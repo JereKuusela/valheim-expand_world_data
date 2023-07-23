@@ -1,0 +1,2 @@
+- v1.0
+  - Initial release. Split from Expand World mod.
