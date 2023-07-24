@@ -36,7 +36,9 @@ public class EWD : BaseUnityPlugin
   {
     Log = Logger;
     BiomeManager.SetupBiomeArrays();
-    YamlCleanUp();
+    // Migrating would be pointless if yaml get reset.
+    if (!NeedsMigration)
+      YamlCleanUp();
     if (!Directory.Exists(YamlDirectory))
       Directory.CreateDirectory(YamlDirectory);
     ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, InvokeRegenerate);
