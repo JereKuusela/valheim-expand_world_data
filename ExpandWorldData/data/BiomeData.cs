@@ -51,12 +51,8 @@ public class BiomeYaml
   public string musicNight = "";
   [DefaultValue(false)]
   public bool noBuild = false;
-  [DefaultValue("")]
-  public string statusEffects = "";
-  [DefaultValue("")]
-  public string dayStatusEffects = "";
-  [DefaultValue("")]
-  public string nightStatusEffects = "";
+  [DefaultValue(null)]
+  public StatusData[]? statusEffects;
 }
 
 public class BiomeData
@@ -74,8 +70,6 @@ public class BiomeData
   public float forestMultiplier = 1f;
 
   public List<Status> statusEffects = new();
-  public List<Status> dayStatusEffects = new();
-  public List<Status> nightStatusEffects = new();
 
   public BiomeData(BiomeYaml data)
   {
@@ -90,17 +84,11 @@ public class BiomeData
     color = data.color;
     mapColor = data.mapColor;
     forestMultiplier = data.forestMultiplier;
-    if (data.statusEffects != "")
-      statusEffects = DataManager.ToList(data.statusEffects).Select(s => new Status(s)).ToList();
-    if (data.dayStatusEffects != "")
-      dayStatusEffects = DataManager.ToList(data.dayStatusEffects).Select(s => new Status(s)).ToList();
-    if (data.nightStatusEffects != "")
-      nightStatusEffects = DataManager.ToList(data.nightStatusEffects).Select(s => new Status(s)).ToList();
+   if (data.statusEffects != null)
+      statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
   }
   public bool IsValid() =>
     statusEffects.Count > 0 ||
-    dayStatusEffects.Count > 0 ||
-    nightStatusEffects.Count > 0 ||
     altitudeMultiplier != 1f ||
     waterDepthMultiplier != 1f ||
     altitudeDelta != 0f ||

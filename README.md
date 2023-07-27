@@ -101,11 +101,8 @@ You can add up to 22 new biomes (on top of the 9 default ones).
 - musicNight: Music override for the night time.
 - noBuild (default: `false`): If true, players can't build in this biome.
 - statusEffects: List of status effects that are active in this environment.
-  - Format is `name1:amount1,name2:amount2,...`
-  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world#Status_effects) for details.
+  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world_data#Status_effects) for details.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
-- dayStatusEffects: List of status effects that are active in this environment during the day.
-- nightStatusEffects: List of status effects that are active in this environment during the night.
 
 ## World
 
@@ -209,11 +206,8 @@ The file `expand_environments.yaml` sets the available weathers. Command `ew_mus
 - lightIntensityNight (default: `0`): ???.
 - sunAngle (default: `60`): ???.
 - statusEffects: List of status effects that are active in this environment.
-  - Format is `name1:amount1,name2:amount2,...`
-  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world#Status_effects) for details.
+  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world_data#Status_effects) for details.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
-- dayStatusEffects: List of status effects that are active in this environment during the day.
-- nightStatusEffects: List of status effects that are active in this environment during the night.
 
 Note: As you can see, lots of values have unknown meaning. Probably better to look at the existing environments for inspiration.
 
@@ -291,12 +285,12 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - groundOffset (default: `0` meters): Placed above the ground.
 - data: ZDO data override. For example to change altars with Spawner Tweaks mod (`object copy` from World Edit Commands).
 - objectSwap: Changes location objects to other objects, also includes dungeons.
-    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world#Object_swaps) for details.
+    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
     - [Example](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples_locations.md#location-adding-new-objects)
 - objectData: Replaces object data in the location, also includes dungeons.
-  - See [Object data](https://github.com/JereKuusela/valheim-expand_world#Object_data) for details.
+  - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
 - objects: Extra objects in the location, relative to the location center.
-  - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world#Custom_objects) for details.
+  - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world_data#Custom_objects) for details.
 - randomDamage (default: `false`): If true, pieces are randomly damaged.
 - exteriorRadius: How many meters are cleared, leveled or no build. If not given for blueprints, this is the radius of the blueprint (+ 2 meters).
   - Note: Maximum suggested value is 32 meters. Higher values go past the zone border and can cause issues.
@@ -351,9 +345,9 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - spawnChance (default: `1`): Chance for each tile to spawn. Only for CampGrid.
 - interiorTransform (default: `false`): Some locations may require this being true. If you notice weird warnings, try setting this to true.
 - objectData: Replaces object data in the dungeon.
-    - See [Object data](https://github.com/JereKuusela/valheim-expand_world#Object_data) for details.
+    - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
 - objectSwap: Changes dungeon objects to other objects.
-    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world#Object_swaps) for details.
+    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
     - Note: If a room has object swaps, the dungeon swaps are applied first.
 
 ## Rooms
@@ -395,9 +389,9 @@ New rooms can be created from blueprints or cloning an existing room by adding `
   - entrance (default: `false`): If true, used for the entrance.
   - door (default: `true`): If true, allows placing door. If `other`, allows placing door if the other connection also allows placing a door.
 - objects: Extra objects in the room.
-    - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world#Custom_objects) for details.
+    - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world_data#Custom_objects) for details.
 - objectSwap: Changes room objects to other objects.
-    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world#Object_swaps) for details.
+    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
     - Note: If the dungeon has object swaps, those are applied first.
 - centerPiece (default: `piece_bpcenterpoint`): Which object determines the blueprint center point. Only for blueprints.
   - Infinity Hammer mod saves the center point to the blueprint. This is automatically used if available.
@@ -613,23 +607,23 @@ Note: Object data is not changed if the custom object has set a specific data.
 
 Both the biome and the current environment can apply status effects to the player. Effects can be active during the day, night or both.
 
-The order is:
+Each entry has following fields:
 
-1. When the biome changes, previous "permanent" effects are instantly removed.
-2. When the weather changes, previous "permanent" effects are instantly removed.
-3. When the night starts,  previous "permanent" day time effects are instantly removed.
-4. When the day starts, previous "permanent" night time effects are instantly removed.
-5. Effects from the current biome and time of the day are refreshed.
-6. Effects from the current environment and time of the day are refreshed.
+- `name`: Name of the effect.
+- `requiredGlobalKeys`: Active if all of these keys are set.
+- `forbiddenGlobalKeys`: Active if none of these keys are set.
+- `day`: Active during the day.
+- `night`: Active during the night.
+- `duration`: Duration in seconds. 0 is "permanent". If not given, uses the default duration of the status effect.
+  - Duration is not used for damaging effects (Burning, Poison and Spirit).
+  - Effects start ticking down when leaving the biome or environment. Effects with "permanent" duration are instantly removed.
+- `damage`: Damage that is affected by both armor and resistances.
+  - Burning: Damage per second. Duration is always 5 seconds.
+  - Spirit: Damage per second. Duration is always 3 seconds.
+  - Poison: Damage over the duration (duration scales with the damage).
+- `damageIgnoreArmor`: Damage that ignores armor.
+- `damageIgnoreAll`: Damage that ignores armor and resistances. 
+- `immuneWithResist`: If true, damage resistance counts as immunity.
+  - Note: `damageIgnoreAll` is not affected.
 
-Multiple formats:
-
-- `name`: Effect is applied with the default duration. Some effects don't have a default duration and are applied "permanently".
-  - For example `BeltStrength`.
-- `name:duration`: Effect is applied with the given duration. Duration 0 can be used for a "permanent" effect.
-  - For example `CorpseRun:10` for 10 seconds of corpse run.
-- `name:damage:damage_ignore_armor:damage_ignore_all`: Used for damage dealing effects (Burning, Poison and Spirit). The duration can't be set.
-  - For example `Burning:50` for 50 damage over 5 seconds (reduced by armor and resistances).
-  - For example `Poison:0:100` for 100 poison damage over time (reduced by resistance)-
-  - For example `Spirit:0:0:50` for 50 damage over 3 seconds (ignores armor and resistances).
-  - For example `Burning:100:50:25` with Fire resist and 25 armor would deal 25 + 50 / 2 + (100 / 2 - 25) = 25 + 25 + 25 = 75 damage over 5 seconds.
+See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples_status.md).

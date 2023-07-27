@@ -70,27 +70,17 @@ public class EnvironmentYaml
   public float lightIntensityNight = 0f;
   [DefaultValue(60f)]
   public float sunAngle = 60f;
-  [DefaultValue("")]
-  public string statusEffects = "";
-  [DefaultValue("")]
-  public string dayStatusEffects = "";
-  [DefaultValue("")]
-  public string nightStatusEffects = "";
+  [DefaultValue(null)]
+  public StatusData[]? statusEffects;
 }
 
 public class EnvironmentData
 {
   public List<Status> statusEffects = new();
-  public List<Status> dayStatusEffects = new();
-  public List<Status> nightStatusEffects = new();
   public EnvironmentData(EnvironmentYaml data)
   {
-    if (data.statusEffects != "")
-      statusEffects = DataManager.ToList(data.statusEffects).Select(s => new Status(s)).ToList();
-    if (data.dayStatusEffects != "")
-      dayStatusEffects = DataManager.ToList(data.dayStatusEffects).Select(s => new Status(s)).ToList();
-    if (data.nightStatusEffects != "")
-      nightStatusEffects = DataManager.ToList(data.nightStatusEffects).Select(s => new Status(s)).ToList();
+    if (data.statusEffects != null)
+      statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
   }
-  public bool IsValid() => statusEffects.Count > 0 || dayStatusEffects.Count > 0 || nightStatusEffects.Count > 0;
+  public bool IsValid() => statusEffects.Count > 0;
 }

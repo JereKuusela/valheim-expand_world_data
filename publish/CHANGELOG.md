@@ -1,2 +1,3 @@
 - v1.0
   - Initial release. Split from Expand World mod.
+  - Reworks the status effect system.

@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
@@ -42,13 +43,11 @@ public class StatusManager
     if (biome != PreviousBiome)
     {
       Remove(seman, data.statusEffects);
-      Remove(seman, data.dayStatusEffects);
-      Remove(seman, data.nightStatusEffects);
     }
     if (day != PreviousDay)
     {
-      if (day) Remove(seman, data.nightStatusEffects);
-      else Remove(seman, data.dayStatusEffects);
+      if (day) Remove(seman, data.statusEffects.Where(s => !s.day).ToList());
+      else Remove(seman, data.statusEffects.Where(s => !s.night).ToList());
     }
   }
   private static void RemoveWeatherEffects(SEMan seman, bool day, string weather)
@@ -57,28 +56,24 @@ public class StatusManager
     if (weather != PreviousWeather)
     {
       Remove(seman, data.statusEffects);
-      Remove(seman, data.dayStatusEffects);
-      Remove(seman, data.nightStatusEffects);
     }
     if (day != PreviousDay)
     {
-      if (day) Remove(seman, data.nightStatusEffects);
-      else Remove(seman, data.dayStatusEffects);
+      if (day) Remove(seman, data.statusEffects.Where(s => !s.day).ToList());
+      else Remove(seman, data.statusEffects.Where(s => !s.night).ToList());
     }
   }
   private static void ApplyBiomeEffects(SEMan seman, bool day, Heightmap.Biome biome)
   {
     if (!BiomeManager.TryGetData(biome, out var data)) return;
-    Add(seman, data.statusEffects);
-    if (day) Add(seman, data.dayStatusEffects);
-    else Add(seman, data.nightStatusEffects);
+    if (day) Add(seman, data.statusEffects.Where(s => s.day).ToList());
+    else Add(seman, data.statusEffects.Where(s => s.night).ToList());
   }
   private static void ApplyWeatherEffects(SEMan seman, bool day, string weather)
   {
     if (!EnvironmentManager.Extra.TryGetValue(weather, out var data)) return;
-    Add(seman, data.statusEffects);
-    if (day) Add(seman, data.dayStatusEffects);
-    else Add(seman, data.nightStatusEffects);
+    if (day) Add(seman, data.statusEffects.Where(s => s.day).ToList());
+    else Add(seman, data.statusEffects.Where(s => s.night).ToList());
   }
 
   private static void Remove(SEMan seman, List<Status> es)
@@ -104,7 +99,9 @@ public class StatusManager
 
   private static void Add(SEMan seman, Status es)
   {
-    seman.AddStatusEffect(es.hash, es.reset, es.itemLevel, es.skillLevel);
+    if (es.requiredGlobalKeys.Any(k => !ZoneSystem.instance.GetGlobalKey(k))) return;
+    if (es.forbiddenGlobalKeys.Any(k => ZoneSystem.instance.GetGlobalKey(k))) return;
+    seman.AddStatusEffect(es.hash, es.reset, 0, 0);
     if (es.reset) return;
     var se = seman.GetStatusEffect(es.hash);
     // To avoid spamming damage calculations, only tick once per second.
@@ -118,7 +115,7 @@ public class StatusManager
       {
         var damage = CalculateDamage(seman, es, HitData.DamageType.Spirit);
         // Fire stacks, so the damage must match the tick rate.
-        if (hasDamage) damage *= TickRate / se.m_ttl;
+        if (!hasDamage) damage *= TickRate * se.m_ttl;
         EWD.Log.LogDebug($"Adding {damage} spirit damage to {burning.name}");
         burning.AddSpiritDamage(damage);
       }
@@ -126,7 +123,7 @@ public class StatusManager
       {
         var damage = CalculateDamage(seman, es, HitData.DamageType.Fire);
         // Fire stacks, so the damage must match the tick rate.
-        if (hasDamage) damage *= TickRate / se.m_ttl;
+        if (!hasDamage) damage *= TickRate * se.m_ttl;
         EWD.Log.LogDebug($"Adding {damage} fire damage to {burning.name}");
         burning.AddFireDamage(damage);
       }
@@ -138,6 +135,11 @@ public class StatusManager
       // Poison doesn't stack so full damage can always be added.
       EWD.Log.LogDebug($"Adding {damage} poison damage to {poison.name}");
       poison.AddDamage(damage);
+    }
+    else if (se is SE_Shield shield)
+    {
+      shield.m_absorbDamage = es.damage;
+      se.m_time = se.m_ttl - es.duration;
     }
     else
       se.m_time = se.m_ttl - es.duration;
@@ -151,6 +153,8 @@ public class StatusManager
     {
       var mod = seman.m_character.GetDamageModifier(damageType);
       var multi = ModToMultiplier(mod);
+      if (multi < 1 && es.immuneWithResist)
+        multi = 0;
       damage *= multi;
       damageIgnoreArmor *= multi;
       if (damage > 0)
@@ -180,6 +184,19 @@ public class StatusManager
   }
 }
 
+public class StatusData
+{
+  public string name = "";
+  public string requiredGlobalKeys = "";
+  public string forbiddenGlobalKeys = "";
+  public bool day = false;
+  public bool night = false;
+  public bool immuneWithResist = false;
+  public float duration = 0f;
+  public float damage = 0f;
+  public float damageIgnoreArmor = 0f;
+  public float damageIgnoreAll = 0f;
+}
 
 public class Status
 {
@@ -188,24 +205,33 @@ public class Status
   public float damage;
   public float damageIgnoreAll;
   public float damageIgnoreArmor;
-  public int itemLevel;
-  public float skillLevel;
   public bool reset;
-  public Status(string str)
+  public bool day;
+  public bool night;
+  public bool immuneWithResist;
+  public List<string> requiredGlobalKeys = new();
+  public List<string> forbiddenGlobalKeys = new();
+  public Status(StatusData status)
   {
-    var split = str.Split(':');
-    hash = split[0].GetStableHashCode();
-    var amount1 = Parse.Float(split, 1, 0f);
-    var amount2 = Parse.Float(split, 2, 0f);
-    var amount3 = Parse.Float(split, 3, 0f);
-    duration = amount1;
-    damage = amount1;
-    damageIgnoreArmor = amount2;
-    damageIgnoreAll = amount3;
-    itemLevel = (int)amount2;
-    skillLevel = amount3;
+    hash = status.name.GetStableHashCode();
+    duration = status.duration;
+    damage = status.damage;
+    damageIgnoreArmor = status.damageIgnoreArmor;
+    damageIgnoreAll = status.damageIgnoreAll;
+    day = status.day;
+    night = status.night;
+    // Both are disabled by default which makes no sense.
+    // For better use experience, enable both by default.
+    if (!day && !night) {
+      day = true;
+      night = true;
+    }
+    immuneWithResist = status.immuneWithResist;
+    requiredGlobalKeys = DataManager.ToList(status.requiredGlobalKeys);
+    forbiddenGlobalKeys = DataManager.ToList(status.forbiddenGlobalKeys);
+
     // Custom duration is handled manually.
     // Also damage effects shouldn't be reseted (since it messed up the damage calculation).
-    reset = amount1 == 0f && amount2 == 0f && amount3 == 0f;
+    reset = status.duration == 0f && status.damage == 0f && status.damageIgnoreArmor == 0f && status.damageIgnoreAll == 0f;
   }
 }
