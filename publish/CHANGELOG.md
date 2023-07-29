@@ -1,3 +1,8 @@
 - v1.0
   - Initial release. Split from Expand World mod.
+  - Adds a new setting to disable automatic data migration.
+  - Adds a new setting to disable automatic config reload (requires restart to take effect).
+  - Fixes the default biome configuration being slightly off (most notably for Meadows).
+  - Fixes the random damage not working for blueprints.
+  - Fixed RNG not being seeded for blueprints.
   - Reworks the status effect system.

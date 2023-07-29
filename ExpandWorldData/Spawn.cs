@@ -37,7 +37,7 @@ public class Spawn
     // Users very easily might have creator on their blueprints or copied data.
     // This causes enemies to attack them because they are considered player built.
     // So far no reason to keep this data.
-    ZNetView.m_initZDO.RemoveLong(ZDOVars.s_creator);
+    zdo?.RemoveLong(ZDOVars.s_creator);
     // For random damage, health is not needed.
     if (IgnoreHealth)
       zdo?.RemoveFloat(ZDOVars.s_health);

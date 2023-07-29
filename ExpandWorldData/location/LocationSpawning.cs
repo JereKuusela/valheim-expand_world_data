@@ -106,7 +106,7 @@ public class LocationObjectDataAndSwap
   }
 
 
-  static void Postfix(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode, List<GameObject> spawnedGhostObjects)
+  static void Postfix(ZoneSystem.ZoneLocation location, int seed, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode, List<GameObject> spawnedGhostObjects)
   {
     if (mode != ZoneSystem.SpawnMode.Client)
     {
@@ -117,11 +117,16 @@ public class LocationObjectDataAndSwap
         var surface = pos with { y = pos.y - data.groundOffset };
         HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
       }
+      Random.InitState(seed);
+      WearNTear.m_randomInitialDamage = location.m_location.m_applyRandomDamage;
       if (mode == ZoneSystem.SpawnMode.Ghost)
         ZNetView.StartGhostInit();
       if (isBluePrint)
         Spawn.Blueprint(bp, pos, rot, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
       LocationSpawning.CustomObjects(location, pos, rot, spawnedGhostObjects);
+
+      WearNTear.m_randomInitialDamage = false;
+      SnapToGround.SnappAll();
       if (mode == ZoneSystem.SpawnMode.Ghost)
         ZNetView.FinishGhostInit();
     }

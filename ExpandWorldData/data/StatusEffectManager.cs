@@ -101,48 +101,64 @@ public class StatusManager
   {
     if (es.requiredGlobalKeys.Any(k => !ZoneSystem.instance.GetGlobalKey(k))) return;
     if (es.forbiddenGlobalKeys.Any(k => ZoneSystem.instance.GetGlobalKey(k))) return;
-    seman.AddStatusEffect(es.hash, es.reset, 0, 0);
-    if (es.reset) return;
-    var se = seman.GetStatusEffect(es.hash);
+
+    if (es.reset)
+    {
+      seman.AddStatusEffect(es.hash, es.reset, 0, 0);
+      return;
+    }
+    var se = ObjectDB.instance.GetStatusEffect(es.hash);
     // To avoid spamming damage calculations, only tick once per second.
     var addDamage = DamageTimer >= TickRate;
-    if (se is SE_Burning burning)
+    if (se is SE_Burning)
     {
       if (!addDamage) return;
-      var hasDamage = (burning.m_fireDamageLeft + burning.m_spiritDamageLeft) > 0;
+      var exists = seman.GetStatusEffect(es.hash) != null;
       // Heuristic to try detect the damage type.
-      if (burning.NameHash() == Character.s_statusEffectSpirit || burning.m_spiritDamageLeft > 0f)
+      if (se.NameHash() == Character.s_statusEffectSpirit)
       {
         var damage = CalculateDamage(seman, es, HitData.DamageType.Spirit);
+        if (damage == 0) return;
+
         // Fire stacks, so the damage must match the tick rate.
-        if (!hasDamage) damage *= TickRate * se.m_ttl;
-        EWD.Log.LogDebug($"Adding {damage} spirit damage to {burning.name}");
-        burning.AddSpiritDamage(damage);
+        if (!exists) damage *= TickRate * se.m_ttl;
+        EWD.Log.LogDebug($"Adding {damage} spirit damage to {se.name}");
+        seman.AddStatusEffect(es.hash, false, 0, 0);
+        var spirit = (SE_Burning)seman.GetStatusEffect(es.hash);
+        spirit.AddSpiritDamage(damage);
       }
       else
       {
         var damage = CalculateDamage(seman, es, HitData.DamageType.Fire);
+        if (damage == 0) return;
         // Fire stacks, so the damage must match the tick rate.
-        if (!hasDamage) damage *= TickRate * se.m_ttl;
-        EWD.Log.LogDebug($"Adding {damage} fire damage to {burning.name}");
+        if (!exists) damage *= TickRate * se.m_ttl;
+        EWD.Log.LogDebug($"Adding {damage} fire damage to {se.name}");
+        seman.AddStatusEffect(es.hash, false, 0, 0);
+        var burning = (SE_Burning)seman.GetStatusEffect(es.hash);
         burning.AddFireDamage(damage);
       }
     }
-    else if (se is SE_Poison poison)
+    else if (se is SE_Poison)
     {
       if (!addDamage) return;
       var damage = CalculateDamage(seman, es, HitData.DamageType.Poison);
+      if (damage == 0) return;
       // Poison doesn't stack so full damage can always be added.
-      EWD.Log.LogDebug($"Adding {damage} poison damage to {poison.name}");
+      EWD.Log.LogDebug($"Adding {damage} poison damage to {se.name}");
+
+      seman.AddStatusEffect(es.hash, false, 0, 0);
+      var poison = (SE_Poison)seman.GetStatusEffect(es.hash);
       poison.AddDamage(damage);
     }
-    else if (se is SE_Shield shield)
-    {
-      shield.m_absorbDamage = es.damage;
-      se.m_time = se.m_ttl - es.duration;
-    }
     else
-      se.m_time = se.m_ttl - es.duration;
+    {
+      seman.AddStatusEffect(es.hash, false, 0, 0);
+      var effect = seman.GetStatusEffect(es.hash);
+      effect.m_time = effect.m_ttl - es.duration;
+      if (effect is SE_Shield shield)
+        shield.m_absorbDamage = es.damage;
+    }
   }
 
   private static float CalculateDamage(SEMan seman, Status es, HitData.DamageType damageType)
@@ -222,7 +238,8 @@ public class Status
     night = status.night;
     // Both are disabled by default which makes no sense.
     // For better use experience, enable both by default.
-    if (!day && !night) {
+    if (!day && !night)
+    {
       day = true;
       night = true;
     }
