@@ -10,16 +10,19 @@ namespace ExpandWorldData;
 public class LocationSpawning
 {
   public static string CurrentLocation = "";
-  public static ZPackage? DataOverride(ZPackage? pkg, string prefab)
+  public static ZDOData? DataOverride(ZDOData? pkg, string prefab)
   {
-    if (pkg == null)
-    {
-      if (!LocationLoading.ObjectData.TryGetValue(CurrentLocation, out var objectData)) return null;
-      if (!objectData.TryGetValue(prefab, out var data)) return null;
-      pkg = Spawn.RandomizeData(data);
-      //ExpandWorldData.Log.LogDebug($"Replaced data for {prefab} in {location}");
-    }
-    return pkg;
+    if (!LocationLoading.ObjectData.TryGetValue(CurrentLocation, out var objectData)) return pkg;
+    var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
+    var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
+    return ZDOData.Merge(allData, prefabData, pkg);
+  }
+  public static ZDOData? DataOverride(string prefab)
+  {
+    if (!LocationLoading.ObjectData.TryGetValue(CurrentLocation, out var objectData)) return null;
+    var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
+    var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
+    return ZDOData.Merge(allData, prefabData);
   }
   public static string PrefabOverride(string prefab)
   {
@@ -37,14 +40,14 @@ public class LocationSpawning
   }
 
 
-  public static void CustomObjects(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, List<GameObject> spawnedGhostObjects)
+  public static void CustomObjects(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, Vector3 scale, List<GameObject> spawnedGhostObjects)
   {
     if (!LocationLoading.Objects.TryGetValue(location.m_prefabName, out var objects)) return;
     //ExpandWorldData.Log.LogDebug($"Spawning {objects.Count} custom objects in {location.m_prefabName}");
     foreach (var obj in objects)
     {
       if (obj.Chance < 1f && Random.value > obj.Chance) continue;
-      Spawn.BPO(obj, pos, rot, DataOverride, PrefabOverride, spawnedGhostObjects);
+      Spawn.BPO(obj, pos, rot, scale, DataOverride, PrefabOverride, spawnedGhostObjects);
     }
   }
 
@@ -55,7 +58,7 @@ public class LocationZDO
 {
   static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
   {
-    if (!LocationLoading.ZDO.TryGetValue(location.m_prefabName, out var data)) return;
+    if (!LocationLoading.ZDOData.TryGetValue(location.m_prefabName, out var data)) return;
     if (!__instance.m_locationProxyPrefab.TryGetComponent<ZNetView>(out var view)) return;
     if (data != null) DataHelper.InitZDO(pos, rotation, null, data, view);
   }
@@ -121,9 +124,13 @@ public class LocationObjectDataAndSwap
       WearNTear.m_randomInitialDamage = location.m_location.m_applyRandomDamage;
       if (mode == ZoneSystem.SpawnMode.Ghost)
         ZNetView.StartGhostInit();
+      var scale = Vector3.one;
+      if (LocationLoading.Scales.TryGetValue(location.m_prefabName, out var s)) scale = Helper.RandomValue(s);
       if (isBluePrint)
-        Spawn.Blueprint(bp, pos, rot, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
-      LocationSpawning.CustomObjects(location, pos, rot, spawnedGhostObjects);
+      {
+        Spawn.Blueprint(bp, pos, rot, scale, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
+      }
+      LocationSpawning.CustomObjects(location, pos, rot, scale, spawnedGhostObjects);
 
       WearNTear.m_randomInitialDamage = false;
       SnapToGround.SnappAll();

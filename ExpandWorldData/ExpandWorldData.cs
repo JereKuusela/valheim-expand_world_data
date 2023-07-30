@@ -52,6 +52,7 @@ public class EWD : BaseUnityPlugin
       if (Configuration.DataReload)
       {
         SetupWatcher();
+        DataLoading.SetupWatcher();
         BiomeManager.SetupWatcher();
         LocationLoading.SetupWatcher();
         VegetationLoading.SetupWatcher();

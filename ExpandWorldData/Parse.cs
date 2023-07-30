@@ -31,6 +31,12 @@ public static class Parse
       return defaultValue;
     return result;
   }
+  public static long Long(string arg, long defaultValue = 0)
+  {
+    if (!long.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
+      return defaultValue;
+    return result;
+  }
   public static int Int(string[] args, int index, int defaultValue = 0)
   {
     if (args.Length <= index) return defaultValue;
@@ -64,7 +70,7 @@ public static class Parse
         VectorXZY(split, 1),
         AngleYXZ(split, 4),
         VectorXZY(split, 7, Vector3.one),
-        DataHelper.Deserialize(split.Length > 11 ? split[11] : ""),
+        ZDOData.Create(split.Length > 11 ? split[11] : ""),
         Float(split, 10, 1f),
         split.Length > 3 && split[3].ToLowerInvariant() == "snap"
       )).ToList();

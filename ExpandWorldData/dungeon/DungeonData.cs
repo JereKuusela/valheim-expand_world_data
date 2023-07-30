@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData.Dungeon;
@@ -80,5 +81,5 @@ public class FakeDungeonGenerator
   public float m_perimeterBuffer;
   public bool m_useCustomInteriorTransform;
   public Dictionary<string, List<Tuple<float, string>>> m_objectSwaps = new();
-  public Dictionary<string, List<Tuple<float, ZPackage?>>> m_objectData = new();
+  public Dictionary<string, List<Tuple<float, ZDOData?>>> m_objectData = new();
 }

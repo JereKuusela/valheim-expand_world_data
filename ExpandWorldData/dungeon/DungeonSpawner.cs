@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData.Dungeon;
@@ -26,21 +27,19 @@ public class Spawner
     return prefab;
   }
 
-  private static ZPackage? DataDungeonOverride(ZPackage? pgk, string prefab)
+  private static ZDOData? DataDungeonOverride(string prefab)
   {
-    if (pgk != null) return pgk;
     if (!Generators.TryGetValue(CurrentDungeon, out var gen)) return null;
-    if (!gen.m_objectData.TryGetValue(prefab, out var data)) return null;
-    return Spawn.RandomizeData(data);
+    var allData = gen.m_objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
+    var prefabData = gen.m_objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
+    return ZDOData.Merge(allData, prefabData);
   }
-  public static ZPackage? DataOverride(ZPackage? pgk, string prefab)
+  public static ZDOData? DataOverride(ZDOData? pgk, string prefab)
   {
-    if (pgk != null) return pgk;
-    pgk = RoomSpawning.DataOverride(pgk, prefab);
-    if (pgk != null) return pgk;
-    pgk = DataDungeonOverride(pgk, prefab);
-    if (pgk != null) return pgk;
-    return LocationSpawning.DataOverride(pgk, prefab);
+    var locationData = LocationSpawning.DataOverride(prefab);
+    var dungeonData = DataDungeonOverride(prefab);
+    var roomData = RoomSpawning.DataOverride(prefab);
+    return ZDOData.Merge(locationData, dungeonData, roomData, pgk);
   }
 
   ///<summary>Implements object data and swapping from location data.</summary>

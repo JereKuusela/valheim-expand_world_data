@@ -47,6 +47,7 @@ public class InitializeContent
   {
     if (Helper.IsServer())
     {
+      DataLoading.Initialize();
       EventManager.ToFile();
       EnvironmentManager.ToFile();
       ClutterManager.ToFile();
@@ -272,7 +273,7 @@ public class DataManager : MonoBehaviour
     return null;
   }
 
-  public static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot, ZPackage? data)
+  public static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot, ZDOData? data)
   {
     var zdo = DataHelper.InitZDO(pos, rot, null, data, prefab);
     zdo?.RemoveLong(ZDOVars.s_creator);

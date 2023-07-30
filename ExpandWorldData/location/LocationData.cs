@@ -86,4 +86,10 @@ public class LocationData
   public float? paintBorder = null;
   [DefaultValue("")]
   public string centerPiece = "";
+  [DefaultValue("1")]
+  public string scaleMin = "1";
+  [DefaultValue("1")]
+  public string scaleMax = "1";
+  [DefaultValue(true)]
+  public bool scaleUniform = true;
 }

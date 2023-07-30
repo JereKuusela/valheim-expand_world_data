@@ -161,7 +161,7 @@ public class VegetationLoading
     if (Helper.IsMultiAxis(scale))
       extra.scale = scale;
     if (data.data != "")
-      extra.data = DataHelper.Deserialize(data.data);
+      extra.data = ZDOData.Create(data.data);
 
     if (ZNetScene.instance.m_namedPrefabs.TryGetValue(hash, out var obj))
     {

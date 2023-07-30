@@ -54,7 +54,7 @@ public class SpawnManager
       spawn.m_minAltitude = spawn.m_maxAltitude > 0f ? 0f : -1000f;
     if (data.data != "")
     {
-      ZDO[spawn] = DataHelper.Deserialize(data.data);
+      Data[spawn] = ZDOData.Create(data.data);
     }
     if (data.objects != null)
     {
@@ -63,7 +63,7 @@ public class SpawnManager
         Parse.VectorXZY(split, 1),
         Quaternion.identity,
         Vector3.one,
-        DataHelper.Deserialize(split.Length > 5 ? split[5] : ""),
+        ZDOData.Create(split.Length > 5 ? split[5] : ""),
         Parse.Float(split, 4, 1f)
       )).ToList();
     }
@@ -138,7 +138,7 @@ public class SpawnManager
   private static void Set(string yaml)
   {
     HandleSpawnData.Override = null;
-    ZDO.Clear();
+    Data.Clear();
     Objects.Clear();
     if (yaml == "" || !Configuration.DataSpawns) return;
     try
@@ -169,7 +169,7 @@ public class SpawnManager
     DataManager.SetupWatcher(Pattern, FromFile);
   }
 
-  public static Dictionary<SpawnSystem.SpawnData, ZPackage?> ZDO = new();
+  public static Dictionary<SpawnSystem.SpawnData, ZDOData?> Data = new();
 
 }
 
@@ -179,7 +179,7 @@ public class SpawnZDO
 {
   static void Prefix(SpawnSystem.SpawnData critter, Vector3 spawnPoint)
   {
-    if (!SpawnManager.ZDO.TryGetValue(critter, out var data)) return;
+    if (!SpawnManager.Data.TryGetValue(critter, out var data)) return;
     if (!critter.m_prefab.TryGetComponent<ZNetView>(out var view)) return;
     DataHelper.InitZDO(spawnPoint, Quaternion.identity, null, data, view);
   }
@@ -188,14 +188,14 @@ public class SpawnZDO
   {
     return prefab;
   }
-  static ZPackage? DataOverride(ZPackage? pgk, string prefab) => pgk;
+  static ZDOData? DataOverride(ZDOData? data, string prefab) => data;
   static void Postfix(SpawnSystem.SpawnData critter, Vector3 spawnPoint)
   {
     if (!SpawnManager.Objects.TryGetValue(critter, out var objects)) return;
     foreach (var obj in objects)
     {
       if (obj.Chance < 1f && UnityEngine.Random.value > obj.Chance) continue;
-      Spawn.BPO(obj, spawnPoint, Quaternion.identity, DataOverride, PrefabOverride, null);
+      Spawn.BPO(obj, spawnPoint, Quaternion.identity, Vector3.one, DataOverride, PrefabOverride, null);
     }
   }
 }

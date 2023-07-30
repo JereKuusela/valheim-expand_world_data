@@ -12,10 +12,11 @@ public class LocationLoading
   public static string FileName = "expand_locations.yaml";
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_locations*.yaml";
-  public static Dictionary<string, ZPackage?> ZDO = new();
+  public static Dictionary<string, ZDOData?> ZDOData = new();
   public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = new();
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, ZPackage?>>>> ObjectData = new();
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, ZDOData?>>>> ObjectData = new();
   public static Dictionary<string, List<BlueprintObject>> Objects = new();
+  public static Dictionary<string, Range<Vector3>> Scales = new();
   public static Dictionary<string, LocationData> LocationData = new();
   public static Dictionary<string, string> Dungeons = new();
   public static Dictionary<string, Location> BlueprintLocations = new();
@@ -31,7 +32,7 @@ public class LocationLoading
     }
 
     if (data.data != "")
-      ZDO[data.prefab] = DataHelper.Deserialize(data.data);
+      ZDOData[data.prefab] = Service.ZDOData.Create(data.data);
     if (data.dungeon != "")
       Dungeons[data.prefab] = data.dungeon;
     if (data.objectSwap != null)
@@ -40,6 +41,13 @@ public class LocationLoading
       ObjectData[data.prefab] = Spawn.LoadData(data.objectData);
     if (data.objects != null)
       Objects[data.prefab] = Parse.Objects(data.objects);
+
+    Range<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
+    {
+      Uniform = data.scaleUniform
+    };
+    if (scale.Min != scale.Max)
+      Scales[data.prefab] = scale;
 
     loc.m_enable = data.enabled;
     loc.m_biome = DataManager.ToBiomes(data.biome);
@@ -131,11 +139,12 @@ public class LocationLoading
   }
   public static void Load()
   {
-    ZDO.Clear();
+    ZDOData.Clear();
     ObjectSwaps.Clear();
     ObjectData.Clear();
     Dungeons.Clear();
     Objects.Clear();
+    Scales.Clear();
     LocationData.Clear();
     if (Helper.IsClient()) return;
     ZoneSystem.instance.m_locations = DefaultEntries;

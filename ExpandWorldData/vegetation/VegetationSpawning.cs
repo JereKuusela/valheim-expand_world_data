@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -24,9 +25,13 @@ public class VegetationSpawning
     return veg;
   }
 
-  private static ZPackage? DataOverride(ZPackage? data, string prefab)
+  private static ZDOData? DataOverride(ZDOData? data, string prefab)
   {
-    if (data != null) return data;
+    if (!Extra.TryGetValue(CurrentVegetation, out var extra)) return data;
+    return ZDOData.Merge(extra.data, data);
+  }
+  private static ZDOData? DataOverride()
+  {
     if (!Extra.TryGetValue(CurrentVegetation, out var extra)) return null;
     return extra.data;
   }
@@ -37,13 +42,16 @@ public class VegetationSpawning
   }
   static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot)
   {
-    return DataManager.Instantiate(prefab, pos, rot, DataOverride(null, ""));
+    return DataManager.Instantiate(prefab, pos, rot, DataOverride());
   }
   static GameObject InstantiateBlueprint(GameObject prefab, Vector3 position, Quaternion rotation)
   {
     if (Mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.StartGhostInit();
-    Spawn.Blueprint(prefab.name, position, rotation, DataOverride, PrefabOverride, SpawnedObjects);
+    var scale = Vector3.one;
+    if (Extra.TryGetValue(CurrentVegetation, out var extra) && extra.scale != null)
+      scale = Helper.RandomValue(extra.scale);
+    Spawn.Blueprint(prefab.name, position, rotation, scale, DataOverride, PrefabOverride, SpawnedObjects);
     if (Mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.FinishGhostInit();
     // Blueprints spawn a dummy non-ZNetView object, so no extra stuff is needed.

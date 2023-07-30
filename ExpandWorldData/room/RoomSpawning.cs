@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using Service;
 
 namespace ExpandWorldData;
 
@@ -22,7 +23,7 @@ public class RoomSpawning
   public static Dictionary<string, DungeonDB.RoomData> Prefabs = new();
 
   public static Dictionary<string, RoomData> Data = new();
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, ZPackage?>>>> ObjectData = new();
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, ZDOData?>>>> ObjectData = new();
 
   public static Dictionary<string, List<BlueprintObject>> Objects = new();
   public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = new();
@@ -83,7 +84,7 @@ public class RoomSpawning
     }
     if (BlueprintManager.TryGet(parameters.name, out var bp))
     {
-      Spawn.Blueprint(bp, pos, rot, DataOverride, PrefabOverride, null);
+      Spawn.Blueprint(bp, pos, rot, Vector3.one, DataOverride, PrefabOverride, null);
     }
     return true;
   }
@@ -101,7 +102,7 @@ public class RoomSpawning
     foreach (var obj in objects)
     {
       if (obj.Chance < 1f && UnityEngine.Random.value > obj.Chance) continue;
-      Spawn.BPO(obj, pos, rot, DataOverride, PrefabOverride, null);
+      Spawn.BPO(obj, pos, rot, Vector3.one, DataOverride, PrefabOverride, null);
     }
     UnityEngine.Random.state = state;
   }
@@ -153,11 +154,18 @@ public class RoomSpawning
     return Spawn.RandomizeSwap(swaps);
   }
 
-  public static ZPackage? DataOverride(ZPackage? pkg, string prefab)
+  public static ZDOData? DataOverride(string prefab)
   {
-    if (pkg != null) return pkg;
     if (!ObjectData.TryGetValue(CurrentRoom, out var objectData)) return null;
-    if (!objectData.TryGetValue(prefab, out var data)) return null;
-    return Spawn.RandomizeData(data);
+    var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
+    var roomData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
+    return ZDOData.Merge(allData, roomData);
+  }
+  public static ZDOData? DataOverride(ZDOData? data, string prefab)
+  {
+    if (!ObjectData.TryGetValue(CurrentRoom, out var objectData)) return data;
+    var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
+    var roomData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
+    return ZDOData.Merge(allData, roomData, data);
   }
 }
