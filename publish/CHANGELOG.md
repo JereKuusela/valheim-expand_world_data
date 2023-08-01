@@ -7,4 +7,5 @@
   - Fixes the default biome configuration being slightly off (most notably for Meadows).
   - Fixes the random damage not working for blueprints.
   - Fixed RNG not being seeded for blueprints.
+  - Fixes blueprints not working as extra objects unless they are also locations.
   - Reworks the status effect system.

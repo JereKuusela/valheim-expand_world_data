@@ -16,7 +16,11 @@ public class BlueprintMetaData
 public class BlueprintManager
 {
   public static bool Has(string name) => BlueprintFiles.ContainsKey(Parse.Name(name));
-  public static bool TryGet(string name, out Blueprint bp) => BlueprintFiles.TryGetValue(Parse.Name(name), out bp);
+  public static bool TryGet(string name, out Blueprint bp)
+  {
+    if (!Has(name)) Load(name, "");
+    return BlueprintFiles.TryGetValue(Parse.Name(name), out bp);
+  }
   public static Dictionary<string, Blueprint> BlueprintFiles = new();
   private static readonly Dictionary<string, BlueprintMetaData> MetaData = new();
   public static bool Load(string name, string centerPiece) => Load(name, centerPiece, new string[0]);
