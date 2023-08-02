@@ -19,6 +19,7 @@ public class DebugCommands
     var items = loc.m_netViews.Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
     return string.Join(", ", items);
   }
+
   public DebugCommands()
   {
     new Terminal.ConsoleCommand("ew_map", "Refreshes the world map.", (args) =>
@@ -28,6 +29,19 @@ public class DebugCommands
     new Terminal.ConsoleCommand("ew_spawns", "Forces spawn file creation.", (args) =>
     {
       SpawnManager.Save();
+    }, true);
+    new Terminal.ConsoleCommand("ew_copy", "[name] - Copies hovered item data to the data yaml.", (args) =>
+    {
+      if (args.Length < 2) return;
+      var name = args[1];
+      var hovered = Selector.GetHovered();
+      if (hovered == null)
+      {
+        args.Context.AddString("No hovered object.");
+        return;
+      }
+      ZDOData data = new(name, hovered);
+      DataLoading.Save(data);
     }, true);
     new Terminal.ConsoleCommand("ew_biomes", "[precision] - Counts biomes by sampling points with a given precision (meters).", args =>
     {

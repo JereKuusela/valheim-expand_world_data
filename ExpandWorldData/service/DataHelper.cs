@@ -57,10 +57,15 @@ public class ZDOData
     return result;
   }
   public ZDOData() { }
+  public ZDOData(string name, ZDO zdo)
+  {
+    Name = name;
+    Load(zdo);
+  }
 
   private ZDOData(string data)
   {
-    Load(new(data));
+    Load(new ZPackage(data));
   }
 
   public void Add(ZDOData data)
@@ -174,6 +179,17 @@ public class ZDOData
       for (var i = 0; i < count; ++i)
         ByteArrays[pkg.ReadInt()] = pkg.ReadByteArray();
     }
+  }
+  public void Load(ZDO zdo)
+  {
+    var id = zdo.m_uid;
+    Floats = ZDOExtraData.s_floats.ContainsKey(id) ? ZDOExtraData.s_floats[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : new();
+    Ints = ZDOExtraData.s_ints.ContainsKey(id) ? ZDOExtraData.s_ints[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : new();
+    Longs = ZDOExtraData.s_longs.ContainsKey(id) ? ZDOExtraData.s_longs[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : new();
+    Strings = ZDOExtraData.s_strings.ContainsKey(id) ? ZDOExtraData.s_strings[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : new();
+    Vecs = ZDOExtraData.s_vec3.ContainsKey(id) ? ZDOExtraData.s_vec3[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : new();
+    Quats = ZDOExtraData.s_quats.ContainsKey(id) ? ZDOExtraData.s_quats[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : new();
+    ByteArrays = ZDOExtraData.s_byteArrays.ContainsKey(id) ? ZDOExtraData.s_byteArrays[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : new();
   }
 
 }

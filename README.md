@@ -306,6 +306,11 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - paintBorder (default: `5`): Adds a smooth transition around the `paintRadius`.
 - centerPiece (default: `piece_bpcenterpoint`): Which object determines the blueprint bottom and center point. If the object is not found, the blueprint is centered automatically and placed 0.05 meters towards the ground.
   - Infinity Hammer mod saves the center point to the blueprint. This is automatically used if available.
+- scaleMin (default: `1`): Minimum scale. Number or x,z,y (with y being the height).
+  - Note: Each object is scaled independently. Distances between objects are not scaled.
+  - Note: All objects can't be scaled without using Structure Tweaks mod.
+- scaleMax (default: `1`): Maximum scale. Number or x,z,y (with y being the height).
+- scaleUniform (default: `true`): If disabled, each axis is scaled independently.
 
 ## Dungeons
 
@@ -543,10 +548,10 @@ The objects are added relative to the spawn or location center.
     - GlowingMushroom, 0,0,0 0,0,0 2,2,2
     # Adds a chest near the center with 90 degrees rotation that has a 50% chance to appear.
     - Chest, 5,0,0, 90,0,0, 1,1,1, 0.5
-    # Adds a chest with specific data (changes items).
+    # Adds a chest with specific data.
     # It's recommended to use the objectData field if possible (less typing).
     # However this can be used to override the objectData.
-    - Chest, 5,0,0, 90,0,0, 1,1,1, 0.5, ASDASD
+    - Chest, 5,0,0, 90,0,0, 1,1,1, 0.5, infinite_health
 ```
 
 For the default objects, you can use commands  `ew_locations` and `ew_rooms` to print location or room contents.
@@ -586,20 +591,41 @@ Note: Objects can be removed by swapping to nothing.
 
 ## Object data
 
-Initial object data in locations can be changed by using the `objectData` field. This affects both original and custom objects.
+Initial object data in locations can be changed by using the `objectData` field. This affects both original, custom and blueprint objects.
 
-Note: Object data is not changed if the custom object has set a specific data.
+Data is merged from multiple levels. The order is:
+1. `all` data from `expand_locations.yaml` or `expand_vegetations.yaml`.
+2. Object specific data from `expand_locations.yaml` or `expand_vegetations.yaml`.
+3. `all` data from `expand_dungeons.yaml`.
+4. Object specific data from `expand_dungeons.yaml`.
+5. `all` data from `expand_rooms.yaml`.
+6. Object specific data from `expand_rooms.yaml`.
+7. Blueprint or custom object data (the highest priority).
 
+For example if the blueprint has infinite health then it can't be changed by using the `objectData` field. But other data could be set like wear from Structure Tweaks mod.
+
+There are two ways to set data:
+1. Add a new entry to `expand_data.yaml` and use its name:
 ```
   - objectData:
-      # Sets object A data to CAAAAAECXKVYFAAAAA==.
-      - idA, CAAAAAECXKVYFAAAAA==
-      # Adds another object data. The data is randomly selected.
+      # Sets all objects data to infinite_health.
+      - all, infinite_health
+      # Overrides idA health to default_health.
+      - idA, default_health
+      # Adds another possible object data for idA.
       # Total weight: 1 + 2 = 3.
-      # 2 / 3 = 66% chance to select this swap.
+      # 2 / 3 = 66% chance for infinite_health and 33% chance for default_health.
+      - idA:2, infinite_health
+      # Same for idB but in a single line.
+      - idB, default_health, infinite_health:2
+```
+2. Use `object copy` to copy the raw data value.
+```
+  - objectData:
+      - all, CAAAAAJrzPp8AAAAAHZc4rL6DUI8
+      - idA, CAAAAAECXKVYFAAAAA==
       - idA:2, CAAAAAJrzPp8AAAAAHZc4rL6DUI8
-      # Same as above but in a single line.
-      # Not recommended to use this way for longer data values.
+      # Note: Not recommended to use a single line if the data is long.
       - idB, CAAAAAECXKVYFAAAAA==, CAAAAAJrzPp8AAAAAHZc4rL6DUI8:2
 ```
 

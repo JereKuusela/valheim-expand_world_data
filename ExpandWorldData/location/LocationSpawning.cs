@@ -113,7 +113,7 @@ public class LocationObjectDataAndSwap
   {
     if (mode != ZoneSystem.SpawnMode.Client)
     {
-      var isBluePrint = BlueprintManager.TryGet(location.m_prefabName, out var bp);
+      var isBluePrint = BlueprintManager.Has(location.m_prefabName);
       if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data))
       {
         // Remove the applied offset.
@@ -126,7 +126,7 @@ public class LocationObjectDataAndSwap
         ZNetView.StartGhostInit();
       var scale = Vector3.one;
       if (LocationLoading.Scales.TryGetValue(location.m_prefabName, out var s)) scale = Helper.RandomValue(s);
-      if (isBluePrint)
+      if (isBluePrint && BlueprintManager.TryGet(location.m_prefabName, out var bp))
       {
         Spawn.Blueprint(bp, pos, rot, scale, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
       }

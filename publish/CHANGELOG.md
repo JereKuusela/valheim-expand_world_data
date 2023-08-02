@@ -1,6 +1,7 @@
 - v1.0
   - Initial release. Split from Expand World mod.
   - Adds a new config file `expand_data.yaml`.
+  - Adds new fields `scaleMin`, `scaleMax`, and `scaleUniform` to `expand_locations.yaml`.
   - Adds a new setting to disable automatic data migration.
   - Adds a new setting to disable automatic config reload (requires restart to take effect).
   - Changes custom data to be merged from multiple sources (instead the last one overriding).
