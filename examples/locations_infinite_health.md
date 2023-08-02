@@ -3,7 +3,7 @@
 Infinite health can be used to prevent players from destroying your location.
 
 Open `expand_locations.yaml`:
-```
+```yaml
 - prefab: BlueprintCastle
   objectData:
   # Infinite health for all objects.
@@ -13,7 +13,7 @@ Open `expand_locations.yaml`:
 ```
 
 If these don't work, check that `expand_data.yaml` has the following:
-```
+```yaml
 - name: default_health
   floats:
   - health, 0

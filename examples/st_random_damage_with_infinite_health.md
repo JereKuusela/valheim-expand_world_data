@@ -5,7 +5,7 @@ Infinite health prevents players from destroying your location. However this mea
 Structure Tweaks allows changing the visual style when installed on all clients.
 
 Open `expand_locations.yaml`:.
-```
+```yaml
 - prefab: BlueprintCastle
   objectData:
   # Each style has 1/3 = 33% chance of appearing.
@@ -15,7 +15,7 @@ Open `expand_locations.yaml`:.
 ```
 
 Use weights to modify the chance of each style:
-```
+```yaml
 - prefab: BlueprintCastle
   objectData:
    # 50% chance for damaged.
@@ -23,7 +23,7 @@ Use weights to modify the chance of each style:
 ```
 
 If these don't work, check that `expand_data.yaml` has the following:
-```
+```yaml
 - name: st_healthy
   ints:
   - override_wear, 0

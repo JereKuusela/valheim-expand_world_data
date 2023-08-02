@@ -1,8 +1,8 @@
-# Dungeon room blueprint examples
+# Dungeons: Blueprint rooms
 
 This example shows how to build a custom dungeon entirely from blueprints. It is important to do everything exactly as shown here. Any mistake can make the dungeon not work properly.
 
-Used [blueprints](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/room_blueprints.zip).
+Used [blueprints](./room_blueprints.zip).
 
 Blueprints must satisfy the following requirements:
 - The room center must be marked with a center piece. This piece is never spawned in the dungeon.
@@ -27,14 +27,12 @@ Blueprints must satisfy the following requirements:
 
 ## General setup
 
-1. Download [Infinity Hammer](https://valheim.thunderstore.io/package/JereKuusela/Infinity_Hammer/) mod (and dependencies).
-2. Download [Upgrade World](https://valheim.thunderstore.io/package/JereKuusela/Upgrade_World/) mod.
-3. Setup commands for easier usage:
+1. Setup commands for easier usage:
  - `alias rs zones_reset zone start force` so that you can just use `rs` command to regenerate the current zone.
  - `alias door hammer dungeon_forestcrypt_door` to select the door more easily.
  - `alias center hammer GlowingMushroom scale=0.25` to select the center piece more easily.
  - `alias base hammer Ice_floor scale=$$,$$,0.25` to select the base more easily.
-4. Use command `find Crypt2` to find the nearest crypt and go inside.
+2. Use command `find Crypt2` to find the nearest crypt and go inside.
 
 
 ## Creating the entrance
@@ -61,7 +59,7 @@ Blueprints must satisfy the following requirements:
   - Too small size means the rooms will overlap with each other.
   - Too big size means that the dungeon fails to generate because rooms take too much space.
 2. Add to `expand_rooms.yaml`: 
-```
+```yaml
 - name: Entrance
   entrance: true
   theme: Crypt
@@ -89,7 +87,7 @@ Blueprints must satisfy the following requirements:
   - Check the marker direction. This is needed when determining the room size.
 4. Area select and save with name Path.
 5. Add to `expand_rooms.yaml`: 
-```
+```yaml
 - name: Path
   theme: Crypt
   # 1 floor perpendicular to the center piece direction
@@ -107,7 +105,7 @@ Blueprints must satisfy the following requirements:
 
 1. Use `base 0.5 0.5`, `door` and `center` to create a room with a single door.
 2. Add to `expand_rooms.yaml`: 
-```
+```yaml
 - name: End
   endCap: true
   theme: Crypt
@@ -123,7 +121,7 @@ Blueprints must satisfy the following requirements:
 
 1. Use `base 0,5.0,5`, `door` and `center` to create a room with two doors, adjacent to each other.
 2. Add to `expand_rooms.yaml`: 
-```
+```yaml
 - name: Corner
   theme: Crypt
   size: 2,2,2
@@ -141,7 +139,7 @@ Blueprints must satisfy the following requirements:
 
 1. Use `base 1 0.5`, `door` and `center` to create a room with two stairs and two doors at tne ends.
 2. Add to `expand_rooms.yaml`: 
-```
+```yaml
 - name: Stairs
   theme: Crypt
   size: 2,4,2

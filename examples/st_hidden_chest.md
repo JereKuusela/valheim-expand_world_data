@@ -2,13 +2,6 @@
 
 Spawner Tweaks can be used to turn any object into a chest.
 
-Mods needed:
-
-1. Server Devcommands
-2. World Edit Commands
-3. Spawner Tweaks
-4. Upgrade World
-
 First you need the data entry:
 1. `spawn stubbe`
 2. `tweak_chest maxamount=2 item=Torch item=Coins,1,10,20`
@@ -24,8 +17,8 @@ First you need the data entry:
 
 ```
 
-Then open `expand_vegetation.yaml` and copy paste the existing `stubbe` entry.
-
+Then add the vegetation:
+1. open `expand_vegetation.yaml` and copy paste the existing `stubbe` entry.
 ```yaml
 # Existing entry with lowered max amount.
 - prefab: stubbe
@@ -56,4 +49,4 @@ Then open `expand_vegetation.yaml` and copy paste the existing `stubbe` entry.
   # Add data field.
   data: chest_stubbe
 ```
-6. Reset entire world to see your changes with `zones_reset start force`
+2. `zones_reset zone start force` to reset the current zone (`zones_reset start force` to reset the entire world).

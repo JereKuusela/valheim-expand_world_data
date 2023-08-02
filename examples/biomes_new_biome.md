@@ -1,4 +1,4 @@
-# Biomes: Add new
+# Biomes: New biome
 
 1. Open `expand_biomes.yaml`.
 2. Copy-paste existing entry.

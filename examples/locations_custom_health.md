@@ -3,14 +3,14 @@
 Three ways to set custom health.
 
 1. Open `expand_data.yaml` and add new entry:
-```
+```yaml
 - name: health_80
   floats:
   - health, 80
 
 ```
 Then use it in the `expand_locations.yaml`:
-```
+```yaml
 - prefab: BlueprintCastle
   objectData:
   - wood_door, health_80
@@ -19,7 +19,7 @@ Then use it in the `expand_locations.yaml`:
 2. Use `object health` on any object and then copy the data with `object copy`.
 
 Then use it in the `expand_locations.yaml`:
-```
+```yaml
 - prefab: BlueprintCastle
   objectData:
   - wood_door, AQAAAAJsBBqZA/WeP8wmXssAAKBC
