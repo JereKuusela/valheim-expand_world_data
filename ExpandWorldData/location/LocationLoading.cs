@@ -198,6 +198,8 @@ public class LocationLoading
     {
       var value = instances[zone];
       var location = zs.GetLocation(value.m_location.m_prefabName);
+      // Jewelcrafting has dynamic locations that don't exist in the location list.
+      if (location == null) continue;
       value.m_location = location;
       instances[zone] = value;
     }
@@ -298,10 +300,6 @@ public class LocationLoading
     item.m_netViews = zoneLocation.m_netViews;
     item.m_randomSpawns = zoneLocation.m_randomSpawns;
   }
-
-
-
-
 
   public static void SetupWatcher()
   {
