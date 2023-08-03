@@ -6,7 +6,7 @@ Always back up your world before making any changes!
 
 Install on all clients and on the server (modding [guide](https://youtu.be/L9ljm2eKLrk)).
 
-# Features
+## Features
 
 - Add new biomes.
 - Change biome distribution.
@@ -15,12 +15,12 @@ Install on all clients and on the server (modding [guide](https://youtu.be/L9ljm
 
 For example you can create entirely flat worlds with only Meadows for building. Or group up colder biomes up north while more warmer biomes end up in the other side. Or just have a world with terrain shapes no one has ever seen before.
 
-# Tutorials
+## Tutorials
 
-- How to make custom biomes: https://youtu.be/TgFhW0MtYyw (33 minutes, created by StonedProphet)
-- How to use blueprints as locations with custom spawners: https://youtu.be/DXtm-WLF6KE (30 minutes, created by StonedProphet)
+- How to make custom biomes: <https://youtu.be/TgFhW0MtYyw> (33 minutes, created by StonedProphet)
+- How to use blueprints as locations with custom spawners: <https://youtu.be/DXtm-WLF6KE> (30 minutes, created by StonedProphet)
 
-# Configuration
+## Configuration
 
 Settings are automatically reloaded (consider using [Configuration manager](https://valheim.thunderstore.io/package/Azumatt/Official_BepInEx_ConfigurationManager/)). This can lead to weird behavior so it's recommended to make a fresh world after you are done configuring.
 
@@ -28,12 +28,12 @@ Note: Pay extra attention when loading old worlds. Certain configurations can ca
 
 Note: Old configuration from Expand World is automatically migrated to this mod.
 
-## Server side
+### Server side
 
 This mod can be used server only, without requiring clients to have it. However only following files can be configured:
 
 - `expand_dungeons.yaml`: All fields.
-- `expand_events.yaml`: Fields enabled, duration, nearBaseOnly, biome, requiredGlobalKeys, notRequiredGlobalKeys, pauseIfNoPlayerInArea, random. 
+- `expand_events.yaml`: Fields enabled, duration, nearBaseOnly, biome, requiredGlobalKeys, notRequiredGlobalKeys, pauseIfNoPlayerInArea, random.
 - `expand_locations.yaml`: All fields, but some disabled locations won't work.
 - `expand_rooms.yaml`: All fields.
 - `expand_vegetation.yaml`: All fields.
@@ -41,7 +41,7 @@ This mod can be used server only, without requiring clients to have it. However 
 
 When doing this, enable `Server only` on the config to remove version check.
 
-# Data
+## Data
 
 This mod provides additional configuration files (.yaml) that can be used to change most world generation related data.
 
@@ -120,7 +120,7 @@ Each entry in the file adds a new rule. When determing the biome, the rules are 
 - centerX (default: `0.0` of world radius): Moves the center point away from the world center.
 - centerY (default: `0.0` of world radius): Moves the center point away from the world center.
 - amount (default: `1.0` of total area): How much of the valid area is randomly filled with this biome. Uses normal distribution, see values below.
-- stretch (default: `1.0`): Same as the `Stretch biomes` setting but applied just to a single entry. Multiplies the size of biome areas (average total area stays the same). 
+- stretch (default: `1.0`): Same as the `Stretch biomes` setting but applied just to a single entry. Multiplies the size of biome areas (average total area stays the same).
 - seed: Overrides the random outcome of `amount`. Numeric value fixes the outcome. Biome name uses a biome specific value derived from the world seed. No value uses biome from the `terrain` parameter.
 - waterDepthMultiplier (default: `1.0`): Multiplies negative terrain altitude.
 - wiggleDistance (default: `true`): Applies "wiggle" to the `minDistance`.
@@ -133,6 +133,7 @@ Note: The world edge is always ocean. This is currently hardcoded.
 Technically the amount is not a percentage but something closer to a normal distribution.
 
 Manual testing with `ew_biomes` command has given these rough values:
+
 - 0.1: 0.4 %
 - 0.2: 2.7 %
 - 0.25: 5.3 %
@@ -162,6 +163,7 @@ If the seeds are different, then Plains amount can be calculated with 0.6 -> 64 
 ### Sectors
 
 Sectors start at the south and increase towards clock-wise direction. So that:
+
 - Bottom left part is between sectors 0 and 0.25.
 - Top left part is between sectors 0.25 and 0.5.
 - Top right part is between sectors 0.5 and 0.75.
@@ -215,7 +217,7 @@ Note: As you can see, lots of values have unknown meaning. Probably better to lo
 
 The file `expand_clutter.yaml` sets the small visual objects.
 
-- prefab: Name of the clutter object. 
+- prefab: Name of the clutter object.
 - enabled (default: `true`): Quick way to disable this entry.
 - amount (default: `80`): Amount of clutter.
 - biome: List of possible biomes.
@@ -253,7 +255,7 @@ Note: Each zone (64m x 64m) can only have one size.
 
 See the [wiki](https://valheim.fandom.com/wiki/Points_of_Interest_(POI)) for more info.
 
-See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples_locations.md).
+See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples.md).
 
 Locations are pregenerated at world generation. You must use `genloc` command to redistribute them on unexplored areas after making any changes. For already explored areas, you need to use Upgrade World mod.
 
@@ -285,8 +287,8 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - groundOffset (default: `0` meters): Placed above the ground.
 - data: ZDO data override. For example to change altars with Spawner Tweaks mod (`object copy` from World Edit Commands).
 - objectSwap: Changes location objects to other objects, also includes dungeons.
-    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
-    - [Example](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples_locations.md#location-adding-new-objects)
+  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
+  - See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples.md).
 - objectData: Replaces object data in the location, also includes dungeons.
   - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
 - objects: Extra objects in the location, relative to the location center.
@@ -350,16 +352,16 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - spawnChance (default: `1`): Chance for each tile to spawn. Only for CampGrid.
 - interiorTransform (default: `false`): Some locations may require this being true. If you notice weird warnings, try setting this to true.
 - objectData: Replaces object data in the dungeon.
-    - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
+  - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
 - objectSwap: Changes dungeon objects to other objects.
-    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
-    - Note: If a room has object swaps, the dungeon swaps are applied first.
+  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
+  - Note: If a room has object swaps, the dungeon swaps are applied first.
 
 ## Rooms
 
 The file `expand_rooms.yaml` sets available dungeon rooms. This is a server side feature, clients don't have access to this data.
 
-See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples_room_blueprints.md).
+See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples.md).
 
 New rooms can be created from blueprints or cloning an existing room by adding `:suffix` to the name.
 
@@ -394,10 +396,10 @@ New rooms can be created from blueprints or cloning an existing room by adding `
   - entrance (default: `false`): If true, used for the entrance.
   - door (default: `true`): If true, allows placing door. If `other`, allows placing door if the other connection also allows placing a door.
 - objects: Extra objects in the room.
-    - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world_data#Custom_objects) for details.
+  - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world_data#Custom_objects) for details.
 - objectSwap: Changes room objects to other objects.
-    - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
-    - Note: If the dungeon has object swaps, those are applied first.
+  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
+  - Note: If the dungeon has object swaps, those are applied first.
 - centerPiece (default: `piece_bpcenterpoint`): Which object determines the blueprint center point. Only for blueprints.
   - Infinity Hammer mod saves the center point to the blueprint. This is automatically used if available.
 
@@ -530,13 +532,13 @@ If setting Zone Spawners is disabled, all spawns stop working from unexplored ar
 - pauseIfNoPlayerInArea (default: `true`): The event timer pauses if no player in the area.
 - random (default: `true`): The event can happen randomly (unlike boss events which happen when near a boss).
 
-# Custom objects
+## Custom objects
 
 New objects can be added to locations, dungeon rooms and zone spawners (creature spawns) by using the `objects` field.
 
 The objects are added relative to the spawn or location center.
 
-```
+```yaml
   - objects:
     # Format is:
     - id, posX,posZ,posY, rotY,rotX,rotZ, scaleX,scaleZ,scaleY, chance, data
@@ -571,7 +573,7 @@ Note: To prevent a custom object being swapped, use a dummy object and then crea
 
 Note: Objects can be removed by swapping to nothing.
 
-```
+```yaml
   - objectSwap:
       # Swaps object A to object X.
       - idA, idX
@@ -594,6 +596,7 @@ Note: Objects can be removed by swapping to nothing.
 Initial object data in locations can be changed by using the `objectData` field. This affects both original, custom and blueprint objects.
 
 Data is merged from multiple levels. The order is:
+
 1. `all` data from `expand_locations.yaml` or `expand_vegetations.yaml`.
 2. Object specific data from `expand_locations.yaml` or `expand_vegetations.yaml`.
 3. `all` data from `expand_dungeons.yaml`.
@@ -605,8 +608,11 @@ Data is merged from multiple levels. The order is:
 For example if the blueprint has infinite health then it can't be changed by using the `objectData` field. But other data could be set like wear from Structure Tweaks mod.
 
 There are two ways to set data:
+
 1. Add a new entry to `expand_data.yaml` and use its name:
-```
+2. Use `object copy` to copy the raw data value.
+
+```yaml
   - objectData:
       # Sets all objects data to infinite_health.
       - all, infinite_health
@@ -619,17 +625,8 @@ There are two ways to set data:
       # Same for idB but in a single line.
       - idB, default_health, infinite_health:2
 ```
-2. Use `object copy` to copy the raw data value.
-```
-  - objectData:
-      - all, CAAAAAJrzPp8AAAAAHZc4rL6DUI8
-      - idA, CAAAAAECXKVYFAAAAA==
-      - idA:2, CAAAAAJrzPp8AAAAAHZc4rL6DUI8
-      # Note: Not recommended to use a single line if the data is long.
-      - idB, CAAAAAECXKVYFAAAAA==, CAAAAAJrzPp8AAAAAHZc4rL6DUI8:2
-```
 
-# Status effects
+## Status effects
 
 Both the biome and the current environment can apply status effects to the player. Effects can be active during the day, night or both.
 
@@ -648,8 +645,8 @@ Each entry has following fields:
   - Spirit: Damage per second. Duration is always 3 seconds.
   - Poison: Damage over the duration (duration scales with the damage).
 - `damageIgnoreArmor`: Damage that ignores armor.
-- `damageIgnoreAll`: Damage that ignores armor and resistances. 
+- `damageIgnoreAll`: Damage that ignores armor and resistances.
 - `immuneWithResist`: If true, damage resistance counts as immunity.
   - Note: `damageIgnoreAll` is not affected.
 
-See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples_status.md).
+See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples.md).

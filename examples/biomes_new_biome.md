@@ -14,13 +14,17 @@ Example:
 
 Copy-paste ashlands entry and change:
 
-    - biome: desert
-      name: Desert
-      terrain: ashlands
-      environments:
-      - environment: Clear
+```yaml
+- biome: desert
+  name: Desert
+  terrain: ashlands
+  environments:
+  - environment: Clear
+```
 
 Copy-paste plains entry and change the top one:
 
-    - biome: desert
-      amount: 0.5
+```yaml
+- biome: desert
+  amount: 0.5
+```

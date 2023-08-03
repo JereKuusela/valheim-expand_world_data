@@ -7,12 +7,14 @@
 5. By default, the terrain is smoothly leveled. Adjust the `levelArea`, `levelRadius` and `levelBorder` fields if needed.
 
 Blueprint without leveling:
+
 ```yaml
 - prefab: Blueprint
   levelArea: false
 ```
 
 Blueprint with 20 meters flat area:
+
 ```yaml
 - prefab: Blueprint
   levelRadius: 20
@@ -20,18 +22,21 @@ Blueprint with 20 meters flat area:
 ```
 
 Blueprint with custom centering (add GlowingMushroom to your blueprint as the center marker):
+
 ```yaml
 - prefab: Blueprint
   centerPiece: GlowingMushroom
 ```
 
 Blueprint with terrain painting:
+
 ```yaml
 - prefab: Blueprint
   paint: paved
 ```
 
 Blueprint with 20 meters of paint without border:
+
 ```yaml
 - prefab: Blueprint
   # dirt,cultivated,paved,vegetation -> mix of cultivated and paved.

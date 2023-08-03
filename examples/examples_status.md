@@ -1,6 +1,6 @@
 # Status effect examples
 
-```
+```yaml
   - statusEffects:
     # Grants extra carry capacity.
     # Removed when leaving the biome / environment.
