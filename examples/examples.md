@@ -27,6 +27,6 @@ Download [Spawner Tweaks](https://valheim.thunderstore.io/package/AzuRe/SpawnerT
 
 ## Structure Tweaks
 
-Download [Spawner Tweaks](https://valheim.thunderstore.io/package/JereKuusela/StructureTweaks/) mod. All clients need this mod.
+Download [Structure Tweaks](https://valheim.thunderstore.io/package/JereKuusela/StructureTweaks/) mod. All clients need this mod.
 
 - [Structure Tweaks: Random damage with infinite health](./st_random_damage_with_infinite_health.md)
