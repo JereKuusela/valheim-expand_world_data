@@ -110,6 +110,7 @@ public class GetBiomeWG
   }
   private static float ConvertDist(float percent) => percent * World.Radius;
 
+  // Remember to update the legacy version too.
   private static Heightmap.Biome Get(WorldGenerator obj, float wx, float wy)
   {
     Data ??= WorldManager.GetDefault(obj);
@@ -175,11 +176,82 @@ public class GetBiomeWG
     }
     return Heightmap.Biome.Ocean;
   }
+
+  // Bit annoying to maintain two versions of the same code.
+  // But biome generation is performance critical so trying to keep it simple.
+  private static Heightmap.Biome GetLegacy(WorldGenerator obj, float wx, float wy)
+  {
+    Data ??= WorldManager.GetDefault(obj);
+    var sx = wx * World.Stretch;
+    var sy = wy * World.Stretch;
+    var magnitude = new Vector2(sx, sy).magnitude;
+    if (magnitude > World.TotalRadius)
+      return Heightmap.Biome.Ocean;
+    var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
+    var num = obj.WorldAngle(wx, wy) * Configuration.WiggleWidth;
+    var baseAngle = 0f;
+    var wiggledAngle = 0f;
+    if (CheckAngles)
+    {
+      baseAngle = (Mathf.Atan2(wx, wy) + Mathf.PI) / 2f / Mathf.PI;
+      wiggledAngle = baseAngle + Configuration.DistanceWiggleWidth * Mathf.Sin(magnitude / Configuration.DistanceWiggleLength);
+      if (wiggledAngle < 0f) wiggledAngle += 1f;
+      if (wiggledAngle >= 1f) wiggledAngle -= 1f;
+    }
+    var radius = World.Radius;
+    var bx = wx / World.BiomeStretch;
+    var by = wy / World.BiomeStretch;
+
+    foreach (var item in Data)
+    {
+      if (item.minAltitude > altitude || item.maxAltitude < altitude) continue;
+      var mag = magnitude;
+      var min = ConvertDist(item.minDistance);
+      if (min > 0)
+        min += item.wiggleDistance ? num : 0f;
+      else if (min == 0f)
+        min = -0.1f; // To handle the center (0,0) correctly.
+      var max = ConvertDist(item.maxDistance);
+      if (item.centerX != 0f || item.centerY != 0f)
+      {
+        var centerX = ConvertDist(item.centerX);
+        var centerY = ConvertDist(item.centerY);
+        mag = new Vector2(sx - centerX, sy - centerY).magnitude;
+      }
+      if (item.curveX != 0f || item.curveY != 0f)
+      {
+        var curveX = ConvertDist(item.curveX);
+        var curveY = ConvertDist(item.curveY);
+        mag = new Vector2(sx + curveX, sy + curveY).magnitude;
+        min += new Vector2(curveX, curveY).magnitude;
+      }
+      var distOk = mag > min && (max >= radius || mag <= max);
+      if (!distOk) continue;
+      if (CheckAngles)
+      {
+        min = item.minSector;
+        max = item.maxSector;
+        if (min != 0f || max != 1f)
+        {
+          var angle = item.wiggleSector ? wiggledAngle : baseAngle;
+          var angleOk = min > max ? (angle >= min || angle < max) : angle >= min && angle < max;
+          if (!angleOk) continue;
+        }
+      }
+      var seed = item._seed ?? GetOffset(obj, item._biomeSeed);
+      if (item.amount < 1f && Mathf.PerlinNoise((seed + bx / item.stretch) * 0.001f, (seed + by / item.stretch) * 0.001f) < 1 - item.amount) continue;
+      return item._biome;
+    }
+    return Heightmap.Biome.Ocean;
+  }
   static bool Prefix(WorldGenerator __instance, ref float wx, ref float wy, ref Heightmap.Biome __result)
   {
     if (__instance.m_world.m_menu) return true;
     if (!Configuration.DataWorld) return true;
-    __result = Get(__instance, wx, wy);
+    if (Configuration.LegacyGeneration)
+      __result = GetLegacy(__instance, wx, wy);
+    else
+      __result = Get(__instance, wx, wy);
     return false;
   }
 }

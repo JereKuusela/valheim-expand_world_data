@@ -10,6 +10,8 @@ public partial class Configuration
 #nullable disable
   public static ConfigEntry<bool> configServerOnly;
   public static bool ServerOnly => configServerOnly.Value;
+  public static ConfigEntry<bool> configLegacyGeneration;
+  public static bool LegacyGeneration => configLegacyGeneration.Value;
   public static ConfigEntry<bool> configRegenerateMap;
   public static bool RegenerateMap => configRegenerateMap.Value;
   public static ConfigEntry<string> configEventInterval;
@@ -72,6 +74,7 @@ public partial class Configuration
     var section = "1. General";
     configRegenerateMap = wrapper.Bind(section, "Regenerate map", true, false, "If true, the world map is regenerated automatically on data changes.");
     configServerOnly = wrapper.Bind(section, "Server only", false, false, "If true, enables server side only mode and clients can't have the mod installed.");
+    configLegacyGeneration = wrapper.Bind(section, "Legacy generation", false, true, "Old Expand World had a bug that cause incorrect generation near biome borders. Set this true for older worlds.");
     configZoneSpawners = wrapper.Bind(section, "Zone spawners", true, false, "If disabled, zone spawners are not generated.");
 
     section = "2. Features";

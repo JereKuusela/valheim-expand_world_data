@@ -11,7 +11,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.0";
+  public const string VERSION = "1.1";
 #nullable disable
   public static ManualLogSource Log;
 #nullable enable
@@ -79,7 +79,8 @@ public class EWD : BaseUnityPlugin
   }
   private void MigrateOldConfig()
   {
-    Log.LogWarning("Migrating old config file.");
+    Log.LogWarning("Migrating old config file and enabling Legacy Generation.");
+    Configuration.configLegacyGeneration.Value = true;
     Config.Save();
     var from = File.ReadAllLines(Path.Combine(Paths.ConfigPath, "expand_world.cfg"));
     var to = File.ReadAllLines(Path.Combine(Paths.ConfigPath, ConfigName));

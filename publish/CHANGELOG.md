@@ -1,3 +1,6 @@
+- v1.1
+  - Adds a new setting for legacy generation (to unfix the generation bug).
+
 - v1.0
   - Initial release. Split from Expand World mod.
   - Adds a new config file `expand_data.yaml`.
