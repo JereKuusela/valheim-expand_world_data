@@ -1,3 +1,6 @@
+- v1.1.1
+  - Fixes links in the readme.
+
 - v1.1
   - Adds a new setting for legacy generation (to unfix the generation bug).
 

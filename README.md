@@ -255,7 +255,7 @@ Note: Each zone (64m x 64m) can only have one size.
 
 See the [wiki](https://valheim.fandom.com/wiki/Points_of_Interest_(POI)) for more info.
 
-See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples.md).
+See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
 
 Locations are pregenerated at world generation. You must use `genloc` command to redistribute them on unexplored areas after making any changes. For already explored areas, you need to use Upgrade World mod.
 
@@ -288,7 +288,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - data: ZDO data override. For example to change altars with Spawner Tweaks mod (`object copy` from World Edit Commands).
 - objectSwap: Changes location objects to other objects, also includes dungeons.
   - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
-  - See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples.md).
+  - See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
 - objectData: Replaces object data in the location, also includes dungeons.
   - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
 - objects: Extra objects in the location, relative to the location center.
@@ -361,7 +361,7 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 
 The file `expand_rooms.yaml` sets available dungeon rooms. This is a server side feature, clients don't have access to this data.
 
-See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples.md).
+See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
 
 New rooms can be created from blueprints or cloning an existing room by adding `:suffix` to the name.
 
@@ -649,4 +649,4 @@ Each entry has following fields:
 - `immuneWithResist`: If true, damage resistance counts as immunity.
   - Note: `damageIgnoreAll` is not affected.
 
-See [examples](https://github.com/JereKuusela/valheim-expand_world/blob/main/examples/examples.md).
+See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
