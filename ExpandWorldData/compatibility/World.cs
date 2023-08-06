@@ -39,7 +39,8 @@ public class World
   }
   public static void RegenerateMap()
   {
-    Minimap.instance?.GenerateWorldMap();
+    if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
+      Minimap.instance?.GenerateWorldMap();
   }
 }
 

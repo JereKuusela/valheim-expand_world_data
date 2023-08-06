@@ -1,3 +1,6 @@
+- v1.4
+  - Removes minimap generation from dedicated server.
+
 - v1.3
   - Fixes vanilla rivers not being cleaned up from the world.
 
