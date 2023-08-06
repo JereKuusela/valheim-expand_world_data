@@ -1,3 +1,6 @@
+- v1.3
+  - Fixes vanilla rivers not being cleaned up from the world.
+
 - v1.2
   - Fixes multiplayer data sync failure.
 
