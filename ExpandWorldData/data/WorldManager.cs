@@ -138,7 +138,7 @@ public class WorldManager
       EWD.Log.LogInfo($"Reloading world data ({data.Count} entries).");
       GetBiomeWG.Data = data;
       GetBiomeWG.CheckAngles = data.Any(x => x.minSector != 0f || x.maxSector != 1f);
-      World.AutomaticRegenerate();
+      EWD.Instance.InvokeRegenerate();
     }
     catch (Exception e)
     {

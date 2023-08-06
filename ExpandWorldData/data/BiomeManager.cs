@@ -212,7 +212,7 @@ public class BiomeManager
     // This tracks if content (environments) have been loaded.
     if (ZoneSystem.instance.m_locationsByHash.Count > 0)
       LoadEnvironments();
-    World.AutomaticRegenerate();
+    EWD.Instance.InvokeRegenerate();
   }
   public static void LoadEnvironments()
   {

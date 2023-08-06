@@ -25,7 +25,9 @@ public class World
   }
   public static void AutomaticRegenerate()
   {
-    WorldGenerator.instance?.Pregenerate();
+    if (WorldGenerator.instance == null) return;
+    EWD.Log.LogInfo("Regenerating the world.");
+    WorldGenerator.instance.Pregenerate();
     foreach (var heightmap in Object.FindObjectsOfType<Heightmap>())
     {
       heightmap.m_buildData = null;

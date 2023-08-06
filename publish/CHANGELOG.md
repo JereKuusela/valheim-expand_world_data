@@ -1,3 +1,6 @@
+- v1.2
+  - Fixes multiplayer data sync failure.
+
 - v1.1.1
   - Fixes links in the readme.
 

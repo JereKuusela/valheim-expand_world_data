@@ -11,9 +11,10 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.1";
+  public const string VERSION = "1.2";
 #nullable disable
   public static ManualLogSource Log;
+  public static EWD Instance;
 #nullable enable
   public static ServerSync.ConfigSync ConfigSync = new(GUID)
   {
@@ -27,6 +28,8 @@ public class EWD : BaseUnityPlugin
   public static string YamlDirectory = Path.Combine(Paths.ConfigPath, "expand_world");
   public void InvokeRegenerate()
   {
+    // Nothing to regenerate because the world hasn't been generated yet.
+    if (WorldGenerator.instance == null) return;
     // Debounced for smooth config editing.
     CancelInvoke("Regenerate");
     Invoke("Regenerate", 1.0f);
@@ -34,6 +37,7 @@ public class EWD : BaseUnityPlugin
   public void Regenerate() => World.AutomaticRegenerate();
   public void Awake()
   {
+    Instance = this;
     Log = Logger;
     BiomeManager.SetupBiomeArrays();
     // Migrating would be pointless if yaml get reset.
