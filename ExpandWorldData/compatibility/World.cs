@@ -1,6 +1,7 @@
 
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace ExpandWorldData;
 

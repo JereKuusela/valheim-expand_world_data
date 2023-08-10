@@ -30,3 +30,9 @@ Download [Spawner Tweaks](https://valheim.thunderstore.io/package/AzuRe/SpawnerT
 Download [Structure Tweaks](https://valheim.thunderstore.io/package/JereKuusela/StructureTweaks/) mod. All clients need this mod.
 
 - [Structure Tweaks: Random damage with infinite health](./st_random_damage_with_infinite_health.md)
+
+## Marketplace
+
+Download [Marketplace](https://valheim.thunderstore.io/package/KGvalheim/Marketplace_And_Server_NPCs_Revamped/) mod. All clients need this mod.
+
+- [Marketplace: Custom trader](./marketplace_custom_trader.md)

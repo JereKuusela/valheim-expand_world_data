@@ -244,7 +244,7 @@ public class GetBiomeWG
     }
     return Heightmap.Biome.Ocean;
   }
-  static bool Prefix(WorldGenerator __instance, ref float wx, ref float wy, ref Heightmap.Biome __result)
+  static bool Prefix(WorldGenerator __instance, float wx, float wy, ref Heightmap.Biome __result)
   {
     if (__instance.m_world.m_menu) return true;
     if (!Configuration.DataWorld) return true;

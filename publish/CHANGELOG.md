@@ -1,4 +1,5 @@
 - v1.4
+  - Adds data ids for Marketplace mod.
   - Removes minimap generation from dedicated server.
 
 - v1.3
