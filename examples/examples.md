@@ -17,6 +17,7 @@
 - [Locations: Infinite health](./locations_infinite_health.md)
 - [Locations: Variants](./locations_variants.md)
 - [Status Effects](./examples_status.md)
+- [Vegetation: Custom health](./vegetation_custom_health.md)
 
 ## Spawer Tweaks
 

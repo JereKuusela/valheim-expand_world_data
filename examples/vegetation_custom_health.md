@@ -1,21 +1,20 @@
-# Locations: Custom health
+# Vegetation: Custom health
 
 Three ways to set custom health.
 
 ## Add entry to `expand_data.yaml`
 
 ```yaml
-- name: health_80
+- name: health_200
   floats:
-  - health, 80
+  - health, 200
 ```
 
-Then use it in the `expand_locations.yaml`.
+Then use it in the `expand_vegetation.yaml`.
 
 ```yaml
-- prefab: BlueprintCastle
-  objectData:
-  - wood_door, health_80
+- prefab: Oak
+  data: health_200
 ```
 
 ## Use raw data
@@ -25,13 +24,12 @@ Then use it in the `expand_locations.yaml`.
 3. Paste to the  `expand_locations.yaml`.
 
 ```yaml
-- prefab: BlueprintCastle
-  objectData:
-  - wood_door, AQAAAAJsBBqZA/WeP8wmXssAAKBC
+- prefab: Oak
+  data: AQAAAAJsBBqZA/WeP8wmXssAAKBC
 ```
 
-## Set health in the blueprint
+## Use blueprint
 
-`hammer_save` automatically includes the health data in the blueprint file.
+Blueprints can be used as vegetation. `hammer_save` automatically includes the health data in the blueprint file.
 
 Note: Data from blueprints has the highest priority. If you want to customize the health, make sure the blueprint data doesn't already set it.
