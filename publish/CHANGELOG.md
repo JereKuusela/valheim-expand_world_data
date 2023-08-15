@@ -1,3 +1,7 @@
+- v1.5
+  - Fixed for the new patch.
+  - Possibly fixes vegetation scale for objects with non-default initial scale.
+
 - v1.4
   - Adds data ids for Marketplace mod.
   - Removes minimap generation from dedicated server.

@@ -62,6 +62,11 @@ public class VegetationSpawning
     if (Extra.TryGetValue(CurrentVegetation, out var extra) && extra.scale != null)
       scale = Helper.RandomValue(extra.scale);
     view.SetLocalScale(scale);
+    // Two fields are used for scale, so clean up the other one.
+    // This is needed because the initial spawn can set the different scale field.
+    var isUniform = Mathf.Approximately(scale.x, scale.y) && Mathf.Approximately(scale.x, scale.z);
+    if (isUniform) view.GetZDO().RemoveVec3(ZDOVars.s_scaleHash);
+    else view.GetZDO().RemoveFloat(ZDOVars.s_scaleScalarHash);
   }
   private static bool InsideClearArea(List<ZoneSystem.ClearArea> areas, Vector3 point)
   {

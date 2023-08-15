@@ -1,23 +1,25 @@
 using HarmonyLib;
+using UnityEngine;
+
 namespace ExpandWorldData;
 
 [HarmonyPatch(typeof(RandEventSystem), nameof(RandEventSystem.InValidBiome))]
 public class RandomEventEnvironment
 {
-  static bool Postfix(bool result, RandomEvent ev, ZDO zdo)
+  static bool Postfix(bool result, RandomEvent ev, Vector3 point)
   {
     if (!result) return false;
     if (!EventManager.EventToRequirentEnvironment.TryGetValue(ev.m_name, out var required)) return true;
     if (required.Count == 0) return true;
-    var biome = WorldGenerator.instance.GetBiome(zdo.GetPosition());
+    var biome = WorldGenerator.instance.GetBiome(point);
     var em = EnvMan.instance;
     var availableEnvironments = em.GetAvailableEnvironments(biome);
     if (availableEnvironments == null || availableEnvironments.Count == 0) return false;
-    UnityEngine.Random.State state = UnityEngine.Random.state;
+    Random.State state = Random.state;
     var num = (long)ZNet.instance.GetTimeSeconds() / em.m_environmentDuration;
-    UnityEngine.Random.InitState((int)num);
+    Random.InitState((int)num);
     var env = em.SelectWeightedEnvironment(availableEnvironments);
-    UnityEngine.Random.state = state;
+    Random.state = state;
     return required.Contains(env.m_name.ToLower());
   }
 }
