@@ -4,7 +4,7 @@ Infinite health prevents players from destroying your location. However this mea
 
 Structure Tweaks allows changing the visual style when installed on all clients.
 
-Open `expand_locations.yaml`:.
+Edit `expand_locations.yaml`:
 
 ```yaml
 - prefab: BlueprintCastle

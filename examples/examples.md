@@ -30,6 +30,7 @@ Download [Spawner Tweaks](https://valheim.thunderstore.io/package/AzuRe/SpawnerT
 
 Download [Structure Tweaks](https://valheim.thunderstore.io/package/JereKuusela/StructureTweaks/) mod. All clients need this mod.
 
+- [Structure Tweaks: Prevent objects falling from dungeons](./st_prevent_objects_falling_from_dungeons.md)
 - [Structure Tweaks: Random damage with infinite health](./st_random_damage_with_infinite_health.md)
 
 ## Marketplace
