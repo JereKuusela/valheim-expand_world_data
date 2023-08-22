@@ -36,5 +36,5 @@ Edit `expand_locations.yaml`:
   # Adds no fall to every mushroom.
   - Pickable_Mushroom, no_fall
   - Pickable_Mushroom_blue, no_fall
-  - Pickable_Mushroom_yellow, no_fall
+  # Yellow mushroom doesn't need to be added, because it doesn't fall by default.
 ```
