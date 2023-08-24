@@ -25,7 +25,7 @@ public class EventData
   public string forceMusic = "";
   [DefaultValue("")]
   public string forceEnvironment = "";
-  public SpawnData[] spawns = new SpawnData[0];
+  public SpawnData[] spawns = [];
   [DefaultValue(true)]
   public bool pauseIfNoPlayerInArea = true;
   [DefaultValue(true)]

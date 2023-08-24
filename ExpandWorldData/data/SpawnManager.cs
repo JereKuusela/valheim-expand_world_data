@@ -16,7 +16,7 @@ public class SpawnManager
   public static Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>> Objects = new();
   public static SpawnSystem.SpawnData FromData(SpawnData data)
   {
-    var spawn = new SpawnSystem.SpawnData
+    SpawnSystem.SpawnData spawn = new()
     {
       m_prefab = DataManager.ToPrefab(data.prefab),
       m_enabled = data.enabled,

@@ -15,10 +15,7 @@ public class EnvironmentManager
   public static Dictionary<string, EnvironmentData> Extra = new();
   public static EnvSetup FromData(EnvironmentYaml data)
   {
-    EnvSetup env = new()
-    {
-      m_psystems = new GameObject[0]
-    };
+    EnvSetup env = new() { m_psystems = [] };
     if (Originals.TryGetValue(data.particles, out var setup))
       env = setup.Clone();
     else if (Originals.TryGetValue(data.name, out setup))

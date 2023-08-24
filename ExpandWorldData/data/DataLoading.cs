@@ -44,7 +44,7 @@ public class DataLoading
   {
     if (Helper.IsClient()) return;
     var yaml = File.Exists(FilePath) ? File.ReadAllText(FilePath) : DataManager.Serializer().Serialize(DefaultData.Data);
-    yaml += "\n" + DataManager.Serializer().Serialize(new DataData[] { ToData(data) });
+    yaml += "\n" + DataManager.Serializer().Serialize(new[] { ToData(data) });
     File.WriteAllText(FilePath, yaml);
   }
   ///<summary>Loads all yaml files returning the deserialized vegetation entries.</summary>
@@ -70,7 +70,7 @@ public class DataLoading
     {
       Name = data.name
     };
-    foreach (var value in data.floats ?? new string[0])
+    foreach (var value in data.floats ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
@@ -78,7 +78,7 @@ public class DataLoading
       var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
       zdo.Floats.Add(hash, Parse.Float(str));
     }
-    foreach (var value in data.ints ?? new string[0])
+    foreach (var value in data.ints ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
@@ -86,7 +86,7 @@ public class DataLoading
       var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
       zdo.Ints.Add(hash, Parse.Int(str));
     }
-    foreach (var value in data.longs ?? new string[0])
+    foreach (var value in data.longs ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
@@ -94,7 +94,7 @@ public class DataLoading
       var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
       zdo.Longs.Add(hash, Parse.Long(str));
     }
-    foreach (var value in data.strings ?? new string[0])
+    foreach (var value in data.strings ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
@@ -102,21 +102,21 @@ public class DataLoading
       var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
       zdo.Strings.Add(hash, str);
     }
-    foreach (var value in data.vecs ?? new string[0])
+    foreach (var value in data.vecs ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length != 4) continue;
       var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
       zdo.Vecs.Add(hash, Parse.VectorXZY(split, 1));
     }
-    foreach (var value in data.quats ?? new string[0])
+    foreach (var value in data.quats ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length != 4) continue;
       var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
       zdo.Quats.Add(hash, Parse.AngleYXZ(split, 1));
     }
-    foreach (var value in data.bytes ?? new string[0])
+    foreach (var value in data.bytes ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length < 2) continue;

@@ -53,7 +53,7 @@ public class NoBuildManager
     {
       for (var j = zone.y - 1; j <= zone.y + 1; j++)
       {
-        if (!NoBuild.TryGetValue(new Vector2i(i, j), out var noBuild)) continue;
+        if (!NoBuild.TryGetValue(new(i, j), out var noBuild)) continue;
         if (point.y <= 3000 && Utils.DistanceXZ(new(noBuild.X, 0, noBuild.Z), point) < noBuild.radius)
           return true;
         // Negative value means the whole zone.

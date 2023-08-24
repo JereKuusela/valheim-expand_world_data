@@ -25,7 +25,7 @@ public class DataData
 
 public class DefaultData
 {
-  private static readonly string[] KnownKeys = new string[]{
+  private static readonly string[] KnownKeys = [
     "TCData",
     "accTime",
     "addedDefaultItems",
@@ -334,33 +334,38 @@ public class DefaultData
     "KGperiodicSound",
     "KGperiodicSoundTime",
     "KGnpcScale",
-  };
+  ];
 
   private static readonly Dictionary<int, string> HashToKey = KnownKeys.ToDictionary(x => x.GetStableHashCode(), x => x);
   public static string Convert(int hash) => HashToKey.TryGetValue(hash, out var key) ? key : hash.ToString();
-  public static DataData[] Data = new DataData[]{
-    new(){
+  public static DataData[] Data = [
+    new()
+    {
       name = "infinite_health",
-      floats = new string[]{"health, 1E30"}
+      floats = ["health, 1E30"]
     },
-    new(){
+    new()
+    {
       name = "default_health",
-      floats = new string[]{"health, 0"}
+      floats = ["health, 0"]
     },
-    new(){
+    new()
+    {
       name = "st_healthy",
-      floats = new string[]{"health, 1E30"},
-      ints = new string[]{"override_wear, 0"}
+      floats = ["health, 1E30"],
+      ints = ["override_wear, 0"]
     },
-    new(){
+    new()
+    {
       name = "st_damaged",
-      floats = new string[]{"health, 1E30"},
-      ints = new string[]{"override_wear, 1"}
+      floats = ["health, 1E30"],
+      ints = ["override_wear, 1"]
     },
-    new(){
+    new()
+    {
       name = "st_broken",
-      floats = new string[]{"health, 1E30"},
-      ints = new string[]{"override_wear, 3"}
+      floats = ["health, 1E30"],
+      ints = ["override_wear, 3"]
     }
-  };
+  ];
 }

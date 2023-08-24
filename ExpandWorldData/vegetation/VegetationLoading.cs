@@ -113,7 +113,7 @@ public class VegetationLoading
 
   public static ZoneSystem.ZoneVegetation FromData(VegetationData data)
   {
-    var veg = new ZoneSystem.ZoneVegetation
+    ZoneSystem.ZoneVegetation veg = new()
     {
       m_name = data.prefab,
       m_enable = data.enabled,
@@ -169,7 +169,7 @@ public class VegetationLoading
     }
     else if (BlueprintManager.Load(data.prefab, data.centerPiece))
     {
-      veg.m_prefab = new GameObject(data.prefab);
+      veg.m_prefab = new(data.prefab);
     }
     if (veg.m_enable && data.requiredGlobalKey != "")
       extra.requiredGlobalKeys = DataManager.ToList(data.requiredGlobalKey);

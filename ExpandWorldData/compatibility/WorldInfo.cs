@@ -54,12 +54,12 @@ public class Pregenerate
     // River points must at least be cleaned.
     // But better clean up everything.
     __instance.m_riverCacheLock.EnterWriteLock();
-    __instance.m_riverPoints = new();
-    __instance.m_rivers = new();
-    __instance.m_streams = new();
-    __instance.m_lakes = new();
-    __instance.m_cachedRiverGrid = new Vector2i(-999999, -999999);
-    __instance.m_cachedRiverPoints = new WorldGenerator.RiverPoint[0];
+    __instance.m_riverPoints = [];
+    __instance.m_rivers = [];
+    __instance.m_streams = [];
+    __instance.m_lakes = [];
+    __instance.m_cachedRiverGrid = new(-999999, -999999);
+    __instance.m_cachedRiverPoints = [];
     __instance.m_riverCacheLock.ExitWriteLock();
   }
 }

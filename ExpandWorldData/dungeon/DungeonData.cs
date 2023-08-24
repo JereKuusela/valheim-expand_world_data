@@ -28,7 +28,7 @@ public class DungeonData
   public bool roomWeights = false;
   [DefaultValue("")]
   public string themes = "";
-  public DungeonDoorData[] doorTypes = new DungeonDoorData[0];
+  public DungeonDoorData[] doorTypes = [];
   public float doorChance;
   [DefaultValue(90f)]
   public float maxTilt = 90f;

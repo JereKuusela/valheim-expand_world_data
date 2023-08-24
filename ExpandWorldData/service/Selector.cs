@@ -14,8 +14,7 @@ public static class Selector
   {
     var obj = Player.m_localPlayer;
     if (!obj) return null;
-    var mask = LayerMask.GetMask(new string[]
-    {
+    var mask = LayerMask.GetMask([
       "item",
       "piece",
       "piece_nonsolid",
@@ -27,7 +26,7 @@ public static class Selector
       "terrain",
       "vehicle",
       "character_trigger" // Added to remove spawners with ESP mod.
-    });
+    ]);
     var hits = Physics.RaycastAll(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, 50f, mask);
     Array.Sort(hits, (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
     foreach (var hit in hits)

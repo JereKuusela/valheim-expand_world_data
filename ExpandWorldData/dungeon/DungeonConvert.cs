@@ -16,9 +16,9 @@ public partial class Loader
       EWD.Log.LogWarning($"Failed to find dungeon algorithm {data.algorithm}.");
     dg.name = data.name;
     if (data.bounds == "")
-      dg.m_zoneSize = new Vector3(64f, 256f, 64f);
+      dg.m_zoneSize = new(64f, 256f, 64f);
     else if (data.bounds.Contains(","))
-      dg.m_zoneSize = Parse.VectorXZY(data.bounds, new Vector3(64f, 256f, 64f));
+      dg.m_zoneSize = Parse.VectorXZY(data.bounds, new(64f, 256f, 64f));
     else
       dg.m_zoneSize = Parse.Float(data.bounds) * Vector3.one;
     dg.m_alternativeFunctionality = data.alternative || data.roomWeights;
@@ -79,7 +79,7 @@ public partial class Loader
       data.maxRooms = dg.m_maxRooms;
       data.minRequiredRooms = dg.m_minRequiredRooms;
       data.minRooms = dg.m_minRooms;
-      data.requiredRooms = global::ExpandWorldData.DataManager.FromList(dg.m_requiredRooms);
+      data.requiredRooms = DataManager.FromList(dg.m_requiredRooms);
       data.roomWeights = dg.m_alternativeFunctionality;
     }
     if (dg.m_algorithm == DungeonGenerator.Algorithm.CampRadial)

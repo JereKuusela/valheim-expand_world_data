@@ -13,7 +13,7 @@ public class EventManager
 
   public static RandomEvent FromData(EventData data)
   {
-    var random = new RandomEvent
+    RandomEvent random = new()
     {
       m_name = data.name,
       m_spawn = data.spawns.Select(SpawnManager.FromData).ToList(),

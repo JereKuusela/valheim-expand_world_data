@@ -6,7 +6,7 @@ namespace ExpandWorldData;
 public class BlueprintMetaData
 {
   public string CenterPiece = "";
-  public string[] SnapPieces = new string[0];
+  public string[] SnapPieces = [];
   public BlueprintMetaData(string centerPiece, string[] snapPieces)
   {
     CenterPiece = centerPiece;
@@ -23,7 +23,7 @@ public class BlueprintManager
   }
   public static Dictionary<string, Blueprint> BlueprintFiles = new();
   private static readonly Dictionary<string, BlueprintMetaData> MetaData = new();
-  public static bool Load(string name, string centerPiece) => Load(name, centerPiece, new string[0]);
+  public static bool Load(string name, string centerPiece) => Load(name, centerPiece, []);
   public static bool Load(string name, string centerPiece, string[] snapPieces)
   {
     var hash = name.GetStableHashCode();
@@ -58,6 +58,6 @@ public class BlueprintManager
     if (MetaData.TryGetValue(name, out var data))
       Load(name, data.CenterPiece, data.SnapPieces);
     else
-      Load(name, "", new string[0]);
+      Load(name, "", []);
   }
 }

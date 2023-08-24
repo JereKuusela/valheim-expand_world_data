@@ -142,7 +142,7 @@ public class Blueprints
   }
   private static IEnumerable<string> Files()
   {
-    IEnumerable<string> bps = new List<string>();
+    IEnumerable<string> bps = [];
     bps = LoadFiles(Configuration.BlueprintGlobalFolder, bps);
     if (Path.GetFullPath(Configuration.BlueprintLocalFolder) != Path.GetFullPath(Configuration.BlueprintGlobalFolder))
       bps = LoadFiles(Configuration.BlueprintLocalFolder, bps);
@@ -216,7 +216,7 @@ public class Blueprints
     var scaleZ = InvariantFloat(split, 12, 1f);
     var data = split.Length > 13 ? split[13] : "";
     var chance = split.Length > 14 ? InvariantFloat(split, 14, 1f) : 1f;
-    return new BlueprintObject(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), new(scaleX, scaleY, scaleZ), ZDOData.Create(data), chance);
+    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), new(scaleX, scaleY, scaleZ), ZDOData.Create(data), chance);
   }
   private static Vector3 GetPlanBuildSnapPoint(string row)
   {
@@ -225,7 +225,7 @@ public class Blueprints
     var x = InvariantFloat(split, 0);
     var y = InvariantFloat(split, 1);
     var z = InvariantFloat(split, 2);
-    return new Vector3(x, y, z);
+    return new(x, y, z);
   }
   private static Blueprint GetBuildShare(Blueprint bp, string[] rows)
   {
@@ -246,7 +246,7 @@ public class Blueprints
     var posZ = InvariantFloat(split, 7);
     var data = split.Length > 8 ? split[8] : "";
     var chance = split.Length > 9 ? InvariantFloat(split, 9, 1f) : 1f;
-    return new BlueprintObject(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), Vector3.one, ZDOData.Create(data), chance);
+    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), Vector3.one, ZDOData.Create(data), chance);
   }
   private static float InvariantFloat(string[] row, int index, float defaultValue = 0f)
   {

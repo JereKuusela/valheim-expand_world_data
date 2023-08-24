@@ -34,7 +34,7 @@ public class BiomeYaml
   public float forestMultiplier = 1f;
   [DefaultValue(0f)]
   public float altitudeDelta = 0f;
-  public BiomeEnvironment[] environments = new BiomeEnvironment[0];
+  public BiomeEnvironment[] environments = [];
   [DefaultValue("")]
   public string paint = "";
   public Color color = new(0, 0, 0, 0);
@@ -84,7 +84,7 @@ public class BiomeData
     color = data.color;
     mapColor = data.mapColor;
     forestMultiplier = data.forestMultiplier;
-   if (data.statusEffects != null)
+    if (data.statusEffects != null)
       statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
   }
   public bool IsValid() =>
