@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace ExpandWorldData;
 
-public class World
+public class WorldInfo
 {
   public static float WaterLevel = 30f;
   public static float Radius = 10000f;

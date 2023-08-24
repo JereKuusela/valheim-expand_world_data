@@ -108,16 +108,16 @@ public class GetBiomeWG
     if (Offsets.TryGetValue(biome, out var value)) return value;
     return obj.m_offset0;
   }
-  private static float ConvertDist(float percent) => percent * World.Radius;
+  private static float ConvertDist(float percent) => percent * WorldInfo.Radius;
 
   // Remember to update the legacy version too.
   private static Heightmap.Biome Get(WorldGenerator obj, float wx, float wy)
   {
     Data ??= WorldManager.GetDefault(obj);
-    var sx = wx * World.Stretch;
-    var sy = wy * World.Stretch;
+    var sx = wx * WorldInfo.Stretch;
+    var sy = wy * WorldInfo.Stretch;
     var magnitude = new Vector2(sx, sy).magnitude;
-    if (magnitude > World.TotalRadius)
+    if (magnitude > WorldInfo.TotalRadius)
       return Heightmap.Biome.Ocean;
     var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
     var num = obj.WorldAngle(wx, wy) * Configuration.WiggleWidth;
@@ -130,9 +130,9 @@ public class GetBiomeWG
       if (wiggledAngle < 0f) wiggledAngle += 1f;
       if (wiggledAngle >= 1f) wiggledAngle -= 1f;
     }
-    var radius = World.Radius;
-    var bx = wx / World.BiomeStretch;
-    var by = wy / World.BiomeStretch;
+    var radius = WorldInfo.Radius;
+    var bx = wx / WorldInfo.BiomeStretch;
+    var by = wy / WorldInfo.BiomeStretch;
 
     foreach (var item in Data)
     {
@@ -182,10 +182,10 @@ public class GetBiomeWG
   private static Heightmap.Biome GetLegacy(WorldGenerator obj, float wx, float wy)
   {
     Data ??= WorldManager.GetDefault(obj);
-    var sx = wx * World.Stretch;
-    var sy = wy * World.Stretch;
+    var sx = wx * WorldInfo.Stretch;
+    var sy = wy * WorldInfo.Stretch;
     var magnitude = new Vector2(sx, sy).magnitude;
-    if (magnitude > World.TotalRadius)
+    if (magnitude > WorldInfo.TotalRadius)
       return Heightmap.Biome.Ocean;
     var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
     var num = obj.WorldAngle(wx, wy) * Configuration.WiggleWidth;
@@ -198,9 +198,9 @@ public class GetBiomeWG
       if (wiggledAngle < 0f) wiggledAngle += 1f;
       if (wiggledAngle >= 1f) wiggledAngle -= 1f;
     }
-    var radius = World.Radius;
-    var bx = wx / World.BiomeStretch;
-    var by = wy / World.BiomeStretch;
+    var radius = WorldInfo.Radius;
+    var bx = wx / WorldInfo.BiomeStretch;
+    var by = wy / WorldInfo.BiomeStretch;
 
     foreach (var item in Data)
     {

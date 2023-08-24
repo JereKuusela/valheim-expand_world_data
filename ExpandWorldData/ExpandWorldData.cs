@@ -34,7 +34,7 @@ public class EWD : BaseUnityPlugin
     CancelInvoke("Regenerate");
     Invoke("Regenerate", 1.0f);
   }
-  public void Regenerate() => World.AutomaticRegenerate();
+  public void Regenerate() => WorldInfo.AutomaticRegenerate();
   public void Awake()
   {
     Instance = this;

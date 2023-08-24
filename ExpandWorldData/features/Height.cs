@@ -24,7 +24,7 @@ public class BiomeHeight
 
     if (BiomeManager.TryGetData(__state, out var data))
     {
-      __result -= World.WaterLevel;
+      __result -= WorldInfo.WaterLevel;
       __result *= data.altitudeMultiplier;
       __result += data.altitudeDelta;
       if (__result < 0f)
@@ -35,7 +35,7 @@ public class BiomeHeight
         __result = data.maximumAltitude + Mathf.Pow(__result - data.maximumAltitude, data.excessFactor);
       if (__result < data.minimumAltitude)
         __result = data.minimumAltitude - Mathf.Pow(data.minimumAltitude - __result, data.excessFactor);
-      __result += World.WaterLevel;
+      __result += WorldInfo.WaterLevel;
     }
   }
 }

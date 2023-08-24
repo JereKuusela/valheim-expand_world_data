@@ -8,9 +8,9 @@ namespace ExpandWorldData;
 public static class Helper
 {
   public static float HeightToBaseHeight(float altitude) => altitude / 200f;
-  public static float AltitudeToHeight(float altitude) => World.WaterLevel + altitude;
+  public static float AltitudeToHeight(float altitude) => WorldInfo.WaterLevel + altitude;
   public static float AltitudeToBaseHeight(float altitude) => HeightToBaseHeight(AltitudeToHeight(altitude));
-  public static float BaseHeightToAltitude(float baseHeight) => baseHeight * 200f - World.WaterLevel;
+  public static float BaseHeightToAltitude(float baseHeight) => baseHeight * 200f - WorldInfo.WaterLevel;
   public static bool IsServer() => ZNet.instance && ZNet.instance.IsServer();
   // Note: Intended that is client when no Znet instance (so stuff isn't loaded in the main menu).
   public static bool IsClient() => !IsServer();

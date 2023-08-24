@@ -24,7 +24,7 @@ public class DebugCommands
   {
     new Terminal.ConsoleCommand("ew_map", "Refreshes the world map.", (args) =>
     {
-      World.RegenerateMap();
+      WorldInfo.RegenerateMap();
     }, true);
     new Terminal.ConsoleCommand("ew_spawns", "Forces spawn file creation.", (args) =>
     {
@@ -47,7 +47,7 @@ public class DebugCommands
     {
       var precision = 100f;
       if (args.Length > 1 && int.TryParse(args[1], out var value)) precision = (float)value;
-      var r = World.Radius;
+      var r = WorldInfo.Radius;
       var start = -(float)Math.Ceiling(r / precision) * precision;
       Dictionary<Heightmap.Biome, int> biomes = new();
       for (var x = start; x <= r; x += precision)
