@@ -1,3 +1,9 @@
+- v1.6
+  - Adds automatic data migration for dungeons.
+  - Fixes Hildir dungeons not generating correctly to the `expand_dungeons.yaml` file.
+  - Fixes Hildir dungeon rooms not generating correctly to the `expand_rooms.yaml` file.
+  - Fixes the command `ew_rooms` not printing room contents.
+
 - v1.5
   - Fixed for the new patch.
   - Possibly fixes vegetation scale for objects with non-default initial scale.

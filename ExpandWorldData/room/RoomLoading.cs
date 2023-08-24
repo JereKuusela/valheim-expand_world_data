@@ -42,7 +42,10 @@ public class RoomLoading
     {"MeadowsVillage", Room.Theme.MeadowsVillage},
     {"MeadowsFarm", Room.Theme.MeadowsFarm},
     {"DvergerTown", Room.Theme.DvergerTown},
-    {"DvergerBoss", Room.Theme.DvergerBoss}
+    {"DvergerBoss", Room.Theme.DvergerBoss},
+    {"ForestCryptHildir", Room.Theme.ForestCryptHildir},
+    {"CaveHildir", Room.Theme.CaveHildir},
+    {"PlainsFortHildir", Room.Theme.PlainsFortHildir}
   };
   // For extra custom room themes.
   public static Dictionary<string, Room.Theme> NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
@@ -94,6 +97,8 @@ public class RoomLoading
     roomData.m_room = room;
     if (RoomSpawning.Prefabs.TryGetValue(Parse.Name(name), out var baseRoom))
     {
+      roomData.m_netViews = baseRoom.m_netViews;
+      roomData.m_randomSpawns = baseRoom.m_randomSpawns;
       var connections = baseRoom.m_room.GetConnections();
       if (connections.Length != snapPieces.Length)
         EWD.Log.LogWarning($"Room {name} has {snapPieces.Length} connections, but base room {baseRoom.m_room.name} has {connections.Length} connections.");

@@ -16,20 +16,26 @@ public partial class Loader
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_dungeons*.yaml";
 
+  private static Dictionary<string, DungeonGenerator> DefaultGenerators = new();
+
   public static void Initialize()
   {
-    Dungeon.EnvironmentBox.Cache.Clear();
+    EnvironmentBox.Cache.Clear();
+    DefaultGenerators.Clear();
+    if (Helper.IsServer())
+    {
+      // Dungeons don't have configuration so the data must be pulled from locations.
+      DefaultGenerators = ZoneSystem.instance.m_locations
+        .Select(loc => loc.m_prefab ? loc.m_prefab.GetComponentInChildren<DungeonGenerator>() : null!)
+        .Where(dg => dg != null)
+        .Distinct(new DgComparer()).ToDictionary(kvp => kvp.name, kvp => kvp);
+    }
     Load();
   }
 
   private static void ToFile()
   {
-    // Dungeons don't have configuration so the data must be pulled from locations.
-    var dgs = ZoneSystem.instance.m_locations
-      .Select(loc => loc.m_prefab ? loc.m_prefab.GetComponentInChildren<DungeonGenerator>() : null!)
-      .Where(dg => dg != null)
-      .Distinct(new DgComparer()).ToList();
-    var yaml = DataManager.Serializer().Serialize(dgs.Select(To).ToList());
+    var yaml = DataManager.Serializer().Serialize(DefaultGenerators.Select(kvp => To(kvp.Value)).ToList());
     File.WriteAllText(FilePath, yaml);
   }
 
@@ -70,8 +76,31 @@ public partial class Loader
       EWD.Log.LogInfo($"Reloading default dungeon data.");
       return;
     }
+    if (Configuration.DataMigration && AddMissingEntries(data))
+    {
+      // Watcher triggers reload.
+      return;
+    }
     EWD.Log.LogInfo($"Reloading dungeon data ({data.Count} entries).");
     Spawner.Generators = data;
+  }
+
+  ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>
+  private static bool AddMissingEntries(Dictionary<string, FakeDungeonGenerator> entries)
+  {
+    var missingKeys = DefaultGenerators.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    foreach (var kvp in entries)
+      missingKeys.Remove(kvp.Key);
+    if (missingKeys.Count == 0) return false;
+    EWD.Log.LogWarning($"Adding {missingKeys.Count} missing dungeon generators to the expand_dungeons.yaml file.");
+    foreach (var kvp in missingKeys)
+      EWD.Log.LogWarning(kvp.Key);
+    var yaml = File.ReadAllText(FilePath);
+    var data = DataManager.Serializer().Serialize(missingKeys.Select(kvp => To(kvp.Value)).ToList());
+    // Directly appending is risky but necessary to keep comments, etc.
+    yaml += "\n" + data;
+    File.WriteAllText(FilePath, yaml);
+    return true;
   }
 
   public static void SetupWatcher()

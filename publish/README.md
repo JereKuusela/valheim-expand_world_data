@@ -14,6 +14,19 @@ See [documentation](https://github.com/JereKuusela/valheim-expand_world_data/blo
 
 See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
 
+## Migration for Hildir dungeon
+
+Version 1.6 automatically migrates data for Hildir dungeons.
+
+If you have used version 1.5, you need to migrate your data manually:
+
+- Open `expand_dungeons.yaml` file.
+- Search and replace:
+  - 1024 to CaveHildir
+  - 2048 to ForestCryptHildir
+  - 4096 to PlainsFortHildir
+- Do the same for `expand_rooms.yaml` file.
+
 ## Tutorials
 
 - How to make custom biomes: <https://youtu.be/TgFhW0MtYyw> (33 minutes, created by StonedProphet)
