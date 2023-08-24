@@ -1,3 +1,6 @@
+- v1.7
+  - Fixes world trying to regenerate on the main menu when changing settings.
+
 - v1.6
   - Adds automatic data migration for dungeons.
   - Fixes Hildir dungeons not generating correctly to the `expand_dungeons.yaml` file.
