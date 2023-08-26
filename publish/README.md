@@ -14,18 +14,40 @@ See [documentation](https://github.com/JereKuusela/valheim-expand_world_data/blo
 
 See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
 
-## Migration for Hildir dungeon
+## Migration for Hildir update
 
-Version 1.6 automatically migrates data for Hildir dungeons.
+New dungeons and locations are added automatically. Events, environments and changes to existing dungeon rooms require manual changes.
 
-If you have used version 1.5, you need to migrate your data manually:
+### Automatic changes
 
-- Open `expand_dungeons.yaml` file.
-- Search and replace:
-  - 1024 to CaveHildir
-  - 2048 to ForestCryptHildir
-  - 4096 to PlainsFortHildir
-- Do the same for `expand_rooms.yaml` file.
+- `expand_locations.yaml` should automatically add DevSpawnTest, Hildir_cave, Hildir_crypt and Hildir_plainsfortress.
+- `expand_dungeons.yaml` should automatically add DG_Hildir_Cave, DG_Hildir_ForestCrypt and DG_Hildir_PlainsFortress.
+  - Expand World Data version 1.5 did not add these correctly.
+  - Search and replace:
+    - 1024 to CaveHildir
+    - 2048 to ForestCryptHildir
+    - 4096 to PlainsFortHildir
+- `expand_rooms.yaml` should automatically add new rooms (for example plainsfortress_Hildir_Floor0).
+  - Expand World Data version 1.5 did not add these correctly.
+  - Search and replace:
+    - 1024 to CaveHildir
+    - 2048 to ForestCryptHildir
+    - 4096 to PlainsFortHildir
+
+### Manual changes
+
+- `expand_environments.yaml` is missing CavesHildir and CryptHildir.
+  - If you have changed the file, copy it to another folder.
+  - Delete the `expand_environments.yaml` so that it regenerates when loading a world.
+  - Add new environments to the previous file and copy it back.
+- `expand_events.yaml` is hildirboss1, hildirboss2 and hildirboss3.
+  - If you have changed the file, copy it to another folder.
+  - Delete the `expand_events.yaml` so that it regenerates when loading a world.
+  - Add new events to the previous file and copy it back.
+- `expand_rooms.yaml` is missing changes to the old rooms.
+  - If you have changed the file, copy it to another folder.
+  - Delete the `expand_rooms.yaml` so that it regenerates when loading a world.
+  - Use any tool to compare the files. Update room themes as needed.
 
 ## Tutorials
 

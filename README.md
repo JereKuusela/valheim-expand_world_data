@@ -15,6 +15,41 @@ Install on all clients and on the server (modding [guide](https://youtu.be/L9ljm
 
 For example you can create entirely flat worlds with only Meadows for building. Or group up colder biomes up north while more warmer biomes end up in the other side. Or just have a world with terrain shapes no one has ever seen before.
 
+## Migration for Hildir update
+
+New dungeons and locations are added automatically. Events, environments and changes to existing dungeon rooms require manual changes.
+
+### Automatic changes
+
+- `expand_locations.yaml` should automatically add DevSpawnTest, Hildir_cave, Hildir_crypt and Hildir_plainsfortress.
+- `expand_dungeons.yaml` should automatically add DG_Hildir_Cave, DG_Hildir_ForestCrypt and DG_Hildir_PlainsFortress.
+  - Expand World Data version 1.5 did not add these correctly.
+  - Search and replace:
+    - 1024 to CaveHildir
+    - 2048 to ForestCryptHildir
+    - 4096 to PlainsFortHildir
+- `expand_rooms.yaml` should automatically add new rooms (for example plainsfortress_Hildir_Floor0).
+  - Expand World Data version 1.5 did not add these correctly.
+  - Search and replace:
+    - 1024 to CaveHildir
+    - 2048 to ForestCryptHildir
+    - 4096 to PlainsFortHildir
+
+### Manual changes
+
+- `expand_environments.yaml` is missing CavesHildir and CryptHildir.
+  - If you have changed the file, copy it to another folder.
+  - Delete the `expand_environments.yaml` so that it regenerates when loading a world.
+  - Add new environments to the previous file and copy it back.
+- `expand_events.yaml` is hildirboss1, hildirboss2 and hildirboss3.
+  - If you have changed the file, copy it to another folder.
+  - Delete the `expand_events.yaml` so that it regenerates when loading a world.
+  - Add new events to the previous file and copy it back.
+- `expand_rooms.yaml` is missing changes to the old rooms.
+  - If you have changed the file, copy it to another folder.
+  - Delete the `expand_rooms.yaml` so that it regenerates when loading a world.
+  - Use any tool to compare the files. Update room themes as needed.
+
 ## Tutorials
 
 - How to make custom biomes: <https://youtu.be/TgFhW0MtYyw> (33 minutes, created by StonedProphet)
@@ -79,6 +114,8 @@ The file format is slightly modified from the usual:
 The file `expand_biomes.yaml` sets available biomes and their configuration.
 
 You can add up to 22 new biomes (on top of the 9 default ones).
+
+Note: The game assigns a number for each biome. If some mods don't recognize new biomes you can try using the number instead. The first new biome gets number 1024 which is doubled for each new biome (2nd biome is 2048, 3rd biome is 4096, etc).
 
 - biome: Identifier for this biome. This is used in the other files.
 - name: Display name. Required for new biomes.
