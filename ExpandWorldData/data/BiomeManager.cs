@@ -262,7 +262,7 @@ public class BiomeManager
     }
 #pragma warning restore CS8500
     // Dictionary can be updated in the place.
-    for (int i = 0; i < indexToBiome.Length; i++)
+    for (int i = 0; i < indexToBiome.Length; ++i)
       Heightmap.s_biomeToIndex[indexToBiome[i]] = i;
   }
 }

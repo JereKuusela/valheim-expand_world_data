@@ -65,7 +65,7 @@ public class Blueprint
   // Snap point system is used for dungeon room connections.
   public void LoadSnapPoints(string[] snapPieces)
   {
-    for (var i = 0; i < snapPieces.Length; i++)
+    for (var i = 0; i < snapPieces.Length; ++i)
     {
       var piece = snapPieces[i];
       if (piece.Split(',').Length == 3)

@@ -333,6 +333,10 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - randomDamage (default: `false`): If true, pieces are randomly damaged.
 - exteriorRadius: How many meters are cleared, leveled or no build. If not given for blueprints, this is the radius of the blueprint (+ 2 meters).
   - Note: Maximum suggested value is 32 meters. Higher values go past the zone border and can cause issues.
+- commands: List of commands that will be executed when spawning the location.
+  - Use $$x, $$y and $$z in the command to use the location center point.
+  - Use $$a, in the command to use the location rotation.
+  - Basic arithmetic is supported. For example `$$x+10` would add 10 meters to the x coordinate.
 - clearArea (default: `false`): If true, vegetation is not placed within `exteriorRadius`.
 - noBuild (default: `false`): If true, players can't build within `exteriorRadius`. If number, player can't build within the given radius.
 - noBuildDungeon (default: `false`): If true, players can't build inside dungeons within the whole zone. If number, player can't build inside dungeons within the given radius.

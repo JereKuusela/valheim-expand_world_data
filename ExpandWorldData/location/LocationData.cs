@@ -62,6 +62,8 @@ public class LocationData
   public string[]? objectSwap = null;
   [DefaultValue(null)]
   public string[]? objects = null;
+  [DefaultValue(null)]
+  public string[]? commands = null;
   [DefaultValue(0f)]
   public float exteriorRadius = 0f;
   [DefaultValue(false)]

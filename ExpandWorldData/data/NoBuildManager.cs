@@ -49,7 +49,7 @@ public class NoBuildManager
   {
     var zs = ZoneSystem.instance;
     var zone = zs.GetZone(point);
-    for (var i = zone.x - 1; i <= zone.x + 1; i++)
+    for (var i = zone.x - 1; i <= zone.x + 1; ++i)
     {
       for (var j = zone.y - 1; j <= zone.y + 1; j++)
       {

@@ -45,7 +45,7 @@ public class ClearAreasFromAdjacentZones
 {
   static void Prefix(ZoneSystem __instance, Vector2i zoneID, List<ZoneSystem.ClearArea> clearAreas)
   {
-    for (var i = zoneID.x - 1; i <= zoneID.x + 1; i++)
+    for (var i = zoneID.x - 1; i <= zoneID.x + 1; ++i)
     {
       for (var j = zoneID.y - 1; j <= zoneID.y + 1; j++)
       {

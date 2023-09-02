@@ -140,6 +140,8 @@ public class LocationObjectDataAndSwap
     LocationSpawning.CurrentLocation = "";
     Spawn.DungeonGeneratorPos = null;
     Spawn.IgnoreHealth = false;
+    if (LocationLoading.Commands.TryGetValue(location.m_prefabName, out var commands))
+      CommandManager.Run(commands, pos, rot.eulerAngles);
   }
 
   static void HandleTerrain(Vector3 pos, float radius, bool isBlueprint, LocationData data)

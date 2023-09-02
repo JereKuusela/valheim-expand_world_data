@@ -92,7 +92,7 @@ public class EWD : BaseUnityPlugin
     {
       var split = line.Split('=');
       if (split.Length != 2) continue;
-      for (var i = 0; i < to.Length; i++)
+      for (var i = 0; i < to.Length; ++i)
       {
         if (to[i].StartsWith(split[0]))
           to[i] = line;

@@ -47,7 +47,7 @@ public class RoomSpawning
     to.m_perimeter = from.m_perimeter;
     var connFrom = from.GetConnections();
     var connTo = to.GetConnections();
-    for (var i = 0; i < connFrom.Length && i < connTo.Length; i++)
+    for (var i = 0; i < connFrom.Length && i < connTo.Length; ++i)
     {
       var cFrom = connFrom[i];
       var cTo = connTo[i];
@@ -126,7 +126,7 @@ public class RoomSpawning
       {
         if (Data.TryGetValue(room.name, out var data) && data.size == "")
           room.m_size = new((int)Mathf.Ceil(bp.Size.x), (int)Mathf.Ceil(bp.Size.y), (int)Mathf.Ceil(bp.Size.z));
-        for (var i = 0; i < bp.SnapPoints.Count && i < room.m_roomConnections.Length; i++)
+        for (var i = 0; i < bp.SnapPoints.Count && i < room.m_roomConnections.Length; ++i)
         {
           var conn = room.m_roomConnections[i];
           conn.transform.localPosition = bp.SnapPoints[i].Pos;

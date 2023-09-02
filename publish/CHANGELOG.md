@@ -1,5 +1,6 @@
 - v1.8
   - Adds fields `requiredPlayerKeys` and `forbiddenPlayerKeys` to the status effect system.
+  - Adds a field `commands` to the  `expand_locations.yaml` file.
   - Fixes unncessary warning when swapping objects to nothing.
 
 - v1.7

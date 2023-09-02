@@ -17,6 +17,7 @@ public class LocationLoading
   public static Dictionary<string, Dictionary<string, List<Tuple<float, ZDOData?>>>> ObjectData = new();
   public static Dictionary<string, List<BlueprintObject>> Objects = new();
   public static Dictionary<string, Range<Vector3>> Scales = new();
+  public static Dictionary<string, string[]> Commands = new();
   public static Dictionary<string, LocationData> LocationData = new();
   public static Dictionary<string, string> Dungeons = new();
   public static Dictionary<string, Location> BlueprintLocations = new();
@@ -41,6 +42,8 @@ public class LocationLoading
       ObjectData[data.prefab] = Spawn.LoadData(data.objectData);
     if (data.objects != null)
       Objects[data.prefab] = Parse.Objects(data.objects);
+    if (data.commands != null)
+      Commands[data.prefab] = data.commands;
 
     Range<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
     {
@@ -145,6 +148,7 @@ public class LocationLoading
     Dungeons.Clear();
     Objects.Clear();
     Scales.Clear();
+    Commands.Clear();
     LocationData.Clear();
     if (Helper.IsClient()) return;
     ZoneSystem.instance.m_locations = DefaultEntries;
