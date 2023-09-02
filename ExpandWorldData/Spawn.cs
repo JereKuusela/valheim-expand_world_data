@@ -86,6 +86,9 @@ public class Spawn
       sc.z *= obj.Scale.Value.z;
     }
     obj.Prefab = prefabOverride(obj.Prefab);
+    // Empty is valid for removing objects.
+    if (obj.Prefab == "")
+      return null;
     var prefab = ZNetScene.instance.GetPrefab(obj.Prefab);
     if (!prefab)
     {
@@ -153,7 +156,7 @@ public class Spawn
   private static List<Tuple<float, ZDOData?>> ParseDataItems(IEnumerable<string> items, float weight) => items.Select(s => Parse.Split(s, false, ':')).Select(s => Tuple.Create(Parse.Float(s, 1, 1f) * weight, ZDOData.Create(s[0]))).ToList();
   public static Dictionary<string, List<Tuple<float, ZDOData?>>> LoadData(string[] objectData)
   {
-    Dictionary<string, List<Tuple<float, ZDOData?>>> swaps = new();
+    Dictionary<string, List<Tuple<float, ZDOData?>>> swaps = [];
     // Empty items are kept to support spawning nothing.
     var list = objectData.Select(s => DataManager.ToList(s, false)).Where(l => l.Count > 0).ToList();
     // Complicated logic to support:
