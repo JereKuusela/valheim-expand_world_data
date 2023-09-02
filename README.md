@@ -670,8 +670,10 @@ Both the biome and the current environment can apply status effects to the playe
 Each entry has following fields:
 
 - `name`: Name of the effect.
-- `requiredGlobalKeys`: Active if all of these keys are set.
-- `forbiddenGlobalKeys`: Active if none of these keys are set.
+- `requiredGlobalKeys`: Active if all of these world keys are set.
+- `forbiddenGlobalKeys`: Active if none of these world keys are set.
+- `requiredPlayerKeys`: Active if all of these player keys are set.
+- `forbiddenPlayerKeys`: Active if none of these player keys are set.
 - `day`: Active during the day.
 - `night`: Active during the night.
 - `duration`: Duration in seconds. 0 is "permanent". If not given, uses the default duration of the status effect.

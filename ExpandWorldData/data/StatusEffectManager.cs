@@ -20,16 +20,15 @@ public class StatusManager
   static void Postfix(Player __instance, float dt)
   {
     if (__instance != Player.m_localPlayer) return;
-    var seman = __instance.GetSEMan();
     DamageTimer += dt;
     var weather = EnvMan.instance.GetCurrentEnvironment()?.m_name ?? "";
     var day = EnvMan.instance.IsDay();
     var biome = EnvMan.instance.GetBiome();
 
-    RemoveBiomeEffects(seman, day, biome);
-    RemoveWeatherEffects(seman, day, weather);
-    ApplyBiomeEffects(seman, day, biome);
-    ApplyWeatherEffects(seman, day, weather);
+    RemoveBiomeEffects(__instance, day, biome);
+    RemoveWeatherEffects(__instance, day, weather);
+    ApplyBiomeEffects(__instance, day, biome);
+    ApplyWeatherEffects(__instance, day, weather);
 
     if (DamageTimer >= TickRate) DamageTimer = 0f;
     PreviousWeather = weather;
@@ -37,71 +36,74 @@ public class StatusManager
     PreviousBiome = biome;
   }
 
-  private static void RemoveBiomeEffects(SEMan seman, bool day, Heightmap.Biome biome)
+  private static void RemoveBiomeEffects(Player player, bool day, Heightmap.Biome biome)
   {
     if (!BiomeManager.TryGetData(PreviousBiome, out var data)) return;
     if (biome != PreviousBiome)
     {
-      Remove(seman, data.statusEffects);
+      Remove(player, data.statusEffects);
     }
     if (day != PreviousDay)
     {
-      if (day) Remove(seman, data.statusEffects.Where(s => !s.day).ToList());
-      else Remove(seman, data.statusEffects.Where(s => !s.night).ToList());
+      if (day) Remove(player, data.statusEffects.Where(s => !s.day).ToList());
+      else Remove(player, data.statusEffects.Where(s => !s.night).ToList());
     }
   }
-  private static void RemoveWeatherEffects(SEMan seman, bool day, string weather)
+  private static void RemoveWeatherEffects(Player player, bool day, string weather)
   {
     if (!EnvironmentManager.Extra.TryGetValue(PreviousWeather, out var data)) return;
     if (weather != PreviousWeather)
     {
-      Remove(seman, data.statusEffects);
+      Remove(player, data.statusEffects);
     }
     if (day != PreviousDay)
     {
-      if (day) Remove(seman, data.statusEffects.Where(s => !s.day).ToList());
-      else Remove(seman, data.statusEffects.Where(s => !s.night).ToList());
+      if (day) Remove(player, data.statusEffects.Where(s => !s.day).ToList());
+      else Remove(player, data.statusEffects.Where(s => !s.night).ToList());
     }
   }
-  private static void ApplyBiomeEffects(SEMan seman, bool day, Heightmap.Biome biome)
+  private static void ApplyBiomeEffects(Player player, bool day, Heightmap.Biome biome)
   {
     if (!BiomeManager.TryGetData(biome, out var data)) return;
-    if (day) Add(seman, data.statusEffects.Where(s => s.day).ToList());
-    else Add(seman, data.statusEffects.Where(s => s.night).ToList());
+    if (day) Add(player, data.statusEffects.Where(s => s.day).ToList());
+    else Add(player, data.statusEffects.Where(s => s.night).ToList());
   }
-  private static void ApplyWeatherEffects(SEMan seman, bool day, string weather)
+  private static void ApplyWeatherEffects(Player player, bool day, string weather)
   {
     if (!EnvironmentManager.Extra.TryGetValue(weather, out var data)) return;
-    if (day) Add(seman, data.statusEffects.Where(s => s.day).ToList());
-    else Add(seman, data.statusEffects.Where(s => s.night).ToList());
+    if (day) Add(player, data.statusEffects.Where(s => s.day).ToList());
+    else Add(player, data.statusEffects.Where(s => s.night).ToList());
   }
 
-  private static void Remove(SEMan seman, List<Status> es)
+  private static void Remove(Player player, List<Status> es)
   {
     foreach (var statusEffect in es)
-      Remove(seman, statusEffect);
+      Remove(player, statusEffect);
   }
-  private static void Remove(SEMan seman, Status es)
+  private static void Remove(Player player, Status es)
   {
+    var seman = player.GetSEMan();
     var statusEffect = seman.GetStatusEffect(es.hash);
     if (statusEffect == null) return;
     // Expiring status effects should expire their own.
     // But permanent ones should be removed.
     if (statusEffect.m_ttl > 0f) return;
-    EWD.Log.LogInfo($"Removing {statusEffect.name}");
+    //EWD.Log.LogInfo($"Removing {statusEffect.name}");
     seman.RemoveStatusEffect(es.hash);
   }
-  private static void Add(SEMan seman, List<Status> es)
+  private static void Add(Player player, List<Status> es)
   {
     foreach (var statusEffect in es)
-      Add(seman, statusEffect);
+      Add(player, statusEffect);
   }
 
-  private static void Add(SEMan seman, Status es)
+  private static void Add(Player player, Status es)
   {
     if (es.requiredGlobalKeys.Any(k => !ZoneSystem.instance.GetGlobalKey(k))) return;
-    if (es.forbiddenGlobalKeys.Any(k => ZoneSystem.instance.GetGlobalKey(k))) return;
-
+    if (es.forbiddenGlobalKeys.Any(ZoneSystem.instance.GetGlobalKey)) return;
+    if (es.requiredPlayerKeys.Any(k => !player.HaveUniqueKey(k))) return;
+    if (es.forbiddenPlayerKeys.Any(player.HaveUniqueKey)) return;
+    var seman = player.GetSEMan();
     if (es.reset)
     {
       seman.AddStatusEffect(es.hash, es.reset, 0, 0);
@@ -205,6 +207,8 @@ public class StatusData
   public string name = "";
   public string requiredGlobalKeys = "";
   public string forbiddenGlobalKeys = "";
+  public string requiredPlayerKeys = "";
+  public string forbiddenPlayerKeys = "";
   public bool day = false;
   public bool night = false;
   public bool immuneWithResist = false;
@@ -225,8 +229,10 @@ public class Status
   public bool day;
   public bool night;
   public bool immuneWithResist;
-  public List<string> requiredGlobalKeys = new();
-  public List<string> forbiddenGlobalKeys = new();
+  public List<string> requiredGlobalKeys = [];
+  public List<string> forbiddenGlobalKeys = [];
+  public List<string> requiredPlayerKeys = [];
+  public List<string> forbiddenPlayerKeys = [];
   public Status(StatusData status)
   {
     hash = status.name.GetStableHashCode();
@@ -246,6 +252,8 @@ public class Status
     immuneWithResist = status.immuneWithResist;
     requiredGlobalKeys = DataManager.ToList(status.requiredGlobalKeys);
     forbiddenGlobalKeys = DataManager.ToList(status.forbiddenGlobalKeys);
+    requiredPlayerKeys = DataManager.ToList(status.requiredPlayerKeys);
+    forbiddenPlayerKeys = DataManager.ToList(status.forbiddenPlayerKeys);
 
     // Custom duration is handled manually.
     // Also damage effects shouldn't be reseted (since it messed up the damage calculation).
