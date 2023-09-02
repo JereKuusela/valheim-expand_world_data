@@ -119,7 +119,7 @@ public class Spawn
 
   public static Dictionary<string, List<Tuple<float, string>>> LoadSwaps(string[] objectSwap)
   {
-    Dictionary<string, List<Tuple<float, string>>> swaps = new();
+    Dictionary<string, List<Tuple<float, string>>> swaps = [];
     // Empty items are kept to support spawning nothing.
     var list = objectSwap.Select(s => DataManager.ToList(s, false)).Where(l => l.Count > 0).ToList();
     // Complicated logic to support:
@@ -131,7 +131,7 @@ public class Spawn
       var name = s[0];
       var weight = Parse.Float(s, 1, 1f);
       if (!swaps.ContainsKey(name))
-        swaps[name] = new();
+        swaps[name] = [];
       swaps[name].AddRange(ParseSwapItems(row.Skip(1), weight));
     }
     foreach (var kvp in swaps)
@@ -140,7 +140,12 @@ public class Spawn
       for (var i = 0; i < kvp.Value.Count; ++i)
         kvp.Value[i] = Tuple.Create(kvp.Value[i].Item1 / total, kvp.Value[i].Item2);
       foreach (var swap in kvp.Value)
-        BlueprintManager.Load(swap.Item2, "");
+      {
+        // Empty string is supported for removing objects.
+        if (swap.Item2 != "")
+          BlueprintManager.Load(swap.Item2, "");
+      }
+
     }
     return swaps;
   }

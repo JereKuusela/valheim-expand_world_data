@@ -1,5 +1,6 @@
 - v1.8
   - Adds fields `requiredPlayerKeys` and `forbiddenPlayerKeys` to the status effect system.
+  - Fixes unncessary warning when swapping objects to nothing.
 
 - v1.7
   - Fixes world trying to regenerate on the main menu when changing settings.
