@@ -14,8 +14,15 @@ public class CommandManager
   {
     foreach (var command in commands)
     {
-      var cmd = Parse(command, center, rot);
-      Console.instance.TryRunCommand(cmd);
+      try
+      {
+        var cmd = Parse(command, center, rot);
+        Console.instance.TryRunCommand(cmd);
+      }
+      catch (Exception e)
+      {
+        EWD.Log.LogError($"Failed to run command: {command}\n{e.Message}");
+      }
     }
   }
   private static string Parse(string command, Vector3 center, Vector3 rot)
@@ -59,12 +66,28 @@ public class CommandManager
       return sum;
     }
     var minus = expression.Split('-');
-    if (minus.Length > 1)
+    // Negative numbers get split as well, so check for actual parts.
+    if (minus.Where(s => s != "").Count() > 1)
     {
       var sum = Evaluate(minus[0]);
-      for (var i = 1; i < minus.Length; ++i) sum -= Evaluate(minus[i]);
+      for (var i = 1; i < minus.Length; ++i)
+      {
+        if (minus[i] == "" && i + 1 < minus.Length)
+        {
+          minus[i + 1] = "-" + minus[i + 1];
+          continue;
+        }
+        sum -= Evaluate(minus[i]);
+      }
       return sum;
     }
-    return float.Parse(expression.Trim(), NumberFormatInfo.InvariantInfo);
+    try
+    {
+      return float.Parse(expression.Trim(), NumberFormatInfo.InvariantInfo);
+    }
+    catch
+    {
+      throw new Exception($"Failed to parse expression: {expression}");
+    }
   }
 }

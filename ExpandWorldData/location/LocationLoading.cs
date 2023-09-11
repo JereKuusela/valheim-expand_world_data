@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using HarmonyLib;
 using Service;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 namespace ExpandWorldData;
 
 public class LocationLoading
@@ -117,7 +119,10 @@ public class LocationLoading
       data.randomDamage = loc.m_location.m_applyRandomDamage;
       data.exteriorRadius = loc.m_location.m_exteriorRadius;
       data.clearArea = loc.m_location.m_clearArea;
+      data.discoverLabel = loc.m_location.m_discoverLabel;
       data.noBuild = loc.m_location.m_noBuild ? "true" : "";
+      if (loc.m_location.m_noBuild && loc.m_location.m_noBuildRadiusOverride > 0f)
+        data.noBuild = loc.m_location.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
     }
     return data;
   }
@@ -356,6 +361,11 @@ public class NewLocationIcons
     if (result != null) return result;
     if (Enum.TryParse<Minimap.PinType>(name, true, out var icon))
       return Minimap.instance.GetSprite(icon);
+    var hash = name.GetStableHashCode();
+    if (ObjectDB.instance.m_itemByHash.TryGetValue(hash, out var item))
+      return item.GetComponent<ItemDrop>()?.m_itemData?.GetIcon()!;
+    var effect = ObjectDB.instance.GetStatusEffect(hash);
+    if (effect) return effect.m_icon;
     return null!;
   }
 }

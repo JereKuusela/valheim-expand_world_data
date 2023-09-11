@@ -17,11 +17,13 @@ For example you can create entirely flat worlds with only Meadows for building. 
 
 ## Migration for Hildir update
 
-New dungeons and locations are added automatically. Events, environments and changes to existing dungeon rooms require manual changes.
+New dungeons and locations are added automatically. Events and changes to existing dungeon rooms require manual changes.
 
 ### Automatic changes
 
 - `expand_locations.yaml` should automatically add DevSpawnTest, Hildir_cave, Hildir_crypt and Hildir_plainsfortress.
+  - Check that Hildir_plainsfortress has `noBuild: 8.75`
+- `expand_environments.yaml` should automatically add CavesHildir and CryptHildir.
 - `expand_dungeons.yaml` should automatically add DG_Hildir_Cave, DG_Hildir_ForestCrypt and DG_Hildir_PlainsFortress.
   - Expand World Data version 1.5 did not add these correctly.
   - Search and replace:
@@ -37,10 +39,6 @@ New dungeons and locations are added automatically. Events, environments and cha
 
 ### Manual changes
 
-- `expand_environments.yaml` is missing CavesHildir and CryptHildir.
-  - If you have changed the file, copy it to another folder.
-  - Delete the `expand_environments.yaml` so that it regenerates when loading a world.
-  - Add new environments to the previous file and copy it back.
 - `expand_events.yaml` is hildirboss1, hildirboss2 and hildirboss3.
   - If you have changed the file, copy it to another folder.
   - Delete the `expand_events.yaml` so that it regenerates when loading a world.
@@ -311,6 +309,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - unique (default: `false`): When placed, all other unplaced locations are removed. Guaranteed maximum of one instance.
 - group: Group name for `minDistanceFromSimilar`.
 - minDistanceFromSimilar (default: `0` meters): Minimum distance between the same location, or locations in the `group` if given.
+- discoverLabel: Shown text when the location is discovered.
 - iconAlways: Location icon that is always shown. Use `ew_icons` to see what is available.
 - iconPlaced: Location icon to show when the location is generated. Use `ew_icons` to see what is available.
 - randomRotation (default: `false`): Randomly rotates the location (unaffected by world seed).

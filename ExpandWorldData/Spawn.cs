@@ -76,7 +76,12 @@ public class Spawn
   {
     pos += rot * obj.Pos;
     if (obj.SnapToGround)
-      pos.y = ZoneSystem.instance.GetGroundHeight(pos);
+    {
+      if (ZoneSystem.instance.GetGroundHeight(pos, out var height))
+        pos.y = height;
+      else
+        pos.y = WorldGenerator.instance.GetHeight(pos.x, pos.z);
+    }
     rot *= obj.Rot;
     var sc = scale;
     if (obj.Scale.HasValue)

@@ -33,6 +33,8 @@ public class LocationData
   [DefaultValue(0f)]
   public float minDistanceFromSimilar = 0f;
   [DefaultValue("")]
+  public string discoverLabel = "";
+  [DefaultValue("")]
   public string iconAlways = "";
   [DefaultValue("")]
   public string iconPlaced = "";

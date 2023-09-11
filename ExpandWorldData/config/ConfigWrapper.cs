@@ -74,7 +74,7 @@ public class ConfigWrapper
 
   public ConfigEntry<string> BindFloat(string group, string name, float value, bool forceRegen, string description = "", bool synchronizedSetting = true)
   {
-    var entry = Bind(group, name, value.ToString(CultureInfo.InvariantCulture), forceRegen, description, synchronizedSetting);
+    var entry = Bind(group, name, value.ToString(NumberFormatInfo.InvariantInfo), forceRegen, description, synchronizedSetting);
     entry.SettingChanged += (s, e) => Floats[entry] = TryParseFloat(entry);
     Floats[entry] = TryParseFloat(entry);
     return entry;

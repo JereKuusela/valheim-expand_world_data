@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 
@@ -44,7 +45,7 @@ public static class Helper
 
   public static string Print(float value)
   {
-    return value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+    return value.ToString(NumberFormatInfo.InvariantInfo);
   }
   public static string Print(Vector3 vec)
   {

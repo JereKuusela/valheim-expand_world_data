@@ -155,6 +155,11 @@ public class EnvironmentManager
         EWD.Log.LogWarning($"Failed to load any environment data.");
         return;
       }
+      if (Configuration.DataMigration && AddMissingEntries(data))
+      {
+        // Watcher triggers reload.
+        return;
+      }
       EWD.Log.LogInfo($"Reloading environment data ({data.Count} entries).");
       foreach (var list in LocationList.m_allLocationLists)
         list.m_environments.Clear();
@@ -173,6 +178,25 @@ public class EnvironmentManager
       EWD.Log.LogError(e.StackTrace);
     }
   }
+
+  private static bool AddMissingEntries(List<EnvSetup> entries)
+  {
+    var missingKeys = Originals.Keys.ToHashSet();
+    foreach (var entry in entries)
+      missingKeys.Remove(entry.m_name);
+    if (missingKeys.Count == 0) return false;
+    var missing = Originals.Values.Where(env => missingKeys.Contains(env.m_name)).ToList();
+    EWD.Log.LogWarning($"Adding {missing.Count} missing environments to the expand_environments.yaml file.");
+    foreach (var env in missing)
+      EWD.Log.LogWarning(env.m_name);
+    var yaml = File.ReadAllText(FilePath);
+    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    // Directly appending is risky but necessary to keep comments, etc.
+    yaml += "\n" + data;
+    File.WriteAllText(FilePath, yaml);
+    return true;
+  }
+
 
   public static void SetupWatcher()
   {

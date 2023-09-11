@@ -1,6 +1,11 @@
 - v1.8
   - Adds fields `requiredPlayerKeys` and `forbiddenPlayerKeys` to the status effect system.
-  - Adds a field `commands` to the  `expand_locations.yaml` file.
+  - Adds fields `commands` and `discoverLabel` to the  `expand_locations.yaml` file.
+  - Adds support for the new no build radiud override setting.
+  - Adds automatic data migration for clutter and  environments.
+  - Adds more precision to the color values of the  `expand_environments.yaml` file.
+  - Adds lots of new map icons.
+  - Fixes custom objects that were out of zone not snapping properly to the ground.
   - Fixes unncessary warning when swapping objects to nothing.
 
 - v1.7

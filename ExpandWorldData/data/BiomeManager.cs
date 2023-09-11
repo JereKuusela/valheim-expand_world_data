@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Service;
+using System.Reflection.Emit;
+using HarmonyLib;
 using UnityEngine;
 
 // TODO: Biomes should be optimized. Scale them by world size on load.
@@ -264,5 +265,23 @@ public class BiomeManager
     // Dictionary can be updated in the place.
     for (int i = 0; i < indexToBiome.Length; ++i)
       Heightmap.s_biomeToIndex[indexToBiome[i]] = i;
+  }
+}
+
+//[HarmonyPatch(typeof(Minimap), nameof(Minimap.GenerateWorldMap))]
+public class GenerateWorldMap
+{
+
+  static float GetBiomeHeight(Heightmap.Biome biome, float wx, float wy, out Color mask, bool preGeneration = false)
+  {
+    var height = WorldGenerator.instance.GetBiomeHeight(biome, wx, wy, out mask, preGeneration);
+    return height;
+  }
+  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+  {
+    return new CodeMatcher(instructions)
+      .MatchForward(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight))))
+      .Set(OpCodes.Call, Transpilers.EmitDelegate(GetBiomeHeight).operand)
+      .InstructionEnumeration();
   }
 }

@@ -81,6 +81,9 @@ public class DebugCommands
       var mm = Minimap.instance;
       if (!mm) return;
       var names = mm.m_locationIcons.Select(icon => icon.m_name).Concat(mm.m_icons.Select(icon => icon.m_name.ToString()));
+      var db = ObjectDB.instance;
+      if (db) names = names.Concat(db.m_items.Select(item => item.name));
+      if (db) names = names.Concat(db.m_StatusEffects.Select(effect => effect.m_name));
       ZLog.Log(string.Join("\n", names));
       args.Context.AddString(string.Join("\n", names));
     }, true);

@@ -17,6 +17,14 @@ public class EventData
   [DefaultValue("")]
   public string notRequiredGlobalKeys = "";
   [DefaultValue("")]
+  public string requiredPlayerKeys = "";
+  [DefaultValue("")]
+  public string notRequiredPlayerKeys = "";
+  [DefaultValue("")]
+  public string requiredKnownItems = "";
+  [DefaultValue("")]
+  public string notRequiredKnownItems = "";
+  [DefaultValue("")]
   public string requiredEnvironments = "";
   [DefaultValue("")]
   public string startMessage = "";

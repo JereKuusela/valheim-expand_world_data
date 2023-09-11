@@ -12,16 +12,16 @@ public class ClutterManager
   public static string FileName = "expand_clutter.yaml";
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_clutter*.yaml";
-  private static Dictionary<string, GameObject> Prefabs = new();
+  private static ClutterSystem.Clutter[] Originals = [];
+  private static Dictionary<string, GameObject> Prefabs = [];
   static void LoadPrefabs()
   {
     if (!ZNet.instance) return;
     Prefabs = Helper.ToDict(ClutterSystem.instance.m_clutter, item => item.m_prefab.name, item => item.m_prefab);
+    Originals = [.. ClutterSystem.instance.m_clutter];
   }
   public static ClutterSystem.Clutter FromData(ClutterData data)
   {
-    if (Prefabs.Count == 0)
-      LoadPrefabs();
     ClutterSystem.Clutter clutter = new();
     if (Prefabs.TryGetValue(data.prefab, out var prefab))
       clutter.m_prefab = prefab;
@@ -111,6 +111,8 @@ public class ClutterManager
   private static void Set(string yaml)
   {
     if (yaml == "" || !Configuration.DataClutter) return;
+    if (Prefabs.Count == 0)
+      LoadPrefabs();
     try
     {
       var data = DataManager.Deserialize<ClutterData>(yaml, FileName)
@@ -118,6 +120,11 @@ public class ClutterManager
       if (data.Count == 0)
       {
         EWD.Log.LogWarning($"Failed to load any clutter data.");
+        return;
+      }
+      if (Configuration.DataMigration && AddMissingEntries(data))
+      {
+        // Watcher triggers reload.
         return;
       }
       EWD.Log.LogInfo($"Reloading clutter data ({data.Count} entries).");
@@ -132,6 +139,24 @@ public class ClutterManager
       EWD.Log.LogError(e.StackTrace);
     }
   }
+  private static bool AddMissingEntries(List<ClutterSystem.Clutter> entries)
+  {
+    var missingKeys = Prefabs.Keys.ToHashSet();
+    foreach (var entry in entries)
+      missingKeys.Remove(entry.m_prefab.name);
+    if (missingKeys.Count == 0) return false;
+    var missing = Originals.Where(clutter => missingKeys.Contains(clutter.m_prefab.name)).ToList();
+    EWD.Log.LogWarning($"Adding {missing.Count} missing clutters to the expand_clutter.yaml file.");
+    foreach (var clutter in missing)
+      EWD.Log.LogWarning(clutter.m_prefab.name);
+    var yaml = File.ReadAllText(FilePath);
+    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    // Directly appending is risky but necessary to keep comments, etc.
+    yaml += "\n" + data;
+    File.WriteAllText(FilePath, yaml);
+    return true;
+  }
+
   public static void SetupWatcher()
   {
     DataManager.SetupWatcher(Pattern, FromFile);

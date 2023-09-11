@@ -169,7 +169,18 @@ public class DataManager : MonoBehaviour
     Heightmap.Biome.Ocean | Heightmap.Biome.Plains | Heightmap.Biome.Swamp;
 
   public static string FromList(IEnumerable<string> array) => string.Join(", ", array);
+  public static string FromList(IEnumerable<ItemDrop> array) => FromList(array.Select(i => FindItemName(i.m_itemData.m_shared?.m_name ?? "")));
   public static List<string> ToList(string str, bool removeEmpty = true) => Parse.Split(str, removeEmpty).ToList();
+  private static readonly Dictionary<string, int> ItemDropCache = [];
+  private static ItemDrop FindItem(string name)
+  {
+    if (ItemDropCache.TryGetValue(name, out var value)) return ObjectDB.instance.GetItemPrefab(value).GetComponent<ItemDrop>();
+    var item = ObjectDB.instance.m_items.FirstOrDefault(i => i.GetComponent<ItemDrop>()?.m_itemData.m_shared?.m_name == name);
+    if (item) ItemDropCache[name] = item.name.GetStableHashCode();
+    return item?.GetComponent<ItemDrop>()!;
+  }
+  private static string FindItemName(string name) => FindItem(name)?.name ?? "";
+  public static List<ItemDrop> ToItemList(string str, bool removeEmpty = true) => Parse.Split(str, removeEmpty).Select(s => ObjectDB.instance.GetItemPrefab(s)?.GetComponent<ItemDrop>()!).Where(s => s != null).ToList();
   public static Dictionary<string, string> ToDict(string str) => ToList(str).Select(s => s.Split('=')).Where(s => s.Length == 2).ToDictionary(s => s[0].Trim(), s => s[1].Trim());
   public static string FromBiomes(Heightmap.Biome biome)
   {
@@ -336,7 +347,7 @@ public class FloatConverter : IYamlTypeConverter
   public void WriteYaml(IEmitter emitter, object value, Type type)
   {
     var number = (float)value;
-    emitter.Emit(new YamlDotNet.Core.Events.Scalar(number.ToString("0.###", CultureInfo.InvariantCulture)));
+    emitter.Emit(new YamlDotNet.Core.Events.Scalar(number.ToString(NumberFormatInfo.InvariantInfo)));
   }
 }
 #nullable enable
