@@ -18,7 +18,7 @@ This requires Upgrade World installed on the server.
   strings:
   - override_name, Location reset
   - override_component, altar
-  - override_command, "zones_reset zone=$$i,$$j start force"
+  - override_command, zones_reset zone=$$i,$$j start force
 
 ```
 
@@ -49,9 +49,9 @@ You can add cost to the reset.
 ```yaml
 - name: coin_reseter
   ints:
-  - override_spawn_item, Coins
   - override_amount, 10
   strings:
+  - override_spawn_item, Coins
   - override_component, altar
   - override_name, Location reset
   - override_command, zones_reset zone=$$i,$$j start force
