@@ -18,7 +18,8 @@ public class ClutterManager
   {
     if (!ZNet.instance) return;
     Prefabs = Helper.ToDict(ClutterSystem.instance.m_clutter, item => item.m_prefab.name, item => item.m_prefab);
-    Originals = [.. ClutterSystem.instance.m_clutter];
+    if (Helper.IsServer())
+      Originals = [.. ClutterSystem.instance.m_clutter];
   }
   public static ClutterSystem.Clutter FromData(ClutterData data)
   {
@@ -122,7 +123,7 @@ public class ClutterManager
         EWD.Log.LogWarning($"Failed to load any clutter data.");
         return;
       }
-      if (Configuration.DataMigration && AddMissingEntries(data))
+      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
       {
         // Watcher triggers reload.
         return;
@@ -141,7 +142,7 @@ public class ClutterManager
   }
   private static bool AddMissingEntries(List<ClutterSystem.Clutter> entries)
   {
-    var missingKeys = Prefabs.Keys.ToHashSet();
+    var missingKeys = Originals.Select(s => s.m_prefab.name).Distinct().ToHashSet();
     foreach (var entry in entries)
       missingKeys.Remove(entry.m_prefab.name);
     if (missingKeys.Count == 0) return false;

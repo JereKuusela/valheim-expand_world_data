@@ -64,7 +64,7 @@ public class DebugCommands
       float total = biomes.Values.Sum();
       var text = biomes
         .OrderBy(kvp => Enum.GetName(typeof(Heightmap.Biome), kvp.Key))
-        .Select(kvp => Enum.GetName(typeof(Heightmap.Biome), kvp.Key) + ": " + kvp.Value + "/" + total + " (" + (kvp.Value / total).ToString("P2", CultureInfo.InvariantCulture) + ")");
+        .Select(kvp => $"{Enum.GetName(typeof(Heightmap.Biome), kvp.Key)} ({(int)kvp.Key}): {kvp.Value}/{total} ({(kvp.Value / total).ToString("P2", CultureInfo.InvariantCulture)}");
       ZLog.Log(string.Join("\n", text));
       args.Context.AddString(string.Join("\n", text));
     }, true);

@@ -13,7 +13,9 @@ public class SpawnManager
   public static string FileName = "expand_spawns.yaml";
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_spawns*.yaml";
-  public static Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>> Objects = new();
+  public static Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>> Objects = [];
+  public static List<SpawnSystem.SpawnData> Originals = [];
+
   public static SpawnSystem.SpawnData FromData(SpawnData data)
   {
     SpawnSystem.SpawnData spawn = new()
@@ -120,6 +122,11 @@ public class SpawnManager
   public static void ToFile()
   {
     if (Helper.IsClient() || !Configuration.DataSpawns) return;
+    if (Originals.Count == 0)
+    {
+      var spawnSystem = SpawnSystem.m_instances.FirstOrDefault();
+      Originals = spawnSystem.m_spawnLists.SelectMany(s => s.m_spawners).ToList();
+    }
     if (File.Exists(FilePath)) return;
     var yaml = Save();
     Configuration.valueSpawnData.Value = yaml;
@@ -138,6 +145,7 @@ public class SpawnManager
   private static void Set(string yaml)
   {
     HandleSpawnData.Override = null;
+
     Data.Clear();
     Objects.Clear();
     if (yaml == "" || !Configuration.DataSpawns) return;
@@ -148,6 +156,11 @@ public class SpawnManager
       if (data.Count == 0)
       {
         EWD.Log.LogWarning($"Failed to load any spawn data.");
+        return;
+      }
+      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
+      {
+        // Watcher triggers reload.
         return;
       }
       EWD.Log.LogInfo($"Reloading spawn data ({data.Count} entries).");
@@ -163,6 +176,24 @@ public class SpawnManager
       EWD.Log.LogError(e.Message);
       EWD.Log.LogError(e.StackTrace);
     }
+  }
+
+  private static bool AddMissingEntries(List<SpawnSystem.SpawnData> entries)
+  {
+    var missingKeys = Originals.Select(s => s.m_prefab.name).Distinct().ToHashSet();
+    foreach (var item in entries)
+      missingKeys.Remove(item.m_prefab.name);
+    if (missingKeys.Count == 0) return false;
+    var missing = Originals.Where(item => missingKeys.Contains(item.m_prefab.name)).ToList();
+    EWD.Log.LogWarning($"Adding {missing.Count} missing spawns to the expand_spawns.yaml file.");
+    foreach (var item in missing)
+      EWD.Log.LogWarning(item.m_prefab.name);
+    var yaml = File.ReadAllText(FilePath);
+    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    // Directly appending is risky but necessary to keep comments, etc.
+    yaml += "\n" + data;
+    File.WriteAllText(FilePath, yaml);
+    return true;
   }
   public static void SetupWatcher()
   {

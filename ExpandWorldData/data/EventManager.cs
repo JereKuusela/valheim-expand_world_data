@@ -9,7 +9,8 @@ public class EventManager
   public static string FileName = "expand_events.yaml";
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_events*.yaml";
-  public static Dictionary<string, List<string>> EventToRequirentEnvironment = new();
+  public static Dictionary<string, List<string>> EventToRequirentEnvironment = [];
+  public static List<RandomEvent> Originals = [];
 
   public static RandomEvent FromData(EventData data)
   {
@@ -83,11 +84,23 @@ public class EventManager
   }
   private static void Set(string yaml)
   {
+    if (Helper.IsServer() && Originals.Count == 0)
+      Originals = [.. RandEventSystem.instance.m_events];
+    EventToRequirentEnvironment.Clear();
     if (yaml == "" || !Configuration.DataEvents) return;
     try
     {
-      EventToRequirentEnvironment.Clear();
       var data = DataManager.Deserialize<EventData>(yaml, FileName).Select(FromData).ToList();
+      if (data.Count == 0)
+      {
+        EWD.Log.LogWarning($"Failed to load any event data.");
+        return;
+      }
+      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
+      {
+        // Watcher triggers reload.
+        return;
+      }
       EWD.Log.LogInfo($"Reloading event data ({data.Count} entries).");
       RandEventSystem.instance.m_events = data;
     }
@@ -96,6 +109,23 @@ public class EventManager
       EWD.Log.LogError(e.Message);
       EWD.Log.LogError(e.StackTrace);
     }
+  }
+  private static bool AddMissingEntries(List<RandomEvent> entries)
+  {
+    var missingKeys = Originals.Select(e => e.m_name).Distinct().ToHashSet();
+    foreach (var item in entries)
+      missingKeys.Remove(item.m_name);
+    if (missingKeys.Count == 0) return false;
+    var missing = Originals.Where(item => missingKeys.Contains(item.m_name)).ToList();
+    EWD.Log.LogWarning($"Adding {missing.Count} missing events to the expand_events.yaml file.");
+    foreach (var item in missing)
+      EWD.Log.LogWarning(item.m_name);
+    var yaml = File.ReadAllText(FilePath);
+    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    // Directly appending is risky but necessary to keep comments, etc.
+    yaml += "\n" + data;
+    File.WriteAllText(FilePath, yaml);
+    return true;
   }
   public static void SetupWatcher()
   {

@@ -16,11 +16,15 @@ See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/mai
 
 ## Migration for Hildir update
 
-New dungeons and locations are added automatically. Events, environments and changes to existing dungeon rooms require manual changes.
+New dungeons, environments, events and locations are added automatically. Changes to existing dungeon rooms require manual changes.
 
 ### Automatic changes
 
 - `expand_locations.yaml` should automatically add DevSpawnTest, Hildir_cave, Hildir_crypt and Hildir_plainsfortress.
+  - Expand World Data version 1.7 did not add these correctly.
+  - Check that Hildir_plainsfortress has `noBuild: 8.75`
+- `expand_environments.yaml` should automatically add CavesHildir and CryptHildir.
+- `expand_events.yaml` should automatically add hildirboss1, hildirboss2 and hildirboss3.
 - `expand_dungeons.yaml` should automatically add DG_Hildir_Cave, DG_Hildir_ForestCrypt and DG_Hildir_PlainsFortress.
   - Expand World Data version 1.5 did not add these correctly.
   - Search and replace:
@@ -36,14 +40,6 @@ New dungeons and locations are added automatically. Events, environments and cha
 
 ### Manual changes
 
-- `expand_environments.yaml` is missing CavesHildir and CryptHildir.
-  - If you have changed the file, copy it to another folder.
-  - Delete the `expand_environments.yaml` so that it regenerates when loading a world.
-  - Add new environments to the previous file and copy it back.
-- `expand_events.yaml` is hildirboss1, hildirboss2 and hildirboss3.
-  - If you have changed the file, copy it to another folder.
-  - Delete the `expand_events.yaml` so that it regenerates when loading a world.
-  - Add new events to the previous file and copy it back.
 - `expand_rooms.yaml` is missing changes to the old rooms.
   - If you have changed the file, copy it to another folder.
   - Delete the `expand_rooms.yaml` so that it regenerates when loading a world.

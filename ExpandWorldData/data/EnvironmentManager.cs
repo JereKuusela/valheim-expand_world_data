@@ -155,7 +155,7 @@ public class EnvironmentManager
         EWD.Log.LogWarning($"Failed to load any environment data.");
         return;
       }
-      if (Configuration.DataMigration && AddMissingEntries(data))
+      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
       {
         // Watcher triggers reload.
         return;

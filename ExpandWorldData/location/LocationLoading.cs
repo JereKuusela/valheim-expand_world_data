@@ -14,7 +14,7 @@ public class LocationLoading
   public static string FileName = "expand_locations.yaml";
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_locations*.yaml";
-  public static Dictionary<string, ZDOData?> ZDOData = new();
+  public static Dictionary<string, string> ZDOData = new();
   public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = new();
   public static Dictionary<string, Dictionary<string, List<Tuple<float, ZDOData?>>>> ObjectData = new();
   public static Dictionary<string, List<BlueprintObject>> Objects = new();
@@ -35,7 +35,7 @@ public class LocationLoading
     }
 
     if (data.data != "")
-      ZDOData[data.prefab] = Service.ZDOData.Create(data.data);
+      ZDOData[data.prefab] = data.data;
     if (data.dungeon != "")
       Dungeons[data.prefab] = data.dungeon;
     if (data.objectSwap != null)

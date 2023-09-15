@@ -25,6 +25,7 @@ Download [Spawner Tweaks](https://valheim.thunderstore.io/package/AzuRe/SpawnerT
 
 - [Spawner Tweaks: Custom altar](./st_custom_altar.md)
 - [Spawner Tweaks: Hidden chest](./st_hidden_chest.md)
+- [Spawner Tweaks: Location reseter](./st_location_reseter.md)
 
 ## Structure Tweaks
 

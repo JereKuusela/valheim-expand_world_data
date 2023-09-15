@@ -58,7 +58,8 @@ public class LocationZDO
 {
   static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
   {
-    if (!LocationLoading.ZDOData.TryGetValue(location.m_prefabName, out var data)) return;
+    if (!LocationLoading.ZDOData.TryGetValue(location.m_prefabName, out var key)) return;
+    var data = ZDOData.Create(key);
     if (!__instance.m_locationProxyPrefab.TryGetComponent<ZNetView>(out var view)) return;
     if (data != null) DataHelper.InitZDO(pos, rotation, null, data, view);
   }
