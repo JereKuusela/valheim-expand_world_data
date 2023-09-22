@@ -14,11 +14,6 @@ public partial class Configuration
   public static bool LegacyGeneration => configLegacyGeneration.Value;
   public static ConfigEntry<bool> configRegenerateMap;
   public static bool RegenerateMap => configRegenerateMap.Value;
-  public static ConfigEntry<string> configEventInterval;
-  public static float EventInterval => ConfigWrapper.Floats[configEventInterval];
-  public static ConfigEntry<string> configEventChance;
-  public static float EventChance => ConfigWrapper.Floats[configEventChance];
-
 
   public static ConfigEntry<bool> configZoneSpawners;
   public static bool ZoneSpawners => configZoneSpawners.Value;
@@ -35,16 +30,10 @@ public partial class Configuration
   public static CustomSyncedValue<string> valueBiomeData;
   public static CustomSyncedValue<string> valueWorldData;
   public static CustomSyncedValue<string> valueClutterData;
-  public static CustomSyncedValue<string> valueSpawnData;
-  public static CustomSyncedValue<string> valueEventData;
   public static CustomSyncedValue<string> valueEnvironmentData;
   public static CustomSyncedValue<string> valueNoBuildData;
   public static ConfigEntry<bool> configDataEnvironments;
   public static bool DataEnvironments => configDataEnvironments.Value;
-  public static ConfigEntry<bool> configDataEvents;
-  public static bool DataEvents => configDataEvents.Value;
-  public static ConfigEntry<bool> configDataSpawns;
-  public static bool DataSpawns => configDataSpawns.Value;
   public static ConfigEntry<bool> configDataVegetation;
   public static bool DataVegetation => configDataVegetation.Value;
   public static ConfigEntry<bool> configDataClutter;
@@ -84,11 +73,6 @@ public partial class Configuration
     configWiggleFrequency = wrapper.BindFloat(section, "Wiggle frequency", 20f, true, "How many wiggles are per each circle.");
     configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, true, "How many meters are the wiggles.");
 
-    configEventChance = wrapper.BindFloat(section, "Random event chance", 20, false, "The chance to try starting a random event.");
-    configEventChance.SettingChanged += (s, e) => RandomEventSystem.Setup(RandEventSystem.instance);
-    configEventInterval = wrapper.BindFloat(section, "Random event interval", 46, false, "How often the random events are checked (minutes).");
-    configEventInterval.SettingChanged += (s, e) => RandomEventSystem.Setup(RandEventSystem.instance);
-
     section = "3. Data";
     configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.");
     configDataMigration = wrapper.Bind(section, "Automatic data migration", true, false, "Automatically add missing location, rooms and vegetation entries.");
@@ -108,10 +92,6 @@ public partial class Configuration
     configDataLocation.SettingChanged += (s, e) => LocationLoading.Load();
     configDataVegetation = wrapper.Bind(section, "Vegetation data", true, false, "Use vegetation data");
     configDataVegetation.SettingChanged += (s, e) => VegetationLoading.Load();
-    configDataEvents = wrapper.Bind(section, "Event data", true, false, "Use event data");
-    configDataEvents.SettingChanged += (s, e) => EventManager.FromSetting(valueEventData.Value);
-    configDataSpawns = wrapper.Bind(section, "Spawn data", true, false, "Use spawn data");
-    configDataSpawns.SettingChanged += (s, e) => SpawnManager.FromSetting(valueSpawnData.Value);
     configBlueprintFolder = wrapper.Bind(section, "Blueprint folder", "PlanBuild", false, "Folder relative to the config folder.");
 
     valueNoBuildData = wrapper.AddValue("no_build_data");
@@ -122,10 +102,6 @@ public partial class Configuration
     valueBiomeData.ValueChanged += () => BiomeManager.FromSetting(valueBiomeData.Value);
     valueClutterData = wrapper.AddValue("clutter_data");
     valueClutterData.ValueChanged += () => ClutterManager.FromSetting(valueClutterData.Value);
-    valueSpawnData = wrapper.AddValue("spawn_data");
-    valueSpawnData.ValueChanged += () => SpawnManager.FromSetting(valueSpawnData.Value);
-    valueEventData = wrapper.AddValue("event_data");
-    valueEventData.ValueChanged += () => EventManager.FromSetting(valueEventData.Value);
     valueWorldData = wrapper.AddValue("world_data");
     valueWorldData.ValueChanged += () => WorldManager.FromSetting(valueWorldData.Value);
   }

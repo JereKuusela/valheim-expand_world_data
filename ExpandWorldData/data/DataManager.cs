@@ -48,7 +48,6 @@ public class InitializeContent
     if (Helper.IsServer())
     {
       DataLoading.Initialize();
-      EventManager.ToFile();
       EnvironmentManager.ToFile();
       ClutterManager.ToFile();
 
@@ -62,34 +61,11 @@ public class InitializeContent
       // Clutter must be here because since SetupLocations adds prefabs to the list.
       ClutterManager.FromFile();
 
-      EventManager.FromFile();
-      SpawnManager.FromFile();
       // Dungeon and room data is handled elsewhere.
-      // Spawn data is handled elsewhere.
     }
     ZoneSystem.instance.m_locations = LocationSetup.CleanUpLocations(ZoneSystem.instance.m_locations);
     LocationSetup.SetupExtraLocations(ZoneSystem.instance.m_locations);
     LocationLoading.Initialize();
-  }
-}
-[HarmonyPatch(typeof(SpawnSystem), nameof(SpawnSystem.Awake))]
-public class HandleSpawnData
-{
-  // File exist check might be bit too slow for constant checking.
-  static bool Done = false;
-  public static List<SpawnSystem.SpawnData>? Override = null;
-  static void Postfix(SpawnSystem __instance)
-  {
-    if (ZNet.instance.IsServer() && !Done)
-    {
-      SpawnManager.ToFile();
-      Done = true;
-    }
-    if (Override != null)
-    {
-      __instance.m_spawnLists.Clear();
-      __instance.m_spawnLists.Add(new() { m_spawners = Override });
-    }
   }
 }
 

@@ -1,3 +1,6 @@
+- v1.9
+  - Splits events and spawns into own mods.
+
 - v1.8
   - Adds fields `requiredPlayerKeys` and `forbiddenPlayerKeys` to the status effect system.
   - Adds fields `commands` and `discoverLabel` to the `expand_locations.yaml` file.

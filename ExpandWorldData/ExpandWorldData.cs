@@ -11,7 +11,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.8";
+  public const string VERSION = "1.9";
 #nullable disable
   public static ManualLogSource Log;
   public static EWD Instance;
@@ -60,8 +60,6 @@ public class EWD : BaseUnityPlugin
         BiomeManager.SetupWatcher();
         LocationLoading.SetupWatcher();
         VegetationLoading.SetupWatcher();
-        EventManager.SetupWatcher();
-        SpawnManager.SetupWatcher();
         WorldManager.SetupWatcher();
         ClutterManager.SetupWatcher();
         EnvironmentManager.SetupWatcher();
@@ -78,8 +76,6 @@ public class EWD : BaseUnityPlugin
   public void Start()
   {
     BiomeManager.NamesFromFile();
-    SpawnThat.Run();
-    CustomRaids.Run();
   }
   private void MigrateOldConfig()
   {

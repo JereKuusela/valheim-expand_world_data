@@ -26,10 +26,6 @@ public class DebugCommands
     {
       WorldInfo.RegenerateMap();
     }, true);
-    new Terminal.ConsoleCommand("ew_spawns", "Forces spawn file creation.", (args) =>
-    {
-      SpawnManager.Save();
-    }, true);
     new Terminal.ConsoleCommand("ew_copy", "[name] - Copies hovered item data to the data yaml.", (args) =>
     {
       if (args.Length < 2) return;

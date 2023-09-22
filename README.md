@@ -10,8 +10,10 @@ Install on all clients and on the server (modding [guide](https://youtu.be/L9ljm
 
 - Add new biomes.
 - Change biome distribution.
-- Change data like events, spawners and weather.
+- Change data like locations, vegetation and weather.
 - Config sync to ensure all clients use the same settings.
+- Change events with [Expand World Events](https://valheim.thunderstore.io/package/Jerekuusela/Expand_World_Events/).
+- Change spawns with [Expand World Spawns](https://valheim.thunderstore.io/package/Jerekuusela/Expand_World_Spawns/).
 
 For example you can create entirely flat worlds with only Meadows for building. Or group up colder biomes up north while more warmer biomes end up in the other side. Or just have a world with terrain shapes no one has ever seen before.
 
@@ -64,11 +66,10 @@ Note: Old configuration from Expand World is automatically migrated to this mod.
 This mod can be used server only, without requiring clients to have it. However only following files can be configured:
 
 - `expand_dungeons.yaml`: All fields.
-- `expand_events.yaml`: Fields enabled, duration, nearBaseOnly, biome, requiredGlobalKeys, notRequiredGlobalKeys, pauseIfNoPlayerInArea, random.
 - `expand_locations.yaml`: All fields, but some disabled locations won't work.
 - `expand_rooms.yaml`: All fields.
 - `expand_vegetation.yaml`: All fields.
-- `expand_world.cfg`: Only settings Random event chance, Random event interval and Zone spawners.
+- `expand_world.cfg`: Only setting Zone spawners.
 
 When doing this, enable `Server only` on the config to remove version check.
 
@@ -499,76 +500,6 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
 - data: ZDO data override. For example to create hidden stashes with Spawner Tweaks mod (`object copy` from World Edit Commands).
 - centerPiece (default: `piece_bpcenterpoint`): Which object determines the blueprint bottom and center point. If the object is not found, the blueprint is centered automatically and placed 0.05 meters towards the ground.
-
-## Spawns
-
-The file `expand_spawns.yaml` sets the spawned creatures.
-
-See the [wiki](https://valheim.fandom.com/wiki/Spawn_zones) for more info.
-
-If setting Zone Spawners is disabled, all spawns stop working from unexplored areas.
-
-- prefab: Identifier of the object. Any [object](https://valheim.fandom.com/wiki/Item_IDs) is valid, not just creatures.
-- enabled (default: `false`): Quick way to disable this entry.
-- biome: List of possible biomes.
-- biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome, 4 = unused, leftover from Valheim data).
-- spawnChance (default: `100` %): Chance to spawn when attempted.
-- maxSpawned: Limit for this entry. Also how many spawn attempts are stacked over time.
-- spawnInterval: How often the spawning is attempted.
-- minLevel (default: `1`): Minimum creature level.
-- maxLevel (default: `1`): Maximum creature level.
-- minAltitude (default: `-1000` meters): Minimum terrain altitude.
-- maxAltitude (default: `1000` meters): Maximum terrain altitude.
-- spawnAtDay (default: `true`): Enabled during the day time.
-- spawnAtNight (default: `true`): Enabled during the night time.
-- requiredGlobalKey: Which [global keys](https://valheim.fandom.com/wiki/Global_Keys) must be set to enable this entry.
-- requiredEnvironments: List of valid environments/weathers.
-- spawnDistance (default: `10` meters): Distance to suppress similar spawns.
-- spawnRadiusMin (default: `40` meters): Minimum distance from every player.
-- spawnRadiusMax (default: `80` meters): Maximum distance from any player.
-- groupSizeMin (default: `1`): Minimum amount spawned at the same time.
-- groupSizeMax (default: `1`): Maximum amount spawned at the same time.
-- groupRadius (default: `3` meters): Radius when spawning multiple objects.
-- minTilt (default: `0` degrees): Minimum terrain angle.
-- maxTilt (default: `35` degrees): Maximum terrain angle.
-- inForest (default: `true`): Enabled in forests.
-- outsideForest (default: `true`): Enabled outside forests.
-- minOceanDepth (default: `0` meters): Minimum ocean depth.
-- maxOceanDepth (default: `0` meters): Maximum ocean depth.
-- huntPlayer (default: `false`): Spawned creatures are more aggressive.
-- groundOffset (default: `0.5` meters): Spawns above the ground.
-- levelUpMinCenterDistance (default: `0` meters): Distance from the world center to enable higher creature levels. This is not scaled with the world size.
-- overrideLevelupChance (default: `-1` percent): Chance per level up (from the default 10%).
-- data: ZDO data override. For example to change faction with Spawner Tweaks mod (`object copy` from World Edit Commands).
-- objects: Extra objects to spawn. Spawned on top of any obstacles. The spawning is skipped if 10 meters above the original position. Format is `id,posX,posZ,posY,chance,data`.
-  - id: Prefab name.
-  - posX, posZ, posY: Offset from the location position. Defalt is 0.
-  - chance: Chance to spawn (from 0 to 1). Default is 1.
-  - data: ZDO data override.
-
-## Events
-
-The file `expand_events.yaml` sets the boss and random events.
-
-See the [wiki](https://valheim.fandom.com/wiki/Events) for more info.
-
-If setting Zone Spawners is disabled, all spawns stop working from unexplored areas.
-
-- name: Identifier.
-- enabled (default: `false`): Quick way to disable this entry.
-- duration (default: `60` seconds): How long the event lasts.
-- nearBaseOnly (default: `true`): Only triggers when near 3 player base items.
-- biome: List of possible biomes.
-- requiredGlobalKeys: Which [global keys](https://valheim.fandom.com/wiki/Global_Keys) must be set for this event.
-- notRequiredGlobalKeys: Which [global keys](https://valheim.fandom.com/wiki/Global_Keys) must not be set for this event.
-- startMessage: Message shown on the screen during the event.
-- endMessage: The end message.
-- forceMusic: Event music.
-- forceEnvironment: Event environment/weather.
-- requiredEnvironments: List of valid environments/weathers. Checked by the server so using `env` command in the client doesn't affect this.
-- spawns: List of spawned objects. See spawns section for more info. Usually these have lower spawn times and less restrictions compared to normal spawns.
-- pauseIfNoPlayerInArea (default: `true`): The event timer pauses if no player in the area.
-- random (default: `true`): The event can happen randomly (unlike boss events which happen when near a boss).
 
 ## Custom objects
 
