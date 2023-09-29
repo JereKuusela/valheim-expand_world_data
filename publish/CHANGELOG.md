@@ -1,3 +1,10 @@
+- v1.11
+  - Fixes `ew_copy` command not working.
+
+- v1.10
+  - Adds automatic backup system.
+  - Fixes no build being shared between location variants.
+
 - v1.9
   - Splits events and spawns into own mods.
 

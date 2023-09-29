@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
+using BepInEx.Bootstrap;
+using UnityEngine;
 
 namespace ExpandWorldData;
 
@@ -25,189 +28,37 @@ public class DataData
 
 public class DefaultData
 {
-  private static readonly string[] KnownKeys = [
-    "TCData",
-    "accTime",
-    "addedDefaultItems",
-    "aggravated",
-    "alert",
-    "alive_time",
-    "ammo",
-    "ammoType",
-    "attachJoint",
-    "author",
-    "Bait",
-    "bakeTimer",
-    "baseValue",
-    "BeardItem",
-    "body_avel",
-    "body_vel",
-    "BodyVelocity",
-    "catchID",
-    "ChestItem",
-    "Content",
-    "crafterID",
-    "crafterName",
-    "creator",
-    "creatorName",
-    "data",
-    "dataCount",
-    "dead",
-    "DebugFly",
-    "DespawnInDay",
-    "dodgeinv",
-    "done",
-    "drops",
-    "durability",
-    "eitr",
-    "emote",
-    "emoteID",
-    "emote_oneshot",
-    "enabled",
-    "escape",
-    "EventCreature",
-    "follow",
-    "forward",
-    "fuel",
-    "GrowStart",
-    "HairColor",
-    "HairItem",
-    "HaveSaddle",
-    "haveTarget",
-    "health",
-    "HelmetItem",
-    "HitDir",
-    "HitPoint",
-    "hooked",
-    "Hue",
-    "huntplayer",
-    "inBed",
-    "InUse",
-    "inWater",
-    "InitVel",
-    "IsBlocking",
-    "item",
-    "item0",
-    "item1",
-    "item2",
-    "item3",
-    "item4",
-    "item5",
-    "item6",
-    "item7",
-    "item8",
-    "item9",
-    "itemPrefab",
-    "itemStack",
-    "items",
-    "landed",
-    "lastAttack",
-    "LastSpawn",
-    "lastTime",
-    "LeftBackItem",
-    "LeftBackItemVariant",
-    "LeftItem",
-    "LeftItemVariant",
-    "LegItem",
-    "level",
-    "LiquidData",
-    "location",
-    "LookTarget",
-    "lovePoints",
-    "max_health",
-    "MaxInstances",
-    "ModelIndex",
-    "noise",
-    "owner",
-    "ownerName",
-    "patrol",
-    "patrolPoint",
-    "permitted",
-    "picked",
-    "picked_time",
-    "plantTime",
-    "played",
-    "playerID",
-    "playerName",
-    "plays",
-    "pose",
-    "pregnant",
-    "product",
-    "pvp",
-    "quality",
-    "quality0",
-    "quality1",
-    "quality2",
-    "quality3",
-    "quality4",
-    "quality5",
-    "quality6",
-    "quality7",
-    "quality8",
-    "quality9",
-    "queued",
-    "RandomSkillFactor",
-    "relPos",
-    "relRot",
-    "RightBackItem",
-    "RightItem",
-    "rodOwner",
-    "rooms",
-    "rudder",
-    "Saturation",
-    "scale",
-    "scaleScalar",
-    "seAttrib",
-    "seed",
-    "ShoulderItem",
-    "ShoulderItemVariant",
-    "ShownAlertMessage",
-    "SkinColor",
-    "sleeping",
-    "SpawnAmount",
-    "SpawnOre",
-    "stack",
-    "stamina",
-    "StartTime",
-    "state",
-    "Stealth",
-    "support",
-    "tag",
-    "tagauthor",
-    "TameLastFeeding",
-    "TameTimeLeft",
-    "tamed",
-    "TamedName",
-    "TamedNameAuthor",
-    "targets",
-    "text",
-    "tiltrot",
-    "timeOfDeath",
-    "triggered",
-    "user",
-    "UtilityItem",
-    "Value",
-    "variant",
-    "variant0",
-    "variant1",
-    "variant2",
-    "variant3",
-    "variant4",
-    "variant5",
-    "variant6",
-    "variant7",
-    "variant8",
-    "variant9",
-    "vel",
-    "wakeup",
-    "WeaponLoaded",
-    "lastWorldTime",
-    "terrainModifierTimeCreated",
-    "spawnpoint",
-    "SpawnPoint",
-    "spawntime",
-    "SpawnTime",
-    "spawn_time",
+  private static string[]? knownKeys;
+  private static string[] KnownKeys => knownKeys ??= GenerateKeys();
+  private static string[] GenerateKeys()
+  {
+    List<string> keys = [.. StaticKeys];
+    List<Assembly> assemblies = [Assembly.GetAssembly(typeof(ZNetView)), .. Chainloader.PluginInfos.Values.Where(p => p.Instance != null).Select(p => p.Instance.GetType().Assembly)];
+    var assembly = Assembly.GetAssembly(typeof(ZNetView));
+    var baseType = typeof(MonoBehaviour);
+    keys.AddRange(assemblies.SelectMany(s =>
+    {
+      try
+      {
+        return s.GetTypes();
+      }
+      catch (ReflectionTypeLoadException e)
+      {
+        return e.Types.Where(t => t != null);
+      }
+    }).Where(baseType.IsAssignableFrom).Select(t => $"HasFields{t.Name}"));
+
+    keys.AddRange(typeof(ZDOVars).GetFields(BindingFlags.Static | BindingFlags.Public).Select(f => f.Name.Replace("s_", "")));
+    for (var i = 0; i < 10; i++)
+    {
+      keys.Add($"item{i}");
+      keys.Add($"quality{i}");
+      keys.Add($"variant{i}");
+    }
+    return [.. keys.Distinct()];
+  }
+  private static readonly string[] StaticKeys = [
+    "HasFields",
     "user_u",
     "user_i",
     "RodOwner_u",
@@ -336,7 +187,8 @@ public class DefaultData
     "KGnpcScale",
   ];
 
-  private static readonly Dictionary<int, string> HashToKey = KnownKeys.ToDictionary(x => x.GetStableHashCode(), x => x);
+  private static Dictionary<int, string>? hashToKey;
+  private static Dictionary<int, string> HashToKey => hashToKey ??= KnownKeys.ToDictionary(x => x.GetStableHashCode(), x => x);
   public static string Convert(int hash) => HashToKey.TryGetValue(hash, out var key) ? key : hash.ToString();
   public static DataData[] Data = [
     new()

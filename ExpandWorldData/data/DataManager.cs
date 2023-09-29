@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using Service;
 using UnityEngine;
@@ -78,13 +79,37 @@ public class DataManager : MonoBehaviour
 {
   public static bool IsReady => EWD.ConfigSync.IsSourceOfTruth || EWD.ConfigSync.InitialSyncDone;
 
+  public static void SetupWatcher(ConfigFile config)
+  {
+    FileSystemWatcher watcher = new(Path.GetDirectoryName(config.ConfigFilePath), Path.GetFileName(config.ConfigFilePath));
+    watcher.Changed += (s, e) => ReadConfigValues(e.FullPath, config);
+    watcher.Created += (s, e) => ReadConfigValues(e.FullPath, config);
+    watcher.Renamed += (s, e) => ReadConfigValues(e.FullPath, config);
+    watcher.IncludeSubdirectories = true;
+    watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
+    watcher.EnableRaisingEvents = true;
+  }
+  private static void ReadConfigValues(string path, ConfigFile config)
+  {
+    if (!File.Exists(path)) return;
+    BackupFile(path);
+    try
+    {
+      config.Reload();
+    }
+    catch
+    {
+      EWD.Log.LogError($"There was an issue loading your {config.ConfigFilePath}");
+      EWD.Log.LogError("Please check your config entries for spelling and format!");
+    }
+  }
   private static void SetupWatcher(string folder, string pattern, Action<string> action)
   {
     FileSystemWatcher watcher = new(folder, pattern);
-    watcher.Created += (s, e) => action(e.Name);
-    watcher.Changed += (s, e) => action(e.Name);
-    watcher.Renamed += (s, e) => action(e.Name);
-    watcher.Deleted += (s, e) => action(e.Name);
+    watcher.Created += (s, e) => action(e.FullPath);
+    watcher.Changed += (s, e) => action(e.FullPath);
+    watcher.Renamed += (s, e) => action(e.FullPath);
+    watcher.Deleted += (s, e) => action(e.FullPath);
     watcher.IncludeSubdirectories = true;
     watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
     watcher.EnableRaisingEvents = true;
@@ -107,7 +132,20 @@ public class DataManager : MonoBehaviour
       SetupWatcher(Configuration.BlueprintLocalFolder, "*.vbuild", ReloadBlueprint);
     }
   }
-  public static void SetupWatcher(string pattern, Action action) => SetupWatcher(EWD.YamlDirectory, pattern, _ => action());
+  public static void SetupWatcher(string pattern, Action action) => SetupWatcher(EWD.YamlDirectory, pattern, file =>
+  {
+    BackupFile(file);
+    action();
+  });
+  private static void BackupFile(string path)
+  {
+    if (!File.Exists(path)) return;
+    if (!Directory.Exists(EWD.BackupDirectory))
+      Directory.CreateDirectory(EWD.BackupDirectory);
+    var stamp = DateTime.Now.ToString("yyyy-MM-dd");
+    var name = $"{Path.GetFileNameWithoutExtension(path)}_{stamp}{Path.GetExtension(path)}.bak";
+    File.Copy(path, Path.Combine(EWD.BackupDirectory, name), true);
+  }
   public static IDeserializer Deserializer() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
     .WithTypeConverter(new FloatConverter()).Build();
   public static IDeserializer DeserializerUnSafe() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
@@ -124,18 +162,18 @@ public class DataManager : MonoBehaviour
   {
     try
     {
-      return Deserializer().Deserialize<List<T>>(raw) ?? new();
+      return Deserializer().Deserialize<List<T>>(raw) ?? [];
     }
     catch (Exception ex1)
     {
       EWD.Log.LogError($"{fileName}: {ex1.Message}");
       try
       {
-        return DeserializerUnSafe().Deserialize<List<T>>(raw) ?? new();
+        return DeserializerUnSafe().Deserialize<List<T>>(raw) ?? [];
       }
       catch (Exception)
       {
-        return new();
+        return [];
       }
     }
   }

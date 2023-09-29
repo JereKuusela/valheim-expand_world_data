@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using Service;
-using UnityEngine;
-
 namespace ExpandWorldData;
 
 public class DataLoading
@@ -13,7 +10,6 @@ public class DataLoading
   private static readonly string FileName = "expand_data.yaml";
   private static readonly string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   private static readonly string Pattern = "expand_data*.yaml";
-
 
   public static void Initialize()
   {
@@ -61,7 +57,7 @@ public class DataLoading
       EWD.Log.LogError(e.Message);
       EWD.Log.LogError(e.StackTrace);
     }
-    return new();
+    return [];
   }
 
   public static ZDOData FromData(DataData data)

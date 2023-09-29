@@ -13,6 +13,7 @@ Install on all clients and on the server (modding [guide](https://youtu.be/L9ljm
 - Change data like locations, vegetation and weather.
 - Config sync to ensure all clients use the same settings.
 - Change events with [Expand World Events](https://valheim.thunderstore.io/package/Jerekuusela/Expand_World_Events/).
+- Change prefabs with [Expand World Prefabs](https://valheim.thunderstore.io/package/Jerekuusela/Expand_World_Prefabs/).
 - Change spawns with [Expand World Spawns](https://valheim.thunderstore.io/package/Jerekuusela/Expand_World_Spawns/).
 
 For example you can create entirely flat worlds with only Meadows for building. Or group up colder biomes up north while more warmer biomes end up in the other side. Or just have a world with terrain shapes no one has ever seen before.

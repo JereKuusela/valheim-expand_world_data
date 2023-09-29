@@ -20,10 +20,11 @@ public class NoBuildManager
   public static void UpdateData()
   {
     if (ZoneSystem.instance.m_locationInstances.Count == 0) return;
-    var locations = ZoneSystem.instance.m_locationInstances.Values.Where(loc => loc.m_location?.m_location?.m_noBuild == true);
+    var noBuilds = LocationLoading.LocationData.Where(kvp => !string.IsNullOrEmpty(kvp.Value.noBuild) || !string.IsNullOrEmpty(kvp.Value.noBuildDungeon)).Select(kvp => kvp.Key).ToHashSet();
+    var locations = ZoneSystem.instance.m_locationInstances.Values.Where(loc => noBuilds.Contains(loc.m_location.m_prefabName));
     var data = locations.Select(loc =>
     {
-      var noBuild = "true";
+      var noBuild = "false";
       var noBuildDungeon = "false";
       if (LocationLoading.LocationData.TryGetValue(loc.m_location.m_prefabName, out var locationData))
       {
@@ -41,10 +42,10 @@ public class NoBuildManager
         radius = radius,
         dungeon = dungeon,
       };
-    }).ToList();
+    }).Where(x => x.radius != 0f || x.dungeon != 0f).ToList();
     Configuration.valueNoBuildData.Value = DataManager.Serializer().Serialize(data);
   }
-  private static Dictionary<Vector2i, NoBuildData> NoBuild = new();
+  private static Dictionary<Vector2i, NoBuildData> NoBuild = [];
   public static bool IsInsideNoBuildZone(Vector3 point)
   {
     var zs = ZoneSystem.instance;

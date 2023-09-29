@@ -14,15 +14,15 @@ public class LocationLoading
   public static string FileName = "expand_locations.yaml";
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_locations*.yaml";
-  public static Dictionary<string, string> ZDOData = new();
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = new();
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, ZDOData?>>>> ObjectData = new();
-  public static Dictionary<string, List<BlueprintObject>> Objects = new();
-  public static Dictionary<string, Range<Vector3>> Scales = new();
-  public static Dictionary<string, string[]> Commands = new();
-  public static Dictionary<string, LocationData> LocationData = new();
-  public static Dictionary<string, string> Dungeons = new();
-  public static Dictionary<string, Location> BlueprintLocations = new();
+  public static Dictionary<string, string> ZDOData = [];
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = [];
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, ZDOData?>>>> ObjectData = [];
+  public static Dictionary<string, List<BlueprintObject>> Objects = [];
+  public static Dictionary<string, Range<Vector3>> Scales = [];
+  public static Dictionary<string, string[]> Commands = [];
+  public static Dictionary<string, LocationData> LocationData = [];
+  public static Dictionary<string, string> Dungeons = [];
+  public static Dictionary<string, Location> BlueprintLocations = [];
   public static ZoneSystem.ZoneLocation FromData(LocationData data)
   {
     var loc = new ZoneSystem.ZoneLocation();
@@ -261,7 +261,8 @@ public class LocationLoading
       item.m_exteriorRadius = radius.Value;
     item.m_location.m_applyRandomDamage = data.randomDamage;
     item.m_location.m_clearArea = data.clearArea;
-    item.m_location.m_noBuild = data.noBuild != "" && data.noBuild != "0" && data.noBuild != "false";
+    // Handled by own system.
+    item.m_location.m_noBuild = false;
   }
   public static Location GetBluePrintLocation(string prefab)
   {
@@ -284,8 +285,8 @@ public class LocationLoading
     location.m_prefab = new();
     location.m_location = GetBluePrintLocation(location.m_prefabName);
     ApplyLocationData(location, bp.Radius + 5);
-    location.m_netViews = new();
-    location.m_randomSpawns = new();
+    location.m_netViews = [];
+    location.m_randomSpawns = [];
     return true;
   }
   ///<summary>Copies setup from locations.</summary>
