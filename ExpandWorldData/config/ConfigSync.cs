@@ -10,14 +10,13 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using BepInEx;
 using BepInEx.Configuration;
-using ExpandWorldData;
 using HarmonyLib;
 using JetBrains.Annotations;
 using UnityEngine;
+using ExpandWorldData;
 
 namespace ServerSync;
 
-#pragma warning disable
 [PublicAPI]
 public abstract class OwnConfigEntryBase
 {
@@ -79,9 +78,11 @@ public abstract class CustomSyncedValueBase
   }
 
   protected bool localIsOwner;
+  public readonly int Priority;
 
-  protected CustomSyncedValueBase(ConfigSync configSync, string identifier, Type type)
+  protected CustomSyncedValueBase(ConfigSync configSync, string identifier, Type type, int priority)
   {
+    Priority = priority;
     Identifier = identifier;
     Type = type;
     configSync.AddCustomValue(this);
@@ -99,7 +100,7 @@ public sealed class CustomSyncedValue<T> : CustomSyncedValueBase
     set => BoxedValue = value;
   }
 
-  public CustomSyncedValue(ConfigSync configSync, string identifier, T value = default!) : base(configSync, identifier, typeof(T))
+  public CustomSyncedValue(ConfigSync configSync, string identifier, T value = default!, int priority = 0) : base(configSync, identifier, typeof(T), priority)
   {
     Value = value;
   }
@@ -126,7 +127,6 @@ internal class ConfigurationManagerAttributes
 public class ConfigSync
 {
   public static bool ProcessingServerUpdate = false;
-  public bool InitialSyncDone = false;
 
   public readonly string Name;
   public string? DisplayName;
@@ -142,7 +142,7 @@ public class ConfigSync
     set => forceConfigLocking = value;
   }
 
-  public bool IsAdmin => lockExempt;
+  public bool IsAdmin => lockExempt || isSourceOfTruth;
 
   private bool isSourceOfTruth = true;
 
@@ -159,12 +159,14 @@ public class ConfigSync
     }
   }
 
+  public bool InitialSyncDone { get; private set; } = false;
+
   public event Action<bool>? SourceOfTruthChanged;
 
   private static readonly HashSet<ConfigSync> configSyncs = new();
 
   private readonly HashSet<OwnConfigEntryBase> allConfigs = new();
-  private readonly HashSet<CustomSyncedValueBase> allCustomValues = new();
+  private HashSet<CustomSyncedValueBase> allCustomValues = new();
 
   private static bool isServer;
 
@@ -225,6 +227,7 @@ public class ConfigSync
     }
 
     allCustomValues.Add(customValue);
+    allCustomValues = new HashSet<CustomSyncedValueBase>(allCustomValues.OrderByDescending(v => v.Priority));
     customValue.ValueChanged += () =>
     {
       if (!ProcessingServerUpdate)
@@ -249,15 +252,13 @@ public class ConfigSync
     [HarmonyPostfix]
     private static void Postfix(ZNet __instance)
     {
-
       isServer = __instance.IsServer();
       foreach (ConfigSync configSync in configSyncs)
       {
-        configSync.IsSourceOfTruth = __instance.IsDedicated() || __instance.IsServer();
-        configSync.InitialSyncDone = configSync.isSourceOfTruth;
-        ZRoutedRpc.instance.Register<ZPackage>(configSync.Name + " ConfigSync", configSync.RPC_ConfigSync);
+        ZRoutedRpc.instance.Register<ZPackage>(configSync.Name + " ConfigSync", configSync.RPC_FromOtherClientConfigSync);
         if (isServer)
         {
+          configSync.InitialSyncDone = true;
           Debug.Log($"Registered '{configSync.Name} ConfigSync' RPC - waiting for incoming connections");
         }
       }
@@ -277,7 +278,7 @@ public class ConfigSync
             {
               ZPackage package = ConfigsToPackage(packageEntries: new[]
               {
-                new PackageEntry { section = "Internal", key = "lockexempt", type = typeof(bool), value = isAdmin }
+                new PackageEntry { section = "Internal", key = "lockexempt", type = typeof(bool), value = isAdmin },
               });
 
               if (configSyncs.First() is { } configSync)
@@ -312,7 +313,7 @@ public class ConfigSync
       {
         foreach (ConfigSync configSync in configSyncs)
         {
-          peer.m_rpc.Register<ZPackage>(configSync.Name + " ConfigSync", configSync.RPC_InitialConfigSync);
+          peer.m_rpc.Register<ZPackage>(configSync.Name + " ConfigSync", configSync.RPC_FromServerConfigSync);
         }
       }
     }
@@ -325,22 +326,31 @@ public class ConfigSync
   private readonly Dictionary<string, SortedDictionary<int, byte[]>> configValueCache = new();
   private readonly List<KeyValuePair<long, string>> cacheExpirations = new(); // avoid leaking memory
 
-  private void RPC_InitialConfigSync(ZRpc rpc, ZPackage package)
+  private void RPC_FromServerConfigSync(ZRpc rpc, ZPackage package)
   {
-    RPC_ConfigSync(0, package);
-    InitialSyncDone = true;
+    lockedConfigChanged += serverLockedSettingChanged;
+    IsSourceOfTruth = false;
+
+    if (HandleConfigSyncRPC(0, package, false))
+    {
+      InitialSyncDone = true;
+    }
   }
 
-  private void RPC_ConfigSync(long sender, ZPackage package)
+  private void RPC_FromOtherClientConfigSync(long sender, ZPackage package) => HandleConfigSyncRPC(sender, package, true);
+
+  private bool HandleConfigSyncRPC(long sender, ZPackage package, bool clientUpdate)
   {
     try
     {
-      if (isServer && IsLocked)
+      if (isServer && IsLocked && SnatchCurrentlyHandlingRPC.currentRpc?.GetSocket()?.GetHostName() is { } client)
       {
-        bool? exempt = ((SyncedList?)AccessTools.DeclaredField(typeof(ZNet), "m_adminList").GetValue(ZNet.instance))?.Contains(SnatchCurrentlyHandlingRPC.currentRpc?.GetSocket()?.GetHostName());
-        if (exempt == false)
+        MethodInfo? listContainsId = AccessTools.DeclaredMethod(typeof(ZNet), "ListContainsId");
+        SyncedList adminList = (SyncedList)AccessTools.DeclaredField(typeof(ZNet), "m_adminList").GetValue(ZNet.instance);
+        bool exempt = listContainsId is null ? adminList.Contains(client) : (bool)listContainsId.Invoke(ZNet.instance, new object[] { adminList, client });
+        if (!exempt)
         {
-          return;
+          return false;
         }
       }
 
@@ -375,7 +385,7 @@ public class ConfigSync
 
         if (dataFragments.Count < fragments)
         {
-          return;
+          return false;
         }
 
         configValueCache.Remove(cacheKey);
@@ -406,15 +416,6 @@ public class ConfigSync
         resetConfigsFromServer();
       }
 
-      if (!isServer)
-      {
-        if (IsSourceOfTruth)
-        {
-          lockedConfigChanged += serverLockedSettingChanged;
-        }
-        IsSourceOfTruth = false;
-      }
-
       ParsedConfigs configs = ReadConfigsFromPackage(package);
 
       foreach (KeyValuePair<OwnConfigEntryBase, object?> configKv in configs.configValues)
@@ -437,12 +438,14 @@ public class ConfigSync
         configKv.Key.BoxedValue = configKv.Value;
       }
 
+      Debug.Log($"Received {configs.configValues.Count} configs and {configs.customValues.Count} custom values from {(isServer || clientUpdate ? $"client {sender}" : "the server")} for mod {DisplayName ?? Name}");
+
       if (!isServer)
       {
-        Debug.Log($"Received {configs.configValues.Count} configs and {configs.customValues.Count} custom values from the server for mod {DisplayName ?? Name}");
-
         serverLockedSettingChanged(); // Re-evaluate for intial locking
       }
+
+      return true;
     }
     finally
     {
@@ -548,6 +551,8 @@ public class ConfigSync
       foreach (ConfigSync serverSync in configSyncs)
       {
         serverSync.resetConfigsFromServer();
+        serverSync.IsSourceOfTruth = true;
+        serverSync.InitialSyncDone = false;
       }
       ProcessingServerUpdate = false;
     }
@@ -586,7 +591,6 @@ public class ConfigSync
     }
 
     lockedConfigChanged -= serverLockedSettingChanged;
-    IsSourceOfTruth = true;
     serverLockedSettingChanged();
   }
 
@@ -805,7 +809,6 @@ public class ConfigSync
     [HarmonyPostfix]
     private static void Postfix(Dictionary<Assembly, BufferingSocket> __state, ZNet __instance, ZRpc rpc)
     {
-      if (Configuration.ServerOnly) return;
       if (!__instance.IsServer())
       {
         return;
@@ -1059,7 +1062,7 @@ public class ConfigSync
       }
       return dict;
     }
-    if (type != typeof(List<string>) && type.IsGenericType && typeof(ICollection<>).MakeGenericType(type.GenericTypeArguments[0]) is { } collectionType && collectionType.IsAssignableFrom(type.GetGenericTypeDefinition()))
+    if (type != typeof(List<string>) && type.IsGenericType && typeof(ICollection<>).MakeGenericType(type.GenericTypeArguments[0]) is { } collectionType && collectionType.IsAssignableFrom(type))
     {
       int entriesCount = package.ReadInt();
       object list = Activator.CreateInstance(type);
@@ -1262,7 +1265,7 @@ public class VersionCheck
     {
       if (!ZNet.instance.IsServer())
       {
-        Dictionary<Heightmap.Biome, string> biomes = new();
+        Dictionary<Heightmap.Biome, string> biomes = [];
         while (pkg.m_reader.BaseStream.Position != pkg.m_reader.BaseStream.Length)
         {
           var biome = (Heightmap.Biome)pkg.ReadInt();
@@ -1396,4 +1399,3 @@ public class VersionCheck
     }
   }
 }
-#pragma warning restore

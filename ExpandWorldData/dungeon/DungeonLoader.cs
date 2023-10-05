@@ -56,7 +56,7 @@ public partial class Loader
 
   public static void Load()
   {
-    Spawner.Generators.Clear();
+    DungeonObjects.Generators.Clear();
     if (Helper.IsClient()) return;
     if (!Configuration.DataRooms)
     {
@@ -82,7 +82,7 @@ public partial class Loader
       return;
     }
     EWD.Log.LogInfo($"Reloading dungeon data ({data.Count} entries).");
-    Spawner.Generators = data;
+    DungeonObjects.Generators = data;
   }
 
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>

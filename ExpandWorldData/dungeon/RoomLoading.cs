@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ExpandWorldData.Dungeon;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -55,9 +56,9 @@ public class RoomLoading
   public static void Load()
   {
     RoomSpawning.Data.Clear();
-    RoomSpawning.Objects.Clear();
-    RoomSpawning.ObjectSwaps.Clear();
-    RoomSpawning.ObjectData.Clear();
+    DungeonObjects.Objects.Clear();
+    DungeonObjects.ObjectSwaps.Clear();
+    DungeonObjects.ObjectData.Clear();
     NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
     ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     if (Helper.IsClient()) return;
@@ -181,11 +182,11 @@ public class RoomLoading
     room.m_endCapPrio = data.endCapPriority;
     UpdateConnections(room, data.connections);
     if (data.objects != null)
-      RoomSpawning.Objects[data.name] = Parse.Objects(data.objects);
+      DungeonObjects.Objects[data.name] = Parse.Objects(data.objects);
     if (data.objectSwap != null)
-      RoomSpawning.ObjectSwaps[data.name] = Spawn.LoadSwaps(data.objectSwap);
+      DungeonObjects.ObjectSwaps[data.name] = Spawn.LoadSwaps(data.objectSwap);
     if (data.objectData != null)
-      RoomSpawning.ObjectData[data.name] = Spawn.LoadData(data.objectData);
+      DungeonObjects.ObjectData[data.name] = Spawn.LoadData(data.objectData);
     return roomData;
   }
   private static RoomData ToData(DungeonDB.RoomData roomData)
@@ -228,7 +229,7 @@ public class RoomLoading
       EWD.Log.LogError(e.Message);
       EWD.Log.LogError(e.StackTrace);
     }
-    return new();
+    return [];
   }
   private static void SetDefaultEntries()
   {
