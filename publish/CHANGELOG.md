@@ -1,3 +1,6 @@
+- v1.13
+  - Removes excessive logging.
+
 - v1.12
   - Fixed for the new patch.
   - Possibly fixes room data not working correctly (didn't test much).

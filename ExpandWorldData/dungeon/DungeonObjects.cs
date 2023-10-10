@@ -41,7 +41,6 @@ public static class DungeonObjects
 
   public static ZDOData? DataOverride(ZDOData? pgk, string prefab)
   {
-    EWD.Log.LogWarning($"DataOverride {prefab}");
     var locationData = LocationSpawning.DataOverride(prefab);
     var dungeonData = DataDungeonOverride(prefab);
     var roomData = DataRoomOverride(prefab);
