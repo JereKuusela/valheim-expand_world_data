@@ -809,6 +809,7 @@ public class ConfigSync
     [HarmonyPostfix]
     private static void Postfix(Dictionary<Assembly, BufferingSocket> __state, ZNet __instance, ZRpc rpc)
     {
+      if (Configuration.ServerOnly) return;
       if (!__instance.IsServer())
       {
         return;

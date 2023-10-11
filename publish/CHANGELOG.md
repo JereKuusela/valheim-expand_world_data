@@ -1,3 +1,6 @@
+- v1.14
+  - Fixes error when on server only mode.
+
 - v1.13
   - Removes excessive logging.
 
