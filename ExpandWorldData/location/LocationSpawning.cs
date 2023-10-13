@@ -93,7 +93,7 @@ public class LocationObjectDataAndSwap
     {
       LocationSpawning.CurrentLocation = location.m_prefabName;
       if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data))
-        pos.y += data.groundOffset;
+        pos.y += data.offset ?? data.groundOffset;
     }
     // Blueprints won't have any znetviews to spawn or other logic to handle.
     return !BlueprintManager.Has(location.m_prefabName);
@@ -118,7 +118,7 @@ public class LocationObjectDataAndSwap
       if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data))
       {
         // Remove the applied offset.
-        var surface = pos with { y = pos.y - data.groundOffset };
+        var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
         HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
       }
       Random.InitState(seed);

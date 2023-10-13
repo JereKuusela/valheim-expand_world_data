@@ -69,17 +69,18 @@ public class CommandManager
     // Negative numbers get split as well, so check for actual parts.
     if (minus.Where(s => s != "").Count() > 1)
     {
-      var sum = Evaluate(minus[0]);
-      for (var i = 1; i < minus.Length; ++i)
+      float? sum = null;
+      for (var i = 0; i < minus.Length; ++i)
       {
         if (minus[i] == "" && i + 1 < minus.Length)
         {
           minus[i + 1] = "-" + minus[i + 1];
           continue;
         }
-        sum -= Evaluate(minus[i]);
+        if (sum == null) sum = Evaluate(minus[i]);
+        else sum -= Evaluate(minus[i]);
       }
-      return sum;
+      return sum ?? 0;
     }
     try
     {

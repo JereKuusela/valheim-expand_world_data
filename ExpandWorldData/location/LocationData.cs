@@ -54,6 +54,8 @@ public class LocationData
   public float forestTresholdMin = 0f;
   [DefaultValue(1f)]
   public float forestTresholdMax = 1f;
+  [DefaultValue(null)]
+  public float? offset = null;
   [DefaultValue(0f)]
   public float groundOffset = 0f;
   [DefaultValue("")]
