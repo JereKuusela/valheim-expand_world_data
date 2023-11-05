@@ -44,10 +44,10 @@ public class SnapPoint
 public class Blueprint
 {
   public string Name;
-  public List<BlueprintObject> Objects = new();
+  public List<BlueprintObject> Objects = [];
   public string CenterPiece = "piece_bpcenterpoint";
   public float Radius = 0f;
-  public List<SnapPoint> SnapPoints = new();
+  public List<SnapPoint> SnapPoints = [];
   public Vector3 Size = Vector3.one;
 
   public Blueprint(string name)

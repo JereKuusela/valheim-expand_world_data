@@ -11,8 +11,8 @@ public class EnvironmentManager
   public static string FileName = "expand_environments.yaml";
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_environments*.yaml";
-  private static Dictionary<string, EnvSetup> Originals = new();
-  public static Dictionary<string, EnvironmentData> Extra = new();
+  private static Dictionary<string, EnvSetup> Originals = [];
+  public static Dictionary<string, EnvironmentData> Extra = [];
   public static EnvSetup FromData(EnvironmentYaml data)
   {
     EnvSetup env = new() { m_psystems = [] };

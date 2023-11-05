@@ -76,7 +76,7 @@ public class EnvironmentYaml
 
 public class EnvironmentData
 {
-  public List<Status> statusEffects = new();
+  public List<Status> statusEffects = [];
   public EnvironmentData(EnvironmentYaml data)
   {
     if (data.statusEffects != null)

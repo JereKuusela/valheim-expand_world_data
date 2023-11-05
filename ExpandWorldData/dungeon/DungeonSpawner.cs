@@ -153,7 +153,7 @@ public class EnvironmentBox
 {
 
   // Not fully sure if the generator or location loads first.
-  public static Dictionary<Vector2i, Vector3> Cache = new();
+  public static Dictionary<Vector2i, Vector3> Cache = [];
 
 
   private static void TryScale(Location loc)

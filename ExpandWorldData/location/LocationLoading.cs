@@ -214,10 +214,10 @@ public class LocationLoading
     }
   }
   // Dictionary can't be used because some mods might have multiple entries for the same location.
-  private static List<ZoneSystem.ZoneLocation> DefaultEntries = new();
+  private static List<ZoneSystem.ZoneLocation> DefaultEntries = [];
   // Used to optimize missing entries check (to avoid n^2 loop).
   // Also used to quickly check if a location is blueprint or not.
-  private static Dictionary<string, ZoneSystem.ZoneLocation> Locations = new();
+  private static Dictionary<string, ZoneSystem.ZoneLocation> Locations = [];
   private static bool AddMissingEntries(List<ZoneSystem.ZoneLocation> items)
   {
     var missingKeys = Locations.Keys.ToHashSet();
@@ -248,7 +248,7 @@ public class LocationLoading
       EWD.Log.LogError(e.Message);
       EWD.Log.LogError(e.StackTrace);
     }
-    return new();
+    return [];
   }
   private static void ApplyLocationData(ZoneSystem.ZoneLocation item, float? radius = null)
   {

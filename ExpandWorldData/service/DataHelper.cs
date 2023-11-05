@@ -86,13 +86,15 @@ public class ZDOData
       ByteArrays[pair.Key] = pair.Value;
   }
   public string Name = "";
-  public Dictionary<int, string> Strings = new();
-  public Dictionary<int, float> Floats = new();
-  public Dictionary<int, int> Ints = new();
-  public Dictionary<int, long> Longs = new();
-  public Dictionary<int, Vector3> Vecs = new();
-  public Dictionary<int, Quaternion> Quats = new();
-  public Dictionary<int, byte[]> ByteArrays = new();
+  public Dictionary<int, string> Strings = [];
+  public Dictionary<int, float> Floats = [];
+  public Dictionary<int, int> Ints = [];
+  public Dictionary<int, long> Longs = [];
+  public Dictionary<int, Vector3> Vecs = [];
+  public Dictionary<int, Quaternion> Quats = [];
+  public Dictionary<int, byte[]> ByteArrays = [];
+  public ZDOExtraData.ConnectionType ConnectionType = ZDOExtraData.ConnectionType.None;
+  public int ConnectionHash = 0;
 
   public void Write(ZDO zdo)
   {
@@ -106,31 +108,21 @@ public class ZDOData
     if (ByteArrays.Count > 0) ZDOHelper.Init(ZDOExtraData.s_byteArrays, id);
 
     foreach (var pair in Floats)
-    {
-      if (pair.Value == 0f) continue;
       ZDOExtraData.s_floats[id].SetValue(pair.Key, pair.Value);
-    }
     foreach (var pair in Vecs)
       ZDOExtraData.s_vec3[id].SetValue(pair.Key, pair.Value);
     foreach (var pair in Quats)
       ZDOExtraData.s_quats[id].SetValue(pair.Key, pair.Value);
     foreach (var pair in Ints)
-    {
-      if (pair.Value == 0) continue;
       ZDOExtraData.s_ints[id].SetValue(pair.Key, pair.Value);
-    }
     foreach (var pair in Longs)
-    {
-      if (pair.Value == 0) continue;
       ZDOExtraData.s_longs[id].SetValue(pair.Key, pair.Value);
-    }
     foreach (var pair in Strings)
-    {
-      if (pair.Value == "") continue;
       ZDOExtraData.s_strings[id].SetValue(pair.Key, pair.Value);
-    }
     foreach (var pair in ByteArrays)
       ZDOExtraData.s_byteArrays[id].SetValue(pair.Key, pair.Value);
+    if (ConnectionType != ZDOExtraData.ConnectionType.None && ConnectionHash != 0)
+      ZDOExtraData.SetConnectionData(id, ConnectionType, ConnectionHash);
   }
   public void Load(ZPackage pkg)
   {
@@ -179,6 +171,11 @@ public class ZDOData
       for (var i = 0; i < count; ++i)
         ByteArrays[pkg.ReadInt()] = pkg.ReadByteArray();
     }
+    if ((num & 256) != 0)
+    {
+      ConnectionType = (ZDOExtraData.ConnectionType)pkg.ReadByte();
+      ConnectionHash = pkg.ReadInt();
+    }
   }
   public void Load(ZDO zdo)
   {
@@ -190,6 +187,10 @@ public class ZDOData
     Vecs = ZDOExtraData.s_vec3.ContainsKey(id) ? ZDOExtraData.s_vec3[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
     Quats = ZDOExtraData.s_quats.ContainsKey(id) ? ZDOExtraData.s_quats[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
     ByteArrays = ZDOExtraData.s_byteArrays.ContainsKey(id) ? ZDOExtraData.s_byteArrays[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
+    if (ZDOExtraData.s_connectionsHashData.TryGetValue(id, out var conn))
+    {
+      ConnectionType = conn.m_type;
+      ConnectionHash = conn.m_hash;
+    }
   }
-
 }

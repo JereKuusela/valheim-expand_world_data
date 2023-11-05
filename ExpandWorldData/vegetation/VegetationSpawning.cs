@@ -10,10 +10,10 @@ namespace ExpandWorldData;
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceVegetation))]
 public class VegetationSpawning
 {
-  public static Dictionary<ZoneSystem.ZoneVegetation, VegetationExtra> Extra = new();
+  public static Dictionary<ZoneSystem.ZoneVegetation, VegetationExtra> Extra = [];
   private static ZoneSystem.ZoneVegetation CurrentVegetation = new();
   private static ZoneSystem.SpawnMode Mode = ZoneSystem.SpawnMode.Client;
-  private static List<GameObject> SpawnedObjects = new();
+  private static List<GameObject> SpawnedObjects = [];
   static void Prefix(ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
   {
     Mode = mode;

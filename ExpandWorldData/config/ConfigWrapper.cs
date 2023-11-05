@@ -68,9 +68,9 @@ public class ConfigWrapper
   }
   public ConfigEntry<T> Bind<T>(string group, string name, T value, bool forceRegen, string description = "", bool synchronizedSetting = true) => Bind(group, name, value, forceRegen, new ConfigDescription(description), synchronizedSetting);
   private void ForceRegen(object e, EventArgs s) => Regenerate();
-  public static Dictionary<ConfigEntry<string>, float> Floats = new();
-  public static Dictionary<ConfigEntry<string>, int?> Ints = new();
-  public static Dictionary<ConfigEntry<int>, float> Amounts = new();
+  public static Dictionary<ConfigEntry<string>, float> Floats = [];
+  public static Dictionary<ConfigEntry<string>, int?> Ints = [];
+  public static Dictionary<ConfigEntry<int>, float> Amounts = [];
 
   public ConfigEntry<string> BindFloat(string group, string name, float value, bool forceRegen, string description = "", bool synchronizedSetting = true)
   {
@@ -91,7 +91,7 @@ public class ConfigWrapper
     context.AddString(message);
     Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, message);
   }
-  private readonly Dictionary<string, Action<Terminal, string>> SettingHandlers = new();
+  private readonly Dictionary<string, Action<Terminal, string>> SettingHandlers = [];
   private string ToKey(string name) => name.ToLower().Replace(' ', '_').Replace("(", "").Replace(")", "");
   private void Register(ConfigEntry<bool> setting)
   {
@@ -106,19 +106,19 @@ public class ConfigWrapper
     SettingHandlers.Add(key, (Terminal terminal, string value) => SetValue(terminal, setting, name, value));
   }
   private static string State(bool value) => value ? "enabled" : "disabled";
-  private static readonly HashSet<string> Truthies = new() {
+  private static readonly HashSet<string> Truthies = [
     "1",
     "true",
     "yes",
     "on"
-  };
+  ];
   private static bool IsTruthy(string value) => Truthies.Contains(value);
-  private static readonly HashSet<string> Falsies = new() {
+  private static readonly HashSet<string> Falsies = [
     "0",
     "false",
     "no",
     "off"
-  };
+  ];
   private static bool IsFalsy(string value) => Falsies.Contains(value);
   private static void Toggle(Terminal context, ConfigEntry<bool> setting, string name, string value)
   {

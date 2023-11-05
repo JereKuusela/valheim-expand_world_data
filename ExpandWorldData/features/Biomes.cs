@@ -101,7 +101,7 @@ public class GetBiomeWG
   public static List<WorldData> GetData() => Data ?? WorldManager.GetDefault(WorldGenerator.instance);
   public static List<WorldData>? Data = null;
   public static bool CheckAngles = false;
-  public static Dictionary<Heightmap.Biome, float> Offsets = new();
+  public static Dictionary<Heightmap.Biome, float> Offsets = [];
 
   private static float GetOffset(WorldGenerator obj, Heightmap.Biome biome)
   {

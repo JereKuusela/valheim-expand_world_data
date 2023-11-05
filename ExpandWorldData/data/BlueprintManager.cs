@@ -21,8 +21,8 @@ public class BlueprintManager
     if (!Has(name)) Load(name, "");
     return BlueprintFiles.TryGetValue(Parse.Name(name), out bp);
   }
-  public static Dictionary<string, Blueprint> BlueprintFiles = new();
-  private static readonly Dictionary<string, BlueprintMetaData> MetaData = new();
+  public static Dictionary<string, Blueprint> BlueprintFiles = [];
+  private static readonly Dictionary<string, BlueprintMetaData> MetaData = [];
   public static bool Load(string name, string centerPiece) => Load(name, centerPiece, []);
   public static bool Load(string name, string centerPiece, string[] snapPieces)
   {

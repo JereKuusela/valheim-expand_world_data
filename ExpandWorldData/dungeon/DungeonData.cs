@@ -64,11 +64,11 @@ public class FakeDungeonGenerator
   public int m_maxRooms = 1;
   public int m_minRooms = 1;
   public int m_minRequiredRooms = 1;
-  public HashSet<string> m_excludedRooms = new();
-  public List<string> m_requiredRooms = new();
+  public HashSet<string> m_excludedRooms = [];
+  public List<string> m_requiredRooms = [];
   public bool m_alternativeFunctionality = false;
-  public List<string> m_themes = new();
-  public List<DungeonGenerator.DoorDef> m_doorTypes = new();
+  public List<string> m_themes = [];
+  public List<DungeonGenerator.DoorDef> m_doorTypes = [];
   public float m_doorChance;
   public float m_maxTilt;
   public float m_tileWidth;
@@ -80,6 +80,6 @@ public class FakeDungeonGenerator
   public int m_perimeterSections;
   public float m_perimeterBuffer;
   public bool m_useCustomInteriorTransform;
-  public Dictionary<string, List<Tuple<float, string>>> m_objectSwaps = new();
-  public Dictionary<string, List<Tuple<float, ZDOData?>>> m_objectData = new();
+  public Dictionary<string, List<Tuple<float, string>>> m_objectSwaps = [];
+  public Dictionary<string, List<Tuple<float, ZDOData?>>> m_objectData = [];
 }

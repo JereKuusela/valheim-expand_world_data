@@ -14,7 +14,7 @@ public class WorldManager
   public static List<WorldData> GetDefault(WorldGenerator obj)
   {
     var version = obj.m_world.m_worldGenVersion;
-    return new() {
+    return [
       new() {
         biome = "ashlands",
         _biome = Heightmap.Biome.AshLands,
@@ -88,7 +88,7 @@ public class WorldManager
         _biome = Heightmap.Biome.Meadows,
         _biomeSeed = Heightmap.Biome.Meadows,
       },
-    };
+    ];
   }
 
   public static WorldData FromData(WorldData data)

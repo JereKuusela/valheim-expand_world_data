@@ -120,6 +120,18 @@ public class DataLoading
       var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
       zdo.ByteArrays.Add(hash, Convert.FromBase64String(str));
     }
+    if (!string.IsNullOrWhiteSpace(data.connection))
+    {
+      var split = Parse.Split(data.connection);
+      if (split.Length > 1)
+      {
+        var types = split.Take(split.Length - 1).ToList();
+        var hash = split[split.Length - 1];
+        zdo.ConnectionType = DataManager.ToByteEnum<ZDOExtraData.ConnectionType>(types);
+        zdo.ConnectionHash = Parse.Int(hash);
+        if (zdo.ConnectionHash == 0) zdo.ConnectionHash = hash.GetStableHashCode();
+      }
+    }
     return zdo;
   }
   public static DataData ToData(ZDOData zdo)
@@ -135,6 +147,8 @@ public class DataLoading
       quats = zdo.Quats.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value)}").ToArray(),
       bytes = zdo.ByteArrays.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Convert.ToBase64String(pair.Value)}").ToArray(),
     };
+    if (zdo.ConnectionType != ZDOExtraData.ConnectionType.None && zdo.ConnectionHash != 0)
+      data.connection = $"{zdo.ConnectionType}, {zdo.ConnectionHash}";
     if (data.floats.Length == 0) data.floats = null;
     if (data.ints.Length == 0) data.ints = null;
     if (data.longs.Length == 0) data.longs = null;

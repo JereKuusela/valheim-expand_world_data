@@ -115,7 +115,7 @@ public partial class Terrain
     radius += border;
     if (radius == 0f) return;
     var smooth = border / radius;
-    List<HeightNode> nodes = new();
+    List<HeightNode> nodes = [];
     GetHeightNodes(nodes, compiler, pos, radius);
     void action(TerrainComp compiler, int index, TerrainNode node)
     {
@@ -131,7 +131,7 @@ public partial class Terrain
     radius += border;
     if (radius == 0f) return;
     var smooth = border / radius;
-    List<PaintNode> nodes = new();
+    List<PaintNode> nodes = [];
     Color color = ParsePaint(paint);
     GetPaintNodes(nodes, compiler, pos, radius);
     void action(TerrainComp compiler, int index, TerrainNode node)

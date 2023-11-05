@@ -45,7 +45,7 @@ public class DebugCommands
       if (args.Length > 1 && int.TryParse(args[1], out var value)) precision = (float)value;
       var r = WorldInfo.Radius;
       var start = -(float)Math.Ceiling(r / precision) * precision;
-      Dictionary<Heightmap.Biome, int> biomes = new();
+      Dictionary<Heightmap.Biome, int> biomes = [];
       for (var x = start; x <= r; x += precision)
       {
         for (var y = start; y <= r; y += precision)

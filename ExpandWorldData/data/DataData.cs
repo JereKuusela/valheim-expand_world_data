@@ -10,6 +10,8 @@ namespace ExpandWorldData;
 public class DataData
 {
   public string name = "";
+  [DefaultValue("")]
+  public string connection = "";
   [DefaultValue(null)]
   public string[]? ints = null;
   [DefaultValue(null)]
@@ -34,9 +36,8 @@ public class DefaultData
   {
     List<string> keys = [.. StaticKeys];
     List<Assembly> assemblies = [Assembly.GetAssembly(typeof(ZNetView)), .. Chainloader.PluginInfos.Values.Where(p => p.Instance != null).Select(p => p.Instance.GetType().Assembly)];
-    var assembly = Assembly.GetAssembly(typeof(ZNetView));
     var baseType = typeof(MonoBehaviour);
-    keys.AddRange(assemblies.SelectMany(s =>
+    var types = assemblies.SelectMany(s =>
     {
       try
       {
@@ -46,8 +47,9 @@ public class DefaultData
       {
         return e.Types.Where(t => t != null);
       }
-    }).Where(baseType.IsAssignableFrom).Select(t => $"HasFields{t.Name}"));
-
+    }).Where(baseType.IsAssignableFrom).ToArray();
+    keys.AddRange(types.Select(t => $"HasFields{t.Name}"));
+    keys.AddRange(types.SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.Public).Select(f => $"{t.Name}.{f.Name}")));
     keys.AddRange(typeof(ZDOVars).GetFields(BindingFlags.Static | BindingFlags.Public).Select(f => f.Name.Replace("s_", "")));
     for (var i = 0; i < 10; i++)
     {

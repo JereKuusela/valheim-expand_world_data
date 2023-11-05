@@ -14,11 +14,11 @@ public class RoomLoading
   public static string Pattern = "expand_rooms*.yaml";
 
 
-  private static List<DungeonDB.RoomData> DefaultEntries = new();
+  private static List<DungeonDB.RoomData> DefaultEntries = [];
 
 
   // For finding rooms with wrong case.
-  private static Dictionary<string, string> RoomNames = new();
+  private static Dictionary<string, string> RoomNames = [];
   public static List<string> ParseRooms(string names) => DataManager.ToList(names).Select(s => RoomLoading.RoomNames.TryGetValue(s, out var name) ? name : s).ToList();
   public static void Initialize()
   {

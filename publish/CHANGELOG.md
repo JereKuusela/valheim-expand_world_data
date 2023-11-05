@@ -1,3 +1,8 @@
+- v1.16
+  - Adds support for connected ZDO to `expand_data.yaml` and `ew_copy` command.
+  - Fixes zero or empty values not being applied from `expand_data.yaml`.
+  - Fixes `ew_copy` command not working properly for field values.
+
 - v1.15
   - Adds compatibility for Monsternomicon mod (it has slightly wrong data).
   - Fixes command parsing not working if a negative number was subtracted.

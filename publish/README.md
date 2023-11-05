@@ -14,6 +14,8 @@ See [documentation](https://github.com/JereKuusela/valheim-expand_world_data/blo
 
 See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
 
+[<img width="80px" style="margin-bottom: -4" src="https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/636e0b5493894cf60b300587_full_logo_white_RGB.svg">](https://discord.gg/VFRJcPwUdm) for help and examples.
+
 ## Migration for Hildir update
 
 New dungeons, environments, events and locations are added automatically. Changes to existing dungeon rooms require manual changes.

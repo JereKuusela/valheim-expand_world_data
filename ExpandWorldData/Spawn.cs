@@ -173,7 +173,7 @@ public class Spawn
       var name = s[0];
       var weight = Parse.Float(s, 1, 1f);
       if (!swaps.ContainsKey(name))
-        swaps[name] = new();
+        swaps[name] = [];
       swaps[name].AddRange(ParseDataItems(row.Skip(1), weight));
     }
     foreach (var kvp in swaps)

@@ -16,7 +16,7 @@ public class VegetationLoading
 
 
   // Default items are stored to track missing entries.
-  private static List<ZoneSystem.ZoneVegetation> DefaultEntries = new();
+  private static List<ZoneSystem.ZoneVegetation> DefaultEntries = [];
   public static void Initialize()
   {
     DefaultEntries.Clear();
@@ -73,7 +73,7 @@ public class VegetationLoading
       EWD.Log.LogError(e.Message);
       EWD.Log.LogError(e.StackTrace);
     }
-    return new();
+    return [];
   }
   ///<summary>Cleans up default vegetation data and stores it to track missing entries.</summary>
   private static void SetDefaultEntries()
@@ -86,7 +86,7 @@ public class VegetationLoading
     DefaultKeys = Helper.ToSet(DefaultEntries, veg => veg.m_prefab.name);
   }
   // Used to optimize missing entries check (to avoid n^2 loop).
-  private static HashSet<string> DefaultKeys = new();
+  private static HashSet<string> DefaultKeys = [];
 
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>
   // Note: This is needed people add new content mods and then complain that Expand World doesn't spawn them.

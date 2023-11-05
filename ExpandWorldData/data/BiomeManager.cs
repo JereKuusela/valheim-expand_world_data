@@ -49,8 +49,8 @@ public class BiomeManager
   public static Dictionary<Heightmap.Biome, string> BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
   private static Dictionary<Heightmap.Biome, Heightmap.Biome> BiomeToTerrain = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
   private static Dictionary<Heightmap.Biome, Heightmap.Biome> BiomeToNature = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
-  private static readonly Dictionary<Heightmap.Biome, Color> BiomeToColor = new();
-  private static readonly Dictionary<Heightmap.Biome, BiomeData> BiomeData = new();
+  private static readonly Dictionary<Heightmap.Biome, Color> BiomeToColor = [];
+  private static readonly Dictionary<Heightmap.Biome, BiomeData> BiomeData = [];
   public static bool TryGetColor(Heightmap.Biome biome, out Color color) => BiomeToColor.TryGetValue(biome, out color);
   public static bool TryGetData(Heightmap.Biome biome, out BiomeData data) => BiomeData.TryGetValue(biome, out data);
   public static bool TryGetBiome(string name, out Heightmap.Biome biome) => NameToBiome.TryGetValue(name.ToLower(), out biome);
@@ -115,7 +115,7 @@ public class BiomeManager
 
   private static List<BiomeYaml> Parse(string yaml)
   {
-    List<BiomeYaml> rawData = new();
+    List<BiomeYaml> rawData = [];
     if (Configuration.DataBiome)
     {
       try
@@ -154,7 +154,7 @@ public class BiomeManager
     }
     NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLower(), kvp => kvp.Key);
   }
-  private static List<BiomeEnvSetup> Environments = new();
+  private static List<BiomeEnvSetup> Environments = [];
   private static void Load(string yaml)
   {
     if (yaml == "" || !Configuration.DataBiome) return;

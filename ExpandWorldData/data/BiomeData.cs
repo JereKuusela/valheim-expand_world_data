@@ -69,7 +69,7 @@ public class BiomeData
   public Color mapColor = new(0, 0, 0, 0);
   public float forestMultiplier = 1f;
 
-  public List<Status> statusEffects = new();
+  public List<Status> statusEffects = [];
 
   public BiomeData(BiomeYaml data)
   {

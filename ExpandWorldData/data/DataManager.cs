@@ -202,7 +202,7 @@ public class DataManager : MonoBehaviour
     biome &= (Heightmap.Biome)~128;
     if (biome == DefaultMax) return "";
     if (biome == Heightmap.Biome.None) return "None";
-    List<string> biomes = new();
+    List<string> biomes = [];
     var number = 1;
     var biomeNumber = (int)biome;
     while (number <= biomeNumber)
@@ -229,7 +229,7 @@ public class DataManager : MonoBehaviour
   }
   public static string FromEnum<T>(T value) where T : struct, Enum
   {
-    List<string> names = new();
+    List<string> names = [];
     var number = 1;
     var maxNumber = (int)(object)value;
     while (number <= maxNumber)
@@ -249,10 +249,25 @@ public class DataManager : MonoBehaviour
     int value = 0;
     foreach (var item in list)
     {
-      if (Enum.TryParse<T>(item, true, out var parsed))
+      var trimmed = item.Trim();
+      if (Enum.TryParse<T>(trimmed, true, out var parsed))
         value += (int)(object)parsed;
       else
-        EWD.Log.LogWarning($"Failed to parse value {item} as {nameof(T)}.");
+        EWD.Log.LogWarning($"Failed to parse value {trimmed} as {nameof(T)}.");
+    }
+    return (T)(object)value;
+  }
+  public static T ToByteEnum<T>(List<string> list) where T : struct, Enum
+  {
+
+    byte value = 0;
+    foreach (var item in list)
+    {
+      var trimmed = item.Trim();
+      if (Enum.TryParse<T>(trimmed, true, out var parsed))
+        value += (byte)(object)parsed;
+      else
+        EWD.Log.LogWarning($"Failed to parse value {trimmed} as {nameof(T)}.");
     }
     return (T)(object)value;
   }

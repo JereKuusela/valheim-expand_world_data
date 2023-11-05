@@ -16,7 +16,7 @@ public partial class Loader
   public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
   public static string Pattern = "expand_dungeons*.yaml";
 
-  private static Dictionary<string, DungeonGenerator> DefaultGenerators = new();
+  private static Dictionary<string, DungeonGenerator> DefaultGenerators = [];
 
   public static void Initialize()
   {
@@ -51,7 +51,7 @@ public partial class Loader
       EWD.Log.LogError(e.Message);
       EWD.Log.LogError(e.StackTrace);
     }
-    return new();
+    return [];
   }
 
   public static void Load()
