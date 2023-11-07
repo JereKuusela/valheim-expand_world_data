@@ -1,6 +1,6 @@
 {
   "name": "Expand_World_Data",
-  "version_number": "1.16.0",
+  "version_number": "1.17.0",
   "website_url": "https://github.com/JereKuusela/valheim-expand_world_data",
   "description": "Allows adding new biomes and changing most of the world generation.",
   "dependencies": [
