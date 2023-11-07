@@ -1,3 +1,6 @@
+- v1.17
+  - Fixed for the new patch.
+
 - v1.16
   - Adds support for connected ZDO to `expand_data.yaml` and `ew_copy` command.
   - Fixes zero or empty values not being applied from `expand_data.yaml`.

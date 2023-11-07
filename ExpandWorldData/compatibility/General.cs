@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
+using UnityEngine;
 namespace ExpandWorldData;
 
 #pragma warning disable IDE0051
@@ -12,7 +13,8 @@ public class TryParseBiome
   static IEnumerable<MethodBase> TargetMethods()
   {
     return typeof(Enum).GetMethods()
-        .Where(method => method.Name.StartsWith("TryParse"))
+        .Where(method => method.Name == "TryParse")
+        .Take(2)
         .Select(method => method.MakeGenericMethod(typeof(Heightmap.Biome)))
         .Cast<MethodBase>();
   }
@@ -29,14 +31,15 @@ public class TryParseTheme
   static IEnumerable<MethodBase> TargetMethods()
   {
     return typeof(Enum).GetMethods()
-        .Where(method => method.Name.StartsWith("TryParse"))
+        .Where(method => method.Name == "TryParse")
+        .Take(2)
         .Select(method => method.MakeGenericMethod(typeof(Room.Theme)))
         .Cast<MethodBase>();
   }
   static bool Prefix(string value, ref Room.Theme result, ref bool __result)
   {
     __result = RoomLoading.TryGetTheme(value, out result);
-    return false;
+    return true;
   }
 }
 #pragma warning restore  IDE0051
