@@ -331,6 +331,7 @@ public class DataManager : MonoBehaviour
     if (ZNetView.m_ghostInit && view)
     {
       view.m_ghost = true;
+      view.GetZDO().Created = false;
       ZNetScene.instance.m_instances.Remove(view.GetZDO());
     }
   }

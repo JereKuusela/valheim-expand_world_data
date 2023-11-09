@@ -1,3 +1,6 @@
+- v1.18
+  - Fixes locations sometimes not appearing until relog.
+
 - v1.17
   - Fixed for the new patch.
 
