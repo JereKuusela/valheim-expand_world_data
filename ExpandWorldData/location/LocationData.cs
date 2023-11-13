@@ -72,8 +72,8 @@ public class LocationData
   public float exteriorRadius = 0f;
   [DefaultValue(false)]
   public bool clearArea = false;
-  [DefaultValue(false)]
-  public bool randomDamage = false;
+  [DefaultValue("")]
+  public string randomDamage = "";
   [DefaultValue("")]
   public string noBuild = "";
   [DefaultValue("")]

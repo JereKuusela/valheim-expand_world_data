@@ -329,7 +329,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
   - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
 - objects: Extra objects in the location, relative to the location center.
   - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world_data#Custom_objects) for details.
-- randomDamage (default: `false`): If true, pieces are randomly damaged.
+- randomDamage (default: `false`): If true, pieces without custom health are randomly damaged. If all, all pieces are randomly damaged.
 - exteriorRadius: How many meters are cleared, leveled or no build. If not given for blueprints, this is the radius of the blueprint (+ 2 meters).
   - Note: Maximum suggested value is 32 meters. Higher values go past the zone border and can cause issues.
 - commands: List of commands that will be executed when spawning the location.
@@ -495,6 +495,10 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
 - clearRadius (default: `0` meters): Extra distance away from location clear areas.
   - Note: By default, only the vegetation center point is checked. So big objects can have part of them inside clear areas.
   - If this is a problem, increase the value.
+- clearArea (default: `false`): If set, this vegetation creates a clear area similar to locations (based on `clearRadius`).
+  - When using this, it's important to put the vegetation at top of the file so that it's generated before other vegetation.
+  - Unlike locations, the clear area can't cross zone borders. If the vegetation spawns near the border, it may have a smaller clear area.
+  - Use `groupRadius` to move the vegetation away from the zone borders.
 - requiredGlobalKey: List of [global keys](https://valheim.fandom.com/wiki/Global_Keys). If all are set, the vegetation is placed.
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
 - forbiddenGlobalKey: List of [global keys](https://valheim.fandom.com/wiki/Global_Keys). If any is set, the vegetation is not placed.

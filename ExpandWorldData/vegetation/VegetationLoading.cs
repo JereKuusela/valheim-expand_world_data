@@ -155,7 +155,8 @@ public class VegetationLoading
     };
     VegetationExtra extra = new()
     {
-      clearRadius = data.clearRadius
+      clearRadius = data.clearRadius,
+      clearArea = data.clearArea,
     };
     // Minor optimization to skip RNG calls if there is nothing to randomize.
     if (Helper.IsMultiAxis(scale))

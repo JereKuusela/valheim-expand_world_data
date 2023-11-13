@@ -72,6 +72,8 @@ public class VegetationData
   public float forestTresholdMin = 0f;
   [DefaultValue(1f)]
   public float forestTresholdMax = 1f;
+  [DefaultValue(false)]
+  public bool clearArea = false;
   [DefaultValue(0f)]
   public float clearRadius = 0f;
   [DefaultValue("")]
@@ -91,6 +93,7 @@ public class VegetationExtra
   public ZDOData? data;
   public Range<Vector3>? scale;
   public float clearRadius = 0;
+  public bool clearArea = false;
 
-  public bool IsValid() => requiredGlobalKeys != null || forbiddenGlobalKeys != null || data != null || scale != null || clearRadius != 0f;
+  public bool IsValid() => requiredGlobalKeys != null || forbiddenGlobalKeys != null || data != null || scale != null || clearRadius != 0f || clearArea;
 }

@@ -116,7 +116,7 @@ public class LocationLoading
       data.maxAltitude = loc.m_maxAltitude;
     if (loc.m_location)
     {
-      data.randomDamage = loc.m_location.m_applyRandomDamage;
+      data.randomDamage = loc.m_location.m_applyRandomDamage ? "true" : "";
       data.exteriorRadius = loc.m_location.m_exteriorRadius;
       data.clearArea = loc.m_location.m_clearArea;
       data.discoverLabel = loc.m_location.m_discoverLabel;
@@ -259,7 +259,7 @@ public class LocationLoading
     item.m_exteriorRadius = item.m_location.m_exteriorRadius;
     if (radius.HasValue && item.m_exteriorRadius == 0)
       item.m_exteriorRadius = radius.Value;
-    item.m_location.m_applyRandomDamage = data.randomDamage;
+    item.m_location.m_applyRandomDamage = data.randomDamage == "true" || data.randomDamage == "all";
     item.m_location.m_clearArea = data.clearArea;
     // Handled by own system.
     item.m_location.m_noBuild = false;

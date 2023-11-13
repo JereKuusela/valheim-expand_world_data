@@ -87,12 +87,12 @@ public class LocationObjectDataAndSwap
     var flag = loc && loc.m_useCustomInteriorTransform && loc.m_interiorTransform && loc.m_generator;
     if (flag)
       Spawn.DungeonGeneratorPos = location.m_generatorPosition;
-    Spawn.IgnoreHealth = location.m_location.m_applyRandomDamage;
+    Spawn.IgnoreHealth = LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data) && data.randomDamage == "all";
     LocationSpawning.CurrentLocation = "";
     if (mode != ZoneSystem.SpawnMode.Client)
     {
       LocationSpawning.CurrentLocation = location.m_prefabName;
-      if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data))
+      if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out data))
         pos.y += data.offset ?? data.groundOffset;
     }
     // Blueprints won't have any znetviews to spawn or other logic to handle.

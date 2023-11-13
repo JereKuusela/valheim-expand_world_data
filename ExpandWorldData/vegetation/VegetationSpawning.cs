@@ -40,11 +40,13 @@ public class VegetationSpawning
   {
     return prefab;
   }
-  static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot)
+  static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot, List<ZoneSystem.ClearArea> clearAreas)
   {
+    if (Extra.TryGetValue(CurrentVegetation, out var extra) && extra.clearArea)
+      clearAreas.Add(new(pos, extra.clearRadius));
     return DataManager.Instantiate(prefab, pos, rot, DataOverride());
   }
-  static GameObject InstantiateBlueprint(GameObject prefab, Vector3 position, Quaternion rotation)
+  static GameObject InstantiateBlueprint(GameObject prefab, Vector3 position, Quaternion rotation, List<ZoneSystem.ClearArea> clearAreas)
   {
     if (Mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.StartGhostInit();
@@ -87,10 +89,12 @@ public class VegetationSpawning
       .MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(ZoneSystem), nameof(ZoneSystem.InsideClearArea))))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(InsideClearArea).operand)
       .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, 5))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(Instantiate).operand)
       .MatchForward(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(ZNetView), nameof(ZNetView.SetLocalScale))))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(SetScale).operand)
       .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, 5))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(InstantiateBlueprint).operand)
       .InstructionEnumeration();
   }
