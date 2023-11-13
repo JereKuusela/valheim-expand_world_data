@@ -1,7 +1,7 @@
 - v1.19
   - Adds a new field `clearArea` to the `expand_vegetation.yaml`.
-  - Adds a new value `all` to the `noBuild` field of `expand_locations.yaml` to affect all pieces.
-  - Changes the `noBuild` field of `expand_locations.yaml` to not affect pieces with custom health.
+  - Adds a new value `all` to the `randomDamage` field of `expand_locations.yaml` to affect all pieces.
+  - Changes the `randomDamage` field of `expand_locations.yaml` to not affect pieces with custom health.
 
 - v1.18
   - Fixes locations sometimes not appearing until relog.
