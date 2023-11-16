@@ -101,7 +101,7 @@ public class LocationObjectDataAndSwap
 
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
   {
-    var instantiator = typeof(Object).GetMethods().First(m => m.Name == nameof(UnityEngine.Object.Instantiate) && m.IsGenericMethodDefinition && m.GetParameters().Skip(1).Select(p => p.ParameterType).SequenceEqual(new[] { typeof(Vector3), typeof(Quaternion) })).MakeGenericMethod(typeof(GameObject));
+    var instantiator = typeof(Object).GetMethods().First(m => m.Name == nameof(Object.Instantiate) && m.IsGenericMethodDefinition && m.GetParameters().Skip(1).Select(p => p.ParameterType).SequenceEqual(new[] { typeof(Vector3), typeof(Quaternion) })).MakeGenericMethod(typeof(GameObject));
     return new CodeMatcher(instructions)
       .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
       .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, 6))
@@ -153,7 +153,7 @@ public class LocationObjectDataAndSwap
     else level = true;
     if (!level && data.paint == "") return;
 
-    Terrain.ChangeTerrain(pos, compiler =>
+    Terrain.ChangeTerrain(pos, (hm, terrain) =>
     {
       if (level)
       {
@@ -165,13 +165,13 @@ public class LocationObjectDataAndSwap
           levelRadius = multiplier * radius;
           levelBorder = (1 - multiplier) * radius;
         }
-        Terrain.Level(compiler, pos, levelRadius, levelBorder);
+        Terrain.Level(hm, terrain, pos, levelRadius, levelBorder);
       }
       if (data.paint != "")
       {
         var paintRadius = data.paintRadius ?? radius;
         var paintBorder = data.paintBorder ?? 5f;
-        Terrain.Paint(compiler, pos, data.paint, paintRadius, paintBorder);
+        Terrain.Paint(hm, terrain, pos, data.paint, paintRadius, paintBorder);
       }
     });
   }
