@@ -530,7 +530,7 @@ The objects are added relative to the spawn or location center.
     - Chest, 5,0,0, 90,0,0, 1,1,1, 0.5, infinite_health
 ```
 
-For the default objects, you can use commands  `ew_locations` and `ew_rooms` to print location or room contents.
+For the default objects, you can use commands `ew_locations` and `ew_rooms` to print location or room contents.
 
 ## Object swaps
 
@@ -543,7 +543,7 @@ Objects in locations can be swapped to other objects by using the `objectSwap` f
   - If the there is no dungeon swap, then the room must swap the object A.
   - If you need to handle both situations, add swap for both A and X objects.
 
-Note: To prevent a custom object being swapped, use a dummy object and then create a swap for it. For example acustom object A would get swapped to object X, then use object D instead and swap it back to the object A.
+Note: To prevent a custom object being swapped, use a dummy object and then create a swap for it. For example a custom object A would get swapped to object X, then use object D instead and swap it back to the object A.
 
 Note: Objects can be removed by swapping to nothing.
 

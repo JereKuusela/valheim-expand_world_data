@@ -4,6 +4,7 @@
   - Changes the `randomDamage` field of `expand_locations.yaml` to not affect pieces with custom health.
   - Fixes location reset from Upgrade World mod creating duplicate terrain compilers when terrain leveling was used.
   - Fixes terrain leveling using the modified terrain height, which caused wrong terrain height when Upgrade World was used.
+  - Fixes zero health on data not being applied as the default health.
   - Improves performance of terrain leveling.
 
 - v1.18

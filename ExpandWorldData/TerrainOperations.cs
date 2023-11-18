@@ -103,7 +103,7 @@ public partial class Terrain
     var index = ZDOMan.instance.SectorToIndex(zone);
     if (index < 0 || index >= ZDOMan.instance.m_objectsBySector.Length)
       return hm.GetAndCreateTerrainCompiler().m_nview.GetZDO();
-    var tc = ZDOMan.instance.m_objectsBySector[index].FirstOrDefault(zdo => zdo.GetPrefab() == TerrainHash);
+    var tc = ZDOMan.instance.m_objectsBySector[index]?.FirstOrDefault(zdo => zdo.GetPrefab() == TerrainHash);
     if (tc == null)
       return hm.GetAndCreateTerrainCompiler().m_nview.GetZDO();
     return tc;

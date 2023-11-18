@@ -67,7 +67,6 @@ public class ZDOData
   {
     Load(new ZPackage(data));
   }
-
   public void Add(ZDOData data)
   {
     foreach (var pair in data.Floats)
@@ -98,6 +97,10 @@ public class ZDOData
 
   public void Write(ZDO zdo)
   {
+    // Hack to allow resetting object health to default.
+    // Proper way to remove keys could be supported but so far this is the only use case.
+    if (Floats.TryGetValue(ZDOVars.s_health, out var h) && h <= 0f)
+      Floats.Remove(ZDOVars.s_health);
     var id = zdo.m_uid;
     if (Floats.Count > 0) ZDOHelper.Init(ZDOExtraData.s_floats, id);
     if (Vecs.Count > 0) ZDOHelper.Init(ZDOExtraData.s_vec3, id);
