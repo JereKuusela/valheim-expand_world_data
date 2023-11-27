@@ -168,7 +168,7 @@ public class VegetationLoading
     {
       veg.m_prefab = obj;
     }
-    else if (BlueprintManager.Load(data.prefab, data.centerPiece))
+    else if (BlueprintManager.Load(data.prefab))
     {
       veg.m_prefab = new(data.prefab);
     }

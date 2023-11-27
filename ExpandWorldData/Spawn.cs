@@ -151,7 +151,7 @@ public class Spawn
       {
         // Empty string is supported for removing objects.
         if (swap.Item2 != "")
-          BlueprintManager.Load(swap.Item2, "");
+          BlueprintManager.Load(swap.Item2);
       }
 
     }

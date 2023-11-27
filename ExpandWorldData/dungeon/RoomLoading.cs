@@ -91,7 +91,7 @@ public class RoomLoading
     DungeonDB.instance.m_rooms = data;
   }
 
-  public static DungeonDB.RoomData CreateProxy(string name, string centerPiece, string[] snapPieces)
+  public static DungeonDB.RoomData CreateProxy(string name, string[] snapPieces)
   {
     DungeonDB.RoomData roomData = new();
     var room = new GameObject(name).AddComponent<Room>();
@@ -117,7 +117,7 @@ public class RoomLoading
           return conn;
         }).ToArray();
     }
-    else if (BlueprintManager.Load(name, centerPiece, snapPieces))
+    else if (BlueprintManager.Load(name, snapPieces))
     {
       room.m_roomConnections = snapPieces.Select(c =>
         {
@@ -159,7 +159,7 @@ public class RoomLoading
   {
     RoomSpawning.Data[data.name] = data;
     var snapPieces = data.connections.Select(c => c.position).ToArray();
-    var roomData = CreateProxy(data.name, data.centerPiece, snapPieces);
+    var roomData = CreateProxy(data.name, snapPieces);
     var room = roomData.m_room;
     var missingThemes = DataManager.ToList(data.theme).Where(s => !NameToTheme.ContainsKey(s.ToLowerInvariant())).ToArray();
     foreach (var theme in missingThemes)

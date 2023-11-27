@@ -13,41 +13,11 @@ Install on all clients and on the server (modding [guide](https://youtu.be/L9ljm
 - Change data like locations, vegetation and weather.
 - Config sync to ensure all clients use the same settings.
 - Change events with [Expand World Events](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Events/).
+- Change factions with [Expand World Factions](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Factions/).
 - Change prefabs with [Expand World Prefabs](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Prefabs/).
 - Change spawns with [Expand World Spawns](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Spawns/).
 
 For example you can create entirely flat worlds with only Meadows for building. Or group up colder biomes up north while more warmer biomes end up in the other side. Or just have a world with terrain shapes no one has ever seen before.
-
-## Migration for Hildir update
-
-New dungeons, environments, events and locations are added automatically. Changes to existing dungeon rooms require manual changes.
-
-### Automatic changes
-
-- `expand_locations.yaml` should automatically add DevSpawnTest, Hildir_cave, Hildir_crypt and Hildir_plainsfortress.
-  - Expand World Data version 1.7 did not add these correctly.
-  - Check that Hildir_plainsfortress has `noBuild: 8.75`
-- `expand_environments.yaml` should automatically add CavesHildir and CryptHildir.
-- `expand_events.yaml` should automatically add hildirboss1, hildirboss2 and hildirboss3.
-- `expand_dungeons.yaml` should automatically add DG_Hildir_Cave, DG_Hildir_ForestCrypt and DG_Hildir_PlainsFortress.
-  - Expand World Data version 1.5 did not add these correctly.
-  - Search and replace:
-    - 1024 to CaveHildir
-    - 2048 to ForestCryptHildir
-    - 4096 to PlainsFortHildir
-- `expand_rooms.yaml` should automatically add new rooms (for example plainsfortress_Hildir_Floor0).
-  - Expand World Data version 1.5 did not add these correctly.
-  - Search and replace:
-    - 1024 to CaveHildir
-    - 2048 to ForestCryptHildir
-    - 4096 to PlainsFortHildir
-
-### Manual changes
-
-- `expand_rooms.yaml` is missing changes to the old rooms.
-  - If you have changed the file, copy it to another folder.
-  - Delete the `expand_rooms.yaml` so that it regenerates when loading a world.
-  - Use any tool to compare the files. Update room themes as needed.
 
 ## Tutorials
 
@@ -104,14 +74,13 @@ The file format is slightly modified from the usual:
 - Blueprints can contain other blueprints as objects. These must added manually to the file.
 - Center piece (bottom center of the blueprint) can be set to a certain object. This object is never spawned to the world.
   - Infinity Hammer saves this information to .blueprint files.
-  - Center piece can also be set in the .yaml files.
-  - If a blueprint is used multiple times, it should always use the same center piece.
+  - If the center piece is not found, the blueprint is centered automatically and placed 0.05 meters towards the ground.
 
 ## Biomes
 
 The file `expand_biomes.yaml` sets available biomes and their configuration.
 
-You can add up to 22 new biomes (on top of the 9 default ones).
+You can add up to 23 new biomes (on top of the 9 default ones).
 
 Note: The game assigns a number for each biome. If some mods don't recognize new biomes you can try using the number instead. The first new biome gets number 1024 which is doubled for each new biome (2nd biome is 2048, 3rd biome is 4096, etc).
 
@@ -334,7 +303,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
   - Note: Maximum suggested value is 32 meters. Higher values go past the zone border and can cause issues.
 - commands: List of commands that will be executed when spawning the location.
   - Use $$x, $$y and $$z in the command to use the location center point.
-  - Use $$a, in the command to use the location rotation.
+  - Use $$a in the command to use the location rotation.
   - Basic arithmetic is supported. For example `$$x+10` would add 10 meters to the x coordinate.
 - clearArea (default: `false`): If true, vegetation is not placed within `exteriorRadius`.
 - noBuild (default: `false`): If true, players can't build within `exteriorRadius`. If number, player can't build within the given radius.
@@ -346,8 +315,6 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - paint: Paints the terrain. Format is `dirt,cultivated,paved,vegetation` (from 0.0 to 1.0) or a pre-defined color (cultivated, dirt, grass, grass_dark, patches, paved, paved_dark, paved_dirt, paved_moss).
 - paintRadius (default: `exteriorRadius`): Size of the painted area.
 - paintBorder (default: `5`): Adds a smooth transition around the `paintRadius`.
-- centerPiece (default: `piece_bpcenterpoint`): Which object determines the blueprint bottom and center point. If the object is not found, the blueprint is centered automatically and placed 0.05 meters towards the ground.
-  - Infinity Hammer mod saves the center point to the blueprint. This is automatically used if available.
 - scaleMin (default: `1`): Minimum scale. Number or x,z,y (with y being the height).
   - Note: Each object is scaled independently. Distances between objects are not scaled.
   - Note: All objects can't be scaled without using Structure Tweaks mod.
@@ -440,8 +407,6 @@ New rooms can be created from blueprints or cloning an existing room by adding `
 - objectSwap: Changes room objects to other objects.
   - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
   - Note: If the dungeon has object swaps, those are applied first.
-- centerPiece (default: `piece_bpcenterpoint`): Which object determines the blueprint center point. Only for blueprints.
-  - Infinity Hammer mod saves the center point to the blueprint. This is automatically used if available.
 
 ## Vegetation
 
@@ -504,7 +469,6 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
 - forbiddenGlobalKey: List of [global keys](https://valheim.fandom.com/wiki/Global_Keys). If any is set, the vegetation is not placed.
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
 - data: ZDO data override. For example to create hidden stashes with Spawner Tweaks mod (`object copy` from World Edit Commands).
-- centerPiece (default: `piece_bpcenterpoint`): Which object determines the blueprint bottom and center point. If the object is not found, the blueprint is centered automatically and placed 0.05 meters towards the ground.
 
 ## Custom objects
 

@@ -82,8 +82,6 @@ public class VegetationData
   public string forbiddenGlobalKey = "";
   [DefaultValue("")]
   public string data = "";
-  [DefaultValue("piece_bpcenterpoint")]
-  public string centerPiece = "piece_bpcenterpoint";
 }
 
 public class VegetationExtra

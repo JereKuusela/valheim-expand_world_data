@@ -3,8 +3,7 @@
 1. Use PlanBuild mod or `hammer_save` to create a blueprint.
 2. Add a new entry and use the blueprint filename as the `prefab`.
 3. Use `hammer_location` to test the location. Note: The blueprint only shows up after being placed. It's normal to see nothing while placing it.
-4. By default, the blueprint is automatically centered. Use the `centerPiece` field.
-5. By default, the terrain is smoothly leveled. Adjust the `levelArea`, `levelRadius` and `levelBorder` fields if needed.
+4. By default, the terrain is smoothly leveled. Adjust the `levelArea`, `levelRadius` and `levelBorder` fields if needed.
 
 Blueprint without leveling:
 
@@ -19,13 +18,6 @@ Blueprint with 20 meters flat area:
 - prefab: Blueprint
   levelRadius: 20
   levelBorder: 0
-```
-
-Blueprint with custom centering (add GlowingMushroom to your blueprint as the center marker):
-
-```yaml
-- prefab: Blueprint
-  centerPiece: GlowingMushroom
 ```
 
 Blueprint with terrain painting:

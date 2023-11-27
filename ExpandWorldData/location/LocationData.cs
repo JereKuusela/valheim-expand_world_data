@@ -90,8 +90,6 @@ public class LocationData
   public float? paintRadius = null;
   [DefaultValue(null)]
   public float? paintBorder = null;
-  [DefaultValue("")]
-  public string centerPiece = "";
   [DefaultValue("1")]
   public string scaleMin = "1";
   [DefaultValue("1")]

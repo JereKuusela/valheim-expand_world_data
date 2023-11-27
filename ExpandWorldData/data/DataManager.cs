@@ -198,8 +198,6 @@ public class DataManager : MonoBehaviour
   public static Dictionary<string, string> ToDict(string str) => ToList(str).Select(s => s.Split('=')).Where(s => s.Length == 2).ToDictionary(s => s[0].Trim(), s => s[1].Trim());
   public static string FromBiomes(Heightmap.Biome biome)
   {
-    // Unused biome.
-    biome &= (Heightmap.Biome)~128;
     if (biome == DefaultMax) return "";
     if (biome == Heightmap.Biome.None) return "None";
     List<string> biomes = [];

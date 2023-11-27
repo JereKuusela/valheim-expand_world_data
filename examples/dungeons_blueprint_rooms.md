@@ -10,7 +10,6 @@ Blueprints must satisfy the following requirements:
   - By default, the `piece_bpcenterpoint` from PlanBuild mod is used.
   - However any object works for this. Recommended to use `GlowingMushroom` because it can be scaled to any size.
   - Blueprints made with Infinity Hammer include the center piece information, so it doesn't have to be added manually.
-  - For other blueprints, you may need to set the `centerPiece` parameter.
 - The center piece should be close to the actual center, but it doesn't have to be exact.
   - The position is used for collision checks which become less accurate the further away the center is.
   - Offset feature of Infinity Hammer can be used to accurately place the center piece (arrow keys and Page Up/Down).

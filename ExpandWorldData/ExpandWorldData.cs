@@ -11,7 +11,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.19";
+  public const string VERSION = "1.20";
 #nullable disable
   public static ManualLogSource Log;
   public static EWD Instance;
@@ -76,6 +76,7 @@ public class EWD : BaseUnityPlugin
   public void Start()
   {
     BiomeManager.NamesFromFile();
+    new DebugCommands();
   }
   private void MigrateOldConfig()
   {
@@ -119,11 +120,3 @@ public class EWD : BaseUnityPlugin
   }
 }
 
-[HarmonyPatch(typeof(Terminal), nameof(Terminal.InitTerminal))]
-public class SetCommands
-{
-  static void Postfix()
-  {
-    new DebugCommands();
-  }
-}

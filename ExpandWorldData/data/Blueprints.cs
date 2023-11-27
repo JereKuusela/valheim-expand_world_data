@@ -88,10 +88,8 @@ public class Blueprint
         EWD.Log.LogWarning($"Snap point piece {piece} not found in blueprint {Name}.");
     }
   }
-  public void Center(string centerPiece)
+  public void Center()
   {
-    if (centerPiece == "")
-      centerPiece = CenterPiece;
     Bounds bounds = new();
     var y = float.MaxValue;
     Quaternion rot = Quaternion.identity;
@@ -106,7 +104,7 @@ public class Blueprint
     Vector3 center = new(bounds.center.x, y, bounds.center.z);
     foreach (var obj in Objects)
     {
-      if (obj.Prefab == centerPiece)
+      if (obj.Prefab == CenterPiece)
       {
         center = obj.Pos;
         rot = Quaternion.Inverse(obj.Rot);

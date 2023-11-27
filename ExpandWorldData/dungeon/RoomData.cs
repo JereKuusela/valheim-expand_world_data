@@ -42,6 +42,4 @@ public class RoomData
   public string[]? objectData = null;
   [DefaultValue(null)]
   public string[]? objects = null;
-  [DefaultValue("")]
-  public string centerPiece = "";
 }

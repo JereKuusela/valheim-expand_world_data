@@ -30,7 +30,7 @@ public class LocationLoading
     loc.m_prefabName = data.prefab;
     if (!Locations.ContainsKey(Parse.Name(data.prefab)))
     {
-      if (!BlueprintManager.Load(data.prefab, data.centerPiece))
+      if (!BlueprintManager.Load(data.prefab))
         loc.m_prefabName = "";
     }
 

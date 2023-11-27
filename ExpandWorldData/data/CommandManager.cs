@@ -9,14 +9,14 @@ namespace ExpandWorldData;
 
 public class CommandManager
 {
-
-  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot)
+  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot) => Run(commands, center, rot, (ZNetPeer?)null);
+  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot, ZNetPeer? peer)
   {
     foreach (var command in commands)
     {
       try
       {
-        var cmd = Parse(command, center, rot);
+        var cmd = Parse(command, center, rot, peer);
         Console.instance.TryRunCommand(cmd);
       }
       catch (Exception e)
@@ -25,14 +25,27 @@ public class CommandManager
       }
     }
   }
-  private static string Parse(string command, Vector3 center, Vector3 rot)
+  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot, ZNetPeer[] peers)
+  {
+    foreach (var peer in peers)
+      Run(commands, center, rot, peer);
+  }
+  private static string Parse(string command, Vector3 center, Vector3 rot, ZNetPeer? peer)
   {
     var cmd = command
         .Replace("$$x", center.x.ToString(NumberFormatInfo.InvariantInfo))
         .Replace("$$y", center.y.ToString(NumberFormatInfo.InvariantInfo))
         .Replace("$$z", center.z.ToString(NumberFormatInfo.InvariantInfo))
         .Replace("$$a", rot.y.ToString(NumberFormatInfo.InvariantInfo));
-
+    if (peer != null)
+    {
+      cmd = cmd
+        .Replace("$$px", peer.m_refPos.x.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("$$py", peer.m_refPos.y.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("$$pz", peer.m_refPos.z.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("$$pname", peer.m_playerName)
+        .Replace("$$p", peer.m_uid.ToString(NumberFormatInfo.InvariantInfo));
+    }
     var expressions = cmd.Split(' ').Select(s => s.Split('=')).Select(a => a[a.Length - 1].Trim()).SelectMany(s => s.Split(',')).ToArray();
     foreach (var expression in expressions)
     {

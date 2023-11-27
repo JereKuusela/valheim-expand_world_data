@@ -144,13 +144,13 @@ public class BiomeManager
       EWD.Log.LogInfo($"Preloading biome names ({rawData.Count} entries).");
     var originalNames = OriginalBiomes.Select(kvp => kvp.Key.ToLower()).ToHashSet();
     BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-    var biomeNumber = (int)Heightmap.Biome.Mistlands * 2;
+    var biome = Heightmap.Biome.Mistlands;
     foreach (var item in rawData)
     {
       if (originalNames.Contains(item.biome.ToLower())) continue;
-      var biome = (Heightmap.Biome)biomeNumber;
+      biome = NextBiome(biome);
       BiomeToDisplayName[biome] = item.biome;
-      biomeNumber *= 2;
+
     }
     NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLower(), kvp => kvp.Key);
   }
@@ -165,34 +165,29 @@ public class BiomeManager
     BiomeToColor.Clear();
     NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
     BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-    var biomeNumber = (int)Heightmap.Biome.Mistlands * 2;
+    var lastBiome = Heightmap.Biome.Mistlands;
     foreach (var item in rawData)
     {
-      var biome = (Heightmap.Biome)biomeNumber;
-      var isDefaultBiome = false;
+      var biome = lastBiome;
       if (NameToBiome.TryGetValue(item.biome.ToLower(), out var defaultBiome))
       {
-        isDefaultBiome = true;
         biome = defaultBiome;
+        if (item.name != "")
+          AddTranslation(biome, item.name);
+      }
+      else
+      {
+        biome = lastBiome = NextBiome(lastBiome);
+        NameToBiome.Add(item.biome.ToLower(), biome);
+        BiomeToDisplayName[biome] = item.biome;
+        AddTranslation(biome, item.name);
       }
       DataManager.Sanity(ref item.mapColor);
       DataManager.Sanity(ref item.color);
-      if (!BiomeToDisplayName.ContainsKey(biome))
-        BiomeToDisplayName[biome] = item.biome;
-      if (item.name != "" || !isDefaultBiome)
-      {
-        var name = item.name == "" ? biome.ToString() : item.name;
-        var key = "biome_" + biome.ToString().ToLower();
-        Localization.instance.m_translations[key] = name;
-      }
       BiomeData extra = new(item);
       if (extra.IsValid())
         BiomeData[biome] = extra;
-      if (isDefaultBiome)
-        continue;
-      NameToBiome.Add(item.biome.ToLower(), biome);
       if (item.paint != "") BiomeToColor[biome] = Terrain.ParsePaint(item.paint);
-      biomeNumber *= 2;
     }
     BiomeToTerrain = rawData.ToDictionary(data => GetBiome(data.biome), data =>
     {
@@ -232,6 +227,21 @@ public class BiomeManager
     em.m_firstEnv = true;
 
   }
+  private static void AddTranslation(Heightmap.Biome biome, string name)
+  {
+    var key = "biome_" + biome.ToString().ToLower();
+    var value = name == "" ? biome.ToString() : name;
+    Localization.instance.m_translations[key] = value;
+  }
+  private static Heightmap.Biome NextBiome(Heightmap.Biome biome)
+  {
+    var number = (uint)biome;
+    if (number == 0x80)
+      throw new Exception("Too many biomes.");
+    if (number == 0x80000000)
+      return (Heightmap.Biome)0x80;
+    return (Heightmap.Biome)(2 * number);
+  }
   private static void Set(string yaml)
   {
     Load(yaml);
@@ -247,7 +257,7 @@ public class BiomeManager
   }
 
   // These must be stored in static fields to avoid garbage collection.
-  static readonly float[] biomeWeights = new float[30];
+  static readonly float[] biomeWeights = new float[33];
   static readonly Heightmap.Biome[] indexToBiome = biomeWeights.Select((_, i) => (Heightmap.Biome)(i < 2 ? i : 2 << (i - 2))).ToArray();
   // dotnet caches/inlines access to static readonly fields.
   // So the readonly arrays must be resized in advance.
@@ -283,5 +293,21 @@ public class GenerateWorldMap
       .MatchForward(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight))))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(GetBiomeHeight).operand)
       .InstructionEnumeration();
+  }
+}
+[HarmonyPatch(typeof(Minimap), nameof(Minimap.UpdateBiome))]
+public class UpdateBiome
+{
+  // Last biome gets negative number that can't be translated.
+  static readonly char[] EmptyChars = [];
+  static char[] OriginalChars = [];
+  static void Prefix()
+  {
+    OriginalChars = Localization.instance.m_endChars;
+    Localization.instance.m_endChars = EmptyChars;
+  }
+  static void Postfix()
+  {
+    Localization.instance.m_endChars = OriginalChars;
   }
 }
