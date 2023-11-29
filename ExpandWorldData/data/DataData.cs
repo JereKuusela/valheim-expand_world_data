@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using BepInEx.Bootstrap;
+using HarmonyLib;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -47,19 +49,50 @@ public class DefaultData
       {
         return e.Types.Where(t => t != null);
       }
-    }).Where(baseType.IsAssignableFrom).ToArray();
+    }).Where(t =>
+    {
+      try
+      {
+        return baseType.IsAssignableFrom(t);
+      }
+      catch
+      {
+        return false;
+      }
+    }).ToArray();
     keys.AddRange(types.Select(t => $"HasFields{t.Name}"));
     keys.AddRange(types.SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.Public).Select(f => $"{t.Name}.{f.Name}")));
     keys.AddRange(typeof(ZDOVars).GetFields(BindingFlags.Static | BindingFlags.Public).Select(f => f.Name.Replace("s_", "")));
+    keys.AddRange(typeof(ZDOVars).GetFields(BindingFlags.Static | BindingFlags.Public).Select(f => FirstLetterUpper(f.Name.Replace("s_", ""))));
     for (var i = 0; i < 10; i++)
     {
       keys.Add($"item{i}");
       keys.Add($"quality{i}");
       keys.Add($"variant{i}");
     }
+    keys.AddRange(AnimationKeys.Select(k => $"${k}"));
     return [.. keys.Distinct()];
   }
+  private static string FirstLetterUpper(string s) => char.ToUpper(s[0]) + s.Substring(1);
   private static readonly string[] StaticKeys = [
+    "alive_time",
+    "attachJoint",
+    "body_avel",
+    "body_vel",
+    "emote_oneshot",
+    "HaveSaddle",
+    "haveTarget",
+    "IsBlocking",
+    "max_health",
+    "picked_time",
+    "relPos",
+    "relRot",
+    "scale",
+    "scaleScalar",
+    "vel",
+    "lastWorldTime",
+    "spawntime",
+    "spawnpoint",
     "HasFields",
     "user_u",
     "user_i",
@@ -186,12 +219,62 @@ public class DefaultData
     "KGperiodicAnimationTime",
     "KGperiodicSound",
     "KGperiodicSoundTime",
-    "KGnpcScale",
+    "KGnpcScale"];
+
+  private static readonly string[] AnimationKeys = [
+    "alert",
+    "footstep",
+    "forward_speed",
+    "sideway_speed",
+    "anim_speed",
+    "statef",
+    "statei",
+    "blocking",
+    "attack",
+    "flapping",
+    "falling",
+    "onGround",
+    "intro",
+    "crouching",
+    "encumbered",
+    "equipping",
+    "attach_bed",
+    "attach_chair",
+    "attach_throne",
+    "attach_sitship",
+    "attach_mast",
+    "attach_dragon",
+    "attach_lox",
+    "bow_aim",
+    "reload_crossbow",
+    "crafting",
+    "visible",
+    "turn_speed",
+    "idle",
+    "flying",
+    "body_forward_speed",
+    "inWater",
+    "onGround",
+    "minoraction",
+    "minoraction_fast",
+    "emote"
   ];
 
   private static Dictionary<int, string>? hashToKey;
-  private static Dictionary<int, string> HashToKey => hashToKey ??= KnownKeys.ToDictionary(x => x.GetStableHashCode(), x => x);
+  private static Dictionary<int, string> HashToKey => hashToKey ??= KnownKeys.ToDictionary(Hash, x => x);
   public static string Convert(int hash) => HashToKey.TryGetValue(hash, out var key) ? key : hash.ToString();
+  public static int Hash(string key)
+  {
+    if (key.StartsWith("$", StringComparison.InvariantCultureIgnoreCase))
+    {
+      var hash = ZSyncAnimation.GetHash(key.Substring(1));
+      if (key == "$anim_speed") return hash;
+      return 438569 + hash;
+    }
+    return key.GetStableHashCode();
+  }
+  public static bool Exists(int hash) => hashToKey == null || HashToKey.ContainsKey(hash);
+
   public static DataData[] Data = [
     new()
     {
@@ -223,3 +306,55 @@ public class DefaultData
     }
   ];
 }
+
+/*
+[HarmonyPatch(typeof(ZDO))]
+public class KeyCollector
+{
+
+  [HarmonyPatch(nameof(ZDO.Set), typeof(int), typeof(string)), HarmonyPrefix]
+  static void String(int hash)
+  {
+    if (DefaultData.Exists(hash)) return;
+    var stack = new System.Diagnostics.StackTrace();
+    EWD.Log.LogWarning($"Found new string key: {hash}\n{stack}");
+  }
+  [HarmonyPatch(nameof(ZDO.Set), typeof(int), typeof(int)), HarmonyPrefix]
+  static void Int(int hash)
+  {
+    if (DefaultData.Exists(hash)) return;
+    var stack = new System.Diagnostics.StackTrace();
+    EWD.Log.LogWarning($"Found new int key: {hash}\n{stack}");
+  }
+  [HarmonyPatch(nameof(ZDO.Set), typeof(int), typeof(long)), HarmonyPrefix]
+  static void Long(int hash)
+  {
+    if (DefaultData.Exists(hash)) return;
+    var stack = new System.Diagnostics.StackTrace();
+    EWD.Log.LogWarning($"Found new long key: {hash}\n{stack}");
+  }
+  [HarmonyPatch(nameof(ZDO.Set), typeof(int), typeof(float)), HarmonyPrefix]
+  static void Float(int hash)
+  {
+    if (DefaultData.Exists(hash)) return;
+    var stack = new System.Diagnostics.StackTrace();
+    EWD.Log.LogWarning($"Found new float key: {hash}\n{stack}");
+  }
+  [HarmonyPatch(nameof(ZDO.Set), typeof(int), typeof(Vector3)), HarmonyPrefix]
+  static void Vector3(int hash)
+  {
+    if (DefaultData.Exists(hash)) return;
+    var stack = new System.Diagnostics.StackTrace();
+    EWD.Log.LogWarning($"Found new Vector3 key: {hash}\n{stack}");
+  }
+}
+[HarmonyPatch(typeof(ZSyncAnimation), nameof(ZSyncAnimation.GetHash))]
+public class ZSyncAnimation_GetHash_Patch
+{
+  static void Postfix(string name, int __result)
+  {
+    if (DefaultData.Exists(__result + 438569)) return;
+    EWD.Log.LogWarning($"Found new animation key: {name}");
+  }
+}
+*/

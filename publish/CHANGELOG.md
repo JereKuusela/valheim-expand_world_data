@@ -1,3 +1,7 @@
+- v1.21
+  - Adds a lot more recognized data keys to `ew_copy`.
+  - Improves the connected ZDO support (mainly for Expand World Prefabs).
+
 - v1.20
   - Increases the amount of custom biomes from 19 to 23.
   - Removes the field `centerPiece` as obsolete (exists in blueprints already).

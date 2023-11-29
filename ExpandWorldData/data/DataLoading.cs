@@ -71,7 +71,7 @@ public class DataLoading
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
       var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
       zdo.Floats.Add(hash, Parse.Float(str));
     }
     foreach (var value in data.ints ?? [])
@@ -79,7 +79,7 @@ public class DataLoading
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
       var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
       zdo.Ints.Add(hash, Parse.Int(str));
     }
     foreach (var value in data.longs ?? [])
@@ -87,7 +87,7 @@ public class DataLoading
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
       var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
       zdo.Longs.Add(hash, Parse.Long(str));
     }
     foreach (var value in data.strings ?? [])
@@ -95,21 +95,21 @@ public class DataLoading
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
       var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
       zdo.Strings.Add(hash, str);
     }
     foreach (var value in data.vecs ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length != 4) continue;
-      var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
       zdo.Vecs.Add(hash, Parse.VectorXZY(split, 1));
     }
     foreach (var value in data.quats ?? [])
     {
       var split = Parse.Split(value);
       if (split.Length != 4) continue;
-      var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
       zdo.Quats.Add(hash, Parse.AngleYXZ(split, 1));
     }
     foreach (var value in data.bytes ?? [])
@@ -117,7 +117,7 @@ public class DataLoading
       var split = Parse.Split(value);
       if (split.Length < 2) continue;
       var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : split[0].GetStableHashCode();
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
       zdo.ByteArrays.Add(hash, Convert.FromBase64String(str));
     }
     if (!string.IsNullOrWhiteSpace(data.connection))

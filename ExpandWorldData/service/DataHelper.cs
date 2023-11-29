@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ExpandWorldData;
 using UnityEngine;
 
 namespace Service;
@@ -39,7 +40,17 @@ public class ZDOData
     if (data == "") return null;
     var hash = data.GetStableHashCode();
     if (!Cache.ContainsKey(hash))
-      Cache[hash] = new ZDOData(data);
+    {
+      try
+      {
+        Cache[hash] = new ZDOData(data);
+      }
+      catch
+      {
+        EWD.Log.LogError($"Failed to find or parse data entry: {data}");
+        return null;
+      }
+    }
     return Cache[hash];
   }
   public static void Register(ZDOData data)
@@ -94,6 +105,8 @@ public class ZDOData
   public Dictionary<int, byte[]> ByteArrays = [];
   public ZDOExtraData.ConnectionType ConnectionType = ZDOExtraData.ConnectionType.None;
   public int ConnectionHash = 0;
+  public ZDOID OriginalId = ZDOID.None;
+  public ZDOID TargetConnectionId = ZDOID.None;
 
   public void Write(ZDO zdo)
   {
@@ -124,8 +137,76 @@ public class ZDOData
       ZDOExtraData.s_strings[id].SetValue(pair.Key, pair.Value);
     foreach (var pair in ByteArrays)
       ZDOExtraData.s_byteArrays[id].SetValue(pair.Key, pair.Value);
-    if (ConnectionType != ZDOExtraData.ConnectionType.None && ConnectionHash != 0)
-      ZDOExtraData.SetConnectionData(id, ConnectionType, ConnectionHash);
+
+    HandleConnection(zdo);
+    HandleHashConnection(zdo);
+  }
+  private void HandleConnection(ZDO ownZdo)
+  {
+    if (OriginalId == ZDOID.None) return;
+    var ownId = ownZdo.m_uid;
+    if (TargetConnectionId != ZDOID.None)
+    {
+      // If target is known, the setup is easy.
+      var otherZdo = ZDOMan.instance.GetZDO(TargetConnectionId);
+      if (otherZdo == null) return;
+
+      ownZdo.SetConnection(ConnectionType, TargetConnectionId);
+      // Portal is two way.
+      if (ConnectionType == ZDOExtraData.ConnectionType.Portal)
+        otherZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, ownId);
+
+    }
+    else
+    {
+      // Otherwise all zdos must be scanned.
+      var other = ZDOExtraData.s_connections.FirstOrDefault(kvp => kvp.Value.m_target == OriginalId);
+      if (other.Value == null) return;
+      var otherZdo = ZDOMan.instance.GetZDO(other.Key);
+      if (otherZdo == null) return;
+      // Connection is always one way here, otherwise TargetConnectionId would be set.
+      otherZdo.SetConnection(other.Value.m_type, ownId);
+    }
+  }
+  private void HandleHashConnection(ZDO ownZdo)
+  {
+    if (ConnectionHash == 0) return;
+    if (ConnectionType == ZDOExtraData.ConnectionType.None) return;
+    var ownId = ownZdo.m_uid;
+
+    // Hash data is regenerated on world save.
+    // But in this case, it's manually set, so might be needed later.
+    ZDOExtraData.SetConnectionData(ownId, ConnectionType, ConnectionHash);
+
+    // While actual connection can be one way, hash is always two way.
+    // One of the hashes always has the target type.
+    var otherType = ConnectionType ^ ZDOExtraData.ConnectionType.Target;
+    var isOtherTarget = (ConnectionType & ZDOExtraData.ConnectionType.Target) == 0;
+    var zdos = ZDOExtraData.GetAllConnectionZDOIDs(otherType);
+    var otherId = zdos.FirstOrDefault(z => ZDOExtraData.GetConnectionHashData(z, ConnectionType)?.m_hash == ConnectionHash);
+    if (otherId == ZDOID.None) return;
+    var otherZdo = ZDOMan.instance.GetZDO(otherId);
+    if (otherZdo == null) return;
+    if ((ConnectionType & ZDOExtraData.ConnectionType.Spawned) > 0)
+    {
+      // Spawn is one way.
+      var connZDO = isOtherTarget ? ownZdo : otherZdo;
+      var targetId = isOtherTarget ? otherId : ownId;
+      connZDO.SetConnection(ZDOExtraData.ConnectionType.Spawned, targetId);
+    }
+    if ((ConnectionType & ZDOExtraData.ConnectionType.SyncTransform) > 0)
+    {
+      // Sync is one way.
+      var connZDO = isOtherTarget ? ownZdo : otherZdo;
+      var targetId = isOtherTarget ? otherId : ownId;
+      connZDO.SetConnection(ZDOExtraData.ConnectionType.SyncTransform, targetId);
+    }
+    if ((ConnectionType & ZDOExtraData.ConnectionType.Portal) > 0)
+    {
+      // Portal is two way.
+      otherZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, ownId);
+      ownZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, otherId);
+    }
   }
   public void Load(ZPackage pkg)
   {
@@ -194,6 +275,12 @@ public class ZDOData
     {
       ConnectionType = conn.m_type;
       ConnectionHash = conn.m_hash;
+    }
+    OriginalId = id;
+    if (ZDOExtraData.s_connections.TryGetValue(id, out var zdoConn) && zdoConn.m_target != ZDOID.None)
+    {
+      TargetConnectionId = zdoConn.m_target;
+      ConnectionType = zdoConn.m_type;
     }
   }
 }
