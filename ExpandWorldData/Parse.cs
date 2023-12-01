@@ -112,4 +112,32 @@ public static class Parse
     if (scale.z == 0) scale.z = scale.x;
     return scale;
   }
+
+  public static Range<string> StringRange(string arg)
+  {
+    var range = arg.Split('-').ToList();
+    if (range.Count > 1 && range[0] == "")
+    {
+      range[0] = "-" + range[1];
+      range.RemoveAt(1);
+    }
+    if (range.Count > 2 && range[1] == "")
+    {
+      range[1] = "-" + range[2];
+      range.RemoveAt(2);
+    }
+    if (range.Count == 1) return new(range[0]);
+    else return new(range[0], range[1]);
+
+  }
+  public static Range<int> IntRange(string arg)
+  {
+    var range = StringRange(arg);
+    return new(Int(range.Min), Int(range.Max));
+  }
+  public static Range<float> FloatRange(string arg)
+  {
+    var range = StringRange(arg);
+    return new(Float(range.Min), Float(range.Max));
+  }
 }

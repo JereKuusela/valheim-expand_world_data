@@ -82,6 +82,22 @@ public class DataLoading
       var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
       zdo.Ints.Add(hash, Parse.Int(str));
     }
+    foreach (var value in data.bools ?? [])
+    {
+      var split = Parse.Split(value);
+      if (split.Length < 2) continue;
+      var str = string.Join(",", split.Skip(1));
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+      zdo.Ints.Add(hash, str == "true" ? 1 : 0);
+    }
+    foreach (var value in data.hashes ?? [])
+    {
+      var split = Parse.Split(value);
+      if (split.Length < 2) continue;
+      var str = string.Join(",", split.Skip(1));
+      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+      zdo.Ints.Add(hash, str.GetStableHashCode());
+    }
     foreach (var value in data.longs ?? [])
     {
       var split = Parse.Split(value);

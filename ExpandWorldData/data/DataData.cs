@@ -15,7 +15,11 @@ public class DataData
   [DefaultValue("")]
   public string connection = "";
   [DefaultValue(null)]
+  public string[]? bools = null;
+  [DefaultValue(null)]
   public string[]? ints = null;
+  [DefaultValue(null)]
+  public string[]? hashes = null;
   [DefaultValue(null)]
   public string[]? floats = null;
   [DefaultValue(null)]

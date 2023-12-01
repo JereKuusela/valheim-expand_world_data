@@ -1,3 +1,7 @@
+- v1.22
+  - Adds support of type `bools` and ``hashes` to the `expand_data.yaml`.
+  - Internal change for Expand World Events.
+
 - v1.21
   - Adds a lot more recognized data keys to `ew_copy`.
   - Improves the connected ZDO support (mainly for Expand World Prefabs).
