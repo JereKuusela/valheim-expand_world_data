@@ -1,6 +1,7 @@
 - v1.22
   - Adds support of type `bools` and ``hashes` to the `expand_data.yaml`.
-  - Internal change for Expand World Events.
+  - Changes the format of command keywords from $$ to {}.
+  - Internal change for Expand World Events and Expand World Prefabs.
 
 - v1.21
   - Adds a lot more recognized data keys to `ew_copy`.

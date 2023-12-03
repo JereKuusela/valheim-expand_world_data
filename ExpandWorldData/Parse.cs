@@ -44,7 +44,7 @@ public static class Parse
   }
   public static float Float(string arg, float defaultValue = 0f)
   {
-    if (!float.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
+    if (!TryFloat(arg, out var result))
       return defaultValue;
     return result;
   }
@@ -52,6 +52,10 @@ public static class Parse
   {
     if (args.Length <= index) return defaultValue;
     return Float(args[index], defaultValue);
+  }
+  public static bool TryFloat(string arg, out float result)
+  {
+    return float.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
   }
 
   public static Quaternion AngleYXZ(string[] args, int index) => AngleYXZ(args, index, Vector3.zero);

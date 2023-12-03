@@ -45,7 +45,18 @@ public class LocationLoading
     if (data.objects != null)
       Objects[data.prefab] = Parse.Objects(data.objects);
     if (data.commands != null)
-      Commands[data.prefab] = data.commands;
+    {
+      Commands[data.prefab] = data.commands.Select(s =>
+      {
+        if (s.Contains("$$"))
+        {
+          EWD.Log.LogWarning($"Command \"{s}\" contains $$ which is obsolete. Use {"{}"} instead.");
+          return s.Replace("$$x", "{x}").Replace("$$y", "{y}").Replace("$$z", "{z}").Replace("$$a", "{a}").Replace("$$i", "{i}").Replace("$$j", "{j}");
+        }
+        return s;
+      }).ToArray();
+    }
+
 
     Range<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
     {

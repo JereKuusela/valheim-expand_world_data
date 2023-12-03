@@ -7,16 +7,38 @@ using UnityEngine;
 
 namespace ExpandWorldData;
 
+public class PlayerInfo
+{
+  public string Name;
+  public Vector3 Pos;
+  public long Id;
+  public ZDOID ZDOID;
+  public PlayerInfo(ZNetPeer peer)
+  {
+    Name = peer.m_playerName;
+    Pos = peer.m_refPos;
+    Id = peer.m_uid;
+    ZDOID = peer.m_characterID;
+  }
+  public PlayerInfo(Player player)
+  {
+    Name = player.GetPlayerName();
+    Pos = player.transform.position;
+    Id = ZNet.GetUID();
+    ZDOID = player.GetZDOID();
+  }
+}
+
 public class CommandManager
 {
-  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot) => Run(commands, center, rot, (ZNetPeer?)null);
-  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot, ZNetPeer? peer)
+  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot) => Run(commands, center, rot, (PlayerInfo?)null);
+  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot, PlayerInfo? player)
   {
     foreach (var command in commands)
     {
       try
       {
-        var cmd = Parse(command, center, rot, peer);
+        var cmd = Parse(command, center, rot, player);
         Console.instance.TryRunCommand(cmd);
       }
       catch (Exception e)
@@ -25,26 +47,26 @@ public class CommandManager
       }
     }
   }
-  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot, ZNetPeer[] peers)
+  public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot, PlayerInfo[] players)
   {
-    foreach (var peer in peers)
+    foreach (var peer in players)
       Run(commands, center, rot, peer);
   }
-  private static string Parse(string command, Vector3 center, Vector3 rot, ZNetPeer? peer)
+  private static string Parse(string command, Vector3 center, Vector3 rot, PlayerInfo? peer)
   {
     var cmd = command
-        .Replace("$$x", center.x.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("$$y", center.y.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("$$z", center.z.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("$$a", rot.y.ToString(NumberFormatInfo.InvariantInfo));
+        .Replace("{x}", center.x.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("{y}", center.y.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("{z}", center.z.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("{a}", rot.y.ToString(NumberFormatInfo.InvariantInfo));
     if (peer != null)
     {
       cmd = cmd
-        .Replace("$$px", peer.m_refPos.x.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("$$py", peer.m_refPos.y.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("$$pz", peer.m_refPos.z.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("$$pname", peer.m_playerName)
-        .Replace("$$p", peer.m_uid.ToString(NumberFormatInfo.InvariantInfo));
+        .Replace("{px}", peer.Pos.x.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("{py}", peer.Pos.y.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("{pz}", peer.Pos.z.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("{pname}", peer.Name)
+        .Replace("{pid}", peer.Id.ToString(NumberFormatInfo.InvariantInfo));
     }
     var expressions = cmd.Split(' ').Select(s => s.Split('=')).Select(a => a[a.Length - 1].Trim()).SelectMany(s => s.Split(',')).ToArray();
     foreach (var expression in expressions)
