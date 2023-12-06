@@ -11,21 +11,25 @@ public class PlayerInfo
 {
   public string Name;
   public Vector3 Pos;
-  public long Id;
+  public long Character;
+  public string HostId;
   public ZDOID ZDOID;
   public PlayerInfo(ZNetPeer peer)
   {
     Name = peer.m_playerName;
     Pos = peer.m_refPos;
-    Id = peer.m_uid;
+    Character = peer.m_uid;
     ZDOID = peer.m_characterID;
+    HostId = peer.m_rpc.GetSocket().GetHostName();
+
   }
   public PlayerInfo(Player player)
   {
     Name = player.GetPlayerName();
     Pos = player.transform.position;
-    Id = ZNet.GetUID();
+    Character = ZNet.GetUID();
     ZDOID = player.GetZDOID();
+    HostId = "server";
   }
 }
 
@@ -55,18 +59,19 @@ public class CommandManager
   private static string Parse(string command, Vector3 center, Vector3 rot, PlayerInfo? peer)
   {
     var cmd = command
-        .Replace("{x}", center.x.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("{y}", center.y.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("{z}", center.z.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("{a}", rot.y.ToString(NumberFormatInfo.InvariantInfo));
+        .Replace("<x>", center.x.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("<y>", center.y.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("<z>", center.z.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("<a>", rot.y.ToString(NumberFormatInfo.InvariantInfo));
     if (peer != null)
     {
       cmd = cmd
-        .Replace("{px}", peer.Pos.x.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("{py}", peer.Pos.y.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("{pz}", peer.Pos.z.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("{pname}", peer.Name)
-        .Replace("{pid}", peer.Id.ToString(NumberFormatInfo.InvariantInfo));
+        .Replace("<px>", peer.Pos.x.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("<py>", peer.Pos.y.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("<pz>", peer.Pos.z.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("<pname>", peer.Name)
+        .Replace("<pid>", peer.HostId.ToString(NumberFormatInfo.InvariantInfo))
+        .Replace("<pchar>", peer.Character.ToString(NumberFormatInfo.InvariantInfo));
     }
     var expressions = cmd.Split(' ').Select(s => s.Split('=')).Select(a => a[a.Length - 1].Trim()).SelectMany(s => s.Split(',')).ToArray();
     foreach (var expression in expressions)

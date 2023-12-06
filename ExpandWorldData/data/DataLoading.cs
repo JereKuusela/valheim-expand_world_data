@@ -66,75 +66,105 @@ public class DataLoading
     {
       Name = data.name
     };
-    foreach (var value in data.floats ?? [])
+    if (data.floats != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length < 2) continue;
-      var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.Floats.Add(hash, Parse.Float(str));
+      zdo.Floats ??= [];
+      foreach (var value in data.floats)
+      {
+        var split = Parse.Split(value);
+        if (split.Length < 2) continue;
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.Floats.Add(hash, new(split));
+      }
     }
-    foreach (var value in data.ints ?? [])
+    if (data.ints != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length < 2) continue;
-      var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.Ints.Add(hash, Parse.Int(str));
+      zdo.Ints ??= [];
+      foreach (var value in data.ints)
+      {
+        var split = Parse.Split(value);
+        if (split.Length < 2) continue;
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.Ints.Add(hash, new(split));
+      }
     }
-    foreach (var value in data.bools ?? [])
+    if (data.bools != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length < 2) continue;
-      var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.Ints.Add(hash, str == "true" ? 1 : 0);
+      zdo.Ints ??= [];
+      foreach (var value in data.bools)
+      {
+        var split = Parse.Split(value);
+        if (split.Length < 2) continue;
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.Ints.Add(hash, new BoolValue(split));
+      }
     }
-    foreach (var value in data.hashes ?? [])
+    if (data.hashes != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length < 2) continue;
-      var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.Ints.Add(hash, str.GetStableHashCode());
+      zdo.Ints ??= [];
+      foreach (var value in data.hashes)
+      {
+        var split = Parse.Split(value);
+        if (split.Length < 2) continue;
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.Ints.Add(hash, new HashValue(split));
+      }
     }
-    foreach (var value in data.longs ?? [])
+    if (data.longs != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length < 2) continue;
-      var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.Longs.Add(hash, Parse.Long(str));
+      zdo.Longs ??= [];
+      foreach (var value in data.longs)
+      {
+        var split = Parse.Split(value);
+        if (split.Length < 2) continue;
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.Longs.Add(hash, new(split));
+      }
     }
-    foreach (var value in data.strings ?? [])
+    if (data.strings != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length < 2) continue;
-      var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.Strings.Add(hash, str);
+      zdo.Strings ??= [];
+      foreach (var value in data.strings)
+      {
+        var split = Parse.Split(value);
+        if (split.Length < 2) continue;
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.Strings.Add(hash, new(split));
+      }
     }
-    foreach (var value in data.vecs ?? [])
+    if (data.vecs != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length != 4) continue;
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.Vecs.Add(hash, Parse.VectorXZY(split, 1));
+      zdo.Vecs ??= [];
+      foreach (var value in data.vecs)
+      {
+        var split = Parse.Split(value);
+        if (split.Length != 4) continue;
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.Vecs.Add(hash, Parse.VectorXZY(split, 1));
+      }
     }
-    foreach (var value in data.quats ?? [])
+    if (data.quats != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length != 4) continue;
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.Quats.Add(hash, Parse.AngleYXZ(split, 1));
+      zdo.Quats ??= [];
+      foreach (var value in data.quats)
+      {
+        var split = Parse.Split(value);
+        if (split.Length != 4) continue;
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.Quats.Add(hash, Parse.AngleYXZ(split, 1));
+      }
     }
-    foreach (var value in data.bytes ?? [])
+    if (data.bytes != null)
     {
-      var split = Parse.Split(value);
-      if (split.Length < 2) continue;
-      var str = string.Join(",", split.Skip(1));
-      var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
-      zdo.ByteArrays.Add(hash, Convert.FromBase64String(str));
+      zdo.ByteArrays ??= [];
+      foreach (var value in data.bytes)
+      {
+        var split = Parse.Split(value);
+        if (split.Length < 2) continue;
+        var str = string.Join(",", split.Skip(1));
+        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        zdo.ByteArrays.Add(hash, Convert.FromBase64String(str));
+      }
     }
     if (!string.IsNullOrWhiteSpace(data.connection))
     {
@@ -155,10 +185,10 @@ public class DataLoading
     DataData data = new()
     {
       name = zdo.Name,
-      floats = zdo.Floats.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value)}").ToArray(),
-      ints = zdo.Ints.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value}").ToArray(),
-      longs = zdo.Longs.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value}").ToArray(),
-      strings = zdo.Strings.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value}").ToArray(),
+      floats = zdo.Floats.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value.Get())}").ToArray(),
+      ints = zdo.Ints.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
+      longs = zdo.Longs.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
+      strings = zdo.Strings.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
       vecs = zdo.Vecs.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value)}").ToArray(),
       quats = zdo.Quats.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value)}").ToArray(),
       bytes = zdo.ByteArrays.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Convert.ToBase64String(pair.Value)}").ToArray(),

@@ -27,7 +27,7 @@ public static class Parse
 {
   public static int Int(string arg, int defaultValue = 0)
   {
-    if (!int.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
+    if (!TryInt(arg, out var result))
       return defaultValue;
     return result;
   }
@@ -41,6 +41,10 @@ public static class Parse
   {
     if (args.Length <= index) return defaultValue;
     return Int(args[index], defaultValue);
+  }
+  public static bool TryInt(string arg, out int result)
+  {
+    return int.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out result);
   }
   public static float Float(string arg, float defaultValue = 0f)
   {
@@ -143,5 +147,10 @@ public static class Parse
   {
     var range = StringRange(arg);
     return new(Float(range.Min), Float(range.Max));
+  }
+  public static Range<long> LongRange(string arg)
+  {
+    var range = StringRange(arg);
+    return new(Long(range.Min), Long(range.Max));
   }
 }

@@ -67,6 +67,20 @@ public class ZDOData
       result.Add(data!);
     return result;
   }
+  public string Name = "";
+  // Nulls add more code but should be more performant.
+  public Dictionary<int, StringValue>? Strings;
+  public Dictionary<int, FloatValue>? Floats;
+  public Dictionary<int, IntValue>? Ints;
+  public Dictionary<int, LongValue>? Longs;
+  public Dictionary<int, Vector3>? Vecs;
+  public Dictionary<int, Quaternion>? Quats;
+  public Dictionary<int, byte[]>? ByteArrays;
+  public ZDOExtraData.ConnectionType ConnectionType = ZDOExtraData.ConnectionType.None;
+  public int ConnectionHash = 0;
+  public ZDOID OriginalId = ZDOID.None;
+  public ZDOID TargetConnectionId = ZDOID.None;
+
   public ZDOData() { }
   public ZDOData(string name, ZDO zdo)
   {
@@ -80,63 +94,99 @@ public class ZDOData
   }
   public void Add(ZDOData data)
   {
-    foreach (var pair in data.Floats)
-      Floats[pair.Key] = pair.Value;
-    foreach (var pair in data.Vecs)
-      Vecs[pair.Key] = pair.Value;
-    foreach (var pair in data.Quats)
-      Quats[pair.Key] = pair.Value;
-    foreach (var pair in data.Ints)
-      Ints[pair.Key] = pair.Value;
-    foreach (var pair in data.Longs)
-      Longs[pair.Key] = pair.Value;
-    foreach (var pair in data.Strings)
-      Strings[pair.Key] = pair.Value;
-    foreach (var pair in data.ByteArrays)
-      ByteArrays[pair.Key] = pair.Value;
+    if (data.Floats != null)
+    {
+      Floats ??= [];
+      foreach (var pair in data.Floats)
+        Floats[pair.Key] = pair.Value;
+    }
+    if (data.Vecs != null)
+    {
+      Vecs ??= [];
+      foreach (var pair in data.Vecs)
+        Vecs[pair.Key] = pair.Value;
+    }
+    if (data.Quats != null)
+    {
+      Quats ??= [];
+      foreach (var pair in data.Quats)
+        Quats[pair.Key] = pair.Value;
+    }
+    if (data.Ints != null)
+    {
+      Ints ??= [];
+      foreach (var pair in data.Ints)
+        Ints[pair.Key] = pair.Value;
+    }
+    if (data.Longs != null)
+    {
+      Longs ??= [];
+      foreach (var pair in data.Longs)
+        Longs[pair.Key] = pair.Value;
+    }
+    if (data.Strings != null)
+    {
+      Strings ??= [];
+      foreach (var pair in data.Strings)
+        Strings[pair.Key] = pair.Value;
+    }
+    if (data.ByteArrays != null)
+    {
+      ByteArrays ??= [];
+      foreach (var pair in data.ByteArrays)
+        ByteArrays[pair.Key] = pair.Value;
+    }
   }
-  public string Name = "";
-  public Dictionary<int, string> Strings = [];
-  public Dictionary<int, float> Floats = [];
-  public Dictionary<int, int> Ints = [];
-  public Dictionary<int, long> Longs = [];
-  public Dictionary<int, Vector3> Vecs = [];
-  public Dictionary<int, Quaternion> Quats = [];
-  public Dictionary<int, byte[]> ByteArrays = [];
-  public ZDOExtraData.ConnectionType ConnectionType = ZDOExtraData.ConnectionType.None;
-  public int ConnectionHash = 0;
-  public ZDOID OriginalId = ZDOID.None;
-  public ZDOID TargetConnectionId = ZDOID.None;
 
   public void Write(ZDO zdo)
   {
     // Hack to allow resetting object health to default.
     // Proper way to remove keys could be supported but so far this is the only use case.
-    if (Floats.TryGetValue(ZDOVars.s_health, out var h) && h <= 0f)
+    if (Floats != null && Floats.TryGetValue(ZDOVars.s_health, out var h) && h.Get() == 0f)
       Floats.Remove(ZDOVars.s_health);
     var id = zdo.m_uid;
-    if (Floats.Count > 0) ZDOHelper.Init(ZDOExtraData.s_floats, id);
-    if (Vecs.Count > 0) ZDOHelper.Init(ZDOExtraData.s_vec3, id);
-    if (Quats.Count > 0) ZDOHelper.Init(ZDOExtraData.s_quats, id);
-    if (Ints.Count > 0) ZDOHelper.Init(ZDOExtraData.s_ints, id);
-    if (Longs.Count > 0) ZDOHelper.Init(ZDOExtraData.s_longs, id);
-    if (Strings.Count > 0) ZDOHelper.Init(ZDOExtraData.s_strings, id);
-    if (ByteArrays.Count > 0) ZDOHelper.Init(ZDOExtraData.s_byteArrays, id);
-
-    foreach (var pair in Floats)
-      ZDOExtraData.s_floats[id].SetValue(pair.Key, pair.Value);
-    foreach (var pair in Vecs)
-      ZDOExtraData.s_vec3[id].SetValue(pair.Key, pair.Value);
-    foreach (var pair in Quats)
-      ZDOExtraData.s_quats[id].SetValue(pair.Key, pair.Value);
-    foreach (var pair in Ints)
-      ZDOExtraData.s_ints[id].SetValue(pair.Key, pair.Value);
-    foreach (var pair in Longs)
-      ZDOExtraData.s_longs[id].SetValue(pair.Key, pair.Value);
-    foreach (var pair in Strings)
-      ZDOExtraData.s_strings[id].SetValue(pair.Key, pair.Value);
-    foreach (var pair in ByteArrays)
-      ZDOExtraData.s_byteArrays[id].SetValue(pair.Key, pair.Value);
+    if (Floats?.Count > 0)
+    {
+      ZDOHelper.Init(ZDOExtraData.s_floats, id);
+      foreach (var pair in Floats)
+        ZDOExtraData.s_floats[id].SetValue(pair.Key, pair.Value.Get());
+    }
+    if (Vecs?.Count > 0)
+    {
+      ZDOHelper.Init(ZDOExtraData.s_vec3, id);
+      foreach (var pair in Vecs)
+        ZDOExtraData.s_vec3[id].SetValue(pair.Key, pair.Value);
+    }
+    if (Quats?.Count > 0)
+    {
+      ZDOHelper.Init(ZDOExtraData.s_quats, id);
+      foreach (var pair in Quats)
+        ZDOExtraData.s_quats[id].SetValue(pair.Key, pair.Value);
+    }
+    if (Ints?.Count > 0)
+    {
+      ZDOHelper.Init(ZDOExtraData.s_ints, id);
+      foreach (var pair in Ints)
+        ZDOExtraData.s_ints[id].SetValue(pair.Key, pair.Value.Get());
+    }
+    if (Longs?.Count > 0)
+    {
+      ZDOHelper.Init(ZDOExtraData.s_longs, id);
+      foreach (var pair in Longs)
+        ZDOExtraData.s_longs[id].SetValue(pair.Key, pair.Value.Get());
+    }
+    if (Strings?.Count > 0)
+    {
+      ZDOHelper.Init(ZDOExtraData.s_strings, id);
+      foreach (var pair in Strings)
+        ZDOExtraData.s_strings[id].SetValue(pair.Key, pair.Value.Get());
+    }
+    if (ByteArrays?.Count > 0)
+    {
+      ZDOHelper.Init(ZDOExtraData.s_byteArrays, id);
+      foreach (var pair in ByteArrays)
+        ZDOExtraData.s_byteArrays[id].SetValue(pair.Key, pair.Value);
+    }
 
     HandleConnection(zdo);
     HandleHashConnection(zdo);
@@ -214,43 +264,50 @@ public class ZDOData
     var num = pkg.ReadInt();
     if ((num & 1) != 0)
     {
+      Floats ??= [];
       var count = pkg.ReadByte();
       for (var i = 0; i < count; ++i)
-        Floats[pkg.ReadInt()] = pkg.ReadSingle();
+        Floats[pkg.ReadInt()] = new(pkg.ReadSingle());
     }
     if ((num & 2) != 0)
     {
+      Vecs ??= [];
       var count = pkg.ReadByte();
       for (var i = 0; i < count; ++i)
         Vecs[pkg.ReadInt()] = pkg.ReadVector3();
     }
     if ((num & 4) != 0)
     {
+      Quats ??= [];
       var count = pkg.ReadByte();
       for (var i = 0; i < count; ++i)
         Quats[pkg.ReadInt()] = pkg.ReadQuaternion();
     }
     if ((num & 8) != 0)
     {
+      Ints ??= [];
       var count = pkg.ReadByte();
       for (var i = 0; i < count; ++i)
-        Ints[pkg.ReadInt()] = pkg.ReadInt();
+        Ints[pkg.ReadInt()] = new(pkg.ReadInt());
     }
     // Intended to come before strings (changing would break existing data).
     if ((num & 64) != 0)
     {
+      Longs ??= [];
       var count = pkg.ReadByte();
       for (var i = 0; i < count; ++i)
-        Longs[pkg.ReadInt()] = pkg.ReadLong();
+        Longs[pkg.ReadInt()] = new(pkg.ReadLong());
     }
     if ((num & 16) != 0)
     {
+      Strings ??= [];
       var count = pkg.ReadByte();
       for (var i = 0; i < count; ++i)
-        Strings[pkg.ReadInt()] = pkg.ReadString();
+        Strings[pkg.ReadInt()] = new(pkg.ReadString());
     }
     if ((num & 128) != 0)
     {
+      ByteArrays ??= [];
       var count = pkg.ReadByte();
       for (var i = 0; i < count; ++i)
         ByteArrays[pkg.ReadInt()] = pkg.ReadByteArray();
@@ -264,13 +321,13 @@ public class ZDOData
   public void Load(ZDO zdo)
   {
     var id = zdo.m_uid;
-    Floats = ZDOExtraData.s_floats.ContainsKey(id) ? ZDOExtraData.s_floats[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
-    Ints = ZDOExtraData.s_ints.ContainsKey(id) ? ZDOExtraData.s_ints[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
-    Longs = ZDOExtraData.s_longs.ContainsKey(id) ? ZDOExtraData.s_longs[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
-    Strings = ZDOExtraData.s_strings.ContainsKey(id) ? ZDOExtraData.s_strings[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
-    Vecs = ZDOExtraData.s_vec3.ContainsKey(id) ? ZDOExtraData.s_vec3[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
-    Quats = ZDOExtraData.s_quats.ContainsKey(id) ? ZDOExtraData.s_quats[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
-    ByteArrays = ZDOExtraData.s_byteArrays.ContainsKey(id) ? ZDOExtraData.s_byteArrays[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : [];
+    Floats = ZDOExtraData.s_floats.ContainsKey(id) ? ZDOExtraData.s_floats[id].ToDictionary(kvp => kvp.Key, kvp => new FloatValue(kvp.Value)) : null;
+    Ints = ZDOExtraData.s_ints.ContainsKey(id) ? ZDOExtraData.s_ints[id].ToDictionary(kvp => kvp.Key, kvp => new IntValue(kvp.Value)) : null;
+    Longs = ZDOExtraData.s_longs.ContainsKey(id) ? ZDOExtraData.s_longs[id].ToDictionary(kvp => kvp.Key, kvp => new LongValue(kvp.Value)) : null;
+    Strings = ZDOExtraData.s_strings.ContainsKey(id) ? ZDOExtraData.s_strings[id].ToDictionary(kvp => kvp.Key, kvp => new StringValue(kvp.Value)) : null;
+    Vecs = ZDOExtraData.s_vec3.ContainsKey(id) ? ZDOExtraData.s_vec3[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : null;
+    Quats = ZDOExtraData.s_quats.ContainsKey(id) ? ZDOExtraData.s_quats[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : null;
+    ByteArrays = ZDOExtraData.s_byteArrays.ContainsKey(id) ? ZDOExtraData.s_byteArrays[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : null;
     if (ZDOExtraData.s_connectionsHashData.TryGetValue(id, out var conn))
     {
       ConnectionType = conn.m_type;
@@ -282,5 +339,166 @@ public class ZDOData
       TargetConnectionId = zdoConn.m_target;
       ConnectionType = zdoConn.m_type;
     }
+  }
+
+  public bool Match(ZDO zdo)
+  {
+    if (Strings != null && !Strings.All(pair => pair.Value.Match(zdo.GetString(pair.Key)))) return false;
+    if (Floats != null && !Floats.All(pair => pair.Value.Match(zdo.GetFloat(pair.Key)))) return false;
+    if (Ints != null && !Ints.All(pair => pair.Value.Match(zdo.GetInt(pair.Key)))) return false;
+    if (Longs != null && !Longs.All(pair => pair.Value.Match(zdo.GetLong(pair.Key)))) return false;
+    if (Vecs != null && !Vecs.All(pair => pair.Value == zdo.GetVec3(pair.Key, Vector3.zero))) return false;
+    if (Quats != null && !Quats.All(pair => pair.Value == zdo.GetQuaternion(pair.Key, Quaternion.identity))) return false;
+    if (ByteArrays != null && !ByteArrays.All(pair => pair.Value.SequenceEqual(zdo.GetByteArray(pair.Key)))) return false;
+    return true;
+  }
+}
+
+public class StringValue
+{
+  private readonly string? Value;
+  private readonly string[]? Values;
+  public StringValue(string value)
+  {
+    Value = value;
+  }
+  public StringValue(string[] values)
+  {
+    if (values.Length == 2)
+      Value = values[1];
+    else
+    {
+      Values = values.Skip(1).ToArray();
+    }
+  }
+  public string Get()
+  {
+    if (Values != null) return Values[Random.Range(0, Values.Length)];
+    return Value ?? "";
+  }
+  public bool Match(string value)
+  {
+    if (Values != null) return Values.Contains(value);
+    return Value == value;
+  }
+}
+public class IntValue
+{
+  protected int? Value;
+  protected Range<int>? Range;
+  protected int[]? Values;
+  public IntValue(int value)
+  {
+    Value = value;
+  }
+  public IntValue()
+  {
+
+  }
+  public IntValue(string[] values)
+  {
+    if (values.Length == 2)
+    {
+      var range = Parse.IntRange(values[1]);
+      if (range.Min == range.Max)
+        Value = range.Min;
+      else
+        Range = range;
+    }
+    else
+      Values = values.Skip(1).Select(s => Parse.Int(s)).ToArray();
+  }
+  public int Get()
+  {
+    if (Values != null) return Values[Random.Range(0, Values.Length)];
+    if (Range != null) return Random.Range(Range.Min, Range.Max + 1);
+    return Value ?? 0;
+  }
+  public bool Match(int value)
+  {
+    if (Values != null) return Values.Contains(value);
+    if (Range != null) return value >= Range.Min && value <= Range.Max;
+    return Value == value;
+  }
+}
+public class HashValue : IntValue
+{
+  public HashValue(string[] values)
+  {
+    if (values.Length == 2)
+      Value = values[1].GetStableHashCode();
+    else
+      Values = values.Skip(1).Select(s => s.GetStableHashCode()).ToArray();
+  }
+}
+public class BoolValue : IntValue
+{
+  public BoolValue(string[] values)
+  {
+    if (values.Length == 2)
+      Value = values[1] == "true" ? 1 : 0;
+    else
+      Values = values.Skip(1).Select(s => s == "true" ? 1 : 0).ToArray();
+  }
+}
+public class FloatValue
+{
+  private readonly float? Value;
+  private readonly Range<float>? Range;
+  private readonly float[]? Values;
+  public FloatValue(float value)
+  {
+    Value = value;
+  }
+  public FloatValue(string[] values)
+  {
+    if (values.Length == 2)
+    {
+      var range = Parse.FloatRange(values[1]);
+      if (range.Min == range.Max)
+        Value = range.Min;
+      else
+        Range = range;
+    }
+    else
+      Values = values.Skip(1).Select(s => Parse.Float(s)).ToArray();
+  }
+  public float Get()
+  {
+    if (Values != null) return Values[Random.Range(0, Values.Length)];
+    if (Range != null) return Random.Range(Range.Min, Range.Max);
+    return Value ?? 0f;
+  }
+  public bool Match(float value)
+  {
+    if (Values != null) return Values.Contains(value);
+    if (Range != null) return value >= Range.Min && value <= Range.Max;
+    return Value == value;
+  }
+}
+public class LongValue
+{
+  private readonly long? Value;
+  private readonly long[]? Values;
+  public LongValue(long value)
+  {
+    Value = value;
+  }
+  public LongValue(string[] values)
+  {
+    if (values.Length == 2)
+      Value = Parse.Long(values[1]);
+    else
+      Values = values.Skip(1).Select(s => Parse.Long(s)).ToArray();
+  }
+  public long Get()
+  {
+    if (Values != null) return Values[Random.Range(0, Values.Length)];
+    return Value ?? 0L;
+  }
+  public bool Match(long value)
+  {
+    if (Values != null) return Values.Contains(value);
+    return Value == value;
   }
 }

@@ -50,8 +50,13 @@ public class LocationLoading
       {
         if (s.Contains("$$"))
         {
-          EWD.Log.LogWarning($"Command \"{s}\" contains $$ which is obsolete. Use {"{}"} instead.");
-          return s.Replace("$$x", "{x}").Replace("$$y", "{y}").Replace("$$z", "{z}").Replace("$$a", "{a}").Replace("$$i", "{i}").Replace("$$j", "{j}");
+          EWD.Log.LogWarning($"Command \"{s}\" contains $$ which is obsolete. Use {"<>"} instead.");
+          return s.Replace("$$x", "<x>").Replace("$$y", "<y>").Replace("$$z", "<z>").Replace("$$a", "<a>").Replace("$$i", "<i>").Replace("$$j", "<j>");
+        }
+        if (s.Contains("{") && s.Contains("}"))
+        {
+          EWD.Log.LogWarning($"Command \"{s}\" contains {{}} which is obsolete. Use {"<>"} instead.");
+          return s.Replace("{", "<").Replace("}", ">");
         }
         return s;
       }).ToArray();

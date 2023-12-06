@@ -1164,7 +1164,7 @@ public class VersionCheck
   private readonly List<ZRpc> ValidatedClients = [];
 
   // Optional backing field to use ConfigSync values (will override other fields).
-  private ConfigSync? ConfigSync;
+  private readonly ConfigSync? ConfigSync;
 
   private static void PatchServerSync()
   {
