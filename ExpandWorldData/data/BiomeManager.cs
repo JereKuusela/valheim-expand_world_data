@@ -44,7 +44,7 @@ public class BiomeManager
     { "Mistlands", Heightmap.Biome.Mistlands},
   };
   ///<summary>Lower case biome names for easier data loading.</summary>
-  private static Dictionary<string, Heightmap.Biome> NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
+  private static Dictionary<string, Heightmap.Biome> NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
   ///<summary>Original biome names because some mods rely on Enum.GetName(s) returning uppercase values.</summary>
   public static Dictionary<Heightmap.Biome, string> BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
   private static Dictionary<Heightmap.Biome, Heightmap.Biome> BiomeToTerrain = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
@@ -53,8 +53,8 @@ public class BiomeManager
   private static readonly Dictionary<Heightmap.Biome, BiomeData> BiomeData = [];
   public static bool TryGetColor(Heightmap.Biome biome, out Color color) => BiomeToColor.TryGetValue(biome, out color);
   public static bool TryGetData(Heightmap.Biome biome, out BiomeData data) => BiomeData.TryGetValue(biome, out data);
-  public static bool TryGetBiome(string name, out Heightmap.Biome biome) => NameToBiome.TryGetValue(name.ToLower(), out biome);
-  public static Heightmap.Biome GetBiome(string name) => NameToBiome.TryGetValue(name.ToLower(), out var biome) ? biome : Heightmap.Biome.None;
+  public static bool TryGetBiome(string name, out Heightmap.Biome biome) => NameToBiome.TryGetValue(name.ToLowerInvariant(), out biome);
+  public static Heightmap.Biome GetBiome(string name) => NameToBiome.TryGetValue(name.ToLowerInvariant(), out var biome) ? biome : Heightmap.Biome.None;
   public static bool TryGetDisplayName(Heightmap.Biome biome, out string name) => BiomeToDisplayName.TryGetValue(biome, out name);
   public static Heightmap.Biome GetTerrain(Heightmap.Biome biome) => BiomeToTerrain.TryGetValue(biome, out var terrain) ? terrain : biome;
   public static Heightmap.Biome GetNature(Heightmap.Biome biome) => BiomeToNature.TryGetValue(biome, out var nature) ? nature : biome;
@@ -134,7 +134,7 @@ public class BiomeManager
   public static void SetNames(Dictionary<Heightmap.Biome, string> names)
   {
     BiomeToDisplayName = names;
-    NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLower(), kvp => kvp.Key);
+    NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLowerInvariant(), kvp => kvp.Key);
     EWD.Log.LogInfo($"Received {BiomeToDisplayName.Count} biome names.");
   }
   private static void LoadNames(string yaml)
@@ -142,17 +142,17 @@ public class BiomeManager
     var rawData = Parse(yaml);
     if (rawData.Count > 0)
       EWD.Log.LogInfo($"Preloading biome names ({rawData.Count} entries).");
-    var originalNames = OriginalBiomes.Select(kvp => kvp.Key.ToLower()).ToHashSet();
+    var originalNames = OriginalBiomes.Select(kvp => kvp.Key.ToLowerInvariant()).ToHashSet();
     BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     var biome = Heightmap.Biome.Mistlands;
     foreach (var item in rawData)
     {
-      if (originalNames.Contains(item.biome.ToLower())) continue;
+      if (originalNames.Contains(item.biome.ToLowerInvariant())) continue;
       biome = NextBiome(biome);
       BiomeToDisplayName[biome] = item.biome;
 
     }
-    NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLower(), kvp => kvp.Key);
+    NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLowerInvariant(), kvp => kvp.Key);
   }
   private static List<BiomeEnvSetup> Environments = [];
   private static void Load(string yaml)
@@ -163,13 +163,13 @@ public class BiomeManager
       EWD.Log.LogInfo($"Reloading biome data ({rawData.Count} entries).");
     BiomeData.Clear();
     BiomeToColor.Clear();
-    NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
+    NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
     BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     var lastBiome = Heightmap.Biome.Mistlands;
     foreach (var item in rawData)
     {
       var biome = lastBiome;
-      if (NameToBiome.TryGetValue(item.biome.ToLower(), out var defaultBiome))
+      if (NameToBiome.TryGetValue(item.biome.ToLowerInvariant(), out var defaultBiome))
       {
         biome = defaultBiome;
         if (item.name != "")
@@ -178,7 +178,7 @@ public class BiomeManager
       else
       {
         biome = lastBiome = NextBiome(lastBiome);
-        NameToBiome.Add(item.biome.ToLower(), biome);
+        NameToBiome.Add(item.biome.ToLowerInvariant(), biome);
         BiomeToDisplayName[biome] = item.biome;
         AddTranslation(biome, item.name);
       }
@@ -229,7 +229,7 @@ public class BiomeManager
   }
   private static void AddTranslation(Heightmap.Biome biome, string name)
   {
-    var key = "biome_" + biome.ToString().ToLower();
+    var key = "biome_" + biome.ToString().ToLowerInvariant();
     var value = name == "" ? biome.ToString() : name;
     Localization.instance.m_translations[key] = value;
   }

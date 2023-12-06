@@ -39,7 +39,7 @@ public class TryParseTheme
   static bool Prefix(string value, ref Room.Theme result, ref bool __result)
   {
     __result = RoomLoading.TryGetTheme(value, out result);
-    return true;
+    return false;
   }
 }
 #pragma warning restore  IDE0051

@@ -251,7 +251,7 @@ public class DataManager : MonoBehaviour
       if (Enum.TryParse<T>(trimmed, true, out var parsed))
         value += (int)(object)parsed;
       else
-        EWD.Log.LogWarning($"Failed to parse value {trimmed} as {nameof(T)}.");
+        EWD.Log.LogWarning($"Failed to parse value {trimmed} as {parsed.GetType().Name}.");
     }
     return (T)(object)value;
   }

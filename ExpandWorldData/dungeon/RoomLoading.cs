@@ -49,9 +49,9 @@ public class RoomLoading
     {"PlainsFortHildir", Room.Theme.PlainsFortHildir}
   };
   // For extra custom room themes.
-  public static Dictionary<string, Room.Theme> NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
+  public static Dictionary<string, Room.Theme> NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
   public static Dictionary<Room.Theme, string> ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-  public static bool TryGetTheme(string name, out Room.Theme theme) => NameToTheme.TryGetValue(name.ToLower(), out theme);
+  public static bool TryGetTheme(string name, out Room.Theme theme) => NameToTheme.TryGetValue(name.ToLowerInvariant(), out theme);
 
   public static void Load()
   {
@@ -59,7 +59,7 @@ public class RoomLoading
     DungeonObjects.Objects.Clear();
     DungeonObjects.ObjectSwaps.Clear();
     DungeonObjects.ObjectData.Clear();
-    NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
+    NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
     ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     if (Helper.IsClient()) return;
     if (!Configuration.DataRooms)

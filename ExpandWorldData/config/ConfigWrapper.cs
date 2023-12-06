@@ -31,7 +31,7 @@ public class ConfigWrapper
         args.Context.AddString("Error: Missing the key.");
         return;
       }
-      if (!SettingHandlers.TryGetValue(args[1].ToLower(), out var handler))
+      if (!SettingHandlers.TryGetValue(args[1].ToLowerInvariant(), out var handler))
       {
         args.Context.AddString("Error: Key not found.");
         return;
@@ -92,7 +92,7 @@ public class ConfigWrapper
     Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, message);
   }
   private readonly Dictionary<string, Action<Terminal, string>> SettingHandlers = [];
-  private string ToKey(string name) => name.ToLower().Replace(' ', '_').Replace("(", "").Replace(")", "");
+  private string ToKey(string name) => name.ToLowerInvariant().Replace(' ', '_').Replace("(", "").Replace(")", "");
   private void Register(ConfigEntry<bool> setting)
   {
     var name = setting.Definition.Key;
