@@ -185,23 +185,16 @@ public class DataLoading
     DataData data = new()
     {
       name = zdo.Name,
-      floats = zdo.Floats.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value.Get())}").ToArray(),
-      ints = zdo.Ints.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
-      longs = zdo.Longs.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
-      strings = zdo.Strings.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
-      vecs = zdo.Vecs.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value)}").ToArray(),
-      quats = zdo.Quats.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value)}").ToArray(),
-      bytes = zdo.ByteArrays.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Convert.ToBase64String(pair.Value)}").ToArray(),
+      floats = zdo.Floats?.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value.Get())}").ToArray(),
+      ints = zdo.Ints?.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
+      longs = zdo.Longs?.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
+      strings = zdo.Strings?.Select(pair => $"{DefaultData.Convert(pair.Key)}, {pair.Value.Get()}").ToArray(),
+      vecs = zdo.Vecs?.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value)}").ToArray(),
+      quats = zdo.Quats?.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Helper.Print(pair.Value)}").ToArray(),
+      bytes = zdo.ByteArrays?.Select(pair => $"{DefaultData.Convert(pair.Key)}, {Convert.ToBase64String(pair.Value)}").ToArray(),
     };
     if (zdo.ConnectionType != ZDOExtraData.ConnectionType.None && zdo.ConnectionHash != 0)
       data.connection = $"{zdo.ConnectionType}, {zdo.ConnectionHash}";
-    if (data.floats.Length == 0) data.floats = null;
-    if (data.ints.Length == 0) data.ints = null;
-    if (data.longs.Length == 0) data.longs = null;
-    if (data.strings.Length == 0) data.strings = null;
-    if (data.vecs.Length == 0) data.vecs = null;
-    if (data.quats.Length == 0) data.quats = null;
-    if (data.bytes.Length == 0) data.bytes = null;
     return data;
   }
 
