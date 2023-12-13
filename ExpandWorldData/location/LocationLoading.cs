@@ -204,16 +204,8 @@ public class LocationLoading
     LocationSetup.UpdateHashes();
     UpdateInstances();
     NoBuildManager.UpdateData();
+    MinimapIcon.Clear();
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
-    CleanMap();
-  }
-  private static void CleanMap()
-  {
-    var mm = Minimap.instance;
-    if (!mm) return;
-    foreach (var pin in mm.m_locationPins)
-      mm.RemovePin(pin.Value);
-    mm.m_locationPins.Clear();
   }
   private static void UpdateInstances()
   {
@@ -366,23 +358,5 @@ public class LocationIcons
       }
     }
     return false;
-  }
-}
-
-
-[HarmonyPatch(typeof(Minimap), nameof(Minimap.GetLocationIcon))]
-public class NewLocationIcons
-{
-  static Sprite Postfix(Sprite result, string name)
-  {
-    if (result != null) return result;
-    if (Enum.TryParse<Minimap.PinType>(name, true, out var icon))
-      return Minimap.instance.GetSprite(icon);
-    var hash = name.GetStableHashCode();
-    if (ObjectDB.instance.m_itemByHash.TryGetValue(hash, out var item))
-      return item.GetComponent<ItemDrop>()?.m_itemData?.GetIcon()!;
-    var effect = ObjectDB.instance.GetStatusEffect(hash);
-    if (effect) return effect.m_icon;
-    return null!;
   }
 }

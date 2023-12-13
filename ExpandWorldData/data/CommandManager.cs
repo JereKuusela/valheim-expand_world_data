@@ -11,25 +11,33 @@ public class PlayerInfo
 {
   public string Name;
   public Vector3 Pos;
+  public Quaternion Rot;
   public long Character;
   public string HostId;
   public ZDOID ZDOID;
   public PlayerInfo(ZNetPeer peer)
   {
+    HostId = peer.m_rpc.GetSocket().GetHostName();
     Name = peer.m_playerName;
     Pos = peer.m_refPos;
-    Character = peer.m_uid;
     ZDOID = peer.m_characterID;
-    HostId = peer.m_rpc.GetSocket().GetHostName();
+    var zdo = ZDOMan.instance.GetZDO(peer.m_characterID);
+    if (zdo != null)
+    {
+      Character = zdo.GetLong(ZDOVars.s_playerID, 0L);
+      Pos = zdo.m_position;
+      Rot = zdo.GetRotation();
+    }
 
   }
   public PlayerInfo(Player player)
   {
+    HostId = "self";
     Name = player.GetPlayerName();
-    Pos = player.transform.position;
-    Character = ZNet.GetUID();
     ZDOID = player.GetZDOID();
-    HostId = "server";
+    Character = player.GetPlayerID();
+    Pos = player.transform.position;
+    Rot = player.transform.rotation;
   }
 }
 
@@ -56,29 +64,31 @@ public class CommandManager
     foreach (var peer in players)
       Run(commands, center, rot, peer);
   }
-  private static string Parse(string command, Vector3 center, Vector3 rot, PlayerInfo? peer)
+  private static string Parse(string command, Vector3 center, Vector3 rot, PlayerInfo? player)
   {
     var cmd = command
-        .Replace("<x>", center.x.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("<y>", center.y.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("<z>", center.z.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("<a>", rot.y.ToString(NumberFormatInfo.InvariantInfo));
-    if (peer != null)
+        .Replace("<x>", center.x.ToString("0.#####"))
+        .Replace("<y>", center.y.ToString("0.#####"))
+        .Replace("<z>", center.z.ToString("0.#####"))
+        .Replace("<a>", rot.y.ToString("0.#####"));
+    if (player != null)
     {
       cmd = cmd
-        .Replace("<px>", peer.Pos.x.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("<py>", peer.Pos.y.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("<pz>", peer.Pos.z.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("<pname>", peer.Name)
-        .Replace("<pid>", peer.HostId.ToString(NumberFormatInfo.InvariantInfo))
-        .Replace("<pchar>", peer.Character.ToString(NumberFormatInfo.InvariantInfo));
+        .Replace("<px>", player.Pos.x.ToString("0.#####"))
+        .Replace("<py>", player.Pos.y.ToString("0.#####"))
+        .Replace("<pz>", player.Pos.z.ToString("0.#####"))
+        .Replace("<pname>", player.Name)
+        .Replace("<pid>", player.HostId)
+        .Replace("<pchar>", player.Character.ToString());
     }
     var expressions = cmd.Split(' ').Select(s => s.Split('=')).Select(a => a[a.Length - 1].Trim()).SelectMany(s => s.Split(',')).ToArray();
     foreach (var expression in expressions)
     {
-      if (!expression.Contains('*') && !expression.Contains('/') && !expression.Contains('+') && !expression.Contains('-')) continue;
+      // Single negative number would get handled as expression.
+      var sub = expression.Substring(1);
+      if (!sub.Contains('*') && !sub.Contains('/') && !sub.Contains('+') && !sub.Contains('-')) continue;
       var value = Evaluate(expression);
-      cmd = cmd.Replace(expression, value.ToString(NumberFormatInfo.InvariantInfo));
+      cmd = cmd.Replace(expression, value.ToString("0.#####"));
     }
     return cmd;
   }

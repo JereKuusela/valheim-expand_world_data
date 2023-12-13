@@ -280,7 +280,13 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - minDistanceFromSimilar (default: `0` meters): Minimum distance between the same location, or locations in the `group` if given.
 - discoverLabel: Shown text when the location is discovered.
 - iconAlways: Location icon that is always shown. Use `ew_icons` to see what is available.
+  - Format is `icon,size,pulse`.
+  - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
+  - Putting anything on the third value causes the icon to pulse. This is not supported with meters.
 - iconPlaced: Location icon to show when the location is generated. Use `ew_icons` to see what is available.
+  - Format is `icon,size,pulse`.
+  - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
+  - Putting anything on the third value causes the icon to pulse. This is not supported with meters.
 - randomRotation (default: `false`): Randomly rotates the location (unaffected by world seed).
 - slopeRotation (default: `false`): Rotates based on the terrain angle. For example for locations at mountain sides.
 - snapToWater (default: `false`): Placed at the water level instead of the terrain.
