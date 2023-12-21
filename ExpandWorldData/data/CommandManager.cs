@@ -46,16 +46,16 @@ public class CommandManager
   public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot) => Run(commands, center, rot, (PlayerInfo?)null);
   public static void Run(IEnumerable<string> commands, Vector3 center, Vector3 rot, PlayerInfo? player)
   {
-    foreach (var command in commands)
+    var parsed = commands.Select(c => Parse(c, center, rot, player)).ToArray();
+    foreach (var cmd in parsed)
     {
       try
       {
-        var cmd = Parse(command, center, rot, player);
         Console.instance.TryRunCommand(cmd);
       }
       catch (Exception e)
       {
-        EWD.Log.LogError($"Failed to run command: {command}\n{e.Message}");
+        EWD.Log.LogError($"Failed to run command: {cmd}\n{e.Message}");
       }
     }
   }
