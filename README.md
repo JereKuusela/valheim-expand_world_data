@@ -90,6 +90,7 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - nature: Identifier of the base biome. Determines which plants can grow here, whether bees are happy and foot steps. If not given, uses the terrain value.
 - altitudeDelta: Flat increase/decrease to the terrain altitude. See Altitude section for more info.
 - altitudeMultiplier: Multiplier to the terrain altitude (relative to the water level).
+- waterDepthMultiplier (default: `1.0`): Multiplies negative terrain altitude.
 - forestMultiplier: Multiplier to the global forest multiplier. Using this requires an extra biome check which will lower the performance.
 - environments: List of available environments (weathers) and their relative chances.
 - maximumAltitude (default: `1000` meters): Maximum altitude.
@@ -126,7 +127,6 @@ Each entry in the file adds a new rule. When determing the biome, the rules are 
 - amount (default: `1.0` of total area): How much of the valid area is randomly filled with this biome. Uses normal distribution, see values below.
 - stretch (default: `1.0`): Same as the `Stretch biomes` setting but applied just to a single entry. Multiplies the size of biome areas (average total area stays the same).
 - seed: Overrides the random outcome of `amount`. Numeric value fixes the outcome. Biome name uses a biome specific value derived from the world seed. No value uses biome from the `terrain` parameter.
-- waterDepthMultiplier (default: `1.0`): Multiplies negative terrain altitude.
 - wiggleDistance (default: `true`): Applies "wiggle" to the `minDistance`.
 - wiggleSector (default: `true`): Applies "wiggle" to the `maxSector` and `minSector`.
 
