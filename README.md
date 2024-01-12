@@ -156,7 +156,7 @@ Manual testing with `ew_biomes` command has given these rough values:
 - 0.85: 97 %
 - 0.9: 99 %
 
-For example if you want to replace 25% of Plains with a new biome you can calculate 0.6 -> 64 % -> 64 % / 4 = 16 % -> 0.35. So you would put 0.35 (or 0.36) to the amount of the new biome.
+For example if you want to replace 25% of Plains with a new biome you can calculate 0.6 -> 64 % -> 64 % * 0.25 = 16 % -> 0.35. So you would put 0.35 (or 0.36) to the amount of the new biome.
 
 Note: The amount is of the total world size, not of the remaining area. If two biomes have the same seed then their areas will overlap which can lead to unexpected results.
 
