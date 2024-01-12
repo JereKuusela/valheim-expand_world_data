@@ -223,7 +223,12 @@ public class DefaultData
     "KGperiodicAnimationTime",
     "KGperiodicSound",
     "KGperiodicSoundTime",
-    "KGnpcScale"];
+    "KGnpcScale",
+    // Item Stand All Items
+    "itemstand_hide",
+    "itemstand_offset",
+    "itemstand_rotation",
+    "itemstand_scale"];
 
   private static readonly string[] AnimationKeys = [
     "alert",
