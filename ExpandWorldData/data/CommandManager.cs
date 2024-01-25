@@ -66,10 +66,13 @@ public class CommandManager
   }
   private static string Parse(string command, Vector3 center, Vector3 rot, PlayerInfo? player)
   {
+    var zone = ZoneSystem.instance.GetZone(center);
     var cmd = command
         .Replace("<x>", center.x.ToString("0.#####"))
         .Replace("<y>", center.y.ToString("0.#####"))
         .Replace("<z>", center.z.ToString("0.#####"))
+        .Replace("<i>", zone.x.ToString())
+        .Replace("<j>", zone.y.ToString())
         .Replace("<a>", rot.y.ToString("0.#####"));
     if (player != null)
     {

@@ -1,3 +1,6 @@
+- v1.25
+  - Fixes zone indices not working on command parameters.
+
 - v1.24
   - Adds icon size support to location icons.
 
