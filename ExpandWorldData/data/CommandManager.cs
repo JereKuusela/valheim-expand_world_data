@@ -68,18 +68,18 @@ public class CommandManager
   {
     var zone = ZoneSystem.instance.GetZone(center);
     var cmd = command
-        .Replace("<x>", center.x.ToString("0.#####"))
-        .Replace("<y>", center.y.ToString("0.#####"))
-        .Replace("<z>", center.z.ToString("0.#####"))
+        .Replace("<x>", center.x.ToString("0.#####", NumberFormatInfo.InvariantInfo))
+        .Replace("<y>", center.y.ToString("0.#####", NumberFormatInfo.InvariantInfo))
+        .Replace("<z>", center.z.ToString("0.#####", NumberFormatInfo.InvariantInfo))
         .Replace("<i>", zone.x.ToString())
         .Replace("<j>", zone.y.ToString())
-        .Replace("<a>", rot.y.ToString("0.#####"));
+        .Replace("<a>", rot.y.ToString("0.#####", NumberFormatInfo.InvariantInfo));
     if (player != null)
     {
       cmd = cmd
-        .Replace("<px>", player.Pos.x.ToString("0.#####"))
-        .Replace("<py>", player.Pos.y.ToString("0.#####"))
-        .Replace("<pz>", player.Pos.z.ToString("0.#####"))
+        .Replace("<px>", player.Pos.x.ToString("0.#####", NumberFormatInfo.InvariantInfo))
+        .Replace("<py>", player.Pos.y.ToString("0.#####", NumberFormatInfo.InvariantInfo))
+        .Replace("<pz>", player.Pos.z.ToString("0.#####", NumberFormatInfo.InvariantInfo))
         .Replace("<pname>", player.Name)
         .Replace("<pid>", player.HostId)
         .Replace("<pchar>", player.Character.ToString());
@@ -91,7 +91,7 @@ public class CommandManager
       var sub = expression.Substring(1);
       if (!sub.Contains('*') && !sub.Contains('/') && !sub.Contains('+') && !sub.Contains('-')) continue;
       var value = Evaluate(expression);
-      cmd = cmd.Replace(expression, value.ToString("0.#####"));
+      cmd = cmd.Replace(expression, value.ToString("0.#####", NumberFormatInfo.InvariantInfo));
     }
     return cmd;
   }

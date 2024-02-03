@@ -90,25 +90,25 @@ public class Spawn
       sc.y *= obj.Scale.Value.y;
       sc.z *= obj.Scale.Value.z;
     }
-    obj.Prefab = prefabOverride(obj.Prefab);
+    var prefabName = prefabOverride(obj.Prefab);
     // Empty is valid for removing objects.
-    if (obj.Prefab == "")
+    if (prefabName == "")
       return null;
-    var prefab = ZNetScene.instance.GetPrefab(obj.Prefab);
+    var prefab = ZNetScene.instance.GetPrefab(prefabName);
     if (!prefab)
     {
-      if (BlueprintManager.TryGet(obj.Prefab, out var bp))
+      if (BlueprintManager.TryGet(prefabName, out var bp))
       {
         Blueprint(bp, pos, rot, sc, dataOverride, prefabOverride, spawned);
         return null;
       }
-      EWD.Log.LogWarning($"Blueprint / object prefab {obj.Prefab} not found!");
+      EWD.Log.LogWarning($"Blueprint / object prefab {prefabName} not found!");
       return null;
     }
-    var data = dataOverride(obj.Data, obj.Prefab);
+    var data = dataOverride(obj.Data, prefabName);
     SetData(prefab, pos, rot, sc, data);
 
-    //ExpandWorldData.Log.LogDebug($"Spawning {obj.Prefab} at {Helper.Print(pos)} {source}");
+    //ExpandWorldData.Log.LogDebug($"Spawning {prefabName} at {Helper.Print(pos)} {source}");
     var go = UnityEngine.Object.Instantiate(prefab, pos, rot);
     DataManager.CleanGhostInit(go);
     if (ZNetView.m_ghostInit)
@@ -191,7 +191,7 @@ public class Spawn
     if (swaps.Count == 1)
       return swaps[0].Item2;
     var rng = UnityEngine.Random.value;
-    //ExpandWorldData.Log.LogDebug($"RandomizeSwap: Roll {Helper.Print(rng)} for {string.Join(", ", swaps.Select(s => s.Item2 + ":" + Helper.Print(s.Item1)))}");
+    //EWD.Log.LogWarning($"RandomizeSwap: Roll {Helper.Print(rng)} for {string.Join(", ", swaps.Select(s => s.Item2 + ":" + Helper.Print(s.Item1)))}");
     foreach (var swap in swaps)
     {
       rng -= swap.Item1;
@@ -206,7 +206,7 @@ public class Spawn
     if (swaps.Count == 1)
       return swaps[0].Item2;
     var rng = UnityEngine.Random.value;
-    //ExpandWorldData.Log.LogDebug($"RandomizeData: Roll {Helper.Print(rng)} for weigths {string.Join(", ", swaps.Select(s => Helper.Print(s.Item1)))}");
+    //EWD.Log.LogWarning($"RandomizeData: Roll {Helper.Print(rng)} for weigths {string.Join(", ", swaps.Select(s => Helper.Print(s.Item1)))}");
     foreach (var swap in swaps)
     {
       rng -= swap.Item1;

@@ -1,3 +1,7 @@
+- v1.26
+  - Fixes multiple options not working with object swaps.
+  - Fixes numeric command parameters not working on some computer locales.
+
 - v1.25
   - Fixes zone indices not working on command parameters.
 

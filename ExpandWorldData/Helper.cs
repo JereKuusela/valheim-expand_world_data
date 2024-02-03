@@ -8,6 +8,16 @@ namespace ExpandWorldData;
 
 public static class Helper
 {
+  public static int Hash(string key)
+  {
+    if (key.StartsWith("$", StringComparison.InvariantCultureIgnoreCase))
+    {
+      var hash = ZSyncAnimation.GetHash(key.Substring(1));
+      if (key == "$anim_speed") return hash;
+      return 438569 + hash;
+    }
+    return key.GetStableHashCode();
+  }
   public static float HeightToBaseHeight(float altitude) => altitude / 200f;
   public static float AltitudeToHeight(float altitude) => WorldInfo.WaterLevel + altitude;
   public static float AltitudeToBaseHeight(float altitude) => HeightToBaseHeight(AltitudeToHeight(altitude));

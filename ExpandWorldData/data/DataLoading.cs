@@ -73,7 +73,7 @@ public class DataLoading
       {
         var split = Parse.Split(value);
         if (split.Length < 2) continue;
-        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        var hash = int.TryParse(split[0], out var h) ? h : Helper.Hash(split[0]);
         zdo.Floats.Add(hash, new(split));
       }
     }
@@ -84,7 +84,7 @@ public class DataLoading
       {
         var split = Parse.Split(value);
         if (split.Length < 2) continue;
-        var hash = int.TryParse(split[0], out var h) ? h : DefaultData.Hash(split[0]);
+        var hash = int.TryParse(split[0], out var h) ? h : Helper.Hash(split[0]);
         zdo.Ints.Add(hash, new(split));
       }
     }
