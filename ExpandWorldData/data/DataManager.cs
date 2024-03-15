@@ -12,6 +12,7 @@ using UnityEngine;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using Data;
 
 namespace ExpandWorldData;
 
@@ -48,7 +49,7 @@ public class InitializeContent
   {
     if (Helper.IsServer())
     {
-      DataLoading.Initialize();
+      DataLoading.LoadEntries();
       EnvironmentManager.ToFile();
       ClutterManager.ToFile();
 
@@ -79,104 +80,6 @@ public class DataManager : MonoBehaviour
 {
   public static bool IsReady => EWD.ConfigSync.IsSourceOfTruth || EWD.ConfigSync.InitialSyncDone;
 
-  public static void SetupWatcher(ConfigFile config)
-  {
-    FileSystemWatcher watcher = new(Path.GetDirectoryName(config.ConfigFilePath), Path.GetFileName(config.ConfigFilePath));
-    watcher.Changed += (s, e) => ReadConfigValues(e.FullPath, config);
-    watcher.Created += (s, e) => ReadConfigValues(e.FullPath, config);
-    watcher.Renamed += (s, e) => ReadConfigValues(e.FullPath, config);
-    watcher.IncludeSubdirectories = true;
-    watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-    watcher.EnableRaisingEvents = true;
-  }
-  private static void ReadConfigValues(string path, ConfigFile config)
-  {
-    if (!File.Exists(path)) return;
-    BackupFile(path);
-    try
-    {
-      config.Reload();
-    }
-    catch
-    {
-      EWD.Log.LogError($"There was an issue loading your {config.ConfigFilePath}");
-      EWD.Log.LogError("Please check your config entries for spelling and format!");
-    }
-  }
-  private static void SetupWatcher(string folder, string pattern, Action<string> action)
-  {
-    FileSystemWatcher watcher = new(folder, pattern);
-    watcher.Created += (s, e) => action(e.FullPath);
-    watcher.Changed += (s, e) => action(e.FullPath);
-    watcher.Renamed += (s, e) => action(e.FullPath);
-    watcher.Deleted += (s, e) => action(e.FullPath);
-    watcher.IncludeSubdirectories = true;
-    watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-    watcher.EnableRaisingEvents = true;
-  }
-  private static void ReloadBlueprint(string name)
-  {
-    BlueprintManager.Reload(Path.GetFileNameWithoutExtension(name));
-  }
-  public static void SetupBlueprintWatcher()
-  {
-    if (!Directory.Exists(Configuration.BlueprintGlobalFolder))
-      Directory.CreateDirectory(Configuration.BlueprintGlobalFolder);
-    if (!Directory.Exists(Configuration.BlueprintLocalFolder))
-      Directory.CreateDirectory(Configuration.BlueprintLocalFolder);
-    SetupWatcher(Configuration.BlueprintGlobalFolder, "*.blueprint", ReloadBlueprint);
-    SetupWatcher(Configuration.BlueprintGlobalFolder, "*.vbuild", ReloadBlueprint);
-    if (Path.GetFullPath(Configuration.BlueprintLocalFolder) != Path.GetFullPath(Configuration.BlueprintGlobalFolder))
-    {
-      SetupWatcher(Configuration.BlueprintLocalFolder, "*.blueprint", ReloadBlueprint);
-      SetupWatcher(Configuration.BlueprintLocalFolder, "*.vbuild", ReloadBlueprint);
-    }
-  }
-  public static void SetupWatcher(string pattern, Action action) => SetupWatcher(EWD.YamlDirectory, pattern, file =>
-  {
-    BackupFile(file);
-    action();
-  });
-  private static void BackupFile(string path)
-  {
-    if (!File.Exists(path)) return;
-    if (!Directory.Exists(EWD.BackupDirectory))
-      Directory.CreateDirectory(EWD.BackupDirectory);
-    var stamp = DateTime.Now.ToString("yyyy-MM-dd");
-    var name = $"{Path.GetFileNameWithoutExtension(path)}_{stamp}{Path.GetExtension(path)}.bak";
-    File.Copy(path, Path.Combine(EWD.BackupDirectory, name), true);
-  }
-  public static IDeserializer Deserializer() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
-    .WithTypeConverter(new FloatConverter()).Build();
-  public static IDeserializer DeserializerUnSafe() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
-  .WithTypeConverter(new FloatConverter()).IgnoreUnmatchedProperties().Build();
-  public static ISerializer Serializer() => new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).DisableAliases()
-    .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults).WithTypeConverter(new FloatConverter())
-      .WithAttributeOverride<Color>(c => c.gamma, new YamlIgnoreAttribute())
-      .WithAttributeOverride<Color>(c => c.grayscale, new YamlIgnoreAttribute())
-      .WithAttributeOverride<Color>(c => c.linear, new YamlIgnoreAttribute())
-      .WithAttributeOverride<Color>(c => c.maxColorComponent, new YamlIgnoreAttribute())
-      .Build();
-
-  public static List<T> Deserialize<T>(string raw, string fileName)
-  {
-    try
-    {
-      return Deserializer().Deserialize<List<T>>(raw) ?? [];
-    }
-    catch (Exception ex1)
-    {
-      EWD.Log.LogError($"{fileName}: {ex1.Message}");
-      try
-      {
-        return DeserializerUnSafe().Deserialize<List<T>>(raw) ?? [];
-      }
-      catch (Exception)
-      {
-        return [];
-      }
-    }
-  }
   private static readonly Heightmap.Biome DefaultMax =
     Heightmap.Biome.AshLands | Heightmap.Biome.BlackForest | Heightmap.Biome.DeepNorth |
     Heightmap.Biome.Meadows | Heightmap.Biome.Mistlands | Heightmap.Biome.Mountain |
@@ -251,7 +154,7 @@ public class DataManager : MonoBehaviour
       if (Enum.TryParse<T>(trimmed, true, out var parsed))
         value += (int)(object)parsed;
       else
-        EWD.Log.LogWarning($"Failed to parse value {trimmed} as {parsed.GetType().Name}.");
+        Log.Warning($"Failed to parse value {trimmed} as {parsed.GetType().Name}.");
     }
     return (T)(object)value;
   }
@@ -265,7 +168,7 @@ public class DataManager : MonoBehaviour
       if (Enum.TryParse<T>(trimmed, true, out var parsed))
         value += (byte)(object)parsed;
       else
-        EWD.Log.LogWarning($"Failed to parse value {trimmed} as {nameof(T)}.");
+        Log.Warning($"Failed to parse value {trimmed} as {nameof(T)}.");
     }
     return (T)(object)value;
   }
@@ -307,13 +210,13 @@ public class DataManager : MonoBehaviour
     if (ZNetScene.instance.m_namedPrefabs.TryGetValue(str.GetStableHashCode(), out var obj))
       return obj;
     else
-      EWD.Log.LogWarning($"Prefab {str} not found!");
+      Log.Warning($"Prefab {str} not found!");
     return null;
   }
 
-  public static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot, ZDOData? data)
+  public static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot, DataEntry? data)
   {
-    var zdo = DataHelper.InitZDO(pos, rot, null, data, prefab);
+    var zdo = DataHelper.Init(prefab, pos, rot, null, data);
     zdo?.RemoveLong(ZDOVars.s_creator);
     var obj = Instantiate(prefab, pos, rot);
     CleanGhostInit(obj);
@@ -335,9 +238,9 @@ public class DataManager : MonoBehaviour
   }
   public static string Read(string pattern)
   {
-    if (!Directory.Exists(EWD.YamlDirectory))
-      Directory.CreateDirectory(EWD.YamlDirectory);
-    var data = Directory.GetFiles(EWD.YamlDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
+    if (!Directory.Exists(Yaml.Directory))
+      Directory.CreateDirectory(Yaml.Directory);
+    var data = Directory.GetFiles(Yaml.Directory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
       string.Join("\n", File.ReadAllLines(name).ToList())
     );
     return string.Join("\n", data) ?? "";
@@ -359,23 +262,3 @@ public class DataManager : MonoBehaviour
   }
 
 }
-#nullable disable
-public class FloatConverter : IYamlTypeConverter
-{
-  public bool Accepts(Type type) => type == typeof(float);
-
-  public object ReadYaml(IParser parser, Type type)
-  {
-    var scalar = (YamlDotNet.Core.Events.Scalar)parser.Current;
-    var number = float.Parse(scalar.Value, NumberStyles.Float, CultureInfo.InvariantCulture);
-    parser.MoveNext();
-    return number;
-  }
-
-  public void WriteYaml(IEmitter emitter, object value, Type type)
-  {
-    var number = (float)value;
-    emitter.Emit(new YamlDotNet.Core.Events.Scalar(number.ToString(NumberFormatInfo.InvariantInfo)));
-  }
-}
-#nullable enable

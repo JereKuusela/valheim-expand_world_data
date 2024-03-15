@@ -7,16 +7,17 @@ using HarmonyLib;
 using Service;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Data;
 namespace ExpandWorldData;
 
 public class LocationLoading
 {
   public static string FileName = "expand_locations.yaml";
-  public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
+  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_locations*.yaml";
   public static Dictionary<string, string> ZDOData = [];
   public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = [];
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, ZDOData?>>>> ObjectData = [];
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, DataEntry?>>>> ObjectData = [];
   public static Dictionary<string, List<BlueprintObject>> Objects = [];
   public static Dictionary<string, Range<Vector3>> Scales = [];
   public static Dictionary<string, string[]> Commands = [];
@@ -43,19 +44,19 @@ public class LocationLoading
     if (data.objectData != null)
       ObjectData[data.prefab] = Spawn.LoadData(data.objectData);
     if (data.objects != null)
-      Objects[data.prefab] = Parse.Objects(data.objects);
+      Objects[data.prefab] = Helper.ParseObjects(data.objects);
     if (data.commands != null)
     {
       Commands[data.prefab] = data.commands.Select(s =>
       {
         if (s.Contains("$$"))
         {
-          EWD.Log.LogWarning($"Command \"{s}\" contains $$ which is obsolete. Use {"<>"} instead.");
+          Log.Warning($"Command \"{s}\" contains $$ which is obsolete. Use {"<>"} instead.");
           return s.Replace("$$x", "<x>").Replace("$$y", "<y>").Replace("$$z", "<z>").Replace("$$a", "<a>").Replace("$$i", "<i>").Replace("$$j", "<j>");
         }
         if (s.Contains("{") && s.Contains("}"))
         {
-          EWD.Log.LogWarning($"Command \"{s}\" contains {{}} which is obsolete. Use {"<>"} instead.");
+          Log.Warning($"Command \"{s}\" contains {{}} which is obsolete. Use {"<>"} instead.");
           return s.Replace("{", "<").Replace("}", ">");
         }
         return s;
@@ -95,7 +96,6 @@ public class LocationLoading
     loc.m_maxAltitude = data.maxAltitude;
     return loc;
   }
-
 
   public static LocationData ToData(ZoneSystem.ZoneLocation loc)
   {
@@ -147,7 +147,7 @@ public class LocationLoading
   private static void ToFile()
   {
     if (File.Exists(FilePath)) return;
-    var yaml = DataManager.Serializer().Serialize(ZoneSystem.instance.m_locations.Where(IsValid).Select(ToData).ToList());
+    var yaml = Yaml.Serializer().Serialize(ZoneSystem.instance.m_locations.Where(IsValid).Select(ToData).ToList());
     File.WriteAllText(FilePath, yaml);
   }
   public static void Initialize()
@@ -184,8 +184,8 @@ public class LocationLoading
       var data = FromFile();
       if (data.Count == 0)
       {
-        EWD.Log.LogWarning($"Failed to load any location data.");
-        EWD.Log.LogInfo($"Reloading default location data ({DefaultEntries.Count} entries).");
+        Log.Warning($"Failed to load any location data.");
+        Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
       }
       else
       {
@@ -195,11 +195,11 @@ public class LocationLoading
           return;
         }
         ZoneSystem.instance.m_locations = data;
-        EWD.Log.LogInfo($"Reloading location data ({data.Count} entries).");
+        Log.Info($"Reloading location data ({data.Count} entries).");
       }
     }
     else
-      EWD.Log.LogInfo($"Reloading default location data ({DefaultEntries.Count} entries).");
+      Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
     foreach (var item in ZoneSystem.instance.m_locations) Setup(item);
     LocationSetup.UpdateHashes();
     UpdateInstances();
@@ -233,11 +233,11 @@ public class LocationLoading
       missingKeys.Remove(item.m_prefabName);
     if (missingKeys.Count == 0) return false;
     var missing = DefaultEntries.Where(loc => missingKeys.Contains(loc.m_prefabName)).ToList();
-    EWD.Log.LogWarning($"Adding {missing.Count} missing locations to the expand_locations.yaml file.");
+    Log.Warning($"Adding {missing.Count} missing locations to the expand_locations.yaml file.");
     foreach (var item in missing)
-      EWD.Log.LogWarning(item);
+      Log.Warning(item.m_prefabName);
     var yaml = File.ReadAllText(FilePath);
-    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
     // Directly appending is risky but necessary to keep comments, etc.
     yaml += "\n" + data;
     File.WriteAllText(FilePath, yaml);
@@ -248,13 +248,13 @@ public class LocationLoading
     try
     {
       var yaml = DataManager.Read(Pattern);
-      return DataManager.Deserialize<LocationData>(yaml, FileName).Select(FromData)
+      return Yaml.Deserialize<LocationData>(yaml, FileName).Select(FromData)
         .Where(loc => loc.m_prefabName != "").ToList();
     }
     catch (Exception e)
     {
-      EWD.Log.LogError(e.Message);
-      EWD.Log.LogError(e.StackTrace);
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
     }
     return [];
   }
@@ -305,7 +305,7 @@ public class LocationLoading
     if (!Locations.TryGetValue(prefabName, out var zoneLocation) || zoneLocation.m_prefab == null || zoneLocation.m_location == null)
     {
       if (SetupBlueprint(item)) return;
-      EWD.Log.LogWarning($"Location prefab {prefabName} not found!");
+      Log.Warning($"Location prefab {prefabName} not found!");
       return;
     }
     item.m_prefab = zoneLocation.m_prefab;
@@ -321,7 +321,7 @@ public class LocationLoading
 
   public static void SetupWatcher()
   {
-    DataManager.SetupWatcher(Pattern, Load);
+    Yaml.SetupWatcher(Pattern, Load);
   }
 }
 

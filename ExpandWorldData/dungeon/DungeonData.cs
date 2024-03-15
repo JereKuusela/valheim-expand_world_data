@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Service;
 using UnityEngine;
+using Data;
 
 namespace ExpandWorldData.Dungeon;
 public class DungeonDoorData
@@ -81,5 +82,5 @@ public class FakeDungeonGenerator
   public float m_perimeterBuffer;
   public bool m_useCustomInteriorTransform;
   public Dictionary<string, List<Tuple<float, string>>> m_objectSwaps = [];
-  public Dictionary<string, List<Tuple<float, ZDOData?>>> m_objectData = [];
+  public Dictionary<string, List<Tuple<float, DataEntry?>>> m_objectData = [];
 }

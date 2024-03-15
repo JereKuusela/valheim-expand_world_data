@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.IO;
+using Service;
 
 namespace ExpandWorldData;
 
@@ -40,18 +42,38 @@ public class BlueprintManager
       }
       return true;
     }
-    EWD.Log.LogWarning($"Object / blueprint {name} not found!");
+    Log.Warning($"Object / blueprint {name} not found!");
     return false;
   }
   public static void Reload(string name)
   {
     if (!Has(name)) return;
     if (!Blueprints.TryGetBluePrint(name, out _)) return;
-    EWD.Log.LogInfo($"Reloading blueprint {name}.");
+    Log.Info($"Reloading blueprint {name}.");
     BlueprintFiles.Remove(name);
     if (MetaData.TryGetValue(name, out var data))
       Load(name, data.SnapPieces);
     else
       Load(name);
+  }
+
+
+  private static void ReloadBlueprint(string name)
+  {
+    Reload(Path.GetFileNameWithoutExtension(name));
+  }
+  public static void SetupBlueprintWatcher()
+  {
+    if (!Directory.Exists(Configuration.BlueprintGlobalFolder))
+      Directory.CreateDirectory(Configuration.BlueprintGlobalFolder);
+    if (!Directory.Exists(Configuration.BlueprintLocalFolder))
+      Directory.CreateDirectory(Configuration.BlueprintLocalFolder);
+    Yaml.SetupWatcher(Configuration.BlueprintGlobalFolder, "*.blueprint", ReloadBlueprint);
+    Yaml.SetupWatcher(Configuration.BlueprintGlobalFolder, "*.vbuild", ReloadBlueprint);
+    if (Path.GetFullPath(Configuration.BlueprintLocalFolder) != Path.GetFullPath(Configuration.BlueprintGlobalFolder))
+    {
+      Yaml.SetupWatcher(Configuration.BlueprintLocalFolder, "*.blueprint", ReloadBlueprint);
+      Yaml.SetupWatcher(Configuration.BlueprintLocalFolder, "*.vbuild", ReloadBlueprint);
+    }
   }
 }

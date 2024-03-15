@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -11,7 +12,7 @@ public class GuaranteeLocations
   {
     if (location.m_prefabName == Game.instance.m_StartLocation && Count(zs, location) == 0)
     {
-      EWD.Log.LogInfo($"Forcefully placing {location.m_prefabName} location at the center.");
+      Log.Info($"Forcefully placing {location.m_prefabName} location at the center.");
       var locationRadius = Mathf.Max(location.m_exteriorRadius, location.m_interiorRadius);
       Vector3 randomPointInZone = zs.GetRandomPointInZone(new Vector2i(0, 0), locationRadius);
       zs.RegisterLocation(location, randomPointInZone, false);

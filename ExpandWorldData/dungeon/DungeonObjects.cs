@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using Service;
+using Data;
 
 namespace ExpandWorldData.Dungeon;
 
@@ -14,7 +15,7 @@ public static class DungeonObjects
   public static string CurrentRoom = "";
 
 
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, ZDOData?>>>> ObjectData = [];
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, DataEntry?>>>> ObjectData = [];
 
   public static Dictionary<string, List<BlueprintObject>> Objects = [];
   public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = [];
@@ -39,26 +40,26 @@ public static class DungeonObjects
     return Spawn.RandomizeSwap(swaps);
   }
 
-  public static ZDOData? DataOverride(ZDOData? pgk, string prefab)
+  public static DataEntry? DataOverride(DataEntry? pgk, string prefab)
   {
     var locationData = LocationSpawning.DataOverride(prefab);
     var dungeonData = DataDungeonOverride(prefab);
     var roomData = DataRoomOverride(prefab);
-    return ZDOData.Merge(locationData, dungeonData, roomData, pgk);
+    return DataHelper.Merge(locationData, dungeonData, roomData, pgk);
   }
-  private static ZDOData? DataDungeonOverride(string prefab)
+  private static DataEntry? DataDungeonOverride(string prefab)
   {
     if (!Generators.TryGetValue(CurrentDungeon, out var gen)) return null;
     var allData = gen.m_objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
     var prefabData = gen.m_objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
-    return ZDOData.Merge(allData, prefabData);
+    return DataHelper.Merge(allData, prefabData);
   }
-  public static ZDOData? DataRoomOverride(string prefab)
+  public static DataEntry? DataRoomOverride(string prefab)
   {
     if (!ObjectData.TryGetValue(CurrentRoom, out var objectData)) return null;
     var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
     var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
-    return ZDOData.Merge(allData, prefabData);
+    return DataHelper.Merge(allData, prefabData);
   }
 
 }

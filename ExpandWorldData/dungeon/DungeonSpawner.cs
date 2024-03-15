@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData.Dungeon;
@@ -111,7 +112,7 @@ public class Spawner
   public static void Override(DungeonGenerator dg, string name)
   {
     if (!DungeonObjects.Generators.TryGetValue(name, out var data)) return;
-    //ExpandWorldData.Log.LogDebug($"Overriding with dungeon {name}.");
+    //ExpandWorldData.Log.Debug($"Overriding with dungeon {name}.");
     dg.name = name;
     dg.m_algorithm = data.m_algorithm;
     dg.m_zoneSize = data.m_zoneSize;
@@ -170,7 +171,7 @@ public class EnvironmentBox
     size.x = Mathf.Max(size.x, origSize.x);
     size.y = Mathf.Max(size.y, origSize.y);
     size.z = Mathf.Max(size.z, origSize.z);
-    // ExpandWorldData.Log.LogDebug($"Scaling environment box for {loc.name} from {origSize} to {size}.");
+    // ExpandWorldData.Log.Debug($"Scaling environment box for {loc.name} from {origSize} to {size}.");
     envZone.transform.localScale = size;
   }
 
@@ -195,7 +196,7 @@ public class EnvironmentBox
     extents.x = Mathf.Max(Mathf.Abs(offset.x + bounds.extents.x) + tweak, Mathf.Abs(offset.x - bounds.extents.x) + tweak);
     extents.y = Mathf.Max(Mathf.Abs(offset.y + bounds.extents.y) + tweak, Mathf.Abs(offset.y - bounds.extents.y) + tweak);
     extents.z = Mathf.Max(Mathf.Abs(offset.z + bounds.extents.z) + tweak, Mathf.Abs(offset.z - bounds.extents.z) + tweak);
-    // ExpandWorldData.Log.LogDebug($"Bounds for {__instance.name} are {bounds.center} {bounds.extents} {center}.");
+    // ExpandWorldData.Log.Debug($"Bounds for {__instance.name} are {bounds.center} {bounds.extents} {center}.");
     Cache[zone] = 2 * extents;
     var locsInZone = Location.m_allLocations.Where(loc => ZoneSystem.instance.GetZone(loc.transform.position) == zone).ToArray();
     foreach (var loc in locsInZone)

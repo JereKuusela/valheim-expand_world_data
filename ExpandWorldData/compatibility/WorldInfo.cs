@@ -1,5 +1,6 @@
 
 using HarmonyLib;
+using Service;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -28,7 +29,7 @@ public class WorldInfo
   public static void AutomaticRegenerate()
   {
     if (WorldGenerator.instance == null) return;
-    EWD.Log.LogInfo("Regenerating the world.");
+    Log.Info("Regenerating the world.");
     WorldGenerator.instance.Pregenerate();
     foreach (var heightmap in Object.FindObjectsOfType<Heightmap>())
     {

@@ -26,19 +26,6 @@ public class DebugCommands
     {
       WorldInfo.RegenerateMap();
     }, true);
-    new Terminal.ConsoleCommand("ew_copy", "[name] - Copies hovered item data to the data yaml.", (args) =>
-    {
-      if (args.Length < 2) return;
-      var name = args[1];
-      var hovered = Selector.GetHovered();
-      if (hovered == null)
-      {
-        args.Context.AddString("No hovered object.");
-        return;
-      }
-      ZDOData data = new(name, hovered);
-      DataLoading.Save(data);
-    }, true);
     new Terminal.ConsoleCommand("ew_biomes", "[precision] - Counts biomes by sampling points with a given precision (meters).", args =>
     {
       var precision = 100f;

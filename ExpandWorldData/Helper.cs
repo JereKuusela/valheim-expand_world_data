@@ -2,21 +2,25 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Data;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
 
 public static class Helper
 {
-  public static int Hash(string key)
+  public static List<BlueprintObject> ParseObjects(string[] args)
   {
-    if (key.StartsWith("$", StringComparison.InvariantCultureIgnoreCase))
-    {
-      var hash = ZSyncAnimation.GetHash(key.Substring(1));
-      if (key == "$anim_speed") return hash;
-      return 438569 + hash;
-    }
-    return key.GetStableHashCode();
+    return args.Select(s => Parse.Split(s)).Select(split => new BlueprintObject(
+        split[0],
+        Parse.VectorXZY(split, 1),
+        Parse.AngleYXZ(split, 4),
+        Parse.VectorXZY(split, 7, Vector3.one),
+        DataHelper.Get(split.Length > 11 ? split[11] : ""),
+        Parse.Float(split, 10, 1f),
+        split.Length > 3 && split[3].ToLowerInvariant() == "snap"
+      )).ToList();
   }
   public static float HeightToBaseHeight(float altitude) => altitude / 200f;
   public static float AltitudeToHeight(float altitude) => WorldInfo.WaterLevel + altitude;
@@ -83,5 +87,9 @@ public static class Helper
 
   public static bool HasAnyGlobalKey(List<string> keys) => keys.Any(ZoneSystem.instance.m_globalKeys.Contains);
   public static bool HasEveryGlobalKey(List<string> keys) => keys.All(ZoneSystem.instance.m_globalKeys.Contains);
+
+  public static bool IsZero(float a) => Mathf.Abs(a) < 0.001f;
+  public static bool Approx(float a, float b) => Mathf.Abs(a - b) < 0.001f;
+  public static bool ApproxBetween(float a, float min, float max) => min - 0.001f <= a && a <= max + 0.001f;
 }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using HarmonyLib;
+using Service;
 
 namespace ExpandWorldData.Dungeon;
 
@@ -13,7 +14,7 @@ namespace ExpandWorldData.Dungeon;
 public partial class Loader
 {
   public static string FileName = "expand_dungeons.yaml";
-  public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
+  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_dungeons*.yaml";
 
   private static Dictionary<string, DungeonGenerator> DefaultGenerators = [];
@@ -35,7 +36,7 @@ public partial class Loader
 
   private static void ToFile()
   {
-    var yaml = DataManager.Serializer().Serialize(DefaultGenerators.Select(kvp => To(kvp.Value)).ToList());
+    var yaml = Yaml.Serializer().Serialize(DefaultGenerators.Select(kvp => To(kvp.Value)).ToList());
     File.WriteAllText(FilePath, yaml);
   }
 
@@ -43,13 +44,13 @@ public partial class Loader
   {
     try
     {
-      var data = DataManager.Deserialize<DungeonData>(DataManager.Read(Pattern), FileName);
+      var data = Yaml.Deserialize<DungeonData>(DataManager.Read(Pattern), FileName);
       return data.ToDictionary(data => data.name, From);
     }
     catch (Exception e)
     {
-      EWD.Log.LogError(e.Message);
-      EWD.Log.LogError(e.StackTrace);
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
     }
     return [];
   }
@@ -60,7 +61,7 @@ public partial class Loader
     if (Helper.IsClient()) return;
     if (!Configuration.DataRooms)
     {
-      EWD.Log.LogInfo($"Reloading default dungeon entries).");
+      Log.Info($"Reloading default dungeon entries).");
       return;
     }
     if (!File.Exists(FilePath))
@@ -72,8 +73,8 @@ public partial class Loader
     var data = FromFile();
     if (data.Count == 0)
     {
-      EWD.Log.LogWarning($"Failed to load any dungeon data.");
-      EWD.Log.LogInfo($"Reloading default dungeon data.");
+      Log.Warning($"Failed to load any dungeon data.");
+      Log.Info($"Reloading default dungeon data.");
       return;
     }
     if (Configuration.DataMigration && AddMissingEntries(data))
@@ -81,7 +82,7 @@ public partial class Loader
       // Watcher triggers reload.
       return;
     }
-    EWD.Log.LogInfo($"Reloading dungeon data ({data.Count} entries).");
+    Log.Info($"Reloading dungeon data ({data.Count} entries).");
     DungeonObjects.Generators = data;
   }
 
@@ -92,11 +93,11 @@ public partial class Loader
     foreach (var kvp in entries)
       missingKeys.Remove(kvp.Key);
     if (missingKeys.Count == 0) return false;
-    EWD.Log.LogWarning($"Adding {missingKeys.Count} missing dungeon generators to the expand_dungeons.yaml file.");
+    Log.Warning($"Adding {missingKeys.Count} missing dungeon generators to the expand_dungeons.yaml file.");
     foreach (var kvp in missingKeys)
-      EWD.Log.LogWarning(kvp.Key);
+      Log.Warning(kvp.Key);
     var yaml = File.ReadAllText(FilePath);
-    var data = DataManager.Serializer().Serialize(missingKeys.Select(kvp => To(kvp.Value)).ToList());
+    var data = Yaml.Serializer().Serialize(missingKeys.Select(kvp => To(kvp.Value)).ToList());
     // Directly appending is risky but necessary to keep comments, etc.
     yaml += "\n" + data;
     File.WriteAllText(FilePath, yaml);
@@ -105,7 +106,7 @@ public partial class Loader
 
   public static void SetupWatcher()
   {
-    DataManager.SetupWatcher(Pattern, Load);
+    Yaml.SetupWatcher(Pattern, Load);
   }
 }
 

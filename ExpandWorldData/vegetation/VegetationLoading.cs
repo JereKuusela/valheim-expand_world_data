@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Data;
 using Service;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ namespace ExpandWorldData;
 public class VegetationLoading
 {
   private static readonly string FileName = "expand_vegetation.yaml";
-  private static readonly string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
+  private static readonly string FilePath = Path.Combine(Yaml.Directory, FileName);
   private static readonly string Pattern = "expand_vegetation*.yaml";
 
 
@@ -32,12 +33,12 @@ public class VegetationLoading
     ZoneSystem.instance.m_vegetation = DefaultEntries;
     if (!Configuration.DataVegetation)
     {
-      EWD.Log.LogInfo($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
+      Log.Info($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
       return;
     }
     if (!File.Exists(FilePath))
     {
-      var yaml = DataManager.Serializer().Serialize(DefaultEntries.Select(ToData).ToList());
+      var yaml = Yaml.Serializer().Serialize(DefaultEntries.Select(ToData).ToList());
       File.WriteAllText(FilePath, yaml);
       // Watcher triggers reload.
       return;
@@ -46,8 +47,8 @@ public class VegetationLoading
     var data = FromFile();
     if (data.Count == 0)
     {
-      EWD.Log.LogWarning($"Failed to load any vegetation data.");
-      EWD.Log.LogInfo($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
+      Log.Warning($"Failed to load any vegetation data.");
+      Log.Info($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
       return;
     }
     if (Configuration.DataMigration && AddMissingEntries(data))
@@ -55,7 +56,7 @@ public class VegetationLoading
       // Watcher triggers reload.
       return;
     }
-    EWD.Log.LogInfo($"Reloading vegetation data ({data.Count} entries).");
+    Log.Info($"Reloading vegetation data ({data.Count} entries).");
     ZoneSystem.instance.m_vegetation = data;
 
   }
@@ -65,13 +66,13 @@ public class VegetationLoading
     try
     {
       var yaml = DataManager.Read(Pattern);
-      return DataManager.Deserialize<VegetationData>(yaml, FileName).Select(FromData)
+      return Yaml.Deserialize<VegetationData>(yaml, FileName).Select(FromData)
         .Where(veg => veg.m_prefab).ToList();
     }
     catch (Exception e)
     {
-      EWD.Log.LogError(e.Message);
-      EWD.Log.LogError(e.StackTrace);
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
     }
     return [];
   }
@@ -81,7 +82,7 @@ public class VegetationLoading
     ZoneSystem.instance.m_vegetation = ZoneSystem.instance.m_vegetation
       .Where(veg => veg.m_prefab)
       .Where(veg => ZNetScene.instance.m_namedPrefabs.ContainsKey(veg.m_prefab.name.GetStableHashCode()))
-      .Where(veg => veg.m_enable && veg.m_biome != 0 && veg.m_max > 0f).ToList();
+      .Where(veg => veg.m_enable && veg.m_max > 0f).ToList();
     DefaultEntries = ZoneSystem.instance.m_vegetation;
     DefaultKeys = Helper.ToSet(DefaultEntries, veg => veg.m_prefab.name);
   }
@@ -99,11 +100,11 @@ public class VegetationLoading
     if (missingKeys.Count == 0) return false;
     // But don't use m_name because it can be anything for original items.
     var missing = DefaultEntries.Where(veg => missingKeys.Contains(veg.m_prefab.name)).ToList();
-    EWD.Log.LogWarning($"Adding {missing.Count} missing vegetation to the expand_vegetation.yaml file.");
+    Log.Warning($"Adding {missing.Count} missing vegetation to the expand_vegetation.yaml file.");
     foreach (var veg in missing)
-      EWD.Log.LogWarning(veg.m_prefab.name);
+      Log.Warning(veg.m_prefab.name);
     var yaml = File.ReadAllText(FilePath);
-    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
     // Directly appending is risky but necessary to keep comments, etc.
     yaml += "\n" + data;
     File.WriteAllText(FilePath, yaml);
@@ -162,7 +163,7 @@ public class VegetationLoading
     if (Helper.IsMultiAxis(scale))
       extra.scale = scale;
     if (data.data != "")
-      extra.data = ZDOData.Create(data.data);
+      extra.data = DataHelper.Get(data.data);
 
     if (ZNetScene.instance.m_namedPrefabs.TryGetValue(hash, out var obj))
     {
@@ -222,6 +223,6 @@ public class VegetationLoading
 
   public static void SetupWatcher()
   {
-    DataManager.SetupWatcher(Pattern, Load);
+    Yaml.SetupWatcher(Pattern, Load);
   }
 }

@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Service;
 using UnityEngine;
+using Data;
 
-using DataOverride = System.Func<Service.ZDOData?, string, Service.ZDOData?>;
+using DataOverride = System.Func<Data.DataEntry?, string, Data.DataEntry?>;
+using Service;
 
 namespace ExpandWorldData;
 
@@ -28,12 +29,11 @@ public class Spawn
       BPO(obj, pos, rot, scale, dataOverride, prefabOverride, spawned);
     }
   }
-  private static void SetData(GameObject prefab, Vector3 position, Quaternion rotation, Vector3? scale, ZDOData? data = null)
+  private static void SetData(GameObject prefab, Vector3 position, Quaternion rotation, Vector3? scale, DataEntry? data = null)
   {
     // No override needed.
     if (data == null && scale == null) return;
-    if (!prefab.TryGetComponent<ZNetView>(out var view)) return;
-    var zdo = DataHelper.InitZDO(position, rotation, scale, data, view);
+    var zdo = DataHelper.Init(prefab, position, rotation, scale, data);
     // Users very easily might have creator on their blueprints or copied data.
     // This causes enemies to attack them because they are considered player built.
     // So far no reason to keep this data.
@@ -102,13 +102,13 @@ public class Spawn
         Blueprint(bp, pos, rot, sc, dataOverride, prefabOverride, spawned);
         return null;
       }
-      EWD.Log.LogWarning($"Blueprint / object prefab {prefabName} not found!");
+      Log.Warning($"Blueprint / object prefab {prefabName} not found!");
       return null;
     }
     var data = dataOverride(obj.Data, prefabName);
     SetData(prefab, pos, rot, sc, data);
 
-    //ExpandWorldData.Log.LogDebug($"Spawning {prefabName} at {Helper.Print(pos)} {source}");
+    //ExpandWorldData.Log.Debug($"Spawning {prefabName} at {Helper.Print(pos)} {source}");
     var go = UnityEngine.Object.Instantiate(prefab, pos, rot);
     DataManager.CleanGhostInit(go);
     if (ZNetView.m_ghostInit)
@@ -158,10 +158,10 @@ public class Spawn
     return swaps;
   }
 
-  private static List<Tuple<float, ZDOData?>> ParseDataItems(IEnumerable<string> items, float weight) => items.Select(s => Parse.Split(s, false, ':')).Select(s => Tuple.Create(Parse.Float(s, 1, 1f) * weight, ZDOData.Create(s[0]))).ToList();
-  public static Dictionary<string, List<Tuple<float, ZDOData?>>> LoadData(string[] objectData)
+  private static List<Tuple<float, DataEntry?>> ParseDataItems(IEnumerable<string> items, float weight) => items.Select(s => Parse.Split(s, false, ':')).Select(s => Tuple.Create(Parse.Float(s, 1, 1f) * weight, DataHelper.Get(s[0]))).ToList();
+  public static Dictionary<string, List<Tuple<float, DataEntry?>>> LoadData(string[] objectData)
   {
-    Dictionary<string, List<Tuple<float, ZDOData?>>> swaps = [];
+    Dictionary<string, List<Tuple<float, DataEntry?>>> swaps = [];
     // Empty items are kept to support spawning nothing.
     var list = objectData.Select(s => DataManager.ToList(s, false)).Where(l => l.Count > 0).ToList();
     // Complicated logic to support:
@@ -191,7 +191,7 @@ public class Spawn
     if (swaps.Count == 1)
       return swaps[0].Item2;
     var rng = UnityEngine.Random.value;
-    //EWD.Log.LogWarning($"RandomizeSwap: Roll {Helper.Print(rng)} for {string.Join(", ", swaps.Select(s => s.Item2 + ":" + Helper.Print(s.Item1)))}");
+    //Log.Warning($"RandomizeSwap: Roll {Helper.Print(rng)} for {string.Join(", ", swaps.Select(s => s.Item2 + ":" + Helper.Print(s.Item1)))}");
     foreach (var swap in swaps)
     {
       rng -= swap.Item1;
@@ -199,14 +199,14 @@ public class Spawn
     }
     return swaps[swaps.Count - 1].Item2;
   }
-  public static ZDOData? RandomizeData(List<Tuple<float, ZDOData?>> swaps)
+  public static DataEntry? RandomizeData(List<Tuple<float, DataEntry?>> swaps)
   {
     if (swaps.Count == 0)
       return null;
     if (swaps.Count == 1)
       return swaps[0].Item2;
     var rng = UnityEngine.Random.value;
-    //EWD.Log.LogWarning($"RandomizeData: Roll {Helper.Print(rng)} for weigths {string.Join(", ", swaps.Select(s => Helper.Print(s.Item1)))}");
+    //Log.Warning($"RandomizeData: Roll {Helper.Print(rng)} for weigths {string.Join(", ", swaps.Select(s => Helper.Print(s.Item1)))}");
     foreach (var swap in swaps)
     {
       rng -= swap.Item1;

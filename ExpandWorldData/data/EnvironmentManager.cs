@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEngine;
+using Service;
 
 namespace ExpandWorldData;
 
 public class EnvironmentManager
 {
   public static string FileName = "expand_environments.yaml";
-  public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
+  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_environments*.yaml";
   private static Dictionary<string, EnvSetup> Originals = [];
   public static Dictionary<string, EnvironmentData> Extra = [];
@@ -21,7 +21,7 @@ public class EnvironmentManager
     else if (Originals.TryGetValue(data.name, out setup))
       env = setup.Clone();
     else
-      EWD.Log.LogWarning($"Failed to find a particle system \"{data.particles}\". Make sure field \"particles\" it set correctly.");
+      Log.Warning($"Failed to find a particle system \"{data.particles}\". Make sure field \"particles\" it set correctly.");
 
     env.m_name = data.name;
     env.m_default = data.isDefault;
@@ -117,7 +117,7 @@ public class EnvironmentManager
   {
     if (Helper.IsClient() || !Configuration.DataEnvironments) return;
     if (File.Exists(FilePath)) return;
-    var yaml = DataManager.Serializer().Serialize(EnvMan.instance.m_environments.Select(ToData).ToList());
+    var yaml = Yaml.Serializer().Serialize(EnvMan.instance.m_environments.Select(ToData).ToList());
     File.WriteAllText(FilePath, yaml);
   }
   public static void FromFile()
@@ -148,11 +148,11 @@ public class EnvironmentManager
     if (yaml == "" || !Configuration.DataEnvironments) return;
     try
     {
-      var data = DataManager.Deserialize<EnvironmentYaml>(yaml, FileName)
+      var data = Yaml.Deserialize<EnvironmentYaml>(yaml, FileName)
         .Select(FromData).ToList();
       if (data.Count == 0)
       {
-        EWD.Log.LogWarning($"Failed to load any environment data.");
+        Log.Warning($"Failed to load any environment data.");
         return;
       }
       if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
@@ -160,7 +160,7 @@ public class EnvironmentManager
         // Watcher triggers reload.
         return;
       }
-      EWD.Log.LogInfo($"Reloading environment data ({data.Count} entries).");
+      Log.Info($"Reloading environment data ({data.Count} entries).");
       foreach (var list in LocationList.m_allLocationLists)
         list.m_environments.Clear();
       var em = EnvMan.instance;
@@ -174,8 +174,8 @@ public class EnvironmentManager
     }
     catch (Exception e)
     {
-      EWD.Log.LogError(e.Message);
-      EWD.Log.LogError(e.StackTrace);
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
     }
   }
 
@@ -186,11 +186,11 @@ public class EnvironmentManager
       missingKeys.Remove(entry.m_name);
     if (missingKeys.Count == 0) return false;
     var missing = Originals.Values.Where(env => missingKeys.Contains(env.m_name)).ToList();
-    EWD.Log.LogWarning($"Adding {missing.Count} missing environments to the expand_environments.yaml file.");
+    Log.Warning($"Adding {missing.Count} missing environments to the expand_environments.yaml file.");
     foreach (var env in missing)
-      EWD.Log.LogWarning(env.m_name);
+      Log.Warning(env.m_name);
     var yaml = File.ReadAllText(FilePath);
-    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
     // Directly appending is risky but necessary to keep comments, etc.
     yaml += "\n" + data;
     File.WriteAllText(FilePath, yaml);
@@ -200,6 +200,6 @@ public class EnvironmentManager
 
   public static void SetupWatcher()
   {
-    DataManager.SetupWatcher(Pattern, FromFile);
+    Yaml.SetupWatcher(Pattern, FromFile);
   }
 }

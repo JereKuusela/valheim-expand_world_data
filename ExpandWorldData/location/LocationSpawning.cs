@@ -4,25 +4,26 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using Service;
 using UnityEngine;
+using Data;
 
 namespace ExpandWorldData;
 
 public class LocationSpawning
 {
   public static string CurrentLocation = "";
-  public static ZDOData? DataOverride(ZDOData? pkg, string prefab)
+  public static DataEntry? DataOverride(DataEntry? pkg, string prefab)
   {
     if (!LocationLoading.ObjectData.TryGetValue(CurrentLocation, out var objectData)) return pkg;
     var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
     var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
-    return ZDOData.Merge(allData, prefabData, pkg);
+    return DataHelper.Merge(allData, prefabData, pkg);
   }
-  public static ZDOData? DataOverride(string prefab)
+  public static DataEntry? DataOverride(string prefab)
   {
     if (!LocationLoading.ObjectData.TryGetValue(CurrentLocation, out var objectData)) return null;
     var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
     var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
-    return ZDOData.Merge(allData, prefabData);
+    return DataHelper.Merge(allData, prefabData);
   }
   public static string PrefabOverride(string prefab)
   {
@@ -43,7 +44,7 @@ public class LocationSpawning
   public static void CustomObjects(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, Vector3 scale, List<GameObject> spawnedGhostObjects)
   {
     if (!LocationLoading.Objects.TryGetValue(location.m_prefabName, out var objects)) return;
-    //ExpandWorldData.Log.LogDebug($"Spawning {objects.Count} custom objects in {location.m_prefabName}");
+    //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefabName}");
     foreach (var obj in objects)
     {
       if (obj.Chance < 1f && Random.value > obj.Chance) continue;
@@ -59,9 +60,8 @@ public class LocationZDO
   static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
   {
     if (!LocationLoading.ZDOData.TryGetValue(location.m_prefabName, out var key)) return;
-    var data = ZDOData.Create(key);
-    if (!__instance.m_locationProxyPrefab.TryGetComponent<ZNetView>(out var view)) return;
-    if (data != null) DataHelper.InitZDO(pos, rotation, null, data, view);
+    var data = DataHelper.Get(key);
+    if (data != null) DataHelper.Init(__instance.m_locationProxyPrefab, pos, rotation, null, data);
   }
 }
 [HarmonyPatch(typeof(LocationProxy), nameof(LocationProxy.SetLocation))]

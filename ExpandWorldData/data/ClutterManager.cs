@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 namespace ExpandWorldData;
 
@@ -10,7 +11,7 @@ namespace ExpandWorldData;
 public class ClutterManager
 {
   public static string FileName = "expand_clutter.yaml";
-  public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
+  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_clutter*.yaml";
   private static ClutterSystem.Clutter[] Originals = [];
   private static Dictionary<string, GameObject> Prefabs = [];
@@ -27,7 +28,7 @@ public class ClutterManager
     if (Prefabs.TryGetValue(data.prefab, out var prefab))
       clutter.m_prefab = prefab;
     else
-      EWD.Log.LogWarning($"Failed to find clutter prefab {data.prefab}.");
+      Log.Warning($"Failed to find clutter prefab {data.prefab}.");
     clutter.m_enabled = data.enabled;
     clutter.m_amount = data.amount;
     clutter.m_biome = DataManager.ToBiomes(data.biome);
@@ -95,7 +96,7 @@ public class ClutterManager
   {
     if (Helper.IsClient() || !Configuration.DataClutter) return;
     if (File.Exists(FilePath)) return;
-    var yaml = DataManager.Serializer().Serialize(ClutterSystem.instance.m_clutter.Select(ToData).ToList());
+    var yaml = Yaml.Serializer().Serialize(ClutterSystem.instance.m_clutter.Select(ToData).ToList());
     File.WriteAllText(FilePath, yaml);
   }
   public static void FromFile()
@@ -116,11 +117,11 @@ public class ClutterManager
       LoadPrefabs();
     try
     {
-      var data = DataManager.Deserialize<ClutterData>(yaml, FileName)
+      var data = Yaml.Deserialize<ClutterData>(yaml, FileName)
         .Select(FromData).Where(clutter => clutter.m_prefab).ToList();
       if (data.Count == 0)
       {
-        EWD.Log.LogWarning($"Failed to load any clutter data.");
+        Log.Warning($"Failed to load any clutter data.");
         return;
       }
       if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
@@ -128,7 +129,7 @@ public class ClutterManager
         // Watcher triggers reload.
         return;
       }
-      EWD.Log.LogInfo($"Reloading clutter data ({data.Count} entries).");
+      Log.Info($"Reloading clutter data ({data.Count} entries).");
       ClutterSystem.instance.m_clutter.Clear();
       foreach (var clutter in data)
         ClutterSystem.instance.m_clutter.Add(clutter);
@@ -136,8 +137,8 @@ public class ClutterManager
     }
     catch (Exception e)
     {
-      EWD.Log.LogError(e.Message);
-      EWD.Log.LogError(e.StackTrace);
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
     }
   }
   private static bool AddMissingEntries(List<ClutterSystem.Clutter> entries)
@@ -147,11 +148,11 @@ public class ClutterManager
       missingKeys.Remove(entry.m_prefab.name);
     if (missingKeys.Count == 0) return false;
     var missing = Originals.Where(clutter => missingKeys.Contains(clutter.m_prefab.name)).ToList();
-    EWD.Log.LogWarning($"Adding {missing.Count} missing clutters to the expand_clutter.yaml file.");
+    Log.Warning($"Adding {missing.Count} missing clutters to the expand_clutter.yaml file.");
     foreach (var clutter in missing)
-      EWD.Log.LogWarning(clutter.m_prefab.name);
+      Log.Warning(clutter.m_prefab.name);
     var yaml = File.ReadAllText(FilePath);
-    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
     // Directly appending is risky but necessary to keep comments, etc.
     yaml += "\n" + data;
     File.WriteAllText(FilePath, yaml);
@@ -160,6 +161,6 @@ public class ClutterManager
 
   public static void SetupWatcher()
   {
-    DataManager.SetupWatcher(Pattern, FromFile);
+    Yaml.SetupWatcher(Pattern, FromFile);
   }
 }

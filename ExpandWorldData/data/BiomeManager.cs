@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 // TODO: Biomes should be optimized. Scale them by world size on load.
@@ -11,7 +12,7 @@ namespace ExpandWorldData;
 public class BiomeManager
 {
   public static string FileName = "expand_biomes.yaml";
-  public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
+  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_biomes*.yaml";
 
   public static EnvEntry FromData(BiomeEnvironment data)
@@ -92,7 +93,7 @@ public class BiomeManager
   {
     if (Helper.IsClient() || !Configuration.DataBiome) return;
     if (File.Exists(FilePath)) return;
-    var yaml = DataManager.Serializer().Serialize(EnvMan.instance.m_biomes.Select(ToData).ToList());
+    var yaml = Yaml.Serializer().Serialize(EnvMan.instance.m_biomes.Select(ToData).ToList());
     File.WriteAllText(FilePath, yaml);
   }
   public static void FromFile()
@@ -120,13 +121,13 @@ public class BiomeManager
     {
       try
       {
-        rawData = DataManager.Deserialize<BiomeYaml>(yaml, FileName);
+        rawData = Yaml.Deserialize<BiomeYaml>(yaml, FileName);
       }
       catch (Exception e)
       {
-        EWD.Log.LogWarning($"Failed to load any biome data.");
-        EWD.Log.LogError(e.Message);
-        EWD.Log.LogError(e.StackTrace);
+        Log.Warning($"Failed to load any biome data.");
+        Log.Error(e.Message);
+        Log.Error(e.StackTrace);
       }
     }
     return rawData;
@@ -135,13 +136,13 @@ public class BiomeManager
   {
     BiomeToDisplayName = names;
     NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLowerInvariant(), kvp => kvp.Key);
-    EWD.Log.LogInfo($"Received {BiomeToDisplayName.Count} biome names.");
+    Log.Info($"Received {BiomeToDisplayName.Count} biome names.");
   }
   private static void LoadNames(string yaml)
   {
     var rawData = Parse(yaml);
     if (rawData.Count > 0)
-      EWD.Log.LogInfo($"Preloading biome names ({rawData.Count} entries).");
+      Log.Info($"Preloading biome names ({rawData.Count} entries).");
     var originalNames = OriginalBiomes.Select(kvp => kvp.Key.ToLowerInvariant()).ToHashSet();
     BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     var biome = Heightmap.Biome.Mistlands;
@@ -160,7 +161,7 @@ public class BiomeManager
     if (yaml == "" || !Configuration.DataBiome) return;
     var rawData = Parse(yaml);
     if (rawData.Count > 0)
-      EWD.Log.LogInfo($"Reloading biome data ({rawData.Count} entries).");
+      Log.Info($"Reloading biome data ({rawData.Count} entries).");
     BiomeData.Clear();
     BiomeToColor.Clear();
     NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
@@ -253,7 +254,7 @@ public class BiomeManager
       if (ZNet.m_instance == null) NamesFromFile();
       else FromFile();
     };
-    DataManager.SetupWatcher(Pattern, callback);
+    Yaml.SetupWatcher(Pattern, callback);
   }
 
   // These must be stored in static fields to avoid garbage collection.

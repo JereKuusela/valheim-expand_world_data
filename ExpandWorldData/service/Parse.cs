@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Service;
 using UnityEngine;
-namespace ExpandWorldData;
+namespace Service;
 
 public class Range<T>
 {
@@ -25,6 +24,11 @@ public class Range<T>
 ///<summary>Contains functions for parsing arguments, etc.</summary>
 public static class Parse
 {
+  public static Vector2i Vector2Int(string arg)
+  {
+    string[] array = SplitWithEmpty(arg);
+    return new Vector2i(Int(array[0]), (array.Length > 1) ? Int(array[1]) : 0);
+  }
   public static int Int(string arg, int defaultValue = 0)
   {
     if (!TryInt(arg, out var result))
@@ -71,19 +75,43 @@ public static class Parse
     vector.z = Float(args, index + 2, defaultValue.z);
     return Quaternion.Euler(vector);
   }
-  public static List<BlueprintObject> Objects(string[] args)
-  {
-    return args.Select(s => Split(s)).Select(split => new BlueprintObject(
-        split[0],
-        VectorXZY(split, 1),
-        AngleYXZ(split, 4),
-        VectorXZY(split, 7, Vector3.one),
-        ZDOData.Create(split.Length > 11 ? split[11] : ""),
-        Float(split, 10, 1f),
-        split.Length > 3 && split[3].ToLowerInvariant() == "snap"
-      )).ToList();
-  }
+
   public static string[] Split(string arg, bool removeEmpty = true, char split = ',') => arg.Split(split).Select(s => s.Trim()).Where(s => !removeEmpty || s != "").ToArray();
+  public static KeyValuePair<string, string> Kvp(string str, char separator = ',')
+  {
+    var split = str.Split([separator], 2);
+    return split.Length < 2 ? new("", "") : new(split[0], split[1].Trim());
+  }
+  public static string[] SplitWithEmpty(string arg, char split = ',') => arg.Split(split).Select(s => s.Trim()).ToArray();
+  public static string[] SplitWithEscape(string arg, char separator = ',')
+  {
+    var parts = new List<string>();
+    var split = arg.Split(separator);
+    for (var i = 0; i < split.Length; i++)
+    {
+      var part = split[i].TrimStart();
+      // Escape should only work if at start/end of the string.
+      if (part.StartsWith("\""))
+      {
+        split[i] = part.Substring(1);
+        var j = i;
+        for (; j < split.Length; j++)
+        {
+          part = split[j].TrimEnd();
+          if (part.EndsWith("\""))
+          {
+            split[j] = part.Substring(0, part.Length - 1);
+            break;
+          }
+        }
+        parts.Add(string.Join(separator.ToString(), split.Skip(i).Take(j - i + 1)));
+        i = j;
+        continue;
+      }
+      parts.Add(split[i].Trim());
+    }
+    return [.. parts];
+  }
   public static string Name(string arg) => arg.Split(':')[0];
   public static Vector3 VectorXZY(string arg) => VectorXZY(arg, Vector3.zero);
   public static Vector3 VectorXZY(string arg, Vector3 defaultValue) => VectorXZY(Split(arg), 0, defaultValue);
@@ -152,5 +180,56 @@ public static class Parse
   {
     var range = StringRange(arg);
     return new(Long(range.Min), Long(range.Max));
+  }
+  public static int? IntNull(string arg)
+  {
+    if (int.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
+      return result;
+    return null;
+  }
+  public static int? IntNull(string[] args, int index)
+  {
+    if (args.Length <= index) return null;
+    return IntNull(args[index]);
+  }
+  public static float? FloatNull(string arg)
+  {
+    if (float.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
+      return result;
+    return null;
+  }
+  public static float? FloatNull(string[] args, int index)
+  {
+    if (args.Length <= index) return null;
+    return FloatNull(args[index]);
+  }
+  public static long? LongNull(string[] args, int index)
+  {
+    if (args.Length <= index) return null;
+    return LongNull(args[index]);
+  }
+  public static long? LongNull(string arg)
+  {
+    if (long.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
+      return result;
+    return null;
+  }
+  public static Vector3? VectorXZYNull(string? arg) => arg == null ? null : VectorXZYNull(Split(arg));
+  public static Vector3? VectorXZYNull(string[] args)
+  {
+    var x = FloatNull(args, 0);
+    var y = FloatNull(args, 2);
+    var z = FloatNull(args, 1);
+    if (x == null || y == null || z == null) return null;
+    return new(x.Value, y.Value, z.Value);
+  }
+  public static Quaternion? AngleYXZNull(string? arg) => arg == null ? null : AngleYXZNull(Split(arg));
+  public static Quaternion? AngleYXZNull(string[] values)
+  {
+    var y = FloatNull(values, 0);
+    var x = FloatNull(values, 1);
+    var z = FloatNull(values, 2);
+    if (y == null || x == null || z == null) return null;
+    return Quaternion.Euler(new(x.Value, y.Value, z.Value));
   }
 }

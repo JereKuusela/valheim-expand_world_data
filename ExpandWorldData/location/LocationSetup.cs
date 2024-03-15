@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Service;
 using UnityEngine;
 namespace ExpandWorldData;
 
@@ -22,14 +23,14 @@ public class LocationSetup
         locations.Add(SetupLocation(location));
     }
     if (loaded.Count != locations.Count)
-      EWD.Log.LogInfo($"Enabled {locations.Count - loaded.Count} extra locations.");
+      Log.Info($"Enabled {locations.Count - loaded.Count} extra locations.");
     UpdateHashes();
   }
   public static void UpdateHashes()
   {
     var zs = ZoneSystem.instance;
     zs.m_locationsByHash = Helper.ToDict(zs.m_locations, loc => loc.m_hash, loc => loc);
-    //ExpandWorldData.Log.LogDebug($"Loaded {zs.m_locationsByHash.Count} zone hashes.");
+    //ExpandWorldData.Log.Debug($"Loaded {zs.m_locationsByHash.Count} zone hashes.");
   }
   // Copy paste from vanilla code.
   private static ZoneSystem.ZoneLocation SetupLocation(Location location)

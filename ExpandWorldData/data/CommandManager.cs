@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -55,7 +56,7 @@ public class CommandManager
       }
       catch (Exception e)
       {
-        EWD.Log.LogError($"Failed to run command: {cmd}\n{e.Message}");
+        Log.Error($"Failed to run command: {cmd}\n{e.Message}");
       }
     }
   }

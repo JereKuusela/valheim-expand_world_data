@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -43,7 +44,7 @@ public class NoBuildManager
         dungeon = dungeon,
       };
     }).Where(x => x.radius != 0f || x.dungeon != 0f).ToList();
-    Configuration.valueNoBuildData.Value = DataManager.Serializer().Serialize(data);
+    Configuration.valueNoBuildData.Value = Yaml.Serializer().Serialize(data);
   }
   private static Dictionary<Vector2i, NoBuildData> NoBuild = [];
   public static bool IsInsideNoBuildZone(Vector3 point)
@@ -76,14 +77,14 @@ public class NoBuildManager
     if (yaml == "") return;
     try
     {
-      var data = DataManager.Deserialize<NoBuildData>(yaml, "");
-      EWD.Log.LogInfo($"Reloading no build data ({data.Count} entries).");
+      var data = Yaml.Deserialize<NoBuildData>(yaml, "");
+      Log.Info($"Reloading no build data ({data.Count} entries).");
       NoBuild = data.ToDictionary(data => ZoneSystem.instance.GetZone(new(data.X, 0, data.Z)));
     }
     catch (Exception e)
     {
-      EWD.Log.LogError(e.Message);
-      EWD.Log.LogError(e.StackTrace);
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
     }
   }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ExpandWorldData.Dungeon;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -10,7 +11,7 @@ namespace ExpandWorldData;
 public class RoomLoading
 {
   public static string FileName = "expand_rooms.yaml";
-  public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
+  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_rooms*.yaml";
 
 
@@ -30,7 +31,7 @@ public class RoomLoading
   }
   private static void ToFile()
   {
-    var yaml = DataManager.Serializer().Serialize(DefaultEntries.Select(ToData).ToList());
+    var yaml = Yaml.Serializer().Serialize(DefaultEntries.Select(ToData).ToList());
     File.WriteAllText(FilePath, yaml);
   }
 
@@ -64,7 +65,7 @@ public class RoomLoading
     if (Helper.IsClient()) return;
     if (!Configuration.DataRooms)
     {
-      EWD.Log.LogInfo($"Reloading default room data ({DefaultEntries.Count} entries).");
+      Log.Info($"Reloading default room data ({DefaultEntries.Count} entries).");
       return;
     }
     if (!File.Exists(FilePath))
@@ -75,8 +76,8 @@ public class RoomLoading
     var data = FromFile();
     if (data.Count == 0)
     {
-      EWD.Log.LogWarning($"Failed to load any room data.");
-      EWD.Log.LogInfo($"Reloading default room data ({DefaultEntries.Count} entries).");
+      Log.Warning($"Failed to load any room data.");
+      Log.Info($"Reloading default room data ({DefaultEntries.Count} entries).");
       return;
     }
     if (Configuration.DataMigration && AddMissingEntries(data))
@@ -84,8 +85,8 @@ public class RoomLoading
       // Watcher triggers reload.
       return;
     }
-    EWD.Log.LogInfo($"Reloading room themes ({NameToTheme.Count} entries).");
-    EWD.Log.LogInfo($"Reloading room data ({data.Count} entries).");
+    Log.Info($"Reloading room themes ({NameToTheme.Count} entries).");
+    Log.Info($"Reloading room data ({data.Count} entries).");
 
     RoomNames = data.ToDictionary(room => room.m_room.name.ToLowerInvariant(), room => room.m_room.name);
     DungeonDB.instance.m_rooms = data;
@@ -102,7 +103,7 @@ public class RoomLoading
       roomData.m_randomSpawns = baseRoom.m_randomSpawns;
       var connections = baseRoom.m_room.GetConnections();
       if (connections.Length != snapPieces.Length)
-        EWD.Log.LogWarning($"Room {name} has {snapPieces.Length} connections, but base room {baseRoom.m_room.name} has {connections.Length} connections.");
+        Log.Warning($"Room {name} has {snapPieces.Length} connections, but base room {baseRoom.m_room.name} has {connections.Length} connections.");
       // Initialize with base connections to allow data missing from the yaml.
       room.m_roomConnections = connections.Select(c =>
         {
@@ -182,7 +183,7 @@ public class RoomLoading
     room.m_endCapPrio = data.endCapPriority;
     UpdateConnections(room, data.connections);
     if (data.objects != null)
-      DungeonObjects.Objects[data.name] = Parse.Objects(data.objects);
+      DungeonObjects.Objects[data.name] = Helper.ParseObjects(data.objects);
     if (data.objectSwap != null)
       DungeonObjects.ObjectSwaps[data.name] = Spawn.LoadSwaps(data.objectSwap);
     if (data.objectData != null)
@@ -222,12 +223,12 @@ public class RoomLoading
     try
     {
       var yaml = DataManager.Read(Pattern);
-      return DataManager.Deserialize<RoomData>(yaml, FileName).Select(FromData).Where(room => room.m_room).ToList();
+      return Yaml.Deserialize<RoomData>(yaml, FileName).Select(FromData).Where(room => room.m_room).ToList();
     }
     catch (Exception e)
     {
-      EWD.Log.LogError(e.Message);
-      EWD.Log.LogError(e.StackTrace);
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
     }
     return [];
   }
@@ -243,11 +244,11 @@ public class RoomLoading
       missingKeys.Remove(entry.m_room.name);
     if (missingKeys.Count == 0) return false;
     var missing = DefaultEntries.Where(entry => missingKeys.Contains(entry.m_room.name)).ToList();
-    EWD.Log.LogWarning($"Adding {missing.Count} missing rooms to the expand_rooms.yaml file.");
+    Log.Warning($"Adding {missing.Count} missing rooms to the expand_rooms.yaml file.");
     foreach (var entry in missing)
-      EWD.Log.LogWarning(entry.m_room.name);
+      Log.Warning(entry.m_room.name);
     var yaml = File.ReadAllText(FilePath);
-    var data = DataManager.Serializer().Serialize(missing.Select(ToData));
+    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
     // Directly appending is risky but necessary to keep comments, etc.
     yaml += "\n" + data;
     File.WriteAllText(FilePath, yaml);
@@ -255,6 +256,6 @@ public class RoomLoading
   }
   public static void SetupWatcher()
   {
-    DataManager.SetupWatcher(Pattern, Load);
+    Yaml.SetupWatcher(Pattern, Load);
   }
 }

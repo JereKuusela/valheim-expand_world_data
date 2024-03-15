@@ -1,6 +1,7 @@
 
 using System;
 using System.Linq;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData.Dungeon;
@@ -13,7 +14,7 @@ public partial class Loader
     if (Enum.TryParse<DungeonGenerator.Algorithm>(data.algorithm, true, out var algorithm))
       dg.m_algorithm = algorithm;
     else
-      EWD.Log.LogWarning($"Failed to find dungeon algorithm {data.algorithm}.");
+      Log.Warning($"Failed to find dungeon algorithm {data.algorithm}.");
     dg.name = data.name;
     if (data.bounds == "")
       dg.m_zoneSize = new(64f, 256f, 64f);
@@ -48,7 +49,7 @@ public partial class Loader
     if (data.objectSwap != null)
     {
       dg.m_objectSwaps = Spawn.LoadSwaps(data.objectSwap);
-      //ExpandWorldData.Log.LogDebug($"Loaded {dg.m_objectSwaps.Count} object swaps for {dg.name}.");
+      //ExpandWorldData.Log.Debug($"Loaded {dg.m_objectSwaps.Count} object swaps for {dg.name}.");
     }
     if (data.objectData != null)
       dg.m_objectData = Spawn.LoadData(data.objectData);

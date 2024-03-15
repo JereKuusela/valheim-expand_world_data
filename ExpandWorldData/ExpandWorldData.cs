@@ -2,6 +2,7 @@
 using System.IO;
 using BepInEx;
 using BepInEx.Logging;
+using Data;
 using HarmonyLib;
 using Service;
 namespace ExpandWorldData;
@@ -11,9 +12,8 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.26";
+  public const string VERSION = "1.27";
 #nullable disable
-  public static ManualLogSource Log;
   public static EWD Instance;
 #nullable enable
   public static ServerSync.ConfigSync ConfigSync = new(GUID)
@@ -23,9 +23,6 @@ public class EWD : BaseUnityPlugin
     ModRequired = true,
     IsLocked = true
   };
-  public static bool NeedsMigration = File.Exists(Path.Combine(Paths.ConfigPath, "expand_world.cfg")) && !File.Exists(Path.Combine(Paths.ConfigPath, "expand_world_data.cfg"));
-  public static string YamlDirectory = Path.Combine(Paths.ConfigPath, "expand_world");
-  public static string BackupDirectory = Path.Combine(Paths.ConfigPath, "expand_world_backups");
   public void InvokeRegenerate()
   {
     // Nothing to regenerate because the world hasn't been generated yet.
@@ -38,24 +35,18 @@ public class EWD : BaseUnityPlugin
   public void Awake()
   {
     Instance = this;
-    Log = Logger;
+    Log.Init(Logger);
     BiomeManager.SetupBiomeArrays();
-    // Migrating would be pointless if yaml get reset.
-    if (!NeedsMigration)
-      YamlCleanUp();
-    if (!Directory.Exists(YamlDirectory))
-      Directory.CreateDirectory(YamlDirectory);
+    Yaml.CleanUp(Config);
     ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, InvokeRegenerate);
     Configuration.Init(wrapper);
-    if (NeedsMigration)
-      MigrateOldConfig();
     Harmony harmony = new(GUID);
     harmony.PatchAll();
     try
     {
       if (Configuration.DataReload)
       {
-        DataManager.SetupWatcher(Config);
+        Yaml.SetupWatcher(Config);
         DataLoading.SetupWatcher();
         BiomeManager.SetupWatcher();
         LocationLoading.SetupWatcher();
@@ -65,12 +56,12 @@ public class EWD : BaseUnityPlugin
         EnvironmentManager.SetupWatcher();
         Dungeon.Loader.SetupWatcher();
         RoomLoading.SetupWatcher();
-        DataManager.SetupBlueprintWatcher();
+        BlueprintManager.SetupBlueprintWatcher();
       }
     }
     catch (Exception e)
     {
-      Log.LogError(e);
+      Log.Error(e.StackTrace);
     }
   }
   public void Start()
@@ -78,26 +69,7 @@ public class EWD : BaseUnityPlugin
     BiomeManager.NamesFromFile();
     new DebugCommands();
   }
-  private void MigrateOldConfig()
-  {
-    Log.LogWarning("Migrating old config file and enabling Legacy Generation.");
-    Configuration.configLegacyGeneration.Value = true;
-    Config.Save();
-    var from = File.ReadAllLines(Path.Combine(Paths.ConfigPath, "expand_world.cfg"));
-    var to = File.ReadAllLines(Config.ConfigFilePath);
-    foreach (var line in from)
-    {
-      var split = line.Split('=');
-      if (split.Length != 2) continue;
-      for (var i = 0; i < to.Length; ++i)
-      {
-        if (to[i].StartsWith(split[0]))
-          to[i] = line;
-      }
-    }
-    File.WriteAllLines(Config.ConfigFilePath, to);
-    Config.Reload();
-  }
+
 #pragma warning disable IDE0051
   private void OnDestroy()
   {
@@ -105,18 +77,6 @@ public class EWD : BaseUnityPlugin
   }
 #pragma warning restore IDE0051
 
-  private void YamlCleanUp()
-  {
-    try
-    {
-      if (!Directory.Exists(YamlDirectory)) return;
-      if (File.Exists(Config.ConfigFilePath)) return;
-      Directory.Delete(YamlDirectory, true);
-    }
-    catch
-    {
-      Log.LogWarning("Failed to remove old yaml files.");
-    }
-  }
+
 }
 

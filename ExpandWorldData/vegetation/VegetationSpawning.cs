@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using Service;
 using UnityEngine;
+using Data;
 
 namespace ExpandWorldData;
 
@@ -25,12 +26,12 @@ public class VegetationSpawning
     return veg;
   }
 
-  private static ZDOData? DataOverride(ZDOData? data, string prefab)
+  private static DataEntry? DataOverride(DataEntry? data, string prefab)
   {
     if (!Extra.TryGetValue(CurrentVegetation, out var extra)) return data;
-    return ZDOData.Merge(extra.data, data);
+    return DataHelper.Merge(extra.data, data);
   }
-  private static ZDOData? DataOverride()
+  private static DataEntry? DataOverride()
   {
     if (!Extra.TryGetValue(CurrentVegetation, out var extra)) return null;
     return extra.data;

@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using Service;
 using UnityEngine;
+using Data;
 namespace ExpandWorldData;
 
 public class BlueprintObject
@@ -13,11 +14,11 @@ public class BlueprintObject
   public string Prefab = "";
   public Vector3 Pos;
   public Quaternion Rot;
-  public ZDOData? Data;
+  public DataEntry? Data;
   public float Chance = 1f;
   public Vector3? Scale;
   public bool SnapToGround = false;
-  public BlueprintObject(string name, Vector3 pos, Quaternion rot, Vector3 scale, ZDOData? data, float chance, bool snapToGround = false)
+  public BlueprintObject(string name, Vector3 pos, Quaternion rot, Vector3 scale, DataEntry? data, float chance, bool snapToGround = false)
   {
     Prefab = name;
     Pos = pos;
@@ -85,7 +86,7 @@ public class Blueprint
         break;
       }
       if (!success)
-        EWD.Log.LogWarning($"Snap point piece {piece} not found in blueprint {Name}.");
+        Log.Warning($"Snap point piece {piece} not found in blueprint {Name}.");
     }
   }
   public void Center()
@@ -191,7 +192,7 @@ public class Blueprints
     }
     catch
     {
-      EWD.Log.LogError($"Failed to load blueprint {bp.Name} at row {currentRow}: {rows[currentRow]}.");
+      Log.Error($"Failed to load blueprint {bp.Name} at row {currentRow}: {rows[currentRow]}.");
       return null;
     }
     return bp;
@@ -214,7 +215,7 @@ public class Blueprints
     var scaleZ = InvariantFloat(split, 12, 1f);
     var data = split.Length > 13 ? split[13] : "";
     var chance = split.Length > 14 ? InvariantFloat(split, 14, 1f) : 1f;
-    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), new(scaleX, scaleY, scaleZ), ZDOData.Create(data), chance);
+    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), new(scaleX, scaleY, scaleZ), DataHelper.Get(data), chance);
   }
   private static Vector3 GetPlanBuildSnapPoint(string row)
   {
@@ -244,7 +245,7 @@ public class Blueprints
     var posZ = InvariantFloat(split, 7);
     var data = split.Length > 8 ? split[8] : "";
     var chance = split.Length > 9 ? InvariantFloat(split, 9, 1f) : 1f;
-    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), Vector3.one, ZDOData.Create(data), chance);
+    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), Vector3.one, DataHelper.Get(data), chance);
   }
   private static float InvariantFloat(string[] row, int index, float defaultValue = 0f)
   {

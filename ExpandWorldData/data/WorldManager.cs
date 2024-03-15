@@ -9,7 +9,7 @@ namespace ExpandWorldData;
 public class WorldManager
 {
   public static string FileName = "expand_world.yaml";
-  public static string FilePath = Path.Combine(EWD.YamlDirectory, FileName);
+  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_world*.yaml";
   public static List<WorldData> GetDefault(WorldGenerator obj)
   {
@@ -109,7 +109,7 @@ public class WorldManager
   {
     if (Helper.IsClient() || !Configuration.DataWorld) return;
     if (File.Exists(FilePath)) return;
-    var yaml = DataManager.Serializer().Serialize(GetBiomeWG.GetData().Select(ToData).ToList());
+    var yaml = Yaml.Serializer().Serialize(GetBiomeWG.GetData().Select(ToData).ToList());
     File.WriteAllText(FilePath, yaml);
   }
   public static void FromFile()
@@ -128,26 +128,26 @@ public class WorldManager
     if (yaml == "" || !Configuration.DataWorld) return;
     try
     {
-      var data = DataManager.Deserialize<WorldData>(yaml, FileName)
+      var data = Yaml.Deserialize<WorldData>(yaml, FileName)
         .Select(FromData).ToList();
       if (data.Count == 0)
       {
-        EWD.Log.LogWarning($"Failed to load any world data.");
+        Log.Warning($"Failed to load any world data.");
         return;
       }
-      EWD.Log.LogInfo($"Reloading world data ({data.Count} entries).");
+      Log.Info($"Reloading world data ({data.Count} entries).");
       GetBiomeWG.Data = data;
       GetBiomeWG.CheckAngles = data.Any(x => x.minSector != 0f || x.maxSector != 1f);
       EWD.Instance.InvokeRegenerate();
     }
     catch (Exception e)
     {
-      EWD.Log.LogError(e.Message);
-      EWD.Log.LogError(e.StackTrace);
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
     }
   }
   public static void SetupWatcher()
   {
-    DataManager.SetupWatcher(Pattern, FromFile);
+    Yaml.SetupWatcher(Pattern, FromFile);
   }
 }

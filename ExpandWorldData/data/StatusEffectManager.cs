@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -88,7 +89,7 @@ public class StatusManager
     // Expiring status effects should expire their own.
     // But permanent ones should be removed.
     if (statusEffect.m_ttl > 0f) return;
-    //EWD.Log.LogInfo($"Removing {statusEffect.name}");
+    //Log.Info($"Removing {statusEffect.name}");
     seman.RemoveStatusEffect(es.hash);
   }
   private static void Add(Player player, List<Status> es)
@@ -124,7 +125,7 @@ public class StatusManager
 
         // Fire stacks, so the damage must match the tick rate.
         if (!exists) damage *= TickRate * se.m_ttl;
-        EWD.Log.LogDebug($"Adding {damage} spirit damage to {se.name}");
+        Log.Debug($"Adding {damage} spirit damage to {se.name}");
         seman.AddStatusEffect(es.hash, false, 0, 0);
         var spirit = (SE_Burning)seman.GetStatusEffect(es.hash);
         spirit.AddSpiritDamage(damage);
@@ -135,7 +136,7 @@ public class StatusManager
         if (damage == 0) return;
         // Fire stacks, so the damage must match the tick rate.
         if (!exists) damage *= TickRate * se.m_ttl;
-        EWD.Log.LogDebug($"Adding {damage} fire damage to {se.name}");
+        Log.Debug($"Adding {damage} fire damage to {se.name}");
         seman.AddStatusEffect(es.hash, false, 0, 0);
         var burning = (SE_Burning)seman.GetStatusEffect(es.hash);
         burning.AddFireDamage(damage);
@@ -147,7 +148,7 @@ public class StatusManager
       var damage = CalculateDamage(seman, es, HitData.DamageType.Poison);
       if (damage == 0) return;
       // Poison doesn't stack so full damage can always be added.
-      EWD.Log.LogDebug($"Adding {damage} poison damage to {se.name}");
+      Log.Debug($"Adding {damage} poison damage to {se.name}");
 
       seman.AddStatusEffect(es.hash, false, 0, 0);
       var poison = (SE_Poison)seman.GetStatusEffect(es.hash);

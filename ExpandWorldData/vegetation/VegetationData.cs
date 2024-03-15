@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using Service;
+using Data;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -88,7 +89,7 @@ public class VegetationExtra
 {
   public List<string>? requiredGlobalKeys;
   public List<string>? forbiddenGlobalKeys;
-  public ZDOData? data;
+  public DataEntry? data;
   public Range<Vector3>? scale;
   public float clearRadius = 0;
   public bool clearArea = false;
