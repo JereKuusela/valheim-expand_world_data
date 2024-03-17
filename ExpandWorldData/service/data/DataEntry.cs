@@ -142,6 +142,29 @@ public class DataEntry
     foreach (var par in data.RequiredParameters)
       RequiredParameters.Add(par);
   }
+  // Reusing the same object keeps references working.
+  public DataEntry Reset(DataData data)
+  {
+    Floats = null;
+    Vecs = null;
+    Quats = null;
+    Ints = null;
+    Strings = null;
+    ByteArrays = null;
+    Longs = null;
+    Bools = null;
+    Hashes = null;
+    Items = null;
+    ContainerSize = null;
+    ItemAmount = null;
+    ConnectionType = ZDOExtraData.ConnectionType.None;
+    ConnectionHash = 0;
+    OriginalId = ZDOID.None;
+    TargetConnectionId = ZDOID.None;
+    RequiredParameters.Clear();
+    Load(data);
+    return this;
+  }
   public void Load(DataData data)
   {
     HashSet<string> componentsToAdd = [];

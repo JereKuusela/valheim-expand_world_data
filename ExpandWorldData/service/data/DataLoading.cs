@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using BepInEx;
 using Service;
+using YamlDotNet.Core.Tokens;
 namespace Data;
 
 public class DataLoading
@@ -12,7 +13,8 @@ public class DataLoading
   private static readonly string ProfilePath = Path.Combine(Paths.ConfigPath, "config", "data");
 
   // Each file can have multiple data entries so we need to load them all.
-  public static readonly Dictionary<int, DataEntry> Data = [];
+  // Hash is used as key because base64 encoded strings can be loaded too.
+  public static Dictionary<int, DataEntry> Data = [];
   public static readonly Dictionary<int, List<string>> ValueGroups = [];
 
   public static DataEntry Get(string name)
@@ -34,9 +36,10 @@ public class DataLoading
     }
     return Data[hash];
   }
+  public static DataEntry? Get(int hash) => Data.ContainsKey(hash) ? Data[hash] : null;
   public static bool TryGetValueFromGroup(string group, out string value)
   {
-    var hash = group.GetStableHashCode();
+    var hash = group.ToLowerInvariant().GetStableHashCode();
     if (!ValueGroups.ContainsKey(hash))
     {
       value = group;
@@ -48,19 +51,20 @@ public class DataLoading
   }
   public static void LoadEntries()
   {
-    Data.Clear();
+    var prev = Data;
+    Data = [];
     ValueGroups.Clear();
     var files = Directory.GetFiles(GamePath, "*.yaml")
       .Concat(Directory.GetFiles(ProfilePath, "*.yaml"))
       .Concat(Directory.GetFiles(Yaml.Directory, Pattern)).ToArray();
     foreach (var file in files)
-      LoadEntry(file);
+      LoadEntry(file, prev);
     Log.Info($"Loaded {Data.Count} data entries.");
     if (ValueGroups.Count > 0)
       Log.Info($"Loaded {ValueGroups.Count} value groups.");
-
+    LoadDefaultValueGroups();
   }
-  private static void LoadEntry(string file)
+  private static void LoadEntry(string file, Dictionary<int, DataEntry> oldData)
   {
     var yaml = Yaml.LoadList<DataData>(file);
     foreach (var data in yaml)
@@ -68,7 +72,7 @@ public class DataLoading
       if (data.value != null)
       {
         var kvp = Parse.Kvp(data.value);
-        var hash = kvp.Key.GetStableHashCode();
+        var hash = kvp.Key.ToLowerInvariant().GetStableHashCode();
         if (ValueGroups.ContainsKey(hash))
           Log.Warning($"Duplicate value group entry: {kvp.Key} at {file}");
         if (!ValueGroups.ContainsKey(hash))
@@ -77,7 +81,7 @@ public class DataLoading
       }
       if (data.valueGroup != null && data.values != null)
       {
-        var hash = data.valueGroup.GetStableHashCode();
+        var hash = data.valueGroup.ToLowerInvariant().GetStableHashCode();
         if (ValueGroups.ContainsKey(hash))
           Log.Warning($"Duplicate value group entry: {data.valueGroup} at {file}");
         if (!ValueGroups.ContainsKey(hash))
@@ -90,10 +94,41 @@ public class DataLoading
         var hash = data.name.GetStableHashCode();
         if (Data.ContainsKey(hash))
           Log.Warning($"Duplicate data entry: {data.name} at {file}");
-        Data[hash] = new DataEntry(data);
+        Data[hash] = oldData.TryGetValue(hash, out var prev) ? prev.Reset(data) : new DataEntry(data);
       }
     }
   }
+  private static readonly Dictionary<int, List<string>> DefaultValueGroups = [];
+  private static readonly int WearNTearHash = "wearntear".GetStableHashCode();
+  private static readonly int HumanoidHash = "humanoid".GetStableHashCode();
+  private static readonly int CreatureHash = "creature".GetStableHashCode();
+  private static readonly int StructureHash = "structure".GetStableHashCode();
+  private static void LoadDefaultValueGroups()
+  {
+    if (DefaultValueGroups.Count == 0)
+    {
+      foreach (var prefab in ZNetScene.instance.m_namedPrefabs.Values)
+      {
+        prefab.GetComponentsInChildren(ZNetView.m_tempComponents);
+        foreach (var component in ZNetView.m_tempComponents)
+        {
+          var hash = component.GetType().Name.ToLowerInvariant().GetStableHashCode();
+          if (!DefaultValueGroups.ContainsKey(hash))
+            DefaultValueGroups[hash] = [];
+          DefaultValueGroups[hash].Add(prefab.name);
+        }
+      }
+      // Some key codes are hardcoded for legacy reasons.
+      DefaultValueGroups[CreatureHash] = DefaultValueGroups[HumanoidHash];
+      DefaultValueGroups[StructureHash] = DefaultValueGroups[WearNTearHash];
+    }
+    foreach (var kvp in DefaultValueGroups)
+    {
+      if (!ValueGroups.ContainsKey(kvp.Key))
+        ValueGroups[kvp.Key] = kvp.Value;
+    }
+  }
+
   public static string Pattern = "expand_data*.yaml";
   public static void SetupWatcher()
   {

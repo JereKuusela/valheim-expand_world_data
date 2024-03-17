@@ -553,8 +553,10 @@ For example if the blueprint has infinite health then it can't be changed by usi
 
 There are two ways to set data:
 
-1. Add a new entry to `expand_data.yaml` and use its name:
-2. Use `object copy` to copy the raw data value.
+1. Add a new entry to `data.yaml` with `data save` and use its name.
+2. Use `data copy_raw` to copy the raw data value.
+
+See [data documentation](https://github.com/JereKuusela/valheim-world_edit_commands/blob/main/README_data.md) for more info.
 
 ```yaml
   - objectData:

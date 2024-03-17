@@ -2,6 +2,8 @@
   - Adds support for loading data entries from the common data folder (used by World Edit Commands).
   - Adds a new field `items` to the `expand_data.yaml` to support item lists.
   - Adds fields `containerSize` and `itemAmount` to the `expand_data.yaml` to support chest content generation.
+  - Adds value group support to the fields `objectData` and `swaps`.
+  - Fixes data fields not automatically updating when modifying the data entries.
   - Removes the `ew_copy` command as obsolete.
 
 - v1.26

@@ -136,11 +136,15 @@ public class Spawn
     foreach (var row in list)
     {
       var s = Parse.Split(row[0], true, ':');
-      var name = s[0];
+      var prefabs = DataHelper.ResolvePrefabs(s[0]);
       var weight = Parse.Float(s, 1, 1f);
-      if (!swaps.ContainsKey(name))
-        swaps[name] = [];
-      swaps[name].AddRange(ParseSwapItems(row.Skip(1), weight));
+      var swapItems = ParseSwapItems(row.Skip(1), weight);
+      foreach (var prefab in prefabs)
+      {
+        if (!swaps.ContainsKey(prefab))
+          swaps[prefab] = [];
+        swaps[prefab].AddRange(swapItems);
+      }
     }
     foreach (var kvp in swaps)
     {
@@ -161,28 +165,35 @@ public class Spawn
   private static List<Tuple<float, DataEntry?>> ParseDataItems(IEnumerable<string> items, float weight) => items.Select(s => Parse.Split(s, false, ':')).Select(s => Tuple.Create(Parse.Float(s, 1, 1f) * weight, DataHelper.Get(s[0]))).ToList();
   public static Dictionary<string, List<Tuple<float, DataEntry?>>> LoadData(string[] objectData)
   {
-    Dictionary<string, List<Tuple<float, DataEntry?>>> swaps = [];
+    Dictionary<string, List<Tuple<float, DataEntry?>>> datas = [];
     // Empty items are kept to support spawning nothing.
     var list = objectData.Select(s => DataManager.ToList(s, false)).Where(l => l.Count > 0).ToList();
     // Complicated logic to support:
     // 1. Multiple rows for the same object.
-    // 2. Multiple swaps in the same row.
+    // 2. Multiple data in the same row.
+    // 3. Value groups.
+    var scene = ZNetScene.instance;
     foreach (var row in list)
     {
       var s = Parse.Split(row[0], true, ':');
+      var prefabs = DataHelper.ResolvePrefabs(s[0]);
       var name = s[0];
       var weight = Parse.Float(s, 1, 1f);
-      if (!swaps.ContainsKey(name))
-        swaps[name] = [];
-      swaps[name].AddRange(ParseDataItems(row.Skip(1), weight));
+      var dataItems = ParseDataItems(row.Skip(1), weight);
+      foreach (var prefab in prefabs)
+      {
+        if (!datas.ContainsKey(prefab))
+          datas[prefab] = [];
+        datas[prefab].AddRange(dataItems);
+      }
     }
-    foreach (var kvp in swaps)
+    foreach (var kvp in datas)
     {
       var total = kvp.Value.Sum(t => t.Item1);
       for (var i = 0; i < kvp.Value.Count; ++i)
         kvp.Value[i] = Tuple.Create(kvp.Value[i].Item1 / total, kvp.Value[i].Item2);
     }
-    return swaps;
+    return datas;
   }
   public static string RandomizeSwap(List<Tuple<float, string>> swaps)
   {
