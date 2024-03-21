@@ -22,7 +22,7 @@ public static class DungeonObjects
 
   public static string PrefabOverride(string prefab)
   {
-    prefab = LocationSpawning.PrefabOverride(prefab);
+    prefab = LocationSpawning.DungeonPrefabOverride(prefab);
     prefab = PrefabDungeonOverride(prefab);
     prefab = PrefabRoomOverride(prefab);
     return prefab;
@@ -42,7 +42,7 @@ public static class DungeonObjects
 
   public static DataEntry? DataOverride(DataEntry? pgk, string prefab)
   {
-    var locationData = LocationSpawning.DataOverride(prefab);
+    var locationData = LocationSpawning.DungeonDataOverride(prefab);
     var dungeonData = DataDungeonOverride(prefab);
     var roomData = DataRoomOverride(prefab);
     return DataHelper.Merge(locationData, dungeonData, roomData, pgk);

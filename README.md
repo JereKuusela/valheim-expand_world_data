@@ -297,10 +297,14 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - forestTresholdMax (default: `0`): Maximum forest value (if only in forests).
 - groundOffset (default: `0` meters): Placed above the ground.
 - data: ZDO data override. For example to change altars with Spawner Tweaks mod (`object copy` from World Edit Commands).
-- objectSwap: Changes location objects to other objects, also includes dungeons.
+- locationObjectSwap: Changes location objects to other objects.
+- dungeonObjectSwap: Changes dungeon objects to other objects.
+- objectSwap: Changes location and dungeon objects to other objects.
   - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
   - See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
-- objectData: Replaces object data in the location, also includes dungeons.
+- locationObjectData: Replaces object data in the location.
+- dungeonObjectData: Replaces object data in the dungeon.
+- objectData: Replaces object data in the location and the dungeon.
   - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
 - objects: Extra objects in the location, relative to the location center.
   - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world_data#Custom_objects) for details.

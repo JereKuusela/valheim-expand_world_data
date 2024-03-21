@@ -96,8 +96,7 @@ public class ClutterManager
   {
     if (Helper.IsClient() || !Configuration.DataClutter) return;
     if (File.Exists(FilePath)) return;
-    var yaml = Yaml.Serializer().Serialize(ClutterSystem.instance.m_clutter.Select(ToData).ToList());
-    File.WriteAllText(FilePath, yaml);
+    Save(ClutterSystem.instance.m_clutter, false);
   }
   public static void FromFile()
   {
@@ -143,20 +142,38 @@ public class ClutterManager
   }
   private static bool AddMissingEntries(List<ClutterSystem.Clutter> entries)
   {
+    Dictionary<string, List<ClutterSystem.Clutter>> perFile = [];
     var missingKeys = Originals.Select(s => s.m_prefab.name).Distinct().ToHashSet();
     foreach (var entry in entries)
       missingKeys.Remove(entry.m_prefab.name);
     if (missingKeys.Count == 0) return false;
     var missing = Originals.Where(clutter => missingKeys.Contains(clutter.m_prefab.name)).ToList();
     Log.Warning($"Adding {missing.Count} missing clutters to the expand_clutter.yaml file.");
-    foreach (var clutter in missing)
-      Log.Warning(clutter.m_prefab.name);
-    var yaml = File.ReadAllText(FilePath);
-    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
-    // Directly appending is risky but necessary to keep comments, etc.
-    yaml += "\n" + data;
-    File.WriteAllText(FilePath, yaml);
+    Save(missing, true);
     return true;
+  }
+  private static void Save(List<ClutterSystem.Clutter> data, bool log)
+  {
+    Dictionary<string, List<ClutterSystem.Clutter>> perFile = [];
+    foreach (var item in data)
+    {
+      var mod = AssetTracker.GetModFromPrefab(item.m_prefab.name);
+      var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
+      if (!perFile.ContainsKey(file))
+        perFile[file] = [];
+      perFile[file].Add(item);
+
+      if (log)
+        Log.Warning($"{mod}: {item.m_prefab.name}");
+    }
+    foreach (var kvp in perFile)
+    {
+      var file = Path.Combine(Yaml.Directory, $"expand_clutter{kvp.Key}.yaml");
+      var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
+      // Directly appending is risky but necessary to keep comments, etc.
+      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));
+      File.WriteAllText(file, yaml);
+    }
   }
 
   public static void SetupWatcher()

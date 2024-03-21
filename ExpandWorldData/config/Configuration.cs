@@ -10,6 +10,8 @@ public partial class Configuration
 #nullable disable
   public static ConfigEntry<bool> configServerOnly;
   public static bool ServerOnly => configServerOnly.Value;
+  public static ConfigEntry<bool> configSplitDataPerMod;
+  public static bool SplitDataPerMod => configSplitDataPerMod.Value;
   public static ConfigEntry<bool> configLegacyGeneration;
   public static bool LegacyGeneration => configLegacyGeneration.Value;
   public static ConfigEntry<bool> configRegenerateMap;
@@ -75,6 +77,7 @@ public partial class Configuration
 
     section = "3. Data";
     configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.");
+    configSplitDataPerMod = wrapper.Bind(section, "Split data per mod", true, false, "If true, created data is saved to multiple files. If false, all data is saved in one file.");
     configDataMigration = wrapper.Bind(section, "Automatic data migration", true, false, "Automatically add missing location, rooms and vegetation entries.");
     configDataEnvironments = wrapper.Bind(section, "Environment data", true, false, "Use environment data");
     configDataEnvironments.SettingChanged += (s, e) => EnvironmentManager.FromSetting(valueEnvironmentData.Value);

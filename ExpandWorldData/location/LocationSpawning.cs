@@ -13,21 +13,27 @@ public class LocationSpawning
   public static string CurrentLocation = "";
   public static DataEntry? DataOverride(DataEntry? pkg, string prefab)
   {
-    if (!LocationLoading.ObjectData.TryGetValue(CurrentLocation, out var objectData)) return pkg;
+    if (!LocationLoading.LocationObjectData.TryGetValue(CurrentLocation, out var objectData)) return pkg;
     var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
     var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
     return DataHelper.Merge(allData, prefabData, pkg);
   }
-  public static DataEntry? DataOverride(string prefab)
+  public static DataEntry? DungeonDataOverride(string prefab)
   {
-    if (!LocationLoading.ObjectData.TryGetValue(CurrentLocation, out var objectData)) return null;
+    if (!LocationLoading.DungeonObjectData.TryGetValue(CurrentLocation, out var objectData)) return null;
     var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
     var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
     return DataHelper.Merge(allData, prefabData);
   }
   public static string PrefabOverride(string prefab)
   {
-    if (!LocationLoading.ObjectSwaps.TryGetValue(CurrentLocation, out var objectSwaps)) return prefab;
+    if (!LocationLoading.LocationObjectSwaps.TryGetValue(CurrentLocation, out var objectSwaps)) return prefab;
+    if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
+    return Spawn.RandomizeSwap(swaps);
+  }
+  public static string DungeonPrefabOverride(string prefab)
+  {
+    if (!LocationLoading.DungeonObjectSwaps.TryGetValue(CurrentLocation, out var objectSwaps)) return prefab;
     if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
     return Spawn.RandomizeSwap(swaps);
   }

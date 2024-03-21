@@ -36,8 +36,7 @@ public partial class Loader
 
   private static void ToFile()
   {
-    var yaml = Yaml.Serializer().Serialize(DefaultGenerators.Select(kvp => To(kvp.Value)).ToList());
-    File.WriteAllText(FilePath, yaml);
+    Save([.. DefaultGenerators.Values], false);
   }
 
   private static Dictionary<string, FakeDungeonGenerator> FromFile()
@@ -89,19 +88,37 @@ public partial class Loader
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>
   private static bool AddMissingEntries(Dictionary<string, FakeDungeonGenerator> entries)
   {
+    Dictionary<string, List<DungeonGenerator>> perFile = [];
     var missingKeys = DefaultGenerators.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     foreach (var kvp in entries)
       missingKeys.Remove(kvp.Key);
     if (missingKeys.Count == 0) return false;
     Log.Warning($"Adding {missingKeys.Count} missing dungeon generators to the expand_dungeons.yaml file.");
-    foreach (var kvp in missingKeys)
-      Log.Warning(kvp.Key);
-    var yaml = File.ReadAllText(FilePath);
-    var data = Yaml.Serializer().Serialize(missingKeys.Select(kvp => To(kvp.Value)).ToList());
-    // Directly appending is risky but necessary to keep comments, etc.
-    yaml += "\n" + data;
-    File.WriteAllText(FilePath, yaml);
+    Save([.. missingKeys.Values], true);
     return true;
+  }
+  private static void Save(List<DungeonGenerator> data, bool log)
+  {
+    Dictionary<string, List<DungeonGenerator>> perFile = [];
+    foreach (var item in data)
+    {
+      var mod = AssetTracker.GetModFromPrefab(item.name);
+      var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
+      if (!perFile.ContainsKey(file))
+        perFile[file] = [];
+      perFile[file].Add(item);
+
+      if (log)
+        Log.Warning($"{mod}: {item.name}");
+    }
+    foreach (var kvp in perFile)
+    {
+      var file = Path.Combine(Yaml.Directory, $"expand_dungeons{kvp.Key}.yaml");
+      var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
+      // Directly appending is risky but necessary to keep comments, etc.
+      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(To));
+      File.WriteAllText(file, yaml);
+    }
   }
 
   public static void SetupWatcher()

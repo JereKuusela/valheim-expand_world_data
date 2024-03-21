@@ -117,8 +117,7 @@ public class EnvironmentManager
   {
     if (Helper.IsClient() || !Configuration.DataEnvironments) return;
     if (File.Exists(FilePath)) return;
-    var yaml = Yaml.Serializer().Serialize(EnvMan.instance.m_environments.Select(ToData).ToList());
-    File.WriteAllText(FilePath, yaml);
+    Save(EnvMan.instance.m_environments, false);
   }
   public static void FromFile()
   {
@@ -181,20 +180,38 @@ public class EnvironmentManager
 
   private static bool AddMissingEntries(List<EnvSetup> entries)
   {
+    Dictionary<string, List<EnvSetup>> perFile = [];
     var missingKeys = Originals.Keys.ToHashSet();
     foreach (var entry in entries)
       missingKeys.Remove(entry.m_name);
     if (missingKeys.Count == 0) return false;
     var missing = Originals.Values.Where(env => missingKeys.Contains(env.m_name)).ToList();
     Log.Warning($"Adding {missing.Count} missing environments to the expand_environments.yaml file.");
-    foreach (var env in missing)
-      Log.Warning(env.m_name);
-    var yaml = File.ReadAllText(FilePath);
-    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
-    // Directly appending is risky but necessary to keep comments, etc.
-    yaml += "\n" + data;
-    File.WriteAllText(FilePath, yaml);
+    Save(missing, true);
     return true;
+  }
+  private static void Save(List<EnvSetup> data, bool log)
+  {
+    Dictionary<string, List<EnvSetup>> perFile = [];
+    foreach (var item in data)
+    {
+      var mod = AssetTracker.GetModFromPrefab(item.m_name);
+      var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
+      if (!perFile.ContainsKey(file))
+        perFile[file] = [];
+      perFile[file].Add(item);
+
+      if (log)
+        Log.Warning($"{mod}: {item.m_name}");
+    }
+    foreach (var kvp in perFile)
+    {
+      var file = Path.Combine(Yaml.Directory, $"expand_environments{kvp.Key}.yaml");
+      var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
+      // Directly appending is risky but necessary to keep comments, etc.
+      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));
+      File.WriteAllText(file, yaml);
+    }
   }
 
 

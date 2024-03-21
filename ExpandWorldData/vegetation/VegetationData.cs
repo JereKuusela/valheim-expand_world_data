@@ -9,7 +9,6 @@ namespace ExpandWorldData;
 public class VegetationData
 {
   public string prefab = "";
-  [DefaultValue(true)]
   public bool enabled = true;
   public float min = 1f;
   public float max = 1f;

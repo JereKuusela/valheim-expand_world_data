@@ -15,8 +15,10 @@ public class LocationLoading
   public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_locations*.yaml";
   public static Dictionary<string, string> ZDOData = [];
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = [];
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, DataEntry?>>>> ObjectData = [];
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> LocationObjectSwaps = [];
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> DungeonObjectSwaps = [];
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, DataEntry?>>>> LocationObjectData = [];
+  public static Dictionary<string, Dictionary<string, List<Tuple<float, DataEntry?>>>> DungeonObjectData = [];
   public static Dictionary<string, List<BlueprintObject>> Objects = [];
   public static Dictionary<string, Range<Vector3>> Scales = [];
   public static Dictionary<string, string[]> Commands = [];
@@ -38,10 +40,8 @@ public class LocationLoading
       ZDOData[data.prefab] = data.data;
     if (data.dungeon != "")
       Dungeons[data.prefab] = data.dungeon;
-    if (data.objectSwap != null)
-      ObjectSwaps[data.prefab] = Spawn.LoadSwaps(data.objectSwap);
-    if (data.objectData != null)
-      ObjectData[data.prefab] = Spawn.LoadData(data.objectData);
+    LoadObjectData(data);
+    LoadObjectSwaps(data);
     if (data.objects != null)
       Objects[data.prefab] = Helper.ParseObjects(data.objects);
     if (data.commands != null)
@@ -96,6 +96,89 @@ public class LocationLoading
     return loc;
   }
 
+  private static void LoadObjectData(LocationData data)
+  {
+    Dictionary<string, List<Tuple<float, DataEntry?>>>? locationobjectData = null;
+    Dictionary<string, List<Tuple<float, DataEntry?>>>? dungeonobjectData = null;
+
+    if (data.objectData != null)
+    {
+      locationobjectData = Spawn.LoadData(data.objectData);
+      dungeonobjectData = Spawn.LoadData(data.objectData);
+    }
+    if (data.locationObjectData != null)
+    {
+      var objectData = Spawn.LoadData(data.locationObjectData);
+      if (locationobjectData == null)
+      {
+        locationobjectData = objectData;
+      }
+      else
+      {
+        foreach (var kvp in objectData)
+          locationobjectData[kvp.Key] = kvp.Value;
+      }
+    }
+    if (data.dungeonObjectData != null)
+    {
+      var objectData = Spawn.LoadData(data.dungeonObjectData);
+      if (dungeonobjectData == null)
+      {
+        dungeonobjectData = objectData;
+      }
+      else
+      {
+        foreach (var kvp in objectData)
+          dungeonobjectData[kvp.Key] = kvp.Value;
+      }
+    }
+    if (dungeonobjectData != null)
+      DungeonObjectData[data.prefab] = dungeonobjectData;
+    if (locationobjectData != null)
+      LocationObjectData[data.prefab] = locationobjectData;
+  }
+  private static void LoadObjectSwaps(LocationData data)
+  {
+    Dictionary<string, List<Tuple<float, string>>>? locationobjectSwaps = null;
+    Dictionary<string, List<Tuple<float, string>>>? dungeonobjectSwaps = null;
+
+    if (data.objectSwap != null)
+    {
+      locationobjectSwaps = Spawn.LoadSwaps(data.objectSwap);
+      dungeonobjectSwaps = Spawn.LoadSwaps(data.objectSwap);
+    }
+    if (data.locationObjectSwap != null)
+    {
+      var objectSwap = Spawn.LoadSwaps(data.locationObjectSwap);
+      if (locationobjectSwaps == null)
+      {
+        locationobjectSwaps = objectSwap;
+      }
+      else
+      {
+        foreach (var kvp in objectSwap)
+          locationobjectSwaps[kvp.Key] = kvp.Value;
+      }
+    }
+    if (data.dungeonObjectSwap != null)
+    {
+      var objectSwap = Spawn.LoadSwaps(data.dungeonObjectSwap);
+      if (dungeonobjectSwaps == null)
+      {
+        dungeonobjectSwaps = objectSwap;
+      }
+      else
+      {
+        foreach (var kvp in objectSwap)
+          dungeonobjectSwaps[kvp.Key] = kvp.Value;
+      }
+    }
+    if (dungeonobjectSwaps != null)
+      DungeonObjectSwaps[data.prefab] = dungeonobjectSwaps;
+    if (locationobjectSwaps != null)
+      LocationObjectSwaps[data.prefab] = locationobjectSwaps;
+  }
+
   public static LocationData ToData(ZoneSystem.ZoneLocation loc)
   {
     LocationData data = new();
@@ -146,8 +229,7 @@ public class LocationLoading
   private static void ToFile()
   {
     if (File.Exists(FilePath)) return;
-    var yaml = Yaml.Serializer().Serialize(ZoneSystem.instance.m_locations.Where(IsValid).Select(ToData).ToList());
-    File.WriteAllText(FilePath, yaml);
+    Save(ZoneSystem.instance.m_locations.Where(IsValid).ToList(), false);
   }
   public static void Initialize()
   {
@@ -163,8 +245,10 @@ public class LocationLoading
   public static void Load()
   {
     ZDOData.Clear();
-    ObjectSwaps.Clear();
-    ObjectData.Clear();
+    LocationObjectSwaps.Clear();
+    DungeonObjectSwaps.Clear();
+    LocationObjectData.Clear();
+    DungeonObjectData.Clear();
     Dungeons.Clear();
     Objects.Clear();
     Scales.Clear();
@@ -227,21 +311,40 @@ public class LocationLoading
   private static Dictionary<string, ZoneSystem.ZoneLocation> Locations = [];
   private static bool AddMissingEntries(List<ZoneSystem.ZoneLocation> items)
   {
+    Dictionary<string, List<ZoneSystem.ZoneLocation>> perFile = [];
     var missingKeys = Locations.Keys.ToHashSet();
     foreach (var item in items)
       missingKeys.Remove(item.m_prefabName);
     if (missingKeys.Count == 0) return false;
     var missing = DefaultEntries.Where(loc => missingKeys.Contains(loc.m_prefabName)).ToList();
     Log.Warning($"Adding {missing.Count} missing locations to the expand_locations.yaml file.");
-    foreach (var item in missing)
-      Log.Warning(item.m_prefabName);
-    var yaml = File.ReadAllText(FilePath);
-    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
-    // Directly appending is risky but necessary to keep comments, etc.
-    yaml += "\n" + data;
-    File.WriteAllText(FilePath, yaml);
+    Save(missing, true);
     return true;
   }
+  private static void Save(List<ZoneSystem.ZoneLocation> data, bool log)
+  {
+    Dictionary<string, List<ZoneSystem.ZoneLocation>> perFile = [];
+    foreach (var item in data)
+    {
+      var mod = AssetTracker.GetModFromPrefab(item.m_prefabName);
+      var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
+      if (!perFile.ContainsKey(file))
+        perFile[file] = [];
+      perFile[file].Add(item);
+
+      if (log)
+        Log.Warning($"{mod}: {item.m_prefabName}");
+    }
+    foreach (var kvp in perFile)
+    {
+      var file = Path.Combine(Yaml.Directory, $"expand_locations{kvp.Key}.yaml");
+      var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
+      // Directly appending is risky but necessary to keep comments, etc.
+      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));
+      File.WriteAllText(file, yaml);
+    }
+  }
+
   private static List<ZoneSystem.ZoneLocation> FromFile()
   {
     try

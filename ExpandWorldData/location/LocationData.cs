@@ -65,6 +65,14 @@ public class LocationData
   [DefaultValue(null)]
   public string[]? objectSwap = null;
   [DefaultValue(null)]
+  public string[]? dungeonObjectData = null;
+  [DefaultValue(null)]
+  public string[]? dungeonObjectSwap = null;
+  [DefaultValue(null)]
+  public string[]? locationObjectData = null;
+  [DefaultValue(null)]
+  public string[]? locationObjectSwap = null;
+  [DefaultValue(null)]
   public string[]? objects = null;
   [DefaultValue(null)]
   public string[]? commands = null;

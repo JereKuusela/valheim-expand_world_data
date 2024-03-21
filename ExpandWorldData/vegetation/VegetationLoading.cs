@@ -38,8 +38,7 @@ public class VegetationLoading
     }
     if (!File.Exists(FilePath))
     {
-      var yaml = Yaml.Serializer().Serialize(DefaultEntries.Select(ToData).ToList());
-      File.WriteAllText(FilePath, yaml);
+      Save(DefaultEntries, false);
       // Watcher triggers reload.
       return;
     }
@@ -93,6 +92,7 @@ public class VegetationLoading
   // Note: This is needed people add new content mods and then complain that Expand World doesn't spawn them.
   private static bool AddMissingEntries(List<ZoneSystem.ZoneVegetation> entries)
   {
+    Dictionary<string, List<ZoneSystem.ZoneVegetation>> perFile = [];
     var missingKeys = DefaultKeys.ToHashSet();
     // Some mods override prefabs so the m_prefab.name is not reliable.
     foreach (var entry in entries)
@@ -101,16 +101,32 @@ public class VegetationLoading
     // But don't use m_name because it can be anything for original items.
     var missing = DefaultEntries.Where(veg => missingKeys.Contains(veg.m_prefab.name)).ToList();
     Log.Warning($"Adding {missing.Count} missing vegetation to the expand_vegetation.yaml file.");
-    foreach (var veg in missing)
-      Log.Warning(veg.m_prefab.name);
-    var yaml = File.ReadAllText(FilePath);
-    var data = Yaml.Serializer().Serialize(missing.Select(ToData));
-    // Directly appending is risky but necessary to keep comments, etc.
-    yaml += "\n" + data;
-    File.WriteAllText(FilePath, yaml);
+    Save(missing, true);
     return true;
   }
+  private static void Save(List<ZoneSystem.ZoneVegetation> data, bool log)
+  {
+    Dictionary<string, List<ZoneSystem.ZoneVegetation>> perFile = [];
+    foreach (var item in data)
+    {
+      var mod = AssetTracker.GetModFromPrefab(item.m_prefab.name);
+      var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
+      if (!perFile.ContainsKey(file))
+        perFile[file] = [];
+      perFile[file].Add(item);
 
+      if (log)
+        Log.Warning($"{mod}: {item.m_prefab.name}");
+    }
+    foreach (var kvp in perFile)
+    {
+      var file = Path.Combine(Yaml.Directory, $"expand_vegetation{kvp.Key}.yaml");
+      var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
+      // Directly appending is risky but necessary to keep comments, etc.
+      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));
+      File.WriteAllText(file, yaml);
+    }
+  }
 
   public static ZoneSystem.ZoneVegetation FromData(VegetationData data)
   {
