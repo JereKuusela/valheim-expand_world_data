@@ -4,6 +4,7 @@
   - Adds fields `containerSize` and `itemAmount` to the `expand_data.yaml` to support chest content generation.
   - Adds new fields `locationObjectData`, `locationSwaps`, `dungeonObjectData` and `dungeonSwaps` to the `expand_location.yaml`.
   - Adds value group support to the fields `objectData` and `swaps`.
+  - Adds new command `ew_copy_room` and `ew_copy_location` to copy object coordinates relative to the room or location center.
   - Adds new setting "Split data per mod" to create separate data files for each mod.
   - Fixes data fields not automatically updating when modifying the data entries.
   - Removes the `ew_copy` command as obsolete.
