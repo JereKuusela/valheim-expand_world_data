@@ -214,7 +214,7 @@ public class Blueprints
     var scaleY = InvariantFloat(split, 11, 1f);
     var scaleZ = InvariantFloat(split, 12, 1f);
     var data = split.Length > 13 ? split[13] : "";
-    var chance = split.Length > 14 ? InvariantFloat(split, 14, 1f) : 1f;
+    var chance = InvariantFloat(split, 14, 1f);
     return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), new(scaleX, scaleY, scaleZ), DataHelper.Get(data), chance);
   }
   private static Vector3 GetPlanBuildSnapPoint(string row)
