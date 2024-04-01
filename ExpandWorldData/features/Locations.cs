@@ -25,16 +25,6 @@ public class GuaranteeLocations
   }
 }
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceLocations))]
-public class PlaceLocationsFailsafe
-{
-  static bool Prefix(ZoneSystem __instance, Vector2i zoneID)
-  {
-    if (__instance.m_locationInstances.TryGetValue(zoneID, out var locationInstance))
-      return locationInstance.m_location != null && locationInstance.m_location.m_prefab;
-    return true;
-  }
-}
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceZoneCtrl))]
 public class PlaceZoneCtrl
 {
@@ -55,9 +45,9 @@ public class ClearAreasFromAdjacentZones
         // No location in the zone.
         if (!__instance.m_locationInstances.TryGetValue(new(i, j), out var item)) continue;
         // Check for corrupted locations.
-        if (item.m_location == null || item.m_location.m_location == null) continue;
+        if (item.m_location == null) continue;
         // No clear area in the location.
-        if (!item.m_location.m_location.m_clearArea) continue;
+        if (!item.m_location.m_clearArea) continue;
         // If fits inside the zone, no need to add it.
         if (item.m_location.m_exteriorRadius < 32f) continue;
         clearAreas.Add(new(item.m_position, item.m_location.m_exteriorRadius));

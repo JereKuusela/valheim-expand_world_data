@@ -89,10 +89,6 @@ public class LocationObjectDataAndSwap
 {
   static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos)
   {
-    var loc = location.m_location;
-    var flag = loc && loc.m_useCustomInteriorTransform && loc.m_interiorTransform && loc.m_generator;
-    if (flag)
-      Spawn.DungeonGeneratorPos = location.m_generatorPosition;
     Spawn.IgnoreHealth = LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data) && data.randomDamage == "all";
     LocationSpawning.CurrentLocation = "";
     if (mode != ZoneSystem.SpawnMode.Client)
@@ -102,7 +98,7 @@ public class LocationObjectDataAndSwap
         pos.y += data.offset ?? data.groundOffset;
     }
     // Blueprints won't have any znetviews to spawn or other logic to handle.
-    return !BlueprintManager.Has(location.m_prefabName);
+    return location.m_prefab.IsValid;
   }
 
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -128,7 +124,8 @@ public class LocationObjectDataAndSwap
         HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
       }
       Random.InitState(seed);
-      WearNTear.m_randomInitialDamage = location.m_location.m_applyRandomDamage;
+      // TODO FIX
+      // WearNTear.m_randomInitialDamage = location.m_location.m_applyRandomDamage;
       if (mode == ZoneSystem.SpawnMode.Ghost)
         ZNetView.StartGhostInit();
       var scale = Vector3.one;
@@ -145,7 +142,6 @@ public class LocationObjectDataAndSwap
         ZNetView.FinishGhostInit();
     }
     LocationSpawning.CurrentLocation = "";
-    Spawn.DungeonGeneratorPos = null;
     Spawn.IgnoreHealth = false;
     if (LocationLoading.Commands.TryGetValue(location.m_prefabName, out var commands))
       CommandManager.Run(commands, pos, rot.eulerAngles);

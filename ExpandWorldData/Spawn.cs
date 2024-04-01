@@ -14,7 +14,6 @@ namespace ExpandWorldData;
 // 2. On ghost spawning mode, created objects must be either stored or instantly destroyed.
 public class Spawn
 {
-  public static Vector3? DungeonGeneratorPos = null;
   public static bool IgnoreHealth = false;
   public static void Blueprint(string name, Vector3 pos, Quaternion rot, Vector3 scale, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
   {
@@ -60,8 +59,7 @@ public class Spawn
     var go = SharedBPO(obj, pos, rot, scale, dataOverride, prefabOverride, spawned);
     if (go != null && go.TryGetComponent<DungeonGenerator>(out var dg))
     {
-      if (DungeonGeneratorPos.HasValue)
-        dg.m_originalPosition = DungeonGeneratorPos.Value;
+      // m_originalPosition is not set because not sure if it's needed for custom objects.
       dg.Generate(ZNetView.m_ghostInit ? ZoneSystem.SpawnMode.Ghost : ZoneSystem.SpawnMode.Full);
     }
   }

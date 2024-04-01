@@ -24,7 +24,6 @@ public class LocationLoading
   public static Dictionary<string, string[]> Commands = [];
   public static Dictionary<string, LocationData> LocationData = [];
   public static Dictionary<string, string> Dungeons = [];
-  public static Dictionary<string, Location> BlueprintLocations = [];
   public static ZoneSystem.ZoneLocation FromData(LocationData data)
   {
     var loc = new ZoneSystem.ZoneLocation();
@@ -212,19 +211,22 @@ public class LocationLoading
       data.maxAltitude = 10000f;
     else
       data.maxAltitude = loc.m_maxAltitude;
-    if (loc.m_location)
+    loc.m_prefab.Load();
+    var prefab = loc.m_prefab.Asset.GetComponent<Location>();
+    if (prefab)
     {
-      data.randomDamage = loc.m_location.m_applyRandomDamage ? "true" : "";
-      data.exteriorRadius = loc.m_location.m_exteriorRadius;
-      data.clearArea = loc.m_location.m_clearArea;
-      data.discoverLabel = loc.m_location.m_discoverLabel;
-      data.noBuild = loc.m_location.m_noBuild ? "true" : "";
-      if (loc.m_location.m_noBuild && loc.m_location.m_noBuildRadiusOverride > 0f)
-        data.noBuild = loc.m_location.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
+      data.randomDamage = prefab.m_applyRandomDamage ? "true" : "";
+      data.exteriorRadius = prefab.m_exteriorRadius;
+      data.clearArea = prefab.m_clearArea;
+      data.discoverLabel = prefab.m_discoverLabel;
+      data.noBuild = prefab.m_noBuild ? "true" : "";
+      if (prefab.m_noBuild && prefab.m_noBuildRadiusOverride > 0f)
+        data.noBuild = prefab.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
     }
+    loc.m_prefab.Release();
     return data;
   }
-  public static bool IsValid(ZoneSystem.ZoneLocation loc) => loc.m_prefab;
+  public static bool IsValid(ZoneSystem.ZoneLocation loc) => loc.m_prefab.IsValid;
 
   private static void ToFile()
   {
@@ -284,11 +286,17 @@ public class LocationLoading
     else
       Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
     foreach (var item in ZoneSystem.instance.m_locations) Setup(item);
-    LocationSetup.UpdateHashes();
+    UpdateHashes();
     UpdateInstances();
     NoBuildManager.UpdateData();
     MinimapIcon.Clear();
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
+  }
+  private static void UpdateHashes()
+  {
+    var zs = ZoneSystem.instance;
+    zs.m_locationsByHash = Helper.ToDict(zs.m_locations, loc => loc.m_prefabName.GetStableHashCode(), loc => loc);
+    //ExpandWorldData.Log.Debug($"Loaded {zs.m_locationsByHash.Count} zone hashes.");
   }
   private static void UpdateInstances()
   {
@@ -365,27 +373,12 @@ public class LocationLoading
     if (!LocationData.TryGetValue(item.m_prefabName, out var data)) return;
     // Old config won't have exterior radius so don't set anything.
     if (data.exteriorRadius == 0f && radius == null) return;
-    item.m_location.m_exteriorRadius = data.exteriorRadius;
-    item.m_exteriorRadius = item.m_location.m_exteriorRadius;
+    item.m_exteriorRadius = data.exteriorRadius;
     if (radius.HasValue && item.m_exteriorRadius == 0)
       item.m_exteriorRadius = radius.Value;
-    item.m_location.m_applyRandomDamage = data.randomDamage == "true" || data.randomDamage == "all";
-    item.m_location.m_clearArea = data.clearArea;
-    // Handled by own system.
-    item.m_location.m_noBuild = false;
-  }
-  public static Location GetBluePrintLocation(string prefab)
-  {
-    if (!BlueprintLocations.TryGetValue(prefab, out var location))
-    {
-      var obj = new GameObject
-      {
-        name = "Blueprint"
-      };
-      location = obj.AddComponent<Location>();
-      BlueprintLocations.Add(prefab, location);
-    }
-    return location;
+    // TODO FIX
+    //item.m_applyRandomDamage = data.randomDamage == "true" || data.randomDamage == "all";
+    item.m_clearArea = data.clearArea;
   }
 
 
@@ -393,32 +386,24 @@ public class LocationLoading
   {
     if (!BlueprintManager.TryGet(location.m_prefabName, out var bp)) return false;
     location.m_prefab = new();
-    location.m_location = GetBluePrintLocation(location.m_prefabName);
     ApplyLocationData(location, bp.Radius + 5);
-    location.m_netViews = [];
-    location.m_randomSpawns = [];
     return true;
   }
   ///<summary>Copies setup from locations.</summary>
   private static void Setup(ZoneSystem.ZoneLocation item)
   {
     var prefabName = Parse.Name(item.m_prefabName);
-    item.m_hash = item.m_prefabName.GetStableHashCode();
-    if (!Locations.TryGetValue(prefabName, out var zoneLocation) || zoneLocation.m_prefab == null || zoneLocation.m_location == null)
+    if (!Locations.TryGetValue(prefabName, out var zoneLocation) || !zoneLocation.m_prefab.IsValid)
     {
       if (SetupBlueprint(item)) return;
       Log.Warning($"Location prefab {prefabName} not found!");
       return;
     }
+    item.m_prefabName = zoneLocation.m_prefabName;
     item.m_prefab = zoneLocation.m_prefab;
-    item.m_location = zoneLocation.m_location;
     item.m_interiorRadius = zoneLocation.m_interiorRadius;
     item.m_exteriorRadius = zoneLocation.m_exteriorRadius;
-    item.m_interiorPosition = zoneLocation.m_interiorPosition;
-    item.m_generatorPosition = zoneLocation.m_generatorPosition;
     ApplyLocationData(item);
-    item.m_netViews = zoneLocation.m_netViews;
-    item.m_randomSpawns = zoneLocation.m_randomSpawns;
   }
 
   public static void SetupWatcher()
