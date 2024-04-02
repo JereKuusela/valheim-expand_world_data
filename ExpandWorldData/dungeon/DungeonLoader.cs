@@ -25,11 +25,8 @@ public partial class Loader
     DefaultGenerators.Clear();
     if (Helper.IsServer())
     {
-      // Dungeons don't have configuration so the data must be pulled from locations.
-      DefaultGenerators = ZoneSystem.instance.m_locations
-        .Select(loc => loc.m_prefab ? loc.m_prefab.GetComponentInChildren<DungeonGenerator>() : null!)
-        .Where(dg => dg != null)
-        .Distinct(new DgComparer()).ToDictionary(kvp => kvp.name, kvp => kvp);
+      DefaultGenerators = ZNetScene.instance.m_namedPrefabs.Values.Where(prefab => prefab.GetComponent<DungeonGenerator>())
+        .Select(prefab => prefab.GetComponent<DungeonGenerator>()).ToDictionary(kvp => kvp.name, kvp => kvp);
     }
     Load();
   }
@@ -124,18 +121,5 @@ public partial class Loader
   public static void SetupWatcher()
   {
     Yaml.SetupWatcher(Pattern, Load);
-  }
-}
-
-class DgComparer : IEqualityComparer<DungeonGenerator>
-{
-  public bool Equals(DungeonGenerator dg1, DungeonGenerator dg2)
-  {
-    return dg1.name == dg2.name;
-  }
-
-  public int GetHashCode(DungeonGenerator dg)
-  {
-    return dg.name.GetHashCode();
   }
 }

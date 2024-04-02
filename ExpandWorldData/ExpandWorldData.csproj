@@ -42,8 +42,8 @@
     <Reference Include="Unity.TextMeshPro">
       <HintPath>..\..\Libs\Unity.TextMeshPro.dll</HintPath>
     </Reference>
-    <Reference Include="SoftReferenceableAssets">
-      <HintPath>..\..\Libs\SoftReferenceableAssets.dll</HintPath>
+    <Reference Include="SoftReferenceableAssets_publicized">
+      <HintPath>..\..\Libs\SoftReferenceableAssets_publicized.dll</HintPath>
     </Reference>
     <Reference Include="0Harmony">
       <HintPath>..\..\Libs\0Harmony.dll</HintPath>

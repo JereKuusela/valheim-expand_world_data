@@ -7,6 +7,7 @@ using HarmonyLib;
 using Service;
 using UnityEngine;
 using Data;
+using SoftReferenceableAssets;
 namespace ExpandWorldData;
 
 public class LocationLoading
@@ -241,6 +242,11 @@ public class LocationLoading
     {
       DefaultEntries = ZoneSystem.instance.m_locations;
       Locations = Helper.ToDict(DefaultEntries, l => l.m_prefabName, l => l);
+      foreach (var item in DefaultEntries)
+      {
+        if (item.m_prefab.IsValid)
+          Runtime.Loader.CallbackWhenLoaded(item.m_prefab.m_assetID, (res) => Log.Info($"Loading {item.m_prefabName} {res}."));
+      }
     }
     Load();
   }

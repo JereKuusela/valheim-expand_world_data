@@ -35,7 +35,7 @@ public class RoomData
   [DefaultValue(false)]
   public bool perimeter = false;
   public string size = "";
-  public RoomConnectionData[] connections = new RoomConnectionData[0];
+  public RoomConnectionData[] connections = [];
   [DefaultValue(null)]
   public string[]? objectSwap = null;
   [DefaultValue(null)]

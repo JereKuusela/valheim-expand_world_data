@@ -11,14 +11,12 @@ namespace ExpandWorldData.Dungeon;
 public class Spawner
 {
 
-
-
   ///<summary>Implements object data and swapping from location data.</summary>
   static GameObject CustomObject(GameObject prefab, Vector3 pos, Quaternion rot)
   {
     // Some mods cause client side dungeon reloading. In this case, no data is available.
     // Revert to the default behaviour as a fail safe.
-    if (Helper.IsClient()) return Object.Instantiate(prefab, pos, rot);
+    if (DungeonObjects.CurrentRoom == null) return Object.Instantiate(prefab, pos, rot);
     BlueprintObject bpo = new(Utils.GetPrefabName(prefab), pos, rot, prefab.transform.localScale, null, 1f);
     var obj = Spawn.BPO(bpo, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
     return obj ?? LocationSpawning.DummySpawn;
@@ -54,39 +52,25 @@ public class Spawner
   }
 
   [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPrefix]
-  static bool ReplaceRoom(ref DungeonDB.RoomData room, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
+  static bool ReplaceRoom(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
   {
     if (!Configuration.DataRooms || Helper.IsClient()) return true;
     // Clients already have proper rooms.
     if (mode == ZoneSystem.SpawnMode.Client) return true;
-    var parameters = room.m_room;
-    DungeonObjects.CurrentRoom = parameters.name;
-    var baseName = Parse.Name(parameters.name);
-    // Combine the base room prefab and the room parameters.
-    if (RoomSpawning.Prefabs.TryGetValue(baseName, out var roomData))
-    {
-      // The proxy shouldn't be modified, or entries will get reference to the same room.
-      room = new()
-      {
-        m_room = RoomSpawning.OverrideParameters(parameters, roomData.m_room),
-        m_netViews = roomData.m_netViews,
-        m_randomSpawns = roomData.m_randomSpawns
-      };
+    DungeonObjects.CurrentRoom = roomData;
+    if (!RoomSpawning.Blueprints.TryGetValue(roomData, out var bpName))
       return true;
-    }
-    if (BlueprintManager.TryGet(parameters.name, out var bp))
-    {
+    if (BlueprintManager.TryGet(bpName, out var bp))
       Spawn.Blueprint(bp, pos, rot, Vector3.one, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
-    }
-    return true;
+    return false;
   }
 
 
   [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPostfix]
-  static void PlaceRoomCustomObjects(DungeonDB.RoomData room, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
+  static void PlaceRoomCustomObjects(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
   {
     if (!Configuration.DataRooms || mode == ZoneSystem.SpawnMode.Client || Helper.IsClient()) return;
-    if (!DungeonObjects.Objects.TryGetValue(room.m_room.name, out var objects)) return;
+    if (!DungeonObjects.Objects.TryGetValue(roomData, out var objects)) return;
     int seed = (int)pos.x * 4271 + (int)pos.y * 9187 + (int)pos.z * 2134;
     Random.State state = Random.state;
     Random.InitState(seed);
@@ -96,7 +80,7 @@ public class Spawner
       Spawn.BPO(obj, pos, rot, Vector3.one, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
     }
     Random.state = state;
-    DungeonObjects.CurrentRoom = "";
+    DungeonObjects.CurrentRoom = null;
   }
 
 
@@ -142,7 +126,7 @@ public class Spawner
     var name = Utils.GetPrefabName(__instance.gameObject);
     if (!DungeonObjects.Generators.TryGetValue(name, out var gen)) return;
     if (gen.m_excludedRooms.Count == 0) return;
-    DungeonGenerator.m_availableRooms = DungeonGenerator.m_availableRooms.Where(room => !gen.m_excludedRooms.Contains(room.m_room.name)).ToList();
+    DungeonGenerator.m_availableRooms = DungeonGenerator.m_availableRooms.Where(room => !gen.m_excludedRooms.Contains(room.m_prefab.Name)).ToList();
 
   }
 

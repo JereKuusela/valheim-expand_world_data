@@ -18,10 +18,10 @@ namespace ExpandWorldData;
 [HarmonyPatch(typeof(DungeonGenerator))]
 public class RoomSpawning
 {
-  // Note: OverrideRoomData will change the parameters of the room prefab. Don't use them for anything.
   public static Dictionary<string, DungeonDB.RoomData> Prefabs = [];
 
-  public static Dictionary<string, RoomData> Data = [];
+  public static Dictionary<DungeonDB.RoomData, RoomData> Data = [];
+  public static Dictionary<DungeonDB.RoomData, string> Blueprints = [];
 
   public static Room OverrideParameters(Room from, Room to)
   {
@@ -56,9 +56,9 @@ public class RoomSpawning
     return to;
   }
 
-  private static bool IsBaseRoom(Room room)
+  private static bool IsBaseRoom(DungeonDB.RoomData room)
   {
-    var baseName = Parse.Name(room.name);
+    var baseName = Parse.Name(room.m_prefab.Name);
     return Prefabs.ContainsKey(baseName);
   }
 
@@ -69,11 +69,12 @@ public class RoomSpawning
     // To support live reloading for blueprints, the connections must be refreshed every time.
     foreach (var roomData in DungeonGenerator.m_availableRooms)
     {
-      var room = roomData.m_room;
-      if (IsBaseRoom(room)) continue;
-      if (BlueprintManager.TryGet(room.name, out var bp))
+      if (!Blueprints.TryGetValue(roomData, out var bpName))
+        continue;
+      var room = roomData.RoomInPrefab;
+      if (BlueprintManager.TryGet(bpName, out var bp))
       {
-        if (Data.TryGetValue(room.name, out var data) && data.size == "")
+        if (Data.TryGetValue(roomData, out var data) && data.size == "")
           room.m_size = new((int)Mathf.Ceil(bp.Size.x), (int)Mathf.Ceil(bp.Size.y), (int)Mathf.Ceil(bp.Size.z));
         for (var i = 0; i < bp.SnapPoints.Count && i < room.m_roomConnections.Length; ++i)
         {
@@ -84,16 +85,4 @@ public class RoomSpawning
       }
     }
   }
-
-  [HarmonyPatch(nameof(DungeonGenerator.Save)), HarmonyPrefix]
-  static void CleanRoomsForSaving()
-  {
-    if (Prefabs.Count == 0 || Helper.IsClient()) return;
-    // Blueprints add a dummy room which shouldn't be saved.
-    DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(IsBaseRoom).ToList();
-    // Restore base names to save the rooms as vanilla compatible.
-    foreach (var room in DungeonGenerator.m_placedRooms)
-      room.name = Parse.Name(room.name);
-  }
-
 }

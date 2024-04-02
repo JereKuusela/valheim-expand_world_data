@@ -4,13 +4,12 @@ using System.IO;
 using System.Linq;
 using BepInEx;
 using Service;
-using YamlDotNet.Core.Tokens;
 namespace Data;
 
 public class DataLoading
 {
   private static readonly string GamePath = Path.Combine("BepInEx", "config", "data");
-  private static readonly string ProfilePath = Path.Combine(Paths.ConfigPath, "config", "data");
+  private static readonly string ProfilePath = Path.Combine(Paths.ConfigPath, "data");
 
   // Each file can have multiple data entries so we need to load them all.
   // Hash is used as key because base64 encoded strings can be loaded too.
@@ -56,7 +55,8 @@ public class DataLoading
     ValueGroups.Clear();
     var files = Directory.GetFiles(GamePath, "*.yaml")
       .Concat(Directory.GetFiles(ProfilePath, "*.yaml"))
-      .Concat(Directory.GetFiles(Yaml.Directory, Pattern)).ToArray();
+      .Concat(Directory.GetFiles(Yaml.Directory, Pattern))
+      .Select(Path.GetFullPath).Distinct().ToArray();
     foreach (var file in files)
       LoadEntry(file, prev);
     Log.Info($"Loaded {Data.Count} data entries.");

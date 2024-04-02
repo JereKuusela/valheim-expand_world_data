@@ -84,10 +84,10 @@ public class MinimapIcon
     return new CodeMatcher(instructions)
     // For some reason, targeting the size variable doesn't work, so hack the multiplier instead.
       .MatchForward(false, new CodeMatch(OpCodes.Ldc_R4, 2f))
-      .SetAndAdvance(OpCodes.Ldloc_S, 4)
+      .SetAndAdvance(OpCodes.Ldloc_S, 6)
       .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(GetIconSize).operand))
       .MatchForward(false, new CodeMatch(OpCodes.Ldc_R4, 2f))
-      .SetAndAdvance(OpCodes.Ldloc_S, 4)
+      .SetAndAdvance(OpCodes.Ldloc_S, 6)
       .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(GetIconSize).operand))
       .InstructionEnumeration();
   }
