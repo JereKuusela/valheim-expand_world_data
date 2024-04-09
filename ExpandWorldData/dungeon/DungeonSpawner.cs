@@ -60,8 +60,14 @@ public class Spawner
     DungeonObjects.CurrentRoom = roomData;
     if (!RoomSpawning.Blueprints.TryGetValue(roomData, out var bpName))
       return true;
+    // TODO: Spawned Room must be reconfigured on AddOpenConnections (especially to update the connections).
+    // Or is there need to edit connections of actual rooms? At least there is type to change.
+    // Name must be updated, something else?
+
     if (BlueprintManager.TryGet(bpName, out var bp))
       Spawn.Blueprint(bp, pos, rot, Vector3.one, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
+    // TODO: Must implement AddOpenConnections and related things.
+    // TODO: Override test room collision to support float?
     return false;
   }
 

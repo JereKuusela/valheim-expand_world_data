@@ -85,4 +85,15 @@ public class RoomSpawning
       }
     }
   }
+
+  [HarmonyPatch(nameof(DungeonGenerator.Save)), HarmonyPrefix]
+  static void CleanRoomsForSaving()
+  {
+    if (Prefabs.Count == 0 || Helper.IsClient()) return;
+    // Blueprints add a dummy room which shouldn't be saved.
+    DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(IsBaseRoom).ToList();
+    // Restore base names to save the rooms as vanilla compatible.
+    foreach (var room in DungeonGenerator.m_placedRooms)
+      room.name = Parse.Name(room.name);
+  }
 }

@@ -100,10 +100,10 @@ public class RoomLoading
     {
       m_prefabData = new()
     };
-    var baseName = Parse.Name(name);
-    var room = new GameObject(baseName).AddComponent<Room>();
+    var room = new GameObject(name).AddComponent<Room>();
     CreatedObjects.Add(room.gameObject);
     roomData.m_loadedRoom = room;
+    var baseName = Parse.Name(name);
     if (RoomSpawning.Prefabs.TryGetValue(baseName, out var baseRoom))
     {
       // Variants need to load the base room to get the connections.
