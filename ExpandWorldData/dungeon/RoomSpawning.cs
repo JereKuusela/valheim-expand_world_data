@@ -20,6 +20,7 @@ public class RoomSpawning
 {
   public static Dictionary<string, DungeonDB.RoomData> Prefabs = [];
 
+  public static Dictionary<Room, Vector3> RoomSizes = [];
   public static Dictionary<DungeonDB.RoomData, RoomData> Data = [];
   public static Dictionary<DungeonDB.RoomData, string> Blueprints = [];
 
@@ -91,9 +92,37 @@ public class RoomSpawning
   {
     if (Prefabs.Count == 0 || Helper.IsClient()) return;
     // Blueprints add a dummy room which shouldn't be saved.
-    DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(IsBaseRoom).ToList();
+    //DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(IsBaseRoom).ToList();
     // Restore base names to save the rooms as vanilla compatible.
     foreach (var room in DungeonGenerator.m_placedRooms)
       room.name = Parse.Name(room.name);
+  }
+
+
+  [HarmonyPatch(nameof(DungeonGenerator.TestCollision)), HarmonyPrefix]
+  static bool TestCollisionCustom(DungeonGenerator __instance, Room room, Vector3 pos, Quaternion rot, ref bool __result)
+  {
+    if (!RoomSizes.TryGetValue(room, out var size)) return true;
+    __result = TestCollision(__instance, pos, rot, size);
+    return false;
+  }
+
+  private static bool TestCollision(DungeonGenerator dg, Vector3 pos, Quaternion rot, Vector3 size)
+  {
+    if (!IsInsideDungeon(dg, pos, rot, size)) return true;
+    dg.m_colliderA.size = new Vector3(size.x - 0.1f, size.y - 0.1f, size.z - 0.1f);
+    foreach (Room room2 in DungeonGenerator.m_placedRooms)
+    {
+      dg.m_colliderB.size = RoomSizes.TryGetValue(room2, out var s) ? s : room2.m_size;
+      if (Physics.ComputePenetration(dg.m_colliderA, pos, rot, dg.m_colliderB, room2.transform.position, room2.transform.rotation, out _, out _))
+        return true;
+    }
+    return false;
+  }
+  private static bool IsInsideDungeon(DungeonGenerator dg, Vector3 pos, Quaternion rot, Vector3 size)
+  {
+    Bounds bounds = new Bounds(dg.m_zoneCenter, dg.m_zoneSize);
+    size *= 0.5f;
+    return bounds.Contains(pos + rot * new Vector3(size.x, size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, -size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, -size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, -size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, -size.y, size.z));
   }
 }

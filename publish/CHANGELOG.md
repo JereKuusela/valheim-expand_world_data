@@ -1,3 +1,7 @@
+- v1.28
+  - Adds support for decimals in room sizes.
+  - Fixed for the new updated.
+
 - v1.27
   - Adds support for loading data entries from the common data folder (used by World Edit Commands).
   - Adds a new field `items` to the `expand_data.yaml` to support item lists.

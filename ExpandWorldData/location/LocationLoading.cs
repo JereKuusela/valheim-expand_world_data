@@ -242,11 +242,6 @@ public class LocationLoading
     {
       DefaultEntries = ZoneSystem.instance.m_locations;
       Locations = Helper.ToDict(DefaultEntries, l => l.m_prefabName, l => l);
-      foreach (var item in DefaultEntries)
-      {
-        if (item.m_prefab.IsValid)
-          Runtime.Loader.CallbackWhenLoaded(item.m_prefab.m_assetID, (res) => Log.Info($"Loading {item.m_prefabName} {res}."));
-      }
     }
     Load();
   }
@@ -382,8 +377,6 @@ public class LocationLoading
     item.m_exteriorRadius = data.exteriorRadius;
     if (radius.HasValue && item.m_exteriorRadius == 0)
       item.m_exteriorRadius = radius.Value;
-    // TODO FIX
-    //item.m_applyRandomDamage = data.randomDamage == "true" || data.randomDamage == "all";
     item.m_clearArea = data.clearArea;
   }
 

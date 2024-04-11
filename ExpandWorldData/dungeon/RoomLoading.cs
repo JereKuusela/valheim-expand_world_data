@@ -25,6 +25,7 @@ public class RoomLoading
   {
     DefaultEntries.Clear();
     RoomSpawning.Prefabs.Clear();
+    RoomSpawning.RoomSizes.Clear();
     if (Helper.IsServer())
       SetDefaultEntries();
     Load();
@@ -189,6 +190,7 @@ public class RoomLoading
     room.m_divider = data.divider;
     room.m_enabled = data.enabled;
     var size = Parse.VectorXZY(data.size);
+    RoomSpawning.RoomSizes[room] = size;
     room.m_size = new((int)size.x, (int)size.y, (int)size.z);
     room.m_minPlaceOrder = data.minPlaceOrder;
     room.m_weight = data.weight;
