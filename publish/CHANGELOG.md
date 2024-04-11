@@ -1,6 +1,6 @@
 - v1.28
   - Adds support for decimals in room sizes.
-  - Fixed for the new updated.
+  - Fixed for the new game version.
 
 - v1.27
   - Adds support for loading data entries from the common data folder (used by World Edit Commands).

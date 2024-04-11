@@ -384,7 +384,10 @@ public class LocationLoading
   private static bool SetupBlueprint(ZoneSystem.ZoneLocation location)
   {
     if (!BlueprintManager.TryGet(location.m_prefabName, out var bp)) return false;
-    location.m_prefab = new();
+    location.m_prefab = new()
+    {
+      m_name = bp.Name
+    };
     ApplyLocationData(location, bp.Radius + 5);
     return true;
   }

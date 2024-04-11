@@ -183,7 +183,17 @@ public class LocationObjectDataAndSwap
       }
     });
   }
-
-
-
+  [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PokeCanSpawnLocation))]
+  public class PokeCanSpawnLocation
+  {
+    static bool Prefix(ZoneSystem.ZoneLocation location, ref bool __result)
+    {
+      if (BlueprintManager.Has(location.m_prefabName))
+      {
+        __result = true;
+        return false;
+      }
+      return true;
+    }
+  }
 }

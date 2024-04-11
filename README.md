@@ -402,9 +402,10 @@ New rooms can be created from blueprints or cloning an existing room by adding `
 - weight (default: `1`): Chance of this room being selected (relative to other weights), unless `roomWeights` is disabled.
 - faceCenter (default: `false`): If true, the room is always rotated towards the camp center. If false, the room is randomly rotated.
 - perimeter (default: `false`): If true, this room is placed on the camp perimeter (edge).
-- size: Format `x,z,y`. Size of this room in meters. Only integers.
+- size: Format `x,z,y`. Size of this room in meters. Decimals are also supported.
   - Probably no reason to change this for existing rooms.
   - For blueprints, this is automatically calculated but recommended to be set manually.
+  - Collision check removes 0.1 meters from the size which may cause some overlap.
 - connections: List of doorways.
   - position: Format `posX,posZ,posY,rotY,rotX,rotZ` or `id` for blueprints. Position relative to the room.
     - If missing, the base room position is used.
