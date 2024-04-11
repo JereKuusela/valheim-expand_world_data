@@ -10,13 +10,17 @@ public class DebugCommands
 {
   private string GetRoomItems(DungeonDB.RoomData room)
   {
-    var items = room.m_netViews.Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
+    room.m_prefab.Load();
+    var items = Utils.GetEnabledComponentsInChildren<ZNetView>(room.m_prefab.Asset).Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
+    room.m_prefab.Release();
     return string.Join(", ", items);
   }
 
   private string GetLocationItems(ZoneSystem.ZoneLocation loc)
   {
-    var items = loc.m_netViews.Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
+    loc.m_prefab.Load();
+    var items = Utils.GetEnabledComponentsInChildren<ZNetView>(loc.m_prefab.Asset).Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
+    loc.m_prefab.Release();
     return string.Join(", ", items);
   }
   private GameObject? goCollider;
@@ -75,7 +79,7 @@ public class DebugCommands
     {
       var db = DungeonDB.instance;
       if (!db) return;
-      var names = db.m_rooms.Select(room => $"{room.m_room.name} ({DataManager.FromEnum(room.m_room.m_theme)}): {GetRoomItems(room)}").ToList();
+      var names = db.m_rooms.Select(room => $"{room.m_prefab.Name} ({DataManager.FromEnum(room.m_prefabData.m_theme)}): {GetRoomItems(room)}").ToList();
       ZLog.Log(string.Join("\n", names));
       args.Context.AddString($"Logged {names.Count} rooms to the log file.");
     }, true);
@@ -83,7 +87,7 @@ public class DebugCommands
     {
       var zs = ZoneSystem.instance;
       if (!zs) return;
-      var names = zs.m_locations.Where(loc => loc.m_location && loc.m_location.name != "Blueprint").Select(loc => $"{loc.m_location.name}: {GetLocationItems(loc)}").ToList();
+      var names = zs.m_locations.Where(loc => loc.m_prefab.IsValid && loc.m_prefabName != "Blueprint").Select(loc => $"{loc.m_prefabName}: {GetLocationItems(loc)}").ToList();
       ZLog.Log(string.Join("\n", names));
       args.Context.AddString($"Logged {names.Count} locations to the log file.");
     }, true);
@@ -97,7 +101,7 @@ public class DebugCommands
       {
         Dungeon.Spawner.Override(dg, kvp.Key);
         dg.SetupAvailableRooms();
-        var rooms = DungeonGenerator.m_availableRooms.Select(room => room.m_room.name);
+        var rooms = DungeonGenerator.m_availableRooms.Select(room => room.m_prefab.Name);
         return $"{kvp.Key}: {string.Join(", ", rooms)}";
       }).ToList();
       ZLog.Log(string.Join("\n", dgs));

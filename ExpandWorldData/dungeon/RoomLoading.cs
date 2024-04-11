@@ -20,11 +20,12 @@ public class RoomLoading
 
   // For finding rooms with wrong case.
   private static Dictionary<string, string> RoomNames = [];
-  public static List<string> ParseRooms(string names) => DataManager.ToList(names).Select(s => RoomLoading.RoomNames.TryGetValue(s, out var name) ? name : s).ToList();
+  public static List<string> ParseRooms(string names) => DataManager.ToList(names).Select(s => RoomNames.TryGetValue(s, out var name) ? name : s).ToList();
   public static void Initialize()
   {
     DefaultEntries.Clear();
     RoomSpawning.Prefabs.Clear();
+    RoomSpawning.RoomSizes.Clear();
     if (Helper.IsServer())
       SetDefaultEntries();
     Load();
@@ -56,9 +57,12 @@ public class RoomLoading
   public static void Load()
   {
     RoomSpawning.Data.Clear();
+    RoomSpawning.Blueprints.Clear();
     DungeonObjects.Objects.Clear();
     DungeonObjects.ObjectSwaps.Clear();
     DungeonObjects.ObjectData.Clear();
+    CreatedObjects.ForEach(UnityEngine.Object.Destroy);
+    CreatedObjects.Clear();
     NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
     ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     if (Helper.IsClient()) return;
@@ -87,26 +91,34 @@ public class RoomLoading
     Log.Info($"Reloading room themes ({NameToTheme.Count} entries).");
     Log.Info($"Reloading room data ({data.Count} entries).");
 
-    RoomNames = data.ToDictionary(room => room.m_room.name.ToLowerInvariant(), room => room.m_room.name);
+    RoomNames = data.ToDictionary(room => room.m_prefab.Name.ToLowerInvariant(), room => room.m_prefab.Name);
     DungeonDB.instance.m_rooms = data;
   }
-
-  public static DungeonDB.RoomData CreateProxy(string name, string[] snapPieces)
+  private static readonly List<GameObject> CreatedObjects = [];
+  public static DungeonDB.RoomData CreateRoomData(string name, string[] snapPieces)
   {
-    DungeonDB.RoomData roomData = new();
-    var room = new GameObject(name).AddComponent<Room>();
-    roomData.m_room = room;
-    if (RoomSpawning.Prefabs.TryGetValue(Parse.Name(name), out var baseRoom))
+    DungeonDB.RoomData roomData = new()
     {
-      roomData.m_netViews = baseRoom.m_netViews;
-      roomData.m_randomSpawns = baseRoom.m_randomSpawns;
-      var connections = baseRoom.m_room.GetConnections();
+      m_prefabData = new()
+    };
+    var room = new GameObject(name).AddComponent<Room>();
+    CreatedObjects.Add(room.gameObject);
+    roomData.m_loadedRoom = room;
+    var baseName = Parse.Name(name);
+    if (RoomSpawning.Prefabs.TryGetValue(baseName, out var baseRoom))
+    {
+      // Variants need to load the base room to get the connections.
+      roomData.m_prefab = baseRoom.m_prefab;
+      baseRoom.m_prefab.Load();
+      room.m_musicPrefab = baseRoom.RoomInPrefab.m_musicPrefab;
+      var connections = baseRoom.RoomInPrefab.GetConnections();
       if (connections.Length != snapPieces.Length)
-        Log.Warning($"Room {name} has {snapPieces.Length} connections, but base room {baseRoom.m_room.name} has {connections.Length} connections.");
+        Log.Warning($"Room {name} has {snapPieces.Length} connections, but base room {baseRoom.m_prefab.Name} has {connections.Length} connections.");
       // Initialize with base connections to allow data missing from the yaml.
       room.m_roomConnections = connections.Select(c =>
         {
           var conn = new GameObject(c.name).AddComponent<RoomConnection>();
+          CreatedObjects.Add(conn.gameObject);
           conn.transform.parent = room.transform;
           conn.transform.localPosition = c.transform.localPosition;
           conn.transform.localRotation = c.transform.localRotation;
@@ -116,12 +128,15 @@ public class RoomLoading
           conn.m_doorOnlyIfOtherAlsoAllowsDoor = c.m_doorOnlyIfOtherAlsoAllowsDoor;
           return conn;
         }).ToArray();
+      baseRoom.m_prefab.Release();
     }
-    else if (BlueprintManager.Load(name, snapPieces))
+    else if (BlueprintManager.Load(baseName, snapPieces))
     {
+      RoomSpawning.Blueprints[roomData] = baseName;
       room.m_roomConnections = snapPieces.Select(c =>
         {
           var conn = new GameObject("").AddComponent<RoomConnection>();
+          CreatedObjects.Add(conn.gameObject);
           conn.transform.parent = room.transform;
           return conn;
         }).ToArray();
@@ -136,6 +151,7 @@ public class RoomLoading
       if (i >= room.m_roomConnections.Length)
       {
         var newConn = new GameObject(connData.type).AddComponent<RoomConnection>();
+        CreatedObjects.Add(newConn.gameObject);
         newConn.transform.parent = room.transform;
         room.m_roomConnections = room.m_roomConnections.Append(newConn).ToArray();
       }
@@ -157,10 +173,10 @@ public class RoomLoading
   }
   private static DungeonDB.RoomData FromData(RoomData data)
   {
-    RoomSpawning.Data[data.name] = data;
     var snapPieces = data.connections.Select(c => c.position).ToArray();
-    var roomData = CreateProxy(data.name, snapPieces);
-    var room = roomData.m_room;
+    var roomData = CreateRoomData(data.name, snapPieces);
+    RoomSpawning.Data[roomData] = data;
+    var room = roomData.RoomInPrefab;
     var missingThemes = DataManager.ToList(data.theme).Where(s => !NameToTheme.ContainsKey(s.ToLowerInvariant())).ToArray();
     foreach (var theme in missingThemes)
     {
@@ -174,24 +190,28 @@ public class RoomLoading
     room.m_divider = data.divider;
     room.m_enabled = data.enabled;
     var size = Parse.VectorXZY(data.size);
+    RoomSpawning.RoomSizes[room] = size;
     room.m_size = new((int)size.x, (int)size.y, (int)size.z);
     room.m_minPlaceOrder = data.minPlaceOrder;
     room.m_weight = data.weight;
     room.m_faceCenter = data.faceCenter;
     room.m_perimeter = data.perimeter;
     room.m_endCapPrio = data.endCapPriority;
+    roomData.m_prefabData.m_theme = room.m_theme;
+    roomData.m_prefabData.m_enabled = room.m_enabled;
     UpdateConnections(room, data.connections);
     if (data.objects != null)
-      DungeonObjects.Objects[data.name] = Helper.ParseObjects(data.objects);
+      DungeonObjects.Objects[roomData] = Helper.ParseObjects(data.objects);
     if (data.objectSwap != null)
-      DungeonObjects.ObjectSwaps[data.name] = Spawn.LoadSwaps(data.objectSwap);
+      DungeonObjects.ObjectSwaps[roomData] = Spawn.LoadSwaps(data.objectSwap);
     if (data.objectData != null)
-      DungeonObjects.ObjectData[data.name] = Spawn.LoadData(data.objectData);
+      DungeonObjects.ObjectData[roomData] = Spawn.LoadData(data.objectData);
     return roomData;
   }
   private static RoomData ToData(DungeonDB.RoomData roomData)
   {
-    var room = roomData.m_room;
+    roomData.m_prefab.Load();
+    var room = roomData.RoomInPrefab;
     RoomData data = new()
     {
       name = room.gameObject.name,
@@ -214,6 +234,7 @@ public class RoomLoading
         door = connection.m_allowDoor ? "true" : connection.m_doorOnlyIfOtherAlsoAllowsDoor ? "other" : "false"
       }).ToArray(),
     };
+    roomData.m_prefab.Release();
     return data;
   }
 
@@ -222,7 +243,7 @@ public class RoomLoading
     try
     {
       var yaml = DataManager.Read(Pattern);
-      return Yaml.Deserialize<RoomData>(yaml, FileName).Select(FromData).Where(room => room.m_room).ToList();
+      return Yaml.Deserialize<RoomData>(yaml, FileName).Select(FromData).Where(room => room.m_prefab.IsValid).ToList();
     }
     catch (Exception e)
     {
@@ -233,17 +254,17 @@ public class RoomLoading
   }
   private static void SetDefaultEntries()
   {
-    DefaultEntries = DungeonDB.instance.m_rooms.Where(room => room.m_room).ToList();
-    RoomSpawning.Prefabs = DefaultEntries.ToDictionary(entry => entry.m_room.name, entry => entry);
+    DefaultEntries = DungeonDB.instance.m_rooms.Where(room => room.m_prefab.IsValid).ToList();
+    RoomSpawning.Prefabs = DefaultEntries.ToDictionary(entry => entry.m_prefab.Name, entry => entry);
   }
   private static bool AddMissingEntries(List<DungeonDB.RoomData> entries)
   {
     Dictionary<string, List<DungeonDB.RoomData>> perFile = [];
-    var missingKeys = DefaultEntries.Select(entry => entry.m_room.name).Distinct().ToHashSet();
+    var missingKeys = DefaultEntries.Select(entry => entry.m_prefab.Name).Distinct().ToHashSet();
     foreach (var entry in entries)
-      missingKeys.Remove(entry.m_room.name);
+      missingKeys.Remove(entry.m_prefab.Name);
     if (missingKeys.Count == 0) return false;
-    var missing = DefaultEntries.Where(entry => missingKeys.Contains(entry.m_room.name)).ToList();
+    var missing = DefaultEntries.Where(entry => missingKeys.Contains(entry.m_prefab.Name)).ToList();
     Log.Warning($"Adding {missing.Count} missing rooms to the expand_rooms.yaml file.");
     Save(missing, true);
     return true;
@@ -253,14 +274,14 @@ public class RoomLoading
     Dictionary<string, List<DungeonDB.RoomData>> perFile = [];
     foreach (var item in data)
     {
-      var mod = AssetTracker.GetModFromPrefab(item.m_room.name);
+      var mod = AssetTracker.GetModFromPrefab(item.m_prefab.Name);
       var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
       if (!perFile.ContainsKey(file))
         perFile[file] = [];
       perFile[file].Add(item);
 
       if (log)
-        Log.Warning($"{mod}: {item.m_room.name}");
+        Log.Warning($"{mod}: {item.m_prefab.Name}");
     }
     foreach (var kvp in perFile)
     {

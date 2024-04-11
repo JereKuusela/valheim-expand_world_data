@@ -12,13 +12,13 @@ public static class DungeonObjects
 
   public static Dictionary<string, FakeDungeonGenerator> Generators = [];
   public static string CurrentDungeon = "";
-  public static string CurrentRoom = "";
+  public static DungeonDB.RoomData? CurrentRoom;
 
 
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, DataEntry?>>>> ObjectData = [];
+  public static Dictionary<DungeonDB.RoomData, Dictionary<string, List<Tuple<float, DataEntry?>>>> ObjectData = [];
 
-  public static Dictionary<string, List<BlueprintObject>> Objects = [];
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = [];
+  public static Dictionary<DungeonDB.RoomData, List<BlueprintObject>> Objects = [];
+  public static Dictionary<DungeonDB.RoomData, Dictionary<string, List<Tuple<float, string>>>> ObjectSwaps = [];
 
   public static string PrefabOverride(string prefab)
   {
@@ -35,7 +35,7 @@ public static class DungeonObjects
   }
   public static string PrefabRoomOverride(string prefab)
   {
-    if (!ObjectSwaps.TryGetValue(CurrentRoom, out var objectSwaps)) return prefab;
+    if (!ObjectSwaps.TryGetValue(CurrentRoom!, out var objectSwaps)) return prefab;
     if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
     return Spawn.RandomizeSwap(swaps);
   }
@@ -56,7 +56,7 @@ public static class DungeonObjects
   }
   public static DataEntry? DataRoomOverride(string prefab)
   {
-    if (!ObjectData.TryGetValue(CurrentRoom, out var objectData)) return null;
+    if (!ObjectData.TryGetValue(CurrentRoom!, out var objectData)) return null;
     var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
     var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
     return DataHelper.Merge(allData, prefabData);

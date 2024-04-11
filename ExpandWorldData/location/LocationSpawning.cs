@@ -89,10 +89,6 @@ public class LocationObjectDataAndSwap
 {
   static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos)
   {
-    var loc = location.m_location;
-    var flag = loc && loc.m_useCustomInteriorTransform && loc.m_interiorTransform && loc.m_generator;
-    if (flag)
-      Spawn.DungeonGeneratorPos = location.m_generatorPosition;
     Spawn.IgnoreHealth = LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data) && data.randomDamage == "all";
     LocationSpawning.CurrentLocation = "";
     if (mode != ZoneSystem.SpawnMode.Client)
@@ -102,13 +98,20 @@ public class LocationObjectDataAndSwap
         pos.y += data.offset ?? data.groundOffset;
     }
     // Blueprints won't have any znetviews to spawn or other logic to handle.
-    return !BlueprintManager.Has(location.m_prefabName);
+    return location.m_prefab.IsValid;
   }
-
+  static void Customize(ZoneSystem.ZoneLocation location)
+  {
+    if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data))
+      WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
+  }
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
   {
     var instantiator = typeof(Object).GetMethods().First(m => m.Name == nameof(Object.Instantiate) && m.IsGenericMethodDefinition && m.GetParameters().Skip(1).Select(p => p.ParameterType).SequenceEqual(new[] { typeof(Vector3), typeof(Quaternion) })).MakeGenericMethod(typeof(GameObject));
     return new CodeMatcher(instructions)
+      .MatchForward(true, new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(WearNTear), nameof(WearNTear.m_randomInitialDamage))))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_1))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(Customize).operand))
       .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
       .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, 6))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(LocationSpawning.Object).operand)
@@ -123,12 +126,12 @@ public class LocationObjectDataAndSwap
       var isBluePrint = BlueprintManager.Has(location.m_prefabName);
       if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data))
       {
+        WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
         // Remove the applied offset.
         var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
         HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
       }
       Random.InitState(seed);
-      WearNTear.m_randomInitialDamage = location.m_location.m_applyRandomDamage;
       if (mode == ZoneSystem.SpawnMode.Ghost)
         ZNetView.StartGhostInit();
       var scale = Vector3.one;
@@ -145,7 +148,6 @@ public class LocationObjectDataAndSwap
         ZNetView.FinishGhostInit();
     }
     LocationSpawning.CurrentLocation = "";
-    Spawn.DungeonGeneratorPos = null;
     Spawn.IgnoreHealth = false;
     if (LocationLoading.Commands.TryGetValue(location.m_prefabName, out var commands))
       CommandManager.Run(commands, pos, rot.eulerAngles);

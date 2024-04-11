@@ -65,8 +65,12 @@ public class InitializeContent
 
       // Dungeon and room data is handled elsewhere.
     }
-    ZoneSystem.instance.m_locations = LocationSetup.CleanUpLocations(ZoneSystem.instance.m_locations);
-    LocationSetup.SetupExtraLocations(ZoneSystem.instance.m_locations);
+    ZoneSystem.instance.m_locations = ZoneSystem.instance.m_locations.Where(loc =>
+    {
+      if (!loc.m_prefab.IsValid)
+        Log.Warning($"Location {loc.m_prefabName} is not valid.");
+      return loc.m_prefab.IsValid;
+    }).ToList();
     LocationLoading.Initialize();
   }
 }

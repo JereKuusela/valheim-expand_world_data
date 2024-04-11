@@ -33,7 +33,7 @@ public class NoBuildManager
         noBuildDungeon = locationData.noBuildDungeon;
       }
 
-      var radius = noBuild == "true" ? loc.m_location.m_location.GetMaxRadius() : Parse.Float(noBuild);
+      var radius = noBuild == "true" ? loc.m_location.m_exteriorRadius : Parse.Float(noBuild);
       // Negative value means the whole zone.
       var dungeon = noBuildDungeon == "true" ? -1f : Parse.Float(noBuildDungeon);
       return new NoBuildData()
