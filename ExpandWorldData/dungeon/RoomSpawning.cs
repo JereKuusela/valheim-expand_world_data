@@ -92,7 +92,13 @@ public class RoomSpawning
   {
     if (Prefabs.Count == 0 || Helper.IsClient()) return;
     // Blueprints add a dummy room which shouldn't be saved.
-    //DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(IsBaseRoom).ToList();
+    DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(r =>
+    {
+      var ok = r.m_seed != 0;
+      if (!ok)
+        UnityEngine.Object.Destroy(r.gameObject);
+      return ok;
+    }).ToList();
     // Restore base names to save the rooms as vanilla compatible.
     foreach (var room in DungeonGenerator.m_placedRooms)
       room.name = Parse.Name(room.name);
@@ -125,4 +131,5 @@ public class RoomSpawning
     size *= 0.5f;
     return bounds.Contains(pos + rot * new Vector3(size.x, size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, -size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, -size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, -size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, -size.y, size.z));
   }
+
 }

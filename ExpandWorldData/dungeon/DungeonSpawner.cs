@@ -52,7 +52,7 @@ public class Spawner
   }
 
   [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPrefix]
-  static bool ReplaceRoom(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
+  static bool ReplaceRoom(DungeonGenerator __instance, DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, RoomConnection fromConnection, ZoneSystem.SpawnMode mode)
   {
     if (!Configuration.DataRooms || Helper.IsClient()) return true;
     // Clients already have proper rooms.
@@ -60,14 +60,19 @@ public class Spawner
     DungeonObjects.CurrentRoom = roomData;
     if (!RoomSpawning.Blueprints.TryGetValue(roomData, out var bpName))
       return true;
-    // TODO: Spawned Room must be reconfigured on AddOpenConnections (especially to update the connections).
-    // Or is there need to edit connections of actual rooms? At least there is type to change.
-    // Name must be updated, something else?
 
     if (BlueprintManager.TryGet(bpName, out var bp))
       Spawn.Blueprint(bp, pos, rot, Vector3.one, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
-    // TODO: Must implement AddOpenConnections and related things.
-    // TODO: Override test room collision to support float?
+    var go = new GameObject
+    {
+      name = bpName
+    };
+    var room = go.AddComponent<Room>();
+    room.m_placeOrder = fromConnection ? (fromConnection.m_placeOrder + 1) : 0;
+    // Blueprints don't actually have prefab so seed is not used.
+    room.m_seed = 0;
+    DungeonGenerator.m_placedRooms.Add(room);
+    __instance.AddOpenConnections(room, fromConnection);
     return false;
   }
 
@@ -134,6 +139,13 @@ public class Spawner
     if (gen.m_excludedRooms.Count == 0) return;
     DungeonGenerator.m_availableRooms = DungeonGenerator.m_availableRooms.Where(room => !gen.m_excludedRooms.Contains(room.m_prefab.Name)).ToList();
 
+  }
+
+  [HarmonyPatch(nameof(DungeonGenerator.AddOpenConnections)), HarmonyPrefix]
+  static void AddOpenConnections(Room newRoom)
+  {
+    if (DungeonObjects.CurrentRoom == null) return;
+    RoomSpawning.OverrideParameters(DungeonObjects.CurrentRoom.RoomInPrefab, newRoom);
   }
 
 }
