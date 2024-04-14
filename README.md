@@ -428,7 +428,7 @@ Changes only apply to unexplored areas. Upgrade World mod can be used to reset a
 Note: Missing vegetation are automatically added to the file. To disable, set `enabled` to `false` instead of removing anything.
 
 - prefab: Identifier of the object or name of blueprint file.
-- enabled (default: `false`): Quick way to disable this entry.
+- enabled (default: `true`): Quick way to disable this entry.
 - min (default: `1`): Minimum amount (of groups) to be placed per zone (64m x 64m).
 - max (default: `1`): Maximum amount (of groups) to be placed per zone (64m x 64m). If less than 1, has only a chance to appear.
 - forcePlacement (default: `false`): By default, only one attempt is made to find a suitable position for each vegetation. If enabled, 50 attempts are done for each vegetation.

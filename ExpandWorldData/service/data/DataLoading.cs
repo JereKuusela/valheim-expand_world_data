@@ -122,7 +122,7 @@ public class DataLoading
       // Some key codes are hardcoded for legacy reasons.
       if (DefaultValueGroups.ContainsKey(HumanoidHash))
         DefaultValueGroups[CreatureHash] = DefaultValueGroups[HumanoidHash];
-      if (DefaultValueGroups.ContainsKey(StructureHash))
+      if (DefaultValueGroups.ContainsKey(WearNTearHash))
         DefaultValueGroups[StructureHash] = DefaultValueGroups[WearNTearHash];
     }
     foreach (var kvp in DefaultValueGroups)
