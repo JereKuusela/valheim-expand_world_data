@@ -106,7 +106,7 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - musicNight: Music override for the night time.
 - noBuild (default: `false`): If true, players can't build in this biome.
 - statusEffects: List of status effects that are active in this environment.
-  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/README.md#Status_effects) for details.
+  - See [Status effects](#status-effects) for details.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
 
 ## World
