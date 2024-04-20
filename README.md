@@ -106,7 +106,7 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - musicNight: Music override for the night time.
 - noBuild (default: `false`): If true, players can't build in this biome.
 - statusEffects: List of status effects that are active in this environment.
-  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world_data#Status_effects) for details.
+  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/README.md#Status_effects) for details.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
 
 ## World
@@ -212,7 +212,7 @@ The file `expand_environments.yaml` sets the available weathers. Command `ew_mus
 - lightIntensityNight (default: `0`): ???.
 - sunAngle (default: `60`): ???.
 - statusEffects: List of status effects that are active in this environment.
-  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world_data#Status_effects) for details.
+  - See [Status effects](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/README.md#Status_effects) for details.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
 
 Note: As you can see, lots of values have unknown meaning. Probably better to look at the existing environments for inspiration.
@@ -300,7 +300,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - locationObjectSwap: Changes location objects to other objects.
 - dungeonObjectSwap: Changes dungeon objects to other objects.
 - objectSwap: Changes location and dungeon objects to other objects.
-  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
+  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/README.md#Object_swaps) for details.
   - See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
 - locationObjectData: Replaces object data in the location.
 - dungeonObjectData: Replaces object data in the dungeon.
@@ -369,9 +369,9 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - spawnChance (default: `1`): Chance for each tile to spawn. Only for CampGrid.
 - interiorTransform (default: `false`): Some locations may require this being true. If you notice weird warnings, try setting this to true.
 - objectData: Replaces object data in the dungeon.
-  - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data#Object_data) for details.
+  - See [Object data](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/README.md#Object_data) for details.
 - objectSwap: Changes dungeon objects to other objects.
-  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
+  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/README.md#Object_swaps) for details.
   - Note: If a room has object swaps, the dungeon swaps are applied first.
 
 ## Rooms
@@ -414,9 +414,9 @@ New rooms can be created from blueprints or cloning an existing room by adding `
   - entrance (default: `false`): If true, used for the entrance.
   - door (default: `true`): If true, allows placing door. If `other`, allows placing door if the other connection also allows placing a door.
 - objects: Extra objects in the room.
-  - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world_data#Custom_objects) for details.
+  - See [Custom objects](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/README.md#Custom_objects) for details.
 - objectSwap: Changes room objects to other objects.
-  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data#Object_swaps) for details.
+  - See [Object swaps](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/README.md#Object_swaps) for details.
   - Note: If the dungeon has object swaps, those are applied first.
 
 ## Vegetation
