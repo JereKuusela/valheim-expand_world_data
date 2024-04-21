@@ -106,7 +106,7 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - musicNight: Music override for the night time.
 - noBuild (default: `false`): If true, players can't build in this biome.
 - statusEffects: List of status effects that are active in this environment.
-  - See [Status effects](#status-effects) for details.
+  - See [Status effects](#status-effects) for format and more information.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
 
 ## World
@@ -212,7 +212,7 @@ The file `expand_environments.yaml` sets the available weathers. Command `ew_mus
 - lightIntensityNight (default: `0`): ???.
 - sunAngle (default: `60`): ???.
 - statusEffects: List of status effects that are active in this environment.
-  - See [Status effects](#status-effects) for details.
+  - See [Status effects](#status-effects) for format and more information.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
 
 Note: As you can see, lots of values have unknown meaning. Probably better to look at the existing environments for inspiration.
