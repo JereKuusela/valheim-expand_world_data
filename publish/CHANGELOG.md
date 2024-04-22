@@ -1,3 +1,6 @@
+- v1.29
+  - Fixes location clones not working.
+
 - v1.28
   - Adds support for decimals in room sizes.
   - Fixed for the new game version.

@@ -49,8 +49,8 @@ public class LocationSpawning
 
   public static void CustomObjects(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, Vector3 scale, List<GameObject> spawnedGhostObjects)
   {
-    if (!LocationLoading.Objects.TryGetValue(location.m_prefabName, out var objects)) return;
-    //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefabName}");
+    if (!LocationLoading.Objects.TryGetValue(location.m_prefab.Name, out var objects)) return;
+    //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefab.Name}");
     foreach (var obj in objects)
     {
       if (obj.Chance < 1f && Random.value > obj.Chance) continue;
@@ -65,7 +65,7 @@ public class LocationZDO
 {
   static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
   {
-    if (!LocationLoading.ZDOData.TryGetValue(location.m_prefabName, out var key)) return;
+    if (!LocationLoading.ZDOData.TryGetValue(location.m_prefab.Name, out var key)) return;
     var data = DataHelper.Get(key);
     if (data != null) DataHelper.Init(__instance.m_locationProxyPrefab, pos, rotation, null, data);
   }
@@ -89,12 +89,12 @@ public class LocationObjectDataAndSwap
 {
   static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos)
   {
-    Spawn.IgnoreHealth = LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data) && data.randomDamage == "all";
+    Spawn.IgnoreHealth = LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data) && data.randomDamage == "all";
     LocationSpawning.CurrentLocation = "";
     if (mode != ZoneSystem.SpawnMode.Client)
     {
-      LocationSpawning.CurrentLocation = location.m_prefabName;
-      if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out data))
+      LocationSpawning.CurrentLocation = location.m_prefab.Name;
+      if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out data))
         pos.y += data.offset ?? data.groundOffset;
     }
     // Blueprints won't have any znetviews to spawn or other logic to handle.
@@ -102,7 +102,7 @@ public class LocationObjectDataAndSwap
   }
   static void Customize(ZoneSystem.ZoneLocation location)
   {
-    if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data))
+    if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
       WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
   }
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -123,8 +123,8 @@ public class LocationObjectDataAndSwap
   {
     if (mode != ZoneSystem.SpawnMode.Client)
     {
-      var isBluePrint = BlueprintManager.Has(location.m_prefabName);
-      if (LocationLoading.LocationData.TryGetValue(location.m_prefabName, out var data))
+      var isBluePrint = BlueprintManager.Has(location.m_prefab.Name);
+      if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
       {
         WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
         // Remove the applied offset.
@@ -135,8 +135,8 @@ public class LocationObjectDataAndSwap
       if (mode == ZoneSystem.SpawnMode.Ghost)
         ZNetView.StartGhostInit();
       var scale = Vector3.one;
-      if (LocationLoading.Scales.TryGetValue(location.m_prefabName, out var s)) scale = Helper.RandomValue(s);
-      if (isBluePrint && BlueprintManager.TryGet(location.m_prefabName, out var bp))
+      if (LocationLoading.Scales.TryGetValue(location.m_prefab.Name, out var s)) scale = Helper.RandomValue(s);
+      if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.Name, out var bp))
       {
         Spawn.Blueprint(bp, pos, rot, scale, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
       }
@@ -149,7 +149,7 @@ public class LocationObjectDataAndSwap
     }
     LocationSpawning.CurrentLocation = "";
     Spawn.IgnoreHealth = false;
-    if (LocationLoading.Commands.TryGetValue(location.m_prefabName, out var commands))
+    if (LocationLoading.Commands.TryGetValue(location.m_prefab.Name, out var commands))
       CommandManager.Run(commands, pos, rot.eulerAngles);
   }
 
@@ -188,7 +188,7 @@ public class LocationObjectDataAndSwap
   {
     static bool Prefix(ZoneSystem.ZoneLocation location, ref bool __result)
     {
-      if (BlueprintManager.Has(location.m_prefabName))
+      if (BlueprintManager.Has(location.m_prefab.Name))
       {
         __result = true;
         return false;

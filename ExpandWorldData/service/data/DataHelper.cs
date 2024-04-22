@@ -18,22 +18,6 @@ public class DataHelper
     return result;
   }
   public static bool Exists(int hash) => DataLoading.Data.ContainsKey(hash);
-  public static bool Match(int hash, ZDO zdo)
-  {
-    if (DataLoading.Data.TryGetValue(hash, out var data))
-    {
-      return data.Match([], zdo);
-    }
-    return false;
-  }
-  public static bool Match(int hash, ZDO zdo, Dictionary<string, string> pars)
-  {
-    if (DataLoading.Data.TryGetValue(hash, out var data))
-    {
-      return data.Match(pars, zdo);
-    }
-    return false;
-  }
   public static DataEntry? Get(string name) => name == "" ? null : DataLoading.Get(name);
   public static void Init(GameObject obj, Vector3 pos, Quaternion rot, Vector3? scale, DataEntry? data, Dictionary<string, string> pars)
   {

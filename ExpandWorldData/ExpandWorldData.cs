@@ -10,7 +10,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.28";
+  public const string VERSION = "1.29";
 #nullable disable
   public static EWD Instance;
 #nullable enable

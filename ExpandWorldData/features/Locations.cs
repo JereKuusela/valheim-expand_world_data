@@ -10,15 +10,15 @@ public class GuaranteeLocations
 {
   static void GuaranteeStartLocation(ZoneSystem zs, ZoneSystem.ZoneLocation location)
   {
-    if (location.m_prefabName == Game.instance.m_StartLocation && Count(zs, location) == 0)
+    if (location.m_prefab.Name == Game.instance.m_StartLocation && Count(zs, location) == 0)
     {
-      Log.Info($"Forcefully placing {location.m_prefabName} location at the center.");
+      Log.Info($"Forcefully placing {location.m_prefab.Name} location at the center.");
       var locationRadius = Mathf.Max(location.m_exteriorRadius, location.m_interiorRadius);
       Vector3 randomPointInZone = zs.GetRandomPointInZone(new Vector2i(0, 0), locationRadius);
       zs.RegisterLocation(location, randomPointInZone, false);
     }
   }
-  static int Count(ZoneSystem zs, ZoneSystem.ZoneLocation location) => zs.m_locationInstances.Values.Count(loc => loc.m_location.m_prefabName == location.m_prefabName);
+  static int Count(ZoneSystem zs, ZoneSystem.ZoneLocation location) => zs.m_locationInstances.Values.Count(loc => loc.m_location.m_prefab.Name == location.m_prefab.Name);
   static void Finalizer(ZoneSystem __instance, ZoneSystem.ZoneLocation location)
   {
     GuaranteeStartLocation(__instance, location);

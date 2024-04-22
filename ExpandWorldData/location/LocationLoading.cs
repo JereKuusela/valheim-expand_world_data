@@ -30,12 +30,6 @@ public class LocationLoading
     var loc = new ZoneSystem.ZoneLocation();
     LocationData[data.prefab] = data;
     loc.m_prefabName = data.prefab;
-    if (!Locations.ContainsKey(Parse.Name(data.prefab)))
-    {
-      if (!BlueprintManager.Load(data.prefab))
-        loc.m_prefabName = "";
-    }
-
     if (data.data != "")
       ZDOData[data.prefab] = data.data;
     if (data.dungeon != "")
@@ -46,20 +40,7 @@ public class LocationLoading
       Objects[data.prefab] = Helper.ParseObjects(data.objects);
     if (data.commands != null)
     {
-      Commands[data.prefab] = data.commands.Select(s =>
-      {
-        if (s.Contains("$$"))
-        {
-          Log.Warning($"Command \"{s}\" contains $$ which is obsolete. Use {"<>"} instead.");
-          return s.Replace("$$x", "<x>").Replace("$$y", "<y>").Replace("$$z", "<z>").Replace("$$a", "<a>").Replace("$$i", "<i>").Replace("$$j", "<j>");
-        }
-        if (s.Contains("{") && s.Contains("}"))
-        {
-          Log.Warning($"Command \"{s}\" contains {{}} which is obsolete. Use {"<>"} instead.");
-          return s.Replace("{", "<").Replace("}", ">");
-        }
-        return s;
-      }).ToArray();
+      Commands[data.prefab] = data.commands;
     }
 
 
@@ -93,6 +74,8 @@ public class LocationLoading
     loc.m_maxDistance = data.maxDistance * 10000f;
     loc.m_minAltitude = data.minAltitude;
     loc.m_maxAltitude = data.maxAltitude;
+
+    Setup(data.prefab, loc);
     return loc;
   }
 
@@ -183,9 +166,9 @@ public class LocationLoading
   {
     LocationData data = new();
     // For migrations, ensures that old data is preserved.
-    if (LocationData.TryGetValue(loc.m_prefabName, out var existing))
+    if (LocationData.TryGetValue(loc.m_prefab.Name, out var existing))
       data = existing;
-    data.prefab = loc.m_prefabName;
+    data.prefab = loc.m_prefab.Name;
     data.enabled = loc.m_enable;
     data.biome = DataManager.FromBiomes(loc.m_biome);
     data.biomeArea = DataManager.FromBiomeAreas(loc.m_biomeArea);
@@ -195,8 +178,8 @@ public class LocationLoading
     data.unique = loc.m_unique;
     data.group = loc.m_group;
     data.minDistanceFromSimilar = loc.m_minDistanceFromSimilar;
-    data.iconAlways = loc.m_iconAlways ? loc.m_prefabName : "";
-    data.iconPlaced = loc.m_iconPlaced ? loc.m_prefabName : "";
+    data.iconAlways = loc.m_iconAlways ? loc.m_prefab.Name : "";
+    data.iconPlaced = loc.m_iconPlaced ? loc.m_prefab.Name : "";
     data.randomRotation = loc.m_randomRotation;
     data.slopeRotation = loc.m_slopeRotation;
     data.snapToWater = loc.m_snapToWater;
@@ -241,7 +224,7 @@ public class LocationLoading
     if (Helper.IsServer())
     {
       DefaultEntries = ZoneSystem.instance.m_locations;
-      Locations = Helper.ToDict(DefaultEntries, l => l.m_prefabName, l => l);
+      Locations = Helper.ToDict(DefaultEntries, l => l.m_prefab.Name, l => l);
     }
     Load();
   }
@@ -286,7 +269,6 @@ public class LocationLoading
     }
     else
       Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
-    foreach (var item in ZoneSystem.instance.m_locations) Setup(item);
     UpdateHashes();
     UpdateInstances();
     NoBuildManager.UpdateData();
@@ -296,7 +278,7 @@ public class LocationLoading
   private static void UpdateHashes()
   {
     var zs = ZoneSystem.instance;
-    zs.m_locationsByHash = Helper.ToDict(zs.m_locations, loc => loc.m_prefabName.GetStableHashCode(), loc => loc);
+    zs.m_locationsByHash = Helper.ToDict(zs.m_locations, loc => loc.m_prefab.Name.GetStableHashCode(), loc => loc);
     //ExpandWorldData.Log.Debug($"Loaded {zs.m_locationsByHash.Count} zone hashes.");
   }
   private static void UpdateInstances()
@@ -306,7 +288,7 @@ public class LocationLoading
     foreach (var zone in instances.Keys.ToArray())
     {
       var value = instances[zone];
-      var location = zs.GetLocation(value.m_location.m_prefabName);
+      var location = zs.GetLocation(value.m_location.m_prefab.Name);
       // Jewelcrafting has dynamic locations that don't exist in the location list.
       if (location == null) continue;
       value.m_location = location;
@@ -323,9 +305,9 @@ public class LocationLoading
     Dictionary<string, List<ZoneSystem.ZoneLocation>> perFile = [];
     var missingKeys = Locations.Keys.ToHashSet();
     foreach (var item in items)
-      missingKeys.Remove(item.m_prefabName);
+      missingKeys.Remove(item.m_prefab.Name);
     if (missingKeys.Count == 0) return false;
-    var missing = DefaultEntries.Where(loc => missingKeys.Contains(loc.m_prefabName)).ToList();
+    var missing = DefaultEntries.Where(loc => missingKeys.Contains(loc.m_prefab.Name)).ToList();
     Log.Warning($"Adding {missing.Count} missing locations to the expand_locations.yaml file.");
     Save(missing, true);
     return true;
@@ -335,14 +317,14 @@ public class LocationLoading
     Dictionary<string, List<ZoneSystem.ZoneLocation>> perFile = [];
     foreach (var item in data)
     {
-      var mod = AssetTracker.GetModFromPrefab(item.m_prefabName);
+      var mod = AssetTracker.GetModFromPrefab(item.m_prefab.Name);
       var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
       if (!perFile.ContainsKey(file))
         perFile[file] = [];
       perFile[file].Add(item);
 
       if (log)
-        Log.Warning($"{mod}: {item.m_prefabName}");
+        Log.Warning($"{mod}: {item.m_prefab.Name}");
     }
     foreach (var kvp in perFile)
     {
@@ -360,7 +342,7 @@ public class LocationLoading
     {
       var yaml = DataManager.Read(Pattern);
       return Yaml.Deserialize<LocationData>(yaml, FileName).Select(FromData)
-        .Where(loc => loc.m_prefabName != "").ToList();
+        .Where(loc => loc.m_prefab.Name != "").ToList();
     }
     catch (Exception e)
     {
@@ -371,7 +353,7 @@ public class LocationLoading
   }
   private static void ApplyLocationData(ZoneSystem.ZoneLocation item, float? radius = null)
   {
-    if (!LocationData.TryGetValue(item.m_prefabName, out var data)) return;
+    if (!LocationData.TryGetValue(item.m_prefab.Name, out var data)) return;
     // Old config won't have exterior radius so don't set anything.
     if (data.exteriorRadius == 0f && radius == null) return;
     item.m_exteriorRadius = data.exteriorRadius;
@@ -381,28 +363,30 @@ public class LocationLoading
   }
 
 
-  private static bool SetupBlueprint(ZoneSystem.ZoneLocation location)
+  private static bool SetupBlueprint(string name, ZoneSystem.ZoneLocation location)
   {
-    if (!BlueprintManager.TryGet(location.m_prefabName, out var bp)) return false;
+    if (!BlueprintManager.TryGet(name, out var bp)) return false;
+
     location.m_prefab = new()
     {
-      m_name = bp.Name
+      m_name = name
     };
     ApplyLocationData(location, bp.Radius + 5);
     return true;
   }
   ///<summary>Copies setup from locations.</summary>
-  private static void Setup(ZoneSystem.ZoneLocation item)
+  private static void Setup(string name, ZoneSystem.ZoneLocation item)
   {
-    var prefabName = Parse.Name(item.m_prefabName);
-    if (!Locations.TryGetValue(prefabName, out var zoneLocation) || !zoneLocation.m_prefab.IsValid)
+    var baseName = Parse.Name(name);
+    if (!Locations.TryGetValue(baseName, out var zoneLocation) || !zoneLocation.m_prefab.IsValid)
     {
-      if (SetupBlueprint(item)) return;
-      Log.Warning($"Location prefab {prefabName} not found!");
+      if (SetupBlueprint(name, item)) return;
+      Log.Warning($"Location prefab {baseName} not found!");
       return;
     }
-    item.m_prefabName = zoneLocation.m_prefabName;
-    item.m_prefab = zoneLocation.m_prefab;
+    // Currently only used for saving the instance.
+    item.m_prefabName = zoneLocation.m_prefab.Name;
+    item.m_prefab = new(zoneLocation.m_prefab.m_assetID) { m_name = name };
     item.m_interiorRadius = zoneLocation.m_interiorRadius;
     item.m_exteriorRadius = zoneLocation.m_exteriorRadius;
     ApplyLocationData(item);
@@ -426,9 +410,9 @@ public class LocationIcons
       var loc = kvp.Value.m_location;
       var pos = kvp.Value.m_position;
       if (loc == null) continue;
-      if (LocationLoading.LocationData.TryGetValue(loc.m_prefabName, out var data))
+      if (LocationLoading.LocationData.TryGetValue(loc.m_prefab.Name, out var data))
       {
-        var placed = data.iconPlaced == "true" ? loc.m_prefabName : data.iconPlaced == "false" ? "" : data.iconPlaced;
+        var placed = data.iconPlaced == "true" ? loc.m_prefab.Name : data.iconPlaced == "false" ? "" : data.iconPlaced;
         if (kvp.Value.m_placed && placed != "")
         {
           icons[pos] = placed;
@@ -436,14 +420,14 @@ public class LocationIcons
         else
         {
           pos.y += 0.00001f; // Trivial amount for a different key.
-          var always = data.iconAlways == "true" ? loc.m_prefabName : data.iconAlways == "false" ? "" : data.iconAlways;
+          var always = data.iconAlways == "true" ? loc.m_prefab.Name : data.iconAlways == "false" ? "" : data.iconAlways;
           if (always != "") icons[pos] = always;
         }
       }
       // Jewelcrafting has dynamic locations so use the vanilla code as a fallback.
       else if (loc.m_iconAlways || (loc.m_iconPlaced && kvp.Value.m_placed))
       {
-        icons[pos] = loc.m_prefabName;
+        icons[pos] = loc.m_prefab.Name;
       }
     }
     return false;

@@ -87,7 +87,7 @@ public class DebugCommands
     {
       var zs = ZoneSystem.instance;
       if (!zs) return;
-      var names = zs.m_locations.Where(loc => loc.m_prefab.IsValid && loc.m_prefabName != "Blueprint").Select(loc => $"{loc.m_prefabName}: {GetLocationItems(loc)}").ToList();
+      var names = zs.m_locations.Where(loc => loc.m_prefab.IsValid && loc.m_prefab.Name != "Blueprint").Select(loc => $"{loc.m_prefab.Name}: {GetLocationItems(loc)}").ToList();
       ZLog.Log(string.Join("\n", names));
       args.Context.AddString($"Logged {names.Count} locations to the log file.");
     }, true);
