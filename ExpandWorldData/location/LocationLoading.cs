@@ -384,8 +384,6 @@ public class LocationLoading
       Log.Warning($"Location prefab {baseName} not found!");
       return;
     }
-    // Currently only used for saving the instance.
-    item.m_prefabName = zoneLocation.m_prefab.Name;
     item.m_prefab = new(zoneLocation.m_prefab.m_assetID) { m_name = name };
     item.m_interiorRadius = zoneLocation.m_interiorRadius;
     item.m_exteriorRadius = zoneLocation.m_exteriorRadius;

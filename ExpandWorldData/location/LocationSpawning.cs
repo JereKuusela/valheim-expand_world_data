@@ -73,8 +73,9 @@ public class LocationZDO
 [HarmonyPatch(typeof(LocationProxy), nameof(LocationProxy.SetLocation))]
 public class FixGhostInit
 {
-  static void Prefix(LocationProxy __instance, ref bool spawnNow)
+  static void Prefix(LocationProxy __instance, ref string location, ref bool spawnNow)
   {
+    location = Parse.Name(location);
     if (ZNetView.m_ghostInit)
     {
       spawnNow = false;
