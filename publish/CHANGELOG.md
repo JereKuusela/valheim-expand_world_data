@@ -1,4 +1,5 @@
 - v1.30
+  - Fixes arithmetics not working for int or long values.
   - Fixes config directory not always being created.
 
 - v1.29
