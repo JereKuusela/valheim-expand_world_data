@@ -1,3 +1,6 @@
+- v1.30
+  - Fixes config directory not always being created.
+
 - v1.29
   - Fixes location clones not working.
 

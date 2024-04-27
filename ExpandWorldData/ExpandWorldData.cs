@@ -10,7 +10,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.29";
+  public const string VERSION = "1.30";
 #nullable disable
   public static EWD Instance;
 #nullable enable
@@ -34,8 +34,8 @@ public class EWD : BaseUnityPlugin
   {
     Instance = this;
     Log.Init(Logger);
+    Yaml.Init();
     BiomeManager.SetupBiomeArrays();
-    Yaml.CleanUp(Config);
     ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, InvokeRegenerate);
     Configuration.Init(wrapper);
     Harmony harmony = new(GUID);
