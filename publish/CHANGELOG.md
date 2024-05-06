@@ -1,3 +1,6 @@
+- v1.31
+  - Fixes clutter related error when trying to rejoin a world without restarting the game.
+
 - v1.30
   - Fixes arithmetics not working for int or long values.
   - Fixes config directory not always being created.

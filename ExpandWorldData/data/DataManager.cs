@@ -51,7 +51,6 @@ public class InitializeContent
     {
       DataLoading.LoadEntries();
       EnvironmentManager.ToFile();
-      ClutterManager.ToFile();
 
       EnvironmentManager.FromFile();
       BiomeManager.LoadEnvironments();
@@ -61,7 +60,7 @@ public class InitializeContent
       // These are here to not have to clear location lists (slightly better compatibility).
       VegetationLoading.Initialize();
       // Clutter must be here because since SetupLocations adds prefabs to the list.
-      ClutterManager.FromFile();
+      ClutterManager.Initialize();
 
       // Dungeon and room data is handled elsewhere.
     }

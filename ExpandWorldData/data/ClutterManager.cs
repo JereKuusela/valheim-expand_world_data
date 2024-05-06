@@ -13,14 +13,18 @@ public class ClutterManager
   public static string FileName = "expand_clutter.yaml";
   public static string FilePath = Path.Combine(Yaml.Directory, FileName);
   public static string Pattern = "expand_clutter*.yaml";
-  private static ClutterSystem.Clutter[] Originals = [];
+  private static List<ClutterSystem.Clutter> DefaultEntries = [];
   private static Dictionary<string, GameObject> Prefabs = [];
-  static void LoadPrefabs()
+  public static void Initialize()
   {
-    if (!ZNet.instance) return;
     Prefabs = Helper.ToDict(ClutterSystem.instance.m_clutter, item => item.m_prefab.name, item => item.m_prefab);
+    DefaultEntries = [.. ClutterSystem.instance.m_clutter];
     if (Helper.IsServer())
-      Originals = [.. ClutterSystem.instance.m_clutter];
+    {
+      if (!File.Exists(FilePath))
+        Save(ClutterSystem.instance.m_clutter, false);
+      FromFile();
+    }
   }
   public static ClutterSystem.Clutter FromData(ClutterData data)
   {
@@ -92,62 +96,63 @@ public class ClutterManager
     return data;
   }
 
-  public static void ToFile()
-  {
-    if (Helper.IsClient() || !Configuration.DataClutter) return;
-    if (File.Exists(FilePath)) return;
-    Save(ClutterSystem.instance.m_clutter, false);
-  }
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
     var yaml = Configuration.DataClutter ? DataManager.Read(Pattern) : "";
     Configuration.valueClutterData.Value = yaml;
-    Set(yaml);
   }
-  public static void FromSetting(string yaml)
+
+  public static void Set(string yaml)
   {
-    if (Helper.IsClient()) Set(yaml);
+    if (!TryParseYaml(yaml, out var data)) return;
+    ClutterSystem.instance.m_clutter.Clear();
+    foreach (var clutter in data)
+      ClutterSystem.instance.m_clutter.Add(clutter);
+    ClutterSystem.instance.ClearAll();
   }
-  private static void Set(string yaml)
+  private static bool TryParseYaml(string yaml, out List<ClutterSystem.Clutter> data)
   {
-    if (yaml == "" || !Configuration.DataClutter) return;
-    if (Prefabs.Count == 0)
-      LoadPrefabs();
+    if (yaml == "")
+    {
+      Log.Info($"Reloading default clutter data ({DefaultEntries.Count} entries).");
+      data = DefaultEntries;
+      return true;
+    }
     try
     {
-      var data = Yaml.Deserialize<ClutterData>(yaml, FileName)
-        .Select(FromData).Where(clutter => clutter.m_prefab).ToList();
-      if (data.Count == 0)
-      {
-        Log.Warning($"Failed to load any clutter data.");
-        return;
-      }
-      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
-      {
-        // Watcher triggers reload.
-        return;
-      }
-      Log.Info($"Reloading clutter data ({data.Count} entries).");
-      ClutterSystem.instance.m_clutter.Clear();
-      foreach (var clutter in data)
-        ClutterSystem.instance.m_clutter.Add(clutter);
-      ClutterSystem.instance.ClearAll();
+      data = Yaml.Deserialize<ClutterData>(yaml, FileName)
+          .Select(FromData).Where(clutter => clutter.m_prefab).ToList();
     }
     catch (Exception e)
     {
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
+      data = [];
+      return false;
     }
+
+    if (data.Count == 0)
+    {
+      Log.Warning($"Failed to load any clutter data.");
+      return false;
+    }
+    if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
+    {
+      // Watcher triggers reload.
+      return false;
+    }
+    Log.Info($"Reloading clutter data ({data.Count} entries).");
+    return true;
   }
   private static bool AddMissingEntries(List<ClutterSystem.Clutter> entries)
   {
     Dictionary<string, List<ClutterSystem.Clutter>> perFile = [];
-    var missingKeys = Originals.Select(s => s.m_prefab.name).Distinct().ToHashSet();
+    var missingKeys = DefaultEntries.Select(s => s.m_prefab.name).Distinct().ToHashSet();
     foreach (var entry in entries)
       missingKeys.Remove(entry.m_prefab.name);
     if (missingKeys.Count == 0) return false;
-    var missing = Originals.Where(clutter => missingKeys.Contains(clutter.m_prefab.name)).ToList();
+    var missing = DefaultEntries.Where(clutter => missingKeys.Contains(clutter.m_prefab.name)).ToList();
     Log.Warning($"Adding {missing.Count} missing clutters to the expand_clutter.yaml file.");
     Save(missing, true);
     return true;
