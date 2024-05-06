@@ -6,8 +6,8 @@ Spawner Tweaks can be used to turn any object into a chest.
 
 1. `spawn stubbe`
 2. `tweak_chest maxamount=2 item=Torch item=Coins,1,10,20`
-3. `ew_copy chest_stubbe`
-4. Open `expand_data.yaml` and remove "InUse" and "addedDefaultItems":
+3. `data save=chest_stubbe`
+4. Open `data.yaml` and remove "InUse" and "addedDefaultItems":
 
 ```yaml
 - name: chest_stubbe

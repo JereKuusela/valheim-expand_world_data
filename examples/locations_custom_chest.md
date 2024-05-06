@@ -35,8 +35,8 @@ Check first [Locations: Variants](./locations_variants.md) to learn how to edit 
 
 1. `spawn TreasureChest_meadows`
 2. Manually replace items items in the chest.
-3. `ew_copy chest_resin`
-4. Open `expand_data.yaml` and remove extra data from the copied data.
+3. `data save=chest_resin`
+4. Open `data.yaml` and remove extra data from the copied data.
 5. Repeat for other chests.
 
 ```yaml

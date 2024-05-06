@@ -6,8 +6,8 @@ Traders from Marketplace can be added to the world generation.
 
 1. `spawn MarketPlaceNPC`
 2. Use the UI for edits. For example change model to Wolf and type to transmog.
-3. `ew_copy trader_transmog`
-4. Open `expand_data.yaml` and remove extra fields
+3. `data save=trader_transmog`
+4. Open `data.yaml` and remove extra fields
 
 ```yaml
 - name: trader_transmog

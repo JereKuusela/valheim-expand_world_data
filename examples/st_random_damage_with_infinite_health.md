@@ -24,7 +24,7 @@ Use weights to modify the chance of each style:
   - all, st_healthy, st_damaged:2, st_broken
 ```
 
-If these don't work, check that `expand_data.yaml` has the following:
+If these don't work, check that `data.yaml` has the following:
 
 ```yaml
 - name: st_healthy

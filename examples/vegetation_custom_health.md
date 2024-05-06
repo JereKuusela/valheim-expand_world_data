@@ -2,7 +2,7 @@
 
 Three ways to set custom health.
 
-## Add entry to `expand_data.yaml`
+## Add entry to `data.yaml`
 
 ```yaml
 - name: health_200

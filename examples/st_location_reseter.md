@@ -8,8 +8,8 @@ This requires Upgrade World installed on the server.
 
 1. `spawn GlowingMushroom`
 2. `tweak_altar amount=-1 name="Location reset" command="zones_reset zone={i},{j} start force"`
-3. `ew_copy reseter`
-4. Open `expand_data.yaml` and modify the entry to this:
+3. `data save=reseter`
+4. Open `data.yaml` and modify the entry to this:
 
 ```yaml
 - name: reseter
@@ -43,8 +43,8 @@ Now you can interact with the mushroom to reset the location.
 You can add cost to the reset.
 
 1. `tweak_altar amount=10 spawnitem=Coins name="Location reset"  command="zones_reset zone=<i>,<j> start force"`
-2. `ew_copy coin_reseter`
-3. Open `expand_data.yaml` and modify the entry to this:
+2. `data save=coin_reseter`
+3. Open `data.yaml` and modify the entry to this:
 
 ```yaml
 - name: coin_reseter

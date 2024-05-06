@@ -6,7 +6,7 @@ Structure Tweaks allows changing this setting when installed on all clients.
 
 ## First you need the data entry
 
-Add to `expand_data.yaml`:
+Add to `data.yaml`:
 
 ```yaml
 # Object falls to the ground, through any object.

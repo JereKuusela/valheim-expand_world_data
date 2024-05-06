@@ -6,8 +6,8 @@ Spawner Tweaks can be used to turn any object into a chest.
 
 1. `spawn GlowingMushroom`
 2. `tweak_altar amount=-1 spawn=Wolf`
-3. `ew_copy altar_wolf`
-4. Open `expand_data.yaml` and remove "override_component":
+3. `data save=altar_wolf`
+4. Open `data.yaml` and remove "override_component":
 
 ```yaml
 - name: altar_wolf
