@@ -401,15 +401,16 @@ public class DataEntry
       AddNestedParameters(value, pars, zdo);
       return;
     }
-    if (key.Contains("_"))
+    if (par.Contains("_"))
     {
       if (zdo == null) return;
-      var split = par.Split('_');
-      if (split.Length < 2) return;
-      var type = split[0];
-      var zdoKey = split[1];
-      key = $"<{type}_{zdoKey}>";
-      if (type == "string")
+      var split = Parse.Kvp(par, '_');
+      if (split.Value == "") return;
+      var type = split.Key;
+      var zdoKey = split.Value;
+      if (type == "key")
+        pars[key] = DataHelper.GetGlobalKey(zdoKey);
+      else if (type == "string")
         pars[key] = zdo.GetString(zdoKey);
       else if (type == "float")
         pars[key] = zdo.GetFloat(zdoKey).ToString(CultureInfo.InvariantCulture);
