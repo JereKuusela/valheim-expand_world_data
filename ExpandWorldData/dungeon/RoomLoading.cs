@@ -48,7 +48,9 @@ public class RoomLoading
     {"DvergerBoss", Room.Theme.DvergerBoss},
     {"ForestCryptHildir", Room.Theme.ForestCryptHildir},
     {"CaveHildir", Room.Theme.CaveHildir},
-    {"PlainsFortHildir", Room.Theme.PlainsFortHildir}
+    {"PlainsFortHildir", Room.Theme.PlainsFortHildir},
+    {"AshlandRuins", Room.Theme.AshlandRuins},
+    {"FortressRuins", Room.Theme.FortressRuins}
   };
 
   // For extra custom room themes.
@@ -99,10 +101,7 @@ public class RoomLoading
   private static readonly List<GameObject> CreatedObjects = [];
   public static DungeonDB.RoomData CreateRoomData(string name, string[] snapPieces)
   {
-    DungeonDB.RoomData roomData = new()
-    {
-      m_prefabData = new()
-    };
+    DungeonDB.RoomData roomData = new();
     var room = new GameObject(name).AddComponent<Room>();
     CreatedObjects.Add(room.gameObject);
     roomData.m_loadedRoom = room;
@@ -204,8 +203,8 @@ public class RoomLoading
     room.m_faceCenter = data.faceCenter;
     room.m_perimeter = data.perimeter;
     room.m_endCapPrio = data.endCapPriority;
-    roomData.m_prefabData.m_theme = room.m_theme;
-    roomData.m_prefabData.m_enabled = room.m_enabled;
+    roomData.m_theme = room.m_theme;
+    roomData.m_enabled = room.m_enabled;
     UpdateConnections(room, data.connections);
     if (data.objects != null)
       DungeonObjects.Objects[roomData] = Helper.ParseObjects(data.objects);

@@ -79,7 +79,7 @@ public class DebugCommands
     {
       var db = DungeonDB.instance;
       if (!db) return;
-      var names = db.m_rooms.Select(room => $"{room.m_prefab.Name} ({DataManager.FromEnum(room.m_prefabData.m_theme)}): {GetRoomItems(room)}").ToList();
+      var names = db.m_rooms.Select(room => $"{room.m_prefab.Name} ({DataManager.FromEnum(room.m_theme)}): {GetRoomItems(room)}").ToList();
       ZLog.Log(string.Join("\n", names));
       args.Context.AddString($"Logged {names.Count} rooms to the log file.");
     }, true);

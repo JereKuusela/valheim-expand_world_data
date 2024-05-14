@@ -95,7 +95,7 @@ public class SetBiomeOffsets
     GetBiomeWG.Offsets[Heightmap.Biome.Ocean] = Random.Range(-10000, 10000);
   }
 }
-[HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), new[] { typeof(float), typeof(float) })]
+[HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(float), typeof(float), typeof(float), typeof(bool))]
 public class GetBiomeWG
 {
   public static List<WorldData> GetData() => Data ?? WorldManager.GetDefault(WorldGenerator.instance);
@@ -120,7 +120,7 @@ public class GetBiomeWG
     if (magnitude > WorldInfo.TotalRadius)
       return Heightmap.Biome.Ocean;
     var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
-    var num = obj.WorldAngle(wx, wy) * Configuration.WiggleWidth;
+    var num = WorldGenerator.WorldAngle(wx, wy) * Configuration.WiggleWidth;
     var baseAngle = 0f;
     var wiggledAngle = 0f;
     if (CheckAngles)
@@ -188,7 +188,7 @@ public class GetBiomeWG
     if (magnitude > WorldInfo.TotalRadius)
       return Heightmap.Biome.Ocean;
     var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
-    var num = obj.WorldAngle(wx, wy) * Configuration.WiggleWidth;
+    var num = WorldGenerator.WorldAngle(wx, wy) * Configuration.WiggleWidth;
     var baseAngle = 0f;
     var wiggledAngle = 0f;
     if (CheckAngles)

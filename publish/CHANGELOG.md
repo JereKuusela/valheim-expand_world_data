@@ -1,3 +1,8 @@
+
+- v1.33
+  - Adds new fields for locations and vegetation.
+  - Fixed for the new game version.
+
 - v1.32
   - Fixes blueprint rooms not working.
   - Note: This is not Ashlands version yet!

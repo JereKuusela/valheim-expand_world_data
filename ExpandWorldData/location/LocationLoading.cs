@@ -74,6 +74,14 @@ public class LocationLoading
     loc.m_maxDistance = data.maxDistance * 10000f;
     loc.m_minAltitude = data.minAltitude;
     loc.m_maxAltitude = data.maxAltitude;
+    loc.m_groupMax = data.groupMax;
+    loc.m_maxDistanceFromSimilar = data.maxDistanceFromSimilar;
+    loc.m_minimumVegetation = data.minVegetation;
+    loc.m_maximumVegetation = data.maxVegetation;
+    loc.m_surroundCheckVegetation = data.surroundCheckVegetation;
+    loc.m_surroundCheckDistance = data.surroundCheckDistance;
+    loc.m_surroundCheckLayers = data.surroundCheckLayers;
+    loc.m_surroundBetterThanAverage = data.surroundBetterThanAverage;
 
     Setup(data.prefab, loc);
     return loc;
@@ -191,6 +199,14 @@ public class LocationLoading
     data.minDistance = loc.m_minDistance / 10000f;
     data.maxDistance = loc.m_maxDistance / 10000f;
     data.minAltitude = loc.m_minAltitude;
+    data.groupMax = loc.m_groupMax;
+    data.maxDistanceFromSimilar = loc.m_maxDistanceFromSimilar;
+    data.minVegetation = loc.m_minimumVegetation;
+    data.maxVegetation = loc.m_maximumVegetation;
+    data.surroundCheckVegetation = loc.m_surroundCheckVegetation;
+    data.surroundCheckDistance = loc.m_surroundCheckDistance;
+    data.surroundCheckLayers = loc.m_surroundCheckLayers;
+    data.surroundBetterThanAverage = loc.m_surroundBetterThanAverage;
     if (loc.m_maxAltitude == 1000f)
       data.maxAltitude = 10000f;
     else

@@ -93,7 +93,8 @@ public class BiomeManager
   {
     if (Helper.IsClient() || !Configuration.DataBiome) return;
     if (File.Exists(FilePath)) return;
-    var yaml = Yaml.Serializer().Serialize(EnvMan.instance.m_biomes.Select(ToData).ToList());
+    var biomes = OriginalBiomes.Values.Select(b => EnvMan.instance.m_biomes.Find(ev => ev.m_biome == b)).Where(b => b != null);
+    var yaml = Yaml.Serializer().Serialize(biomes.Select(ToData).ToList());
     File.WriteAllText(FilePath, yaml);
   }
   public static void FromFile()

@@ -30,6 +30,8 @@ public class LocationData
   public bool unique = false;
   [DefaultValue("")]
   public string group = "";
+  [DefaultValue("")]
+  public string groupMax = "";
   [DefaultValue(0f)]
   public float minDistanceFromSimilar = 0f;
   [DefaultValue("")]
@@ -104,4 +106,18 @@ public class LocationData
   public string scaleMax = "1";
   [DefaultValue(true)]
   public bool scaleUniform = true;
+  [DefaultValue(0f)]
+  public float maxDistanceFromSimilar = 0f;
+  [DefaultValue(0f)]
+  public float minVegetation = 0f;
+  [DefaultValue(0f)]
+  public float maxVegetation = 0f;
+  [DefaultValue(false)]
+  public bool surroundCheckVegetation = false;
+  [DefaultValue(0f)]
+  public float surroundCheckDistance = 0f;
+  [DefaultValue(0)]
+  public int surroundCheckLayers = 0;
+  [DefaultValue(0f)]
+  public float surroundBetterThanAverage = 0f;
 }

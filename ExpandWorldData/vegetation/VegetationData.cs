@@ -82,6 +82,14 @@ public class VegetationData
   public string forbiddenGlobalKey = "";
   [DefaultValue("")]
   public string data = "";
+  [DefaultValue(false)]
+  public bool surroundCheckVegetation = false;
+  [DefaultValue(0f)]
+  public float surroundCheckDistance = 0f;
+  [DefaultValue(0)]
+  public int surroundCheckLayers = 0;
+  [DefaultValue(0f)]
+  public float surroundBetterThanAverage = 0f;
 }
 
 public class VegetationExtra

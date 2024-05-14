@@ -232,7 +232,11 @@ public class VegetationLoading
       groupRadius = veg.m_groupRadius,
       inForest = veg.m_inForest,
       forestTresholdMin = veg.m_forestTresholdMin,
-      forestTresholdMax = veg.m_forestTresholdMax
+      forestTresholdMax = veg.m_forestTresholdMax,
+      surroundCheckVegetation = veg.m_surroundCheckVegetation,
+      surroundCheckDistance = veg.m_surroundCheckDistance,
+      surroundCheckLayers = veg.m_surroundCheckLayers,
+      surroundBetterThanAverage = veg.m_surroundBetterThanAverage,
     };
     return data;
   }

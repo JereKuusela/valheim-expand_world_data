@@ -609,7 +609,6 @@ public class ConfigSync
       config.BaseConfig.BoxedValue = config.LocalBaseValue;
       config.LocalBaseValue = null;
     }
-
     if (configFile is not null)
     {
       configFile.SaveOnConfigSet = originalSaveOnConfigSet;
@@ -1273,6 +1272,7 @@ public class VersionCheck
     string guid = pkg.ReadString();
     string minimumRequiredVersion = pkg.ReadString();
     string currentVersion = pkg.ReadString();
+
     bool matched = false;
 
     foreach (VersionCheck check in versionChecks)
@@ -1428,7 +1428,6 @@ public class VersionCheck
     {
       if (!__instance.m_connectionFailedError.text.Contains(kv.Key))
       {
-        __instance.m_connectionFailedError.text += $"\n{kv.Key} (Version: {kv.Value})";
         __instance.m_connectionFailedError.text += $"\nServer expects you to have {kv.Key} (Version: {kv.Value}) installed.";
         failedCheck = true;
       }

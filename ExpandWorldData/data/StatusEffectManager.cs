@@ -23,7 +23,7 @@ public class StatusManager
     if (__instance != Player.m_localPlayer) return;
     DamageTimer += dt;
     var weather = EnvMan.instance.GetCurrentEnvironment()?.m_name ?? "";
-    var day = EnvMan.instance.IsDay();
+    var day = EnvMan.IsDay();
     var biome = EnvMan.instance.GetBiome();
 
     RemoveBiomeEffects(__instance, day, biome);

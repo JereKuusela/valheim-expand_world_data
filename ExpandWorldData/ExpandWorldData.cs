@@ -10,7 +10,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.32";
+  public const string VERSION = "1.33";
 #nullable disable
   public static EWD Instance;
 #nullable enable
@@ -42,6 +42,8 @@ public class EWD : BaseUnityPlugin
     harmony.PatchAll();
     try
     {
+      if (!System.IO.Directory.Exists(Yaml.Directory))
+        System.IO.Directory.CreateDirectory(Yaml.Directory);
       if (Configuration.DataReload)
       {
         Yaml.SetupWatcher(Config);
