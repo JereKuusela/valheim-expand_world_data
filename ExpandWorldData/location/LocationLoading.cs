@@ -342,7 +342,7 @@ public class LocationLoading
     {
       var yaml = DataManager.Read(Pattern);
       return Yaml.Deserialize<LocationData>(yaml, FileName).Select(FromData)
-        .Where(loc => loc.m_prefab.Name != "").ToList();
+        .Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name)).ToList();
     }
     catch (Exception e)
     {
@@ -367,10 +367,7 @@ public class LocationLoading
   {
     if (!BlueprintManager.TryGet(name, out var bp)) return false;
 
-    location.m_prefab = new()
-    {
-      m_name = name
-    };
+    location.m_prefab = new() { m_name = name };
     ApplyLocationData(location, bp.Radius + 5);
     return true;
   }

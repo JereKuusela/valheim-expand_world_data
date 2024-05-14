@@ -1,3 +1,7 @@
+- v1.32
+  - Fixes blueprint rooms not working.
+  - Note: This is not Ashlands version yet!
+
 - v1.31
   - Fixes clutter related error when trying to rejoin a world without restarting the game.
 

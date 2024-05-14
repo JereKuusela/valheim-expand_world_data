@@ -35,6 +35,7 @@ public class RoomLoading
     Save(DefaultEntries, false);
   }
 
+  // Hard coded to not go through the enum patch..
   private static readonly Dictionary<string, Room.Theme> DefaultNameToTheme = new() {
     {"Crypt", Room.Theme.Crypt},
     {"SunkenCrypt", Room.Theme.SunkenCrypt},
@@ -49,6 +50,7 @@ public class RoomLoading
     {"CaveHildir", Room.Theme.CaveHildir},
     {"PlainsFortHildir", Room.Theme.PlainsFortHildir}
   };
+
   // For extra custom room themes.
   public static Dictionary<string, Room.Theme> NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
   public static Dictionary<Room.Theme, string> ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
@@ -133,13 +135,18 @@ public class RoomLoading
     else if (BlueprintManager.Load(baseName, snapPieces))
     {
       RoomSpawning.Blueprints[roomData] = baseName;
+      roomData.m_prefab = new()
+      {
+        m_name = name,
+        m_loadedAsset = room.gameObject
+      };
       room.m_roomConnections = snapPieces.Select(c =>
-        {
-          var conn = new GameObject("").AddComponent<RoomConnection>();
-          CreatedObjects.Add(conn.gameObject);
-          conn.transform.parent = room.transform;
-          return conn;
-        }).ToArray();
+      {
+        var conn = new GameObject("").AddComponent<RoomConnection>();
+        CreatedObjects.Add(conn.gameObject);
+        conn.transform.parent = room.transform;
+        return conn;
+      }).ToArray();
     }
     return roomData;
   }
@@ -243,7 +250,7 @@ public class RoomLoading
     try
     {
       var yaml = DataManager.Read(Pattern);
-      return Yaml.Deserialize<RoomData>(yaml, FileName).Select(FromData).Where(room => room.m_prefab.IsValid).ToList();
+      return Yaml.Deserialize<RoomData>(yaml, FileName).Select(FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
     }
     catch (Exception e)
     {

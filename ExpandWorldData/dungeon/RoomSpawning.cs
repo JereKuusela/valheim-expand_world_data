@@ -91,17 +91,11 @@ public class RoomSpawning
   static void CleanRoomsForSaving()
   {
     if (Prefabs.Count == 0 || Helper.IsClient()) return;
-    // Blueprints add a dummy room which shouldn't be saved.
-    DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(r =>
-    {
-      var ok = r.m_seed != 0;
-      if (!ok)
-        UnityEngine.Object.Destroy(r.gameObject);
-      return ok;
-    }).ToList();
     // Restore base names to save the rooms as vanilla compatible.
     foreach (var room in DungeonGenerator.m_placedRooms)
       room.name = Parse.Name(room.name);
+    // Blueprints add a dummy room which shouldn't be saved.
+    DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(r => DungeonDB.instance.GetRoom(r.GetHash()) != null).ToList();
   }
 
 

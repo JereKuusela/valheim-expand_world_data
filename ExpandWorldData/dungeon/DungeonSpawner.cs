@@ -51,29 +51,18 @@ public class Spawner
     DungeonObjects.CurrentDungeon = dungeonName;
   }
 
-  [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPrefix]
-  static bool ReplaceRoom(DungeonGenerator __instance, DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, RoomConnection fromConnection, ZoneSystem.SpawnMode mode)
+  [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPostfix]
+  static void SpawnBlueprintRoom(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, RoomConnection fromConnection, ZoneSystem.SpawnMode mode)
   {
-    if (!Configuration.DataRooms || Helper.IsClient()) return true;
+    if (!Configuration.DataRooms || Helper.IsClient()) return;
     // Clients already have proper rooms.
-    if (mode == ZoneSystem.SpawnMode.Client) return true;
+    if (mode == ZoneSystem.SpawnMode.Client) return;
     DungeonObjects.CurrentRoom = roomData;
     if (!RoomSpawning.Blueprints.TryGetValue(roomData, out var bpName))
-      return true;
+      return;
 
     if (BlueprintManager.TryGet(bpName, out var bp))
       Spawn.Blueprint(bp, pos, rot, Vector3.one, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
-    var go = new GameObject
-    {
-      name = bpName
-    };
-    var room = go.AddComponent<Room>();
-    room.m_placeOrder = fromConnection ? (fromConnection.m_placeOrder + 1) : 0;
-    // Blueprints don't actually have prefab so seed is not used.
-    room.m_seed = 0;
-    DungeonGenerator.m_placedRooms.Add(room);
-    __instance.AddOpenConnections(room, fromConnection);
-    return false;
   }
 
 
@@ -145,6 +134,8 @@ public class Spawner
   static void AddOpenConnections(Room newRoom)
   {
     if (DungeonObjects.CurrentRoom == null) return;
+    // Blueprints already have correct parameters.
+    if (DungeonDB.instance.GetRoom(newRoom.GetHash()) == null) return;
     RoomSpawning.OverrideParameters(DungeonObjects.CurrentRoom.RoomInPrefab, newRoom);
   }
 

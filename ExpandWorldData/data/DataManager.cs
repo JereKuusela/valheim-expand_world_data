@@ -13,6 +13,7 @@ using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Data;
+using SoftReferenceableAssets;
 
 namespace ExpandWorldData;
 
@@ -47,6 +48,7 @@ public class InitializeContent
 {
   static void Postfix()
   {
+    AddEmptyAssetReference();
     if (Helper.IsServer())
     {
       DataLoading.LoadEntries();
@@ -66,6 +68,30 @@ public class InitializeContent
     }
     ZoneSystem.instance.m_locations = ZoneSystem.instance.m_locations.Where(loc => loc.m_prefab.IsValid).ToList();
     LocationLoading.Initialize();
+  }
+
+  // Blueprints will use empty asset, which must be added to prevent errors.
+  // Alternatively could make assets from blueprints but this would be quite a bit of work.
+  private static void AddEmptyAssetReference()
+  {
+    var bundleLoader = AssetBundleLoader.Instance;
+    bundleLoader.m_bundleNameToLoaderIndex[""] = 0; // So that AssetLoader ctor doesn't crash
+    AssetID id = new();
+    if (bundleLoader.m_assetIDToLoaderIndex.ContainsKey(id))
+      return;
+
+    AssetLoader loader = new(id, new("", ""))
+    {
+      m_asset = new GameObject(),
+      m_referenceCounter = new(),
+      m_shouldBeLoaded = true,
+    };
+
+    var index = bundleLoader.m_assetIDToLoaderIndex.Count;
+    if (index >= bundleLoader.m_assetLoaders.Length)
+      Array.Resize(ref bundleLoader.m_assetLoaders, bundleLoader.m_assetIDToLoaderIndex.Count + 1);
+    bundleLoader.m_assetLoaders[index] = loader;
+    bundleLoader.m_assetIDToLoaderIndex[id] = index;
   }
 }
 
