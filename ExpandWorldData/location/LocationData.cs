@@ -110,8 +110,8 @@ public class LocationData
   public float maxDistanceFromSimilar = 0f;
   [DefaultValue(0f)]
   public float minVegetation = 0f;
-  [DefaultValue(0f)]
-  public float maxVegetation = 0f;
+  [DefaultValue(1f)]
+  public float maxVegetation = 1f;
   [DefaultValue(false)]
   public bool surroundCheckVegetation = false;
   [DefaultValue(20f)]

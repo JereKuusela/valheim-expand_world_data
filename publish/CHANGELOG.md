@@ -1,3 +1,10 @@
+- v1.35
+  - Wrong DLL updated previously.
+
+- v1.34
+  - Changes the default value of location `maxVegetation` from 0 to 1 so that it's disabled by default.
+  - Changes the default values of `surroundCheckDistance` from 0 to 20 to match the game's default.
+  - Changes the default values of `surroundCheckLayers` from 0 to 2 to match the game's default.
 
 - v1.33
   - Adds new fields for locations and vegetation.

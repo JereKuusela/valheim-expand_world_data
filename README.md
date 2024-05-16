@@ -297,7 +297,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - forestTresholdMax (default: `0`): Maximum forest value (if only in forests).
 - groundOffset (default: `0` meters): Placed above the ground.
 - minVegetation (default: `0`): Minimum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
-- maxVegetation (default: `0`): Maximum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
+- maxVegetation (default: `1`): Maximum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
 - surroundCheckVegetation (default: `false`): If enabled, the location is placed near higher vegetation mask.
   - This is sampled within the whole firld. The check requires at least 10 samples, so the first 10 spawning attempts always fail.
   - Recommended to use `prioritized` for more spawning attempts.
