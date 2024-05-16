@@ -296,6 +296,20 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - forestTresholdMin (default: `0`): Minimum forest value (if only in forests).
 - forestTresholdMax (default: `0`): Maximum forest value (if only in forests).
 - groundOffset (default: `0` meters): Placed above the ground.
+- minVegetation (default: `0`): Minimum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
+- maxVegetation (default: `0`): Maximum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
+- surroundCheckVegetation (default: `false`): If enabled, the location is placed near higher vegetation mask.
+  - This is sampled within the whole firld. The check requires at least 10 samples, so the first 10 spawning attempts always fail.
+  - Recommended to use `prioritized` for more spawning attempts.
+  - The location is placed, if the surrounding vegetation mask is higher than the average mask.
+- surroundCheckDistance (default: `20` meters): Distance of the vegetation mask check.
+- surroundCheckLayers (default: `2`): How many points are checked.
+  - The distance is divided into ring shaped layers.
+  - Each layer checks 6 points around the spawn point.
+- surroundBetterThanAverage (default: `0`): How much better the mask must be than the average mask.
+  - This scales the requirement from the average mask to the highest mask.
+  - The value must be less than 1.0 because the mask can't be higher than the highest mask.
+  - Negative values can also be used.
 - data: ZDO data override. For example to change altars with Spawner Tweaks mod (`object copy` from World Edit Commands).
 - locationObjectSwap: Changes location objects to other objects.
 - dungeonObjectSwap: Changes dungeon objects to other objects.
@@ -444,8 +458,20 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
 - maxAltitude (default: `1000` meters): Maximum terrain altitude.
 - minOceanDepth (default: `0` meters): Minimum ocean depth (interpolated from zone corners so slightly different from `minAltitude`).
 - maxOceanDepth (default: `0` meters): Maximum ocean depth (interpolated from zone corners so slightly different from `maxAltitude`).
-- minVegetation (default: `0`): Minimum vegetation mask (random value from 0.0 to 1.0, only used in Mistlands biome).
-- maxVegetation (default: `0`): Maximum vegetation mask (random value from 0.0 to 1.0, only used in Mistlands biome).
+- minVegetation (default: `0`): Minimum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
+- maxVegetation (default: `0`): Maximum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
+- surroundCheckVegetation (default: `false`): If enabled, the vegetation is placed near higher vegetation mask.
+  - This is sampled within a single zone. The check requires at least 10 samples, so the first 10 spawning attempts always fail.
+  - Recommended to use `forcePlacement` for more spawning attempts.
+  - The vegetation is placed, if the surrounding vegetation mask is higher than the average mask.
+- surroundCheckDistance (default: `20` meters): Distance of the vegetation mask check.
+- surroundCheckLayers (default: `2`): How many points are checked.
+  - The distance is divided into ring shaped layers.
+  - Each layer checks 6 points around the spawn point.
+- surroundBetterThanAverage (default: `0`): How much better the mask must be than the average mask.
+  - This scales the requirement from the average mask to the highest mask.
+  - The value must be less than 1.0 because the mask can't be higher than the highest mask.
+  - Negative values can also be used.
 - minTilt (default: `0` degrees): Minimum terrain angle.
 - maxTilt (default: `90` degrees): Maximum terrain angle.
 - terrainDeltaRadius (default: `0` meters): Radius for terrain delta limits.

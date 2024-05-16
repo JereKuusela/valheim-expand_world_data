@@ -18,9 +18,9 @@ See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/mai
 
 ## Ashlands update
 
-- expand_locations.yaml has new fields. These are disabled by default so it should work for old locations.
+- expand_locations.yaml has new fields. These are not used by old locations so old data should work.
 - expand_locations.yaml has some removed locations. Check warnings and clean it up.
-- expand_vegetation.yaml has new fields. These are disabled by default so it should work for old vegetation.
+- expand_vegetation.yaml has new fields. These are not used by old vegetation so old data should work.
 - expand_environment.yaml should no longer have Ashrain. Remove it.
 
 ## Tutorials

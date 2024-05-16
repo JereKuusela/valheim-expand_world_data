@@ -84,10 +84,10 @@ public class VegetationData
   public string data = "";
   [DefaultValue(false)]
   public bool surroundCheckVegetation = false;
-  [DefaultValue(0f)]
-  public float surroundCheckDistance = 0f;
-  [DefaultValue(0)]
-  public int surroundCheckLayers = 0;
+  [DefaultValue(20f)]
+  public float surroundCheckDistance = 20f;
+  [DefaultValue(2)]
+  public int surroundCheckLayers = 2;
   [DefaultValue(0f)]
   public float surroundBetterThanAverage = 0f;
 }
