@@ -1,3 +1,6 @@
+- v1.36
+  - Fixes dungeon generation.
+
 - v1.35
   - Wrong DLL updated previously.
 

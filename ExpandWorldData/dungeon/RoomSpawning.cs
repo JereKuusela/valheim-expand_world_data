@@ -47,8 +47,6 @@ public class RoomSpawning
     {
       var cFrom = connFrom[i];
       var cTo = connTo[i];
-      cTo.transform.localPosition = cFrom.transform.localPosition;
-      cTo.transform.localRotation = cFrom.transform.localRotation;
       cTo.m_type = cFrom.m_type;
       cTo.m_entrance = cFrom.m_entrance;
       cTo.m_allowDoor = cFrom.m_allowDoor;
