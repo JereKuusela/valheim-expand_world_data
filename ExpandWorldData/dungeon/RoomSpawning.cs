@@ -24,35 +24,22 @@ public class RoomSpawning
   public static Dictionary<DungeonDB.RoomData, RoomData> Data = [];
   public static Dictionary<DungeonDB.RoomData, string> Blueprints = [];
 
-  public static Room OverrideParameters(Room from, Room to)
+  public static void OverrideParameters(DungeonDB.RoomData from, Room to)
   {
+    if (Data.TryGetValue(from, out var data)) return;
     // The name must be changed to allow Objects field to work.
     // The hash is used to save the room and handled with RoomSaving patch.
-    to.name = from.name;
-    to.m_theme = from.m_theme;
-    to.m_entrance = from.m_entrance;
-    to.m_endCap = from.m_endCap;
-    to.m_divider = from.m_divider;
-    to.m_enabled = from.m_enabled;
-    to.m_size = from.m_size;
-    to.m_minPlaceOrder = from.m_minPlaceOrder;
-    to.m_weight = from.m_weight;
-    to.m_faceCenter = from.m_faceCenter;
-    to.m_perimeter = from.m_perimeter;
-    to.m_endCapPrio = from.m_endCapPrio;
-    to.m_perimeter = from.m_perimeter;
-    var connFrom = from.GetConnections();
+    to.name = data.name;
     var connTo = to.GetConnections();
-    for (var i = 0; i < connFrom.Length && i < connTo.Length; ++i)
+    for (var i = 0; i < data.connections.Length && i < connTo.Length; ++i)
     {
-      var cFrom = connFrom[i];
+      var connData = data.connections[i];
       var cTo = connTo[i];
-      cTo.m_type = cFrom.m_type;
-      cTo.m_entrance = cFrom.m_entrance;
-      cTo.m_allowDoor = cFrom.m_allowDoor;
-      cTo.m_doorOnlyIfOtherAlsoAllowsDoor = cFrom.m_doorOnlyIfOtherAlsoAllowsDoor;
+      cTo.m_type = connData.type;
+      cTo.m_entrance = connData.entrance;
+      cTo.m_allowDoor = connData.door == "true";
+      cTo.m_doorOnlyIfOtherAlsoAllowsDoor = connData.door == "other";
     }
-    return to;
   }
 
   private static bool IsBaseRoom(DungeonDB.RoomData room)

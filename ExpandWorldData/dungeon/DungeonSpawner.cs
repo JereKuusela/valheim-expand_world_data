@@ -136,7 +136,7 @@ public class Spawner
     if (DungeonObjects.CurrentRoom == null) return;
     // Blueprints already have correct parameters.
     if (DungeonDB.instance.GetRoom(newRoom.GetHash()) == null) return;
-    RoomSpawning.OverrideParameters(DungeonObjects.CurrentRoom.RoomInPrefab, newRoom);
+    RoomSpawning.OverrideParameters(DungeonObjects.CurrentRoom, newRoom);
   }
 
 }

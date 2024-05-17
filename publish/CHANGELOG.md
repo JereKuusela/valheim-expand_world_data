@@ -1,3 +1,6 @@
+- v1.37
+  - Fixes dungeon generation, now for real.
+
 - v1.36
   - Fixes dungeon generation.
 
