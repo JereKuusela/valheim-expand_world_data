@@ -21,6 +21,7 @@ public class WorldInfo
     TotalRadius = totalRadius;
     Stretch = stretch;
     BiomeStretch = biomeStretch;
+    WorldManager.Reload();
   }
   public static void SetWaterLevel(float waterLevel)
   {

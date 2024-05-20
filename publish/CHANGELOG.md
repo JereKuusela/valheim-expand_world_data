@@ -1,3 +1,9 @@
+- v1.38
+  - Adds a new field `boiling` to the `expand_world.yaml` to support boiling water.
+  - Fixes yet another dungeon generation issue.
+  - Improves the performance of biome generation.
+  - Removes deprecated fields `curveX` and `curveY` from the `expand_world.yaml`.
+
 - v1.37
   - Fixes dungeon generation, now for real.
 

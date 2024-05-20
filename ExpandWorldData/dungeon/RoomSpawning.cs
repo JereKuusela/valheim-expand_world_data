@@ -26,7 +26,7 @@ public class RoomSpawning
 
   public static void OverrideParameters(DungeonDB.RoomData from, Room to)
   {
-    if (Data.TryGetValue(from, out var data)) return;
+    if (!Data.TryGetValue(from, out var data)) return;
     // The name must be changed to allow Objects field to work.
     // The hash is used to save the room and handled with RoomSaving patch.
     to.name = data.name;

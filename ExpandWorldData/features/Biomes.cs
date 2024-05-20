@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 namespace ExpandWorldData;
@@ -63,7 +64,7 @@ public class ResetBiomeOffsets
 {
   static void Prefix()
   {
-    GetBiomeWG.Offsets.Clear();
+    BiomeCalculator.Offsets.Clear();
   }
 }
 
@@ -82,24 +83,56 @@ public class SetBiomeOffsets
   [HarmonyPriority(Priority.VeryHigh)]
   static void Prefix(WorldGenerator __instance)
   {
-    if (GetBiomeWG.Offsets.Count > 0) return;
-    GetBiomeWG.Offsets[Heightmap.Biome.Swamp] = __instance.m_offset0;
-    GetBiomeWG.Offsets[Heightmap.Biome.Plains] = __instance.m_offset1;
-    GetBiomeWG.Offsets[Heightmap.Biome.BlackForest] = __instance.m_offset2;
+    if (BiomeCalculator.Offsets.Count > 0) return;
+    BiomeCalculator.Offsets[Heightmap.Biome.Swamp] = __instance.m_offset0;
+    BiomeCalculator.Offsets[Heightmap.Biome.Plains] = __instance.m_offset1;
+    BiomeCalculator.Offsets[Heightmap.Biome.BlackForest] = __instance.m_offset2;
     // Not used in the base game code but might as well reuse the value.
-    GetBiomeWG.Offsets[Heightmap.Biome.Meadows] = __instance.m_offset3;
-    GetBiomeWG.Offsets[Heightmap.Biome.Mistlands] = __instance.m_offset4;
-    GetBiomeWG.Offsets[Heightmap.Biome.AshLands] = Random.Range(-10000, 10000);
-    GetBiomeWG.Offsets[Heightmap.Biome.DeepNorth] = Random.Range(-10000, 10000);
-    GetBiomeWG.Offsets[Heightmap.Biome.Mountain] = Random.Range(-10000, 10000);
-    GetBiomeWG.Offsets[Heightmap.Biome.Ocean] = Random.Range(-10000, 10000);
+    BiomeCalculator.Offsets[Heightmap.Biome.Meadows] = __instance.m_offset3;
+    BiomeCalculator.Offsets[Heightmap.Biome.Mistlands] = __instance.m_offset4;
+    BiomeCalculator.Offsets[Heightmap.Biome.AshLands] = Random.Range(-10000, 10000);
+    BiomeCalculator.Offsets[Heightmap.Biome.DeepNorth] = Random.Range(-10000, 10000);
+    BiomeCalculator.Offsets[Heightmap.Biome.Mountain] = Random.Range(-10000, 10000);
+    BiomeCalculator.Offsets[Heightmap.Biome.Ocean] = Random.Range(-10000, 10000);
   }
 }
 [HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(float), typeof(float), typeof(float), typeof(bool))]
 public class GetBiomeWG
 {
-  public static List<WorldData> GetData() => Data ?? WorldManager.GetDefault(WorldGenerator.instance);
-  public static List<WorldData>? Data = null;
+  static bool Prefix(WorldGenerator __instance, float wx, float wy, float oceanLevel, bool waterAlwaysOcean, ref Heightmap.Biome __result)
+  {
+    if (__instance.m_world.m_menu) return true;
+    if (!Configuration.DataWorld) return true;
+    if (waterAlwaysOcean && __instance.GetHeight(wx, wy) <= oceanLevel)
+    {
+      __result = Heightmap.Biome.Ocean;
+      return false;
+    }
+    if (Configuration.LegacyGeneration)
+      __result = BiomeCalculator.GetLegacy(__instance, wx, wy);
+    else
+      __result = BiomeCalculator.Get(__instance, wx, wy);
+    return false;
+  }
+}
+
+[HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsOceanGradient), typeof(float), typeof(float))]
+public class GetAshlandsOceanGradient
+{
+  static bool Prefix(float x, float y, ref float __result)
+  {
+    var wg = WorldGenerator.instance;
+    if (wg.m_world.m_menu) return true;
+    if (!Configuration.DataWorld) return true;
+    __result = BiomeCalculator.GetBoiling(wg, x, y);
+    return false;
+  }
+}
+
+public class BiomeCalculator
+{
+  public static List<WorldEntry> GetData() => Data ?? WorldManager.DefaultEntries;
+  public static List<WorldEntry>? Data = null;
   public static bool CheckAngles = false;
   public static Dictionary<Heightmap.Biome, float> Offsets = [];
 
@@ -108,80 +141,18 @@ public class GetBiomeWG
     if (Offsets.TryGetValue(biome, out var value)) return value;
     return obj.m_offset0;
   }
-  private static float ConvertDist(float percent) => percent * WorldInfo.Radius;
 
   // Remember to update the legacy version too.
-  private static Heightmap.Biome Get(WorldGenerator obj, float wx, float wy)
+  public static Heightmap.Biome Get(WorldGenerator obj, float wx, float wy)
   {
-    Data ??= WorldManager.GetDefault(obj);
-    var sx = wx * WorldInfo.Stretch;
-    var sy = wy * WorldInfo.Stretch;
-    var magnitude = new Vector2(sx, sy).magnitude;
-    if (magnitude > WorldInfo.TotalRadius)
-      return Heightmap.Biome.Ocean;
-    var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
-    var num = WorldGenerator.WorldAngle(wx, wy) * Configuration.WiggleWidth;
-    var baseAngle = 0f;
-    var wiggledAngle = 0f;
-    if (CheckAngles)
-    {
-      baseAngle = (Mathf.Atan2(wx, wy) + Mathf.PI) / 2f / Mathf.PI;
-      wiggledAngle = baseAngle + Configuration.DistanceWiggleWidth * Mathf.Sin(magnitude / Configuration.DistanceWiggleLength);
-      if (wiggledAngle < 0f) wiggledAngle += 1f;
-      if (wiggledAngle >= 1f) wiggledAngle -= 1f;
-    }
-    var radius = WorldInfo.Radius;
-    var bx = wx / WorldInfo.BiomeStretch;
-    var by = wy / WorldInfo.BiomeStretch;
-
-    foreach (var item in Data)
-    {
-      if (item.minAltitude >= altitude || item.maxAltitude <= altitude) continue;
-      var mag = magnitude;
-      var min = ConvertDist(item.minDistance);
-      if (min > 0)
-        min += item.wiggleDistance ? num : 0f;
-      else if (min == 0f)
-        min = -0.1f; // To handle the center (0,0) correctly.
-      var max = ConvertDist(item.maxDistance);
-      if (item.centerX != 0f || item.centerY != 0f)
-      {
-        var centerX = ConvertDist(item.centerX);
-        var centerY = ConvertDist(item.centerY);
-        mag = new Vector2(sx - centerX, sy - centerY).magnitude;
-      }
-      if (item.curveX != 0f || item.curveY != 0f)
-      {
-        var curveX = ConvertDist(item.curveX);
-        var curveY = ConvertDist(item.curveY);
-        mag = new Vector2(sx + curveX, sy + curveY).magnitude;
-        min += new Vector2(curveX, curveY).magnitude;
-      }
-      var distOk = mag > min && (max >= radius || mag < max);
-      if (!distOk) continue;
-      if (CheckAngles)
-      {
-        min = item.minSector;
-        max = item.maxSector;
-        if (min != 0f || max != 1f)
-        {
-          var angle = item.wiggleSector ? wiggledAngle : baseAngle;
-          var angleOk = min > max ? (angle >= min || angle < max) : angle >= min && angle < max;
-          if (!angleOk) continue;
-        }
-      }
-      var seed = item._seed ?? GetOffset(obj, item._biomeSeed);
-      if (item.amount < 1f && Mathf.PerlinNoise((seed + bx / item.stretch) * 0.001f, (seed + by / item.stretch) * 0.001f) <= 1 - item.amount) continue;
-      return item._biome;
-    }
-    return Heightmap.Biome.Ocean;
+    var wiggle = WorldGenerator.WorldAngle(wx, wy) * Configuration.WiggleWidth;
+    return GetEntry(obj, wx, wy, wiggle)?.biome ?? Heightmap.Biome.Ocean;
   }
-
   // Bit annoying to maintain two versions of the same code.
   // But biome generation is performance critical so trying to keep it simple.
-  private static Heightmap.Biome GetLegacy(WorldGenerator obj, float wx, float wy)
+  public static Heightmap.Biome GetLegacy(WorldGenerator obj, float wx, float wy)
   {
-    Data ??= WorldManager.GetDefault(obj);
+    var data = GetData();
     var sx = wx * WorldInfo.Stretch;
     var sy = wy * WorldInfo.Stretch;
     var magnitude = new Vector2(sx, sy).magnitude;
@@ -202,28 +173,19 @@ public class GetBiomeWG
     var bx = wx / WorldInfo.BiomeStretch;
     var by = wy / WorldInfo.BiomeStretch;
 
-    foreach (var item in Data)
+    foreach (var item in data)
     {
       if (item.minAltitude > altitude || item.maxAltitude < altitude) continue;
       var mag = magnitude;
-      var min = ConvertDist(item.minDistance);
+      var min = item.minDistance;
       if (min > 0)
         min += item.wiggleDistance ? num : 0f;
       else if (min == 0f)
         min = -0.1f; // To handle the center (0,0) correctly.
-      var max = ConvertDist(item.maxDistance);
+      var max = item.maxDistance;
       if (item.centerX != 0f || item.centerY != 0f)
       {
-        var centerX = ConvertDist(item.centerX);
-        var centerY = ConvertDist(item.centerY);
-        mag = new Vector2(sx - centerX, sy - centerY).magnitude;
-      }
-      if (item.curveX != 0f || item.curveY != 0f)
-      {
-        var curveX = ConvertDist(item.curveX);
-        var curveY = ConvertDist(item.curveY);
-        mag = new Vector2(sx + curveX, sy + curveY).magnitude;
-        min += new Vector2(curveX, curveY).magnitude;
+        mag = new Vector2(sx - item.centerX, sy - item.centerY).magnitude;
       }
       var distOk = mag > min && (max >= radius || mag <= max);
       if (!distOk) continue;
@@ -238,20 +200,82 @@ public class GetBiomeWG
           if (!angleOk) continue;
         }
       }
-      var seed = item._seed ?? GetOffset(obj, item._biomeSeed);
+      var seed = item.seed ?? GetOffset(obj, item.biomeSeed);
       if (item.amount < 1f && Mathf.PerlinNoise((seed + bx / item.stretch) * 0.001f, (seed + by / item.stretch) * 0.001f) < 1 - item.amount) continue;
-      return item._biome;
+      return item.biome;
     }
     return Heightmap.Biome.Ocean;
   }
-  static bool Prefix(WorldGenerator __instance, float wx, float wy, ref Heightmap.Biome __result)
+
+  public static float GetBoiling(WorldGenerator obj, float wx, float wy)
   {
-    if (__instance.m_world.m_menu) return true;
-    if (!Configuration.DataWorld) return true;
-    if (Configuration.LegacyGeneration)
-      __result = GetLegacy(__instance, wx, wy);
-    else
-      __result = Get(__instance, wx, wy);
-    return false;
+    var wiggle = WorldGenerator.WorldAngle(wx, wy) * Configuration.WiggleWidth;
+    var item = GetEntry(obj, wx, wy, wiggle);
+    if (item == null || item.boiling <= 0f) return -1f;
+    var sx = wx * WorldInfo.Stretch;
+    var sy = wy * WorldInfo.Stretch;
+    var dist = DUtils.Length(sx - item.centerX, sy - item.centerY);
+    var min = item.minDistance;
+    if (min > 0)
+      min += item.wiggleDistance ? wiggle : 0f;
+    else if (min == 0f)
+      min = -0.1f; // To handle the center (0,0) correctly.
+    return item.boiling * (dist - min) / 300f;
+  }
+
+  private static WorldEntry? GetEntry(WorldGenerator obj, float wx, float wy, float wiggle)
+  {
+    var data = GetData();
+    var sx = wx * WorldInfo.Stretch;
+    var sy = wy * WorldInfo.Stretch;
+    var magnitude = new Vector2(sx, sy).magnitude;
+    if (magnitude > WorldInfo.TotalRadius)
+      return null;
+    var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
+    var baseAngle = 0f;
+    var wiggledAngle = 0f;
+    if (CheckAngles)
+    {
+      baseAngle = (Mathf.Atan2(wx, wy) + Mathf.PI) / 2f / Mathf.PI;
+      wiggledAngle = baseAngle + Configuration.DistanceWiggleWidth * Mathf.Sin(magnitude / Configuration.DistanceWiggleLength);
+      if (wiggledAngle < 0f) wiggledAngle += 1f;
+      if (wiggledAngle >= 1f) wiggledAngle -= 1f;
+    }
+    var radius = WorldInfo.Radius;
+    var bx = wx / WorldInfo.BiomeStretch;
+    var by = wy / WorldInfo.BiomeStretch;
+
+    foreach (var item in data)
+    {
+      if (item.minAltitude >= altitude || item.maxAltitude <= altitude) continue;
+      var mag = magnitude;
+      var min = item.minDistance;
+      if (min > 0)
+        min += item.wiggleDistance ? wiggle : 0f;
+      else if (min == 0f)
+        min = -0.1f; // To handle the center (0,0) correctly.
+      var max = item.maxDistance;
+      if (item.centerX != 0f || item.centerY != 0f)
+      {
+        mag = DUtils.Length(sx - item.centerX, sy - item.centerY);
+      }
+      var distOk = mag > min && (max >= radius || mag < max);
+      if (!distOk) continue;
+      if (CheckAngles)
+      {
+        min = item.minSector;
+        max = item.maxSector;
+        if (min != 0f || max != 1f)
+        {
+          var angle = item.wiggleSector ? wiggledAngle : baseAngle;
+          var angleOk = min > max ? (angle >= min || angle < max) : angle >= min && angle < max;
+          if (!angleOk) continue;
+        }
+      }
+      var seed = item.seed ?? GetOffset(obj, item.biomeSeed);
+      if (item.amount < 1f && Mathf.PerlinNoise((seed + bx / item.stretch) * 0.001f, (seed + by / item.stretch) * 0.001f) <= 1 - item.amount) continue;
+      return item;
+    }
+    return null;
   }
 }
