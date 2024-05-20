@@ -29,6 +29,7 @@ public class VegetationLoading
   public static void Load()
   {
     VegetationSpawning.Extra.Clear();
+    VegetationSpawning.Prefabs.Clear();
     if (Helper.IsClient()) return;
     ZoneSystem.instance.m_vegetation = DefaultEntries;
     if (!Configuration.DataVegetation)
@@ -96,7 +97,11 @@ public class VegetationLoading
     var missingKeys = DefaultKeys.ToHashSet();
     // Some mods override prefabs so the m_prefab.name is not reliable.
     foreach (var entry in entries)
+    {
       missingKeys.Remove(entry.m_name);
+      if (VegetationSpawning.Prefabs.TryGetValue(entry, out var prefabs))
+        missingKeys.RemoveWhere(key => prefabs.Any(prefab => prefab.name == key));
+    }
     if (missingKeys.Count == 0) return false;
     // But don't use m_name because it can be anything for original items.
     var missing = DefaultEntries.Where(veg => missingKeys.Contains(veg.m_prefab.name)).ToList();
@@ -165,7 +170,6 @@ public class VegetationLoading
       m_forestTresholdMin = data.forestTresholdMin,
       m_forestTresholdMax = data.forestTresholdMax
     };
-    var hash = data.prefab.GetStableHashCode();
     Range<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
     {
       Uniform = data.scaleUniform
@@ -181,14 +185,23 @@ public class VegetationLoading
     if (data.data != "")
       extra.data = DataHelper.Get(data.data);
 
-    if (ZNetScene.instance.m_namedPrefabs.TryGetValue(hash, out var obj))
+
+    var prefabs = DataManager.ToList(data.prefab).Select(p =>
     {
-      veg.m_prefab = obj;
-    }
-    else if (BlueprintManager.Load(data.prefab))
-    {
-      veg.m_prefab = new(data.prefab);
-    }
+      var hash = p.GetStableHashCode();
+      if (ZNetScene.instance.m_namedPrefabs.TryGetValue(hash, out var obj))
+        return obj;
+      if (BlueprintManager.Load(data.prefab))
+        return new(data.prefab);
+      return null!;
+    }).Where(p => p).ToList();
+
+
+    if (prefabs.Count > 0)
+      veg.m_prefab = prefabs[0];
+    if (prefabs.Count > 1)
+      VegetationSpawning.Prefabs.Add(veg, prefabs);
+
     if (veg.m_enable && data.requiredGlobalKey != "")
       extra.requiredGlobalKeys = DataManager.ToList(data.requiredGlobalKey);
     if (veg.m_enable && data.forbiddenGlobalKey != "")

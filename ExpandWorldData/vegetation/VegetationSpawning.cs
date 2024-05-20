@@ -12,6 +12,7 @@ namespace ExpandWorldData;
 public class VegetationSpawning
 {
   public static Dictionary<ZoneSystem.ZoneVegetation, VegetationExtra> Extra = [];
+  public static Dictionary<ZoneSystem.ZoneVegetation, List<GameObject>> Prefabs = [];
   private static ZoneSystem.ZoneVegetation CurrentVegetation = new();
   private static ZoneSystem.SpawnMode Mode = ZoneSystem.SpawnMode.Client;
   private static List<GameObject> SpawnedObjects = [];
@@ -45,6 +46,8 @@ public class VegetationSpawning
   {
     if (Extra.TryGetValue(CurrentVegetation, out var extra) && extra.clearArea)
       clearAreas.Add(new(pos, extra.clearRadius));
+    if (Prefabs.TryGetValue(CurrentVegetation, out var prefabs))
+      prefab = prefabs[Random.Range(0, prefabs.Count)];
     return DataManager.Instantiate(prefab, pos, rot, DataOverride());
   }
   static GameObject InstantiateBlueprint(GameObject prefab, Vector3 position, Quaternion rotation, List<ZoneSystem.ClearArea> clearAreas)

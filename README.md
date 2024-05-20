@@ -125,10 +125,15 @@ Each entry in the file adds a new rule. When determing the biome, the rules are 
 - centerX (default: `0.0` of world radius): Moves the center point away from the world center.
 - centerY (default: `0.0` of world radius): Moves the center point away from the world center.
 - amount (default: `1.0` of total area): How much of the valid area is randomly filled with this biome. Uses normal distribution, see values below.
-- stretch (default: `1.0`): Same as the `Stretch biomes` setting but applied just to a single entry. Multiplies the size of biome areas (average total area stays the same).
+- stretch (default: `1.0`): Same as the Stretch biomes setting in Expand World Size but applied just to a single entry. Multiplies the size of biome areas (average total area stays the same).
 - seed: Overrides the random outcome of `amount`. Numeric value fixes the outcome. Biome name uses a biome specific value derived from the world seed. No value uses biome from the `terrain` parameter.
 - wiggleDistance (default: `true`): Applies "wiggle" to the `minDistance`.
 - wiggleSector (default: `true`): Applies "wiggle" to the `maxSector` and `minSector`.
+- boiling (default: `false`): If true, the water is boiling hot.
+  - For Ashlands biome, the default value is `true` to keep old configurations working.
+  - The boiling effect gradually increases over 300 meters.
+    - This can be modified by using a numeric value.
+    - For example `0.5` would make the effect increase over 600 meters while `2.0` would make the effect increase over 150 meters.
 
 Note: The world edge is always ocean. This is currently hardcoded.
 
@@ -441,7 +446,8 @@ Changes only apply to unexplored areas. Upgrade World mod can be used to reset a
 
 Note: Missing vegetation are automatically added to the file. To disable, set `enabled` to `false` instead of removing anything.
 
-- prefab: Identifier of the object or name of blueprint file.
+- prefab: Id of the object or name of blueprint file.
+  - If multiple prefabs are listed, the prefab is randomly selected.
 - enabled (default: `true`): Quick way to disable this entry.
 - min (default: `1`): Minimum amount (of groups) to be placed per zone (64m x 64m).
 - max (default: `1`): Maximum amount (of groups) to be placed per zone (64m x 64m). If less than 1, has only a chance to appear.
