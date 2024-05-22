@@ -61,11 +61,11 @@ public class InitializeContent
 
       // These are here to not have to clear location lists (slightly better compatibility).
       VegetationLoading.Initialize();
-      // Clutter must be here because since SetupLocations adds prefabs to the list.
-      ClutterManager.Initialize();
 
       // Dungeon and room data is handled elsewhere.
     }
+    // Clutter must be here because since SetupLocations adds prefabs to the list.
+    ClutterManager.Initialize();
     ZoneSystem.instance.m_locations = ZoneSystem.instance.m_locations.Where(loc => loc.m_prefab.IsValid).ToList();
     LocationLoading.Initialize();
   }

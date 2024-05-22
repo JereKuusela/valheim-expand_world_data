@@ -59,7 +59,7 @@ public static class Helper
 
   public static string Print(float value)
   {
-    return value.ToString(NumberFormatInfo.InvariantInfo);
+    return value.ToString("0.#####", NumberFormatInfo.InvariantInfo);
   }
   public static string Print(Vector3 vec)
   {

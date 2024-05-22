@@ -21,7 +21,7 @@ public class EnvironmentManager
     else if (Originals.TryGetValue(data.name, out setup))
       env = setup.Clone();
     else
-      Log.Warning($"Failed to find a particle system \"{data.particles}\" for environment ${data.name}. Make sure field \"particles\" is set correctly or remove this entry.");
+      Log.Warning($"Failed to find a particle system \"{data.particles}\" for environment {data.name}. Make sure field \"particles\" is set correctly or remove this entry.");
 
     env.m_name = data.name;
     env.m_default = data.isDefault;

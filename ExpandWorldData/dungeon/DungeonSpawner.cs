@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
-using Service;
 using UnityEngine;
 
 namespace ExpandWorldData.Dungeon;
@@ -10,7 +9,6 @@ namespace ExpandWorldData.Dungeon;
 [HarmonyPatch(typeof(DungeonGenerator))]
 public class Spawner
 {
-
   ///<summary>Implements object data and swapping from location data.</summary>
   static GameObject CustomObject(GameObject prefab, Vector3 pos, Quaternion rot)
   {
@@ -52,11 +50,10 @@ public class Spawner
   }
 
   [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPostfix]
-  static void SpawnBlueprintRoom(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, RoomConnection fromConnection, ZoneSystem.SpawnMode mode)
+  static void SpawnBlueprintRoom(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
   {
-    if (!Configuration.DataRooms || Helper.IsClient()) return;
     // Clients already have proper rooms.
-    if (mode == ZoneSystem.SpawnMode.Client) return;
+    if (!Configuration.DataRooms || mode == ZoneSystem.SpawnMode.Client || Helper.IsClient()) return;
     DungeonObjects.CurrentRoom = roomData;
     if (!RoomSpawning.Blueprints.TryGetValue(roomData, out var bpName))
       return;
@@ -70,16 +67,18 @@ public class Spawner
   static void PlaceRoomCustomObjects(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
   {
     if (!Configuration.DataRooms || mode == ZoneSystem.SpawnMode.Client || Helper.IsClient()) return;
-    if (!DungeonObjects.Objects.TryGetValue(roomData, out var objects)) return;
-    int seed = (int)pos.x * 4271 + (int)pos.y * 9187 + (int)pos.z * 2134;
-    Random.State state = Random.state;
-    Random.InitState(seed);
-    foreach (var obj in objects)
+    if (DungeonObjects.Objects.TryGetValue(roomData, out var objects))
     {
-      if (obj.Chance < 1f && Random.value > obj.Chance) continue;
-      Spawn.BPO(obj, pos, rot, Vector3.one, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
+      int seed = (int)pos.x * 4271 + (int)pos.y * 9187 + (int)pos.z * 2134;
+      Random.State state = Random.state;
+      Random.InitState(seed);
+      foreach (var obj in objects)
+      {
+        if (obj.Chance < 1f && Random.value > obj.Chance) continue;
+        Spawn.BPO(obj, pos, rot, Vector3.one, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
+      }
+      Random.state = state;
     }
-    Random.state = state;
     DungeonObjects.CurrentRoom = null;
   }
 
@@ -136,69 +135,19 @@ public class Spawner
     if (DungeonObjects.CurrentRoom == null) return;
     // Blueprints already have correct parameters.
     if (DungeonDB.instance.GetRoom(newRoom.GetHash()) == null) return;
-    RoomSpawning.OverrideParameters(DungeonObjects.CurrentRoom, newRoom);
-  }
-
-}
-
-// Client side tweak to make the dungeon environment box extend to the whole dungeon.
-[HarmonyPatch]
-public class EnvironmentBox
-{
-
-  // Not fully sure if the generator or location loads first.
-  public static Dictionary<Vector2i, Vector3> Cache = [];
-
-
-  private static void TryScale(Location loc)
-  {
-    var zone = ZoneSystem.instance.GetZone(loc.transform.position);
-    if (!Cache.TryGetValue(zone, out var size)) return;
-    // Only interior locations can have the environment box.
-    if (!loc.m_hasInterior) return;
-    var envZone = loc.GetComponentInChildren<EnvZone>();
-    if (!envZone) return;
-    // Don't shrink from the default so that people can build there more easily.
-    // Otherwise for small dungeons the box would be very small.
-    var origSize = envZone.transform.localScale;
-    size.x = Mathf.Max(size.x, origSize.x);
-    size.y = Mathf.Max(size.y, origSize.y);
-    size.z = Mathf.Max(size.z, origSize.z);
-    // ExpandWorldData.Log.Debug($"Scaling environment box for {loc.name} from {origSize} to {size}.");
-    envZone.transform.localScale = size;
-  }
-
-  [HarmonyPatch(typeof(DungeonGenerator), nameof(DungeonGenerator.Load)), HarmonyPostfix]
-  static void ScaleEnvironmentBox1(DungeonGenerator __instance)
-  {
-    var pos = __instance.transform.position;
-    var zone = ZoneSystem.instance.GetZone(pos);
-    var center = ZoneSystem.instance.GetZonePos(zone) with { y = pos.y };
-    var colliders = __instance.GetComponentsInChildren<Room>().SelectMany(room => room.GetComponentsInChildren<BoxCollider>()).ToList();
-    Bounds bounds = new()
+    if (!RoomSpawning.Data.TryGetValue(DungeonObjects.CurrentRoom, out var data)) return;
+    // The name must be changed to allow Objects field to work.
+    // The hash is used to save the room and handled with RoomSaving patch.
+    newRoom.name = data.name;
+    var connTo = newRoom.GetConnections();
+    for (var i = 0; i < data.connections.Length && i < connTo.Length; ++i)
     {
-      center = center,
-    };
-    foreach (var c in colliders)
-      bounds.Encapsulate(c.bounds);
-    // Bounds doesn't keep the center point, so manually calculate the biggest size.
-    var offset = bounds.center - center;
-    var extents = Vector3.zero;
-    // Vanilla mountain caves seemed to overflow a bit, so make the box smaller to reduce chance of dungeons clipping.
-    var tweak = -1f;
-    extents.x = Mathf.Max(Mathf.Abs(offset.x + bounds.extents.x) + tweak, Mathf.Abs(offset.x - bounds.extents.x) + tweak);
-    extents.y = Mathf.Max(Mathf.Abs(offset.y + bounds.extents.y) + tweak, Mathf.Abs(offset.y - bounds.extents.y) + tweak);
-    extents.z = Mathf.Max(Mathf.Abs(offset.z + bounds.extents.z) + tweak, Mathf.Abs(offset.z - bounds.extents.z) + tweak);
-    // ExpandWorldData.Log.Debug($"Bounds for {__instance.name} are {bounds.center} {bounds.extents} {center}.");
-    Cache[zone] = 2 * extents;
-    var locsInZone = Location.m_allLocations.Where(loc => ZoneSystem.instance.GetZone(loc.transform.position) == zone).ToArray();
-    foreach (var loc in locsInZone)
-      TryScale(loc);
-  }
-
-  [HarmonyPatch(typeof(Location), nameof(Location.Awake)), HarmonyPostfix]
-  static void ScaleEnvironmentBox2(Location __instance)
-  {
-    TryScale(__instance);
+      var connData = data.connections[i];
+      var cTo = connTo[i];
+      cTo.m_type = connData.type;
+      cTo.m_entrance = connData.entrance;
+      cTo.m_allowDoor = connData.door == "true";
+      cTo.m_doorOnlyIfOtherAlsoAllowsDoor = connData.door == "other";
+    }
   }
 }

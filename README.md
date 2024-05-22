@@ -37,7 +37,7 @@ Note: Old configuration from Expand World is automatically migrated to this mod.
 This mod can be used server only, without requiring clients to have it. However only following files can be configured:
 
 - `expand_dungeons.yaml`: All fields.
-- `expand_locations.yaml`: All fields, but some disabled locations won't work.
+- `expand_locations.yaml`: All fields.
 - `expand_rooms.yaml`: All fields.
 - `expand_vegetation.yaml`: All fields.
 - `expand_world.cfg`: Only setting Zone spawners.

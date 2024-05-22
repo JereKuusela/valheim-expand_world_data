@@ -1,3 +1,8 @@
+- v1.39
+  - Another attempt at fixing dungeon generation.
+  - Fixes clutter error when joining a server.
+  - Fixes yaml files sometimes having numbers in exponential notation.
+
 - v1.38
   - Adds a new field `boiling` to the `expand_world.yaml` to support boiling water.
   - Adds support for multiple prefabs to the `expand_vegetation.yaml`.

@@ -24,24 +24,6 @@ public class RoomSpawning
   public static Dictionary<DungeonDB.RoomData, RoomData> Data = [];
   public static Dictionary<DungeonDB.RoomData, string> Blueprints = [];
 
-  public static void OverrideParameters(DungeonDB.RoomData from, Room to)
-  {
-    if (!Data.TryGetValue(from, out var data)) return;
-    // The name must be changed to allow Objects field to work.
-    // The hash is used to save the room and handled with RoomSaving patch.
-    to.name = data.name;
-    var connTo = to.GetConnections();
-    for (var i = 0; i < data.connections.Length && i < connTo.Length; ++i)
-    {
-      var connData = data.connections[i];
-      var cTo = connTo[i];
-      cTo.m_type = connData.type;
-      cTo.m_entrance = connData.entrance;
-      cTo.m_allowDoor = connData.door == "true";
-      cTo.m_doorOnlyIfOtherAlsoAllowsDoor = connData.door == "other";
-    }
-  }
-
   private static bool IsBaseRoom(DungeonDB.RoomData room)
   {
     var baseName = Parse.Name(room.m_prefab.Name);
