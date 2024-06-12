@@ -85,7 +85,8 @@ public class BiomeManager
       color = Heightmap.GetBiomeColor(biome.m_biome),
       mapColor = Minimap.instance.GetPixelColor(biome.m_biome),
       // Reduces the mountains on the map.
-      mapColorMultiplier = biome.m_biome == Heightmap.Biome.AshLands ? 0.5f : 1f
+      mapColorMultiplier = biome.m_biome == Heightmap.Biome.AshLands ? 0.5f : 1f,
+      lava = biome.m_biome == Heightmap.Biome.AshLands ? "true" : ""
     };
   }
 

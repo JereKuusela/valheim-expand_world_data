@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData.Dungeon;
@@ -49,7 +50,7 @@ public class Spawner
     DungeonObjects.CurrentDungeon = dungeonName;
   }
 
-  [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPostfix]
+  [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPrefix]
   static void SpawnBlueprintRoom(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
   {
     // Clients already have proper rooms.

@@ -134,7 +134,7 @@ public class RoomLoading
     else if (BlueprintManager.Load(baseName, snapPieces))
     {
       RoomSpawning.Blueprints[roomData] = baseName;
-      roomData.m_prefab = new()
+      roomData.m_prefab = new(new())
       {
         m_name = name,
         m_loadedAsset = room.gameObject

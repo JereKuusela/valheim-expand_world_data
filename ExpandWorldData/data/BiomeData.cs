@@ -53,6 +53,8 @@ public class BiomeYaml
   public bool noBuild = false;
   [DefaultValue(null)]
   public StatusData[]? statusEffects;
+  [DefaultValue("")]
+  public string lava = "";
 }
 
 public class BiomeData
@@ -68,6 +70,7 @@ public class BiomeData
   public Color color = new(0, 0, 0, 0);
   public Color mapColor = new(0, 0, 0, 0);
   public float forestMultiplier = 1f;
+  public bool lava = false;
 
   public List<Status> statusEffects = [];
 
@@ -86,6 +89,10 @@ public class BiomeData
     forestMultiplier = data.forestMultiplier;
     if (data.statusEffects != null)
       statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
+    if (data.lava == "")
+      lava = data.biome.ToLower() == "ashlands";
+    if (data.lava == "true")
+      lava = true;
   }
   public bool IsValid() =>
     statusEffects.Count > 0 ||

@@ -77,17 +77,21 @@ public class InitializeContent
     var bundleLoader = AssetBundleLoader.Instance;
     bundleLoader.m_bundleNameToLoaderIndex[""] = 0; // So that AssetLoader ctor doesn't crash
     AssetID id = new();
-    if (bundleLoader.m_assetIDToLoaderIndex.ContainsKey(id))
+    if (bundleLoader.m_assetIDToLoaderIndex.TryGetValue(id, out var index))
+    {
+      // GameObject is gone after log out, so have to recreate it.
+      bundleLoader.m_assetLoaders[index].m_asset = new GameObject();
       return;
+    }
 
     AssetLoader loader = new(id, new("", ""))
     {
-      m_asset = new GameObject(),
-      m_referenceCounter = new(),
-      m_shouldBeLoaded = true,
+      m_asset = new GameObject()
     };
+    // Ensures that the asset stays loaded.
+    loader.HoldReference();
 
-    var index = bundleLoader.m_assetIDToLoaderIndex.Count;
+    index = bundleLoader.m_assetIDToLoaderIndex.Count;
     if (index >= bundleLoader.m_assetLoaders.Length)
       Array.Resize(ref bundleLoader.m_assetLoaders, bundleLoader.m_assetIDToLoaderIndex.Count + 1);
     bundleLoader.m_assetLoaders[index] = loader;
