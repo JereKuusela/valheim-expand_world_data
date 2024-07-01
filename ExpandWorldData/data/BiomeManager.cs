@@ -12,7 +12,7 @@ namespace ExpandWorldData;
 public class BiomeManager
 {
   public static string FileName = "expand_biomes.yaml";
-  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
+  public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_biomes*.yaml";
 
   public static EnvEntry FromData(BiomeEnvironment data)

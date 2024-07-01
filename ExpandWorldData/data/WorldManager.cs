@@ -9,7 +9,7 @@ namespace ExpandWorldData;
 public class WorldManager
 {
   public static string FileName = "expand_world.yaml";
-  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
+  public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_world*.yaml";
   public static List<WorldData> DefaultData = [
       new() {
@@ -35,7 +35,7 @@ public class WorldManager
       },
       new() {
         biome = "swamp",
-        wiggleDistance = false,
+        wiggleDistanceWidth = 0f,
         minDistance = 0.2f,
         maxDistance = 0.6f,
         minAltitude = -20f,

@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 namespace Service;
 
 public class Range<T>
@@ -24,6 +26,7 @@ public class Range<T>
 ///<summary>Contains functions for parsing arguments, etc.</summary>
 public static class Parse
 {
+  public static List<string> ToList(string str, bool removeEmpty = true) => [.. Split(str, removeEmpty)];
   public static Vector2i Vector2Int(string arg)
   {
     string[] array = SplitWithEmpty(arg);
@@ -35,16 +38,31 @@ public static class Parse
       return defaultValue;
     return result;
   }
+  public static uint UInt(string arg, uint defaultValue = 0)
+  {
+    if (!TryUInt(arg, out var result))
+      return defaultValue;
+    return result;
+  }
+
   public static long Long(string arg, long defaultValue = 0)
   {
     if (!long.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
       return defaultValue;
     return result;
   }
+  public static bool TryLong(string arg, out long result)
+  {
+    return long.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out result);
+  }
   public static int Int(string[] args, int index, int defaultValue = 0)
   {
     if (args.Length <= index) return defaultValue;
     return Int(args[index], defaultValue);
+  }
+  public static bool TryUInt(string arg, out uint result)
+  {
+    return uint.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out result);
   }
   public static bool TryInt(string arg, out int result)
   {
@@ -66,6 +84,7 @@ public static class Parse
     return float.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
   }
 
+  public static Quaternion AngleYXZ(string arg) => AngleYXZ(Split(arg), 0, Vector3.zero);
   public static Quaternion AngleYXZ(string[] args, int index) => AngleYXZ(args, index, Vector3.zero);
   public static Quaternion AngleYXZ(string[] args, int index, Vector3 defaultValue)
   {
@@ -80,7 +99,8 @@ public static class Parse
   public static KeyValuePair<string, string> Kvp(string str, char separator = ',')
   {
     var split = str.Split([separator], 2);
-    return split.Length < 2 ? new("", "") : new(split[0], split[1].Trim());
+    if (split.Length < 2) return new(split[0], "");
+    return new(split[0], split[1].Trim());
   }
   public static string[] SplitWithEmpty(string arg, char split = ',') => arg.Split(split).Select(s => s.Trim()).ToArray();
   public static string[] SplitWithEscape(string arg, char separator = ',')
@@ -231,5 +251,79 @@ public static class Parse
     var z = FloatNull(values, 2);
     if (y == null || x == null || z == null) return null;
     return Quaternion.Euler(new(x.Value, y.Value, z.Value));
+  }
+  public static string String(string[] args, int index) => args.Length > index ? args[index] : "";
+  public static int Hash(string[] args, int index) => args.Length > index ? args[index].GetStableHashCode() : 0;
+  public static bool Boolean(string[] args, int index) => args.Length > index && Boolean(args[index]);
+  public static bool Boolean(string arg) => arg.ToLowerInvariant() == "true";
+  public static bool BooleanTrue(string arg) => arg.ToLowerInvariant() == "false";
+  public static ZDOID ZdoId(string arg)
+  {
+    var split = Split(arg, true, ':');
+    if (split.Length < 2) return ZDOID.None;
+    return new ZDOID(Long(split[0]), UInt(split[1]));
+  }
+  public static HitData Hit(ZDO? zdo, string arg)
+  {
+    HitData hit = new()
+    {
+      m_point = zdo?.m_position ?? Vector3.zero,
+    };
+    var split = Split(arg, true, ' ');
+    foreach (var s in split)
+    {
+      var kvp = Kvp(s, '=');
+      var key = kvp.Key;
+      var value = kvp.Value;
+      if (key == "damage") hit.m_damage.m_damage = Int(value);
+      if (key == "blunt") hit.m_damage.m_blunt = Int(value);
+      if (key == "slash") hit.m_damage.m_slash = Int(value);
+      if (key == "pierce") hit.m_damage.m_pierce = Int(value);
+      if (key == "chop") hit.m_damage.m_chop = Int(value);
+      if (key == "pickaxe") hit.m_damage.m_pickaxe = Int(value);
+      if (key == "fire") hit.m_damage.m_fire = Int(value);
+      if (key == "frost") hit.m_damage.m_frost = Int(value);
+      if (key == "lightning") hit.m_damage.m_lightning = Int(value);
+      if (key == "poison") hit.m_damage.m_poison = Int(value);
+      if (key == "spirit") hit.m_damage.m_spirit = Int(value);
+      if (key == "tier") hit.m_toolTier = (short)Int(value);
+      if (key == "force") hit.m_pushForce = Float(value);
+      if (key == "backstab") hit.m_backstabBonus = Float(value);
+      if (key == "stagger") hit.m_staggerMultiplier = Int(value);
+      if (key == "dodge") hit.m_dodgeable = Boolean(value);
+      if (key == "block") hit.m_blockable = Boolean(value);
+      if (key == "dir") hit.m_dir = VectorXZY(value);
+      if (key == "ranged") hit.m_ranged = Boolean(value);
+      if (key == "pvp") hit.m_ignorePVP = Boolean(value);
+      if (key == "pos") hit.m_point = VectorXZY(value);
+      if (key == "status") hit.m_statusEffectHash = value.GetStableHashCode();
+      if (key == "attacker") hit.m_attacker = ZdoId(value);
+      if (key == "skill") hit.m_skillLevel = Float(value);
+      if (key == "level") hit.m_itemLevel = (short)Int(value);
+      if (key == "world") hit.m_itemWorldLevel = (byte)Int(value);
+      if (key == "type") hit.m_hitType = Enum.TryParse(value, true, out HitData.HitType type) ? type : HitData.HitType.Undefined;
+      if (key == "spot") hit.m_weakSpot = (short)Int(value);
+    }
+    return hit;
+  }
+  public static int EnumMessage(string arg)
+  {
+    return Enum.TryParse(arg, true, out MessageHud.MessageType state) ? (int)state : Int(arg, 2);
+  }
+  public static int EnumReason(string arg)
+  {
+    return Enum.TryParse(arg, true, out BaseAI.AggravatedReason state) ? (int)state : Int(arg, 0);
+  }
+  public static int EnumTrap(string arg)
+  {
+    return Enum.TryParse(arg, true, out Trap.TrapState state) ? (int)state : Int(arg, 0);
+  }
+  public static int EnumDamageText(string arg)
+  {
+    return Enum.TryParse(arg, true, out DamageText.TextType state) ? (int)state : Int(arg, 0);
+  }
+  public static int EnumTerrainPaint(string arg)
+  {
+    return Enum.TryParse(arg, true, out TerrainModifier.PaintType state) ? (int)state : Int(arg, 0);
   }
 }

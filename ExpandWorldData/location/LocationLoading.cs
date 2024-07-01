@@ -7,13 +7,12 @@ using HarmonyLib;
 using Service;
 using UnityEngine;
 using Data;
-using SoftReferenceableAssets;
 namespace ExpandWorldData;
 
 public class LocationLoading
 {
   public static string FileName = "expand_locations.yaml";
-  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
+  public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_locations*.yaml";
   public static Dictionary<string, string> ZDOData = [];
   public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> LocationObjectSwaps = [];
@@ -344,7 +343,7 @@ public class LocationLoading
     }
     foreach (var kvp in perFile)
     {
-      var file = Path.Combine(Yaml.Directory, $"expand_locations{kvp.Key}.yaml");
+      var file = Path.Combine(Yaml.BaseDirectory, $"expand_locations{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
       yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));

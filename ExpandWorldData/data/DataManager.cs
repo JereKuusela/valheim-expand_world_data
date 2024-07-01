@@ -266,9 +266,9 @@ public class DataManager : MonoBehaviour
   }
   public static string Read(string pattern)
   {
-    if (!Directory.Exists(Yaml.Directory))
-      Directory.CreateDirectory(Yaml.Directory);
-    var data = Directory.GetFiles(Yaml.Directory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
+    if (!Directory.Exists(Yaml.BaseDirectory))
+      Directory.CreateDirectory(Yaml.BaseDirectory);
+    var data = Directory.GetFiles(Yaml.BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
       string.Join("\n", File.ReadAllLines(name).ToList())
     );
     return string.Join("\n", data) ?? "";

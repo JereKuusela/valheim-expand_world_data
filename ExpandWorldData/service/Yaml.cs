@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using UnityEngine;
@@ -13,9 +14,44 @@ namespace Service;
 
 public class Yaml
 {
-  public static string Directory = Path.Combine(Paths.ConfigPath, "expand_world");
+  public static string BaseDirectory = Path.Combine(Paths.ConfigPath, "expand_world");
   public static string BackupDirectory = Path.Combine(Paths.ConfigPath, "expand_world_backups");
 
+
+  public static string Read(string pattern)
+  {
+    if (!Directory.Exists(BaseDirectory))
+      Directory.CreateDirectory(BaseDirectory);
+    var data = Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
+      string.Join("\n", File.ReadAllLines(name).ToList())
+    );
+    return string.Join("\n", data) ?? "";
+  }
+
+  public static Heightmap.Biome ToBiomes(string biomeStr)
+  {
+    Heightmap.Biome result = 0;
+    if (biomeStr == "")
+    {
+      foreach (var biome in Enum.GetValues(typeof(Heightmap.Biome)))
+        result |= (Heightmap.Biome)biome;
+    }
+    else
+    {
+      var biomes = Parse.Split(biomeStr);
+      foreach (var biome in biomes)
+      {
+        if (Enum.TryParse<Heightmap.Biome>(biome, true, out var number))
+          result |= number;
+        else
+        {
+          if (int.TryParse(biome, out var value)) result += value;
+          else throw new InvalidOperationException($"Invalid biome {biome}.");
+        }
+      }
+    }
+    return result;
+  }
   public static void SetupWatcher(ConfigFile config)
   {
     FileSystemWatcher watcher = new(Path.GetDirectoryName(config.ConfigFilePath), Path.GetFileName(config.ConfigFilePath));
@@ -63,7 +99,7 @@ public class Yaml
     watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
     watcher.EnableRaisingEvents = true;
   }
-  public static void SetupWatcher(string pattern, Action action) => SetupWatcher(Directory, pattern, file =>
+  public static void SetupWatcher(string pattern, Action action) => SetupWatcher(BaseDirectory, pattern, file =>
   {
     BackupFile(file);
     action();
@@ -80,9 +116,10 @@ public class Yaml
 
   public static void Init()
   {
-    if (!System.IO.Directory.Exists(Directory))
-      System.IO.Directory.CreateDirectory(Directory);
+    if (!Directory.Exists(BaseDirectory))
+      Directory.CreateDirectory(BaseDirectory);
   }
+
 
   public static IDeserializer Deserializer() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
   .WithTypeConverter(new FloatConverter()).Build();

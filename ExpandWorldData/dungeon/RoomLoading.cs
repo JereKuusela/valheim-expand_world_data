@@ -11,7 +11,7 @@ namespace ExpandWorldData;
 public class RoomLoading
 {
   public static string FileName = "expand_rooms.yaml";
-  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
+  public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_rooms*.yaml";
 
 
@@ -291,7 +291,7 @@ public class RoomLoading
     }
     foreach (var kvp in perFile)
     {
-      var file = Path.Combine(Yaml.Directory, $"expand_rooms{kvp.Key}.yaml");
+      var file = Path.Combine(Yaml.BaseDirectory, $"expand_rooms{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
       yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));

@@ -12,7 +12,7 @@ namespace ExpandWorldData;
 public class VegetationLoading
 {
   private static readonly string FileName = "expand_vegetation.yaml";
-  private static readonly string FilePath = Path.Combine(Yaml.Directory, FileName);
+  private static readonly string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   private static readonly string Pattern = "expand_vegetation*.yaml";
 
 
@@ -125,7 +125,7 @@ public class VegetationLoading
     }
     foreach (var kvp in perFile)
     {
-      var file = Path.Combine(Yaml.Directory, $"expand_vegetation{kvp.Key}.yaml");
+      var file = Path.Combine(Yaml.BaseDirectory, $"expand_vegetation{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
       yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));

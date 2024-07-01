@@ -32,6 +32,15 @@ public class WorldData
   public bool wiggleDistance = true;
   [DefaultValue(true)]
   public bool wiggleSector = true;
+
+  [DefaultValue(null)]
+  public float? wiggleDistanceLength;
+  [DefaultValue(null)]
+  public float? wiggleDistanceWidth;
+  [DefaultValue(null)]
+  public float? wiggleSectorLength;
+  [DefaultValue(null)]
+  public float? wiggleSectorWidth;
   [DefaultValue("")]
   public string boiling = "";
 }
@@ -66,8 +75,22 @@ public class WorldEntry
     centerY = ConvertDist(data.centerY);
     amount = data.amount;
     stretch = data.stretch;
-    wiggleDistance = data.wiggleDistance;
-    wiggleSector = data.wiggleSector;
+    wiggleDistanceLength = Configuration.WiggleFrequency;
+    wiggleDistanceWidth = Configuration.WiggleWidth;
+    wiggleSectorLength = Configuration.DistanceWiggleLength;
+    wiggleSectorWidth = Configuration.DistanceWiggleWidth;
+    if (!data.wiggleDistance)
+      wiggleDistanceWidth = 0f;
+    if (!data.wiggleSector)
+      wiggleSectorWidth = 0f;
+    if (data.wiggleDistanceLength.HasValue)
+      wiggleDistanceLength = data.wiggleDistanceLength.Value;
+    if (data.wiggleDistanceWidth.HasValue)
+      wiggleDistanceWidth = data.wiggleDistanceWidth.Value;
+    if (data.wiggleSectorLength.HasValue)
+      wiggleSectorLength = data.wiggleSectorLength.Value;
+    if (data.wiggleSectorWidth.HasValue)
+      wiggleSectorWidth = data.wiggleSectorWidth.Value;
 
     if (minSector < 0f) minSector += 1f;
     if (maxSector > 1f) maxSector -= 1f;
@@ -85,7 +108,9 @@ public class WorldEntry
   public float stretch = 1f;
   public Heightmap.Biome biomeSeed = Heightmap.Biome.None;
   public int? seed = null;
-  public bool wiggleDistance = true;
-  public bool wiggleSector = true;
+  public float wiggleDistanceLength = 20f;
+  public float wiggleDistanceWidth = 100f;
+  public float wiggleSectorLength = 500f;
+  public float wiggleSectorWidth = 0.01f;
   public float boiling = 0f;
 }

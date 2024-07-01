@@ -1,11 +1,48 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using Service;
+using UnityEngine;
 
 namespace Data;
 
 public class Calculator
 {
+  public static Vector3 EvaluateVector3(string expression)
+  {
+
+    var vector = Vector3.zero;
+    var s = Parse.Split(expression);
+    vector.x = EvaluateFloat(s[0]) ?? 0f;
+    if (s.Length > 1) vector.z = EvaluateFloat(s[1]) ?? 0f;
+    if (s.Length > 2) vector.y = EvaluateFloat(s[2]) ?? 0f;
+    return vector;
+  }
+  public static Vector3 EvaluateVector3(string[] s, int index)
+  {
+    var vector = Vector3.zero;
+    if (s.Length > index) vector.x = EvaluateFloat(s[index]) ?? 0f;
+    if (s.Length > index + 1) vector.z = EvaluateFloat(s[index + 1]) ?? 0f;
+    if (s.Length > index + 2) vector.y = EvaluateFloat(s[index + 2]) ?? 0f;
+    return vector;
+  }
+  public static Quaternion EvaluateQuaternion(string expression)
+  {
+    var vector = Vector3.zero;
+    var s = Parse.Split(expression);
+    vector.y = EvaluateFloat(s[0]) ?? 0f;
+    if (s.Length > 1) vector.x = EvaluateFloat(s[1]) ?? 0f;
+    if (s.Length > 2) vector.z = EvaluateFloat(s[2]) ?? 0f;
+    return Quaternion.Euler(vector);
+  }
+  public static Quaternion EvaluateQuaternion(string[] s, int index)
+  {
+    var vector = Vector3.zero;
+    if (s.Length > index) vector.y = EvaluateFloat(s[index]) ?? 0f;
+    if (s.Length > index + 1) vector.x = EvaluateFloat(s[index + 1]) ?? 0f;
+    if (s.Length > index + 2) vector.z = EvaluateFloat(s[index + 2]) ?? 0f;
+    return Quaternion.Euler(vector);
+  }
   public static int? EvaluateInt(string expression)
   {
     try
@@ -30,7 +67,6 @@ public class Calculator
   }
   private static double EvaluateDouble(string expression)
   {
-
     var plus = expression.Split('+');
     if (plus.Length > 1)
     {
@@ -55,6 +91,7 @@ public class Calculator
       }
       return sum ?? 0;
     }
+
     var mult = expression.Split('*');
     if (mult.Length > 1)
     {

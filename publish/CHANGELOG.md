@@ -1,3 +1,6 @@
+- v1.41
+  - Updates the data system to match latest changes from Expand World Prefabs mod.
+
 - v1.40
   - Fixes blueprint rooms not always loading.
 

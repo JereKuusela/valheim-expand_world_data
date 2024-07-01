@@ -9,7 +9,7 @@ namespace ExpandWorldData;
 public class EnvironmentManager
 {
   public static string FileName = "expand_environments.yaml";
-  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
+  public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_environments*.yaml";
   private static Dictionary<string, EnvSetup> Originals = [];
   public static Dictionary<string, EnvironmentData> Extra = [];
@@ -206,7 +206,7 @@ public class EnvironmentManager
     }
     foreach (var kvp in perFile)
     {
-      var file = Path.Combine(Yaml.Directory, $"expand_environments{kvp.Key}.yaml");
+      var file = Path.Combine(Yaml.BaseDirectory, $"expand_environments{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
       yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));

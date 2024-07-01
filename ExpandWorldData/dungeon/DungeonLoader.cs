@@ -14,7 +14,7 @@ namespace ExpandWorldData.Dungeon;
 public partial class Loader
 {
   public static string FileName = "expand_dungeons.yaml";
-  public static string FilePath = Path.Combine(Yaml.Directory, FileName);
+  public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_dungeons*.yaml";
 
   private static Dictionary<string, DungeonGenerator> DefaultGenerators = [];
@@ -110,7 +110,7 @@ public partial class Loader
     }
     foreach (var kvp in perFile)
     {
-      var file = Path.Combine(Yaml.Directory, $"expand_dungeons{kvp.Key}.yaml");
+      var file = Path.Combine(Yaml.BaseDirectory, $"expand_dungeons{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
       yaml += Yaml.Serializer().Serialize(kvp.Value.Select(To));

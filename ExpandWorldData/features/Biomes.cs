@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 namespace ExpandWorldData;
@@ -145,13 +144,14 @@ public class BiomeCalculator
   // Remember to update the legacy version too.
   public static Heightmap.Biome Get(WorldGenerator obj, float wx, float wy)
   {
-    var wiggle = WorldGenerator.WorldAngle(wx, wy) * Configuration.WiggleWidth;
-    return GetEntry(obj, wx, wy, wiggle)?.biome ?? Heightmap.Biome.Ocean;
+    var angle = Mathf.Atan2(wx, wy);
+    return GetEntry(obj, wx, wy, angle)?.biome ?? Heightmap.Biome.Ocean;
   }
   // Bit annoying to maintain two versions of the same code.
   // But biome generation is performance critical so trying to keep it simple.
   public static Heightmap.Biome GetLegacy(WorldGenerator obj, float wx, float wy)
   {
+    var worldAngle = Mathf.Atan2(wx, wy);
     var data = GetData();
     var sx = wx * WorldInfo.Stretch;
     var sy = wy * WorldInfo.Stretch;
@@ -159,16 +159,9 @@ public class BiomeCalculator
     if (magnitude > WorldInfo.TotalRadius)
       return Heightmap.Biome.Ocean;
     var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
-    var num = WorldGenerator.WorldAngle(wx, wy) * Configuration.WiggleWidth;
     var baseAngle = 0f;
-    var wiggledAngle = 0f;
     if (CheckAngles)
-    {
-      baseAngle = (Mathf.Atan2(wx, wy) + Mathf.PI) / 2f / Mathf.PI;
-      wiggledAngle = baseAngle + Configuration.DistanceWiggleWidth * Mathf.Sin(magnitude / Configuration.DistanceWiggleLength);
-      if (wiggledAngle < 0f) wiggledAngle += 1f;
-      if (wiggledAngle >= 1f) wiggledAngle -= 1f;
-    }
+      baseAngle = (worldAngle + Mathf.PI) / 2f / Mathf.PI;
     var radius = WorldInfo.Radius;
     var bx = wx / WorldInfo.BiomeStretch;
     var by = wy / WorldInfo.BiomeStretch;
@@ -178,8 +171,8 @@ public class BiomeCalculator
       if (item.minAltitude > altitude || item.maxAltitude < altitude) continue;
       var mag = magnitude;
       var min = item.minDistance;
-      if (min > 0)
-        min += item.wiggleDistance ? num : 0f;
+      if (min > 0 && item.wiggleDistanceWidth > 0f)
+        min += Mathf.Sin(worldAngle * item.wiggleDistanceLength);
       else if (min == 0f)
         min = -0.1f; // To handle the center (0,0) correctly.
       var max = item.maxDistance;
@@ -195,7 +188,11 @@ public class BiomeCalculator
         max = item.maxSector;
         if (min != 0f || max != 1f)
         {
-          var angle = item.wiggleSector ? wiggledAngle : baseAngle;
+          var angle = baseAngle;
+          if (item.wiggleSectorWidth > 0f)
+            angle += Mathf.Sin(magnitude / item.wiggleSectorLength) * item.wiggleSectorWidth;
+          if (angle < 0f) angle += 1f;
+          if (angle >= 1f) angle -= 1f;
           var angleOk = min > max ? (angle >= min || angle < max) : angle >= min && angle < max;
           if (!angleOk) continue;
         }
@@ -209,21 +206,21 @@ public class BiomeCalculator
 
   public static float GetBoiling(WorldGenerator obj, float wx, float wy)
   {
-    var wiggle = WorldGenerator.WorldAngle(wx, wy) * Configuration.WiggleWidth;
-    var item = GetEntry(obj, wx, wy, wiggle);
+    var angle = Mathf.Atan2(wx, wy);
+    var item = GetEntry(obj, wx, wy, angle);
     if (item == null || item.boiling <= 0f) return -1f;
     var sx = wx * WorldInfo.Stretch;
     var sy = wy * WorldInfo.Stretch;
     var dist = DUtils.Length(sx - item.centerX, sy - item.centerY);
     var min = item.minDistance;
-    if (min > 0)
-      min += item.wiggleDistance ? wiggle : 0f;
+    if (min > 0 && item.wiggleDistanceWidth > 0f)
+      min += Mathf.Sin(angle * item.wiggleDistanceLength);
     else if (min == 0f)
       min = -0.1f; // To handle the center (0,0) correctly.
     return item.boiling * (dist - min) / 300f;
   }
 
-  private static WorldEntry? GetEntry(WorldGenerator obj, float wx, float wy, float wiggle)
+  private static WorldEntry? GetEntry(WorldGenerator obj, float wx, float wy, float worldAngle)
   {
     var data = GetData();
     var sx = wx * WorldInfo.Stretch;
@@ -233,14 +230,8 @@ public class BiomeCalculator
       return null;
     var altitude = Helper.BaseHeightToAltitude(obj.GetBaseHeight(wx, wy, false));
     var baseAngle = 0f;
-    var wiggledAngle = 0f;
     if (CheckAngles)
-    {
-      baseAngle = (Mathf.Atan2(wx, wy) + Mathf.PI) / 2f / Mathf.PI;
-      wiggledAngle = baseAngle + Configuration.DistanceWiggleWidth * Mathf.Sin(magnitude / Configuration.DistanceWiggleLength);
-      if (wiggledAngle < 0f) wiggledAngle += 1f;
-      if (wiggledAngle >= 1f) wiggledAngle -= 1f;
-    }
+      baseAngle = (worldAngle + Mathf.PI) / 2f / Mathf.PI;
     var radius = WorldInfo.Radius;
     var bx = wx / WorldInfo.BiomeStretch;
     var by = wy / WorldInfo.BiomeStretch;
@@ -250,8 +241,8 @@ public class BiomeCalculator
       if (item.minAltitude >= altitude || item.maxAltitude <= altitude) continue;
       var mag = magnitude;
       var min = item.minDistance;
-      if (min > 0)
-        min += item.wiggleDistance ? wiggle : 0f;
+      if (min > 0 && item.wiggleDistanceWidth > 0f)
+        min += Mathf.Sin(worldAngle * item.wiggleDistanceLength);
       else if (min == 0f)
         min = -0.1f; // To handle the center (0,0) correctly.
       var max = item.maxDistance;
@@ -267,7 +258,11 @@ public class BiomeCalculator
         max = item.maxSector;
         if (min != 0f || max != 1f)
         {
-          var angle = item.wiggleSector ? wiggledAngle : baseAngle;
+          var angle = baseAngle;
+          if (item.wiggleSectorWidth > 0f)
+            angle += Mathf.Sin(magnitude / item.wiggleSectorLength) * item.wiggleSectorWidth;
+          if (angle < 0f) angle += 1f;
+          if (angle >= 1f) angle -= 1f;
           var angleOk = min > max ? (angle >= min || angle < max) : angle >= min && angle < max;
           if (!angleOk) continue;
         }
