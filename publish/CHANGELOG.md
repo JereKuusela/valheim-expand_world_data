@@ -1,3 +1,6 @@
+- v1.42
+  - Fixes depending EW mods getting broken.
+
 - v1.41
   - Updates the data system to match latest changes and fixes from Expand World Prefabs mod.
 

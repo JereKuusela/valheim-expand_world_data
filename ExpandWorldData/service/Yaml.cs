@@ -15,14 +15,16 @@ namespace Service;
 public class Yaml
 {
   public static string BaseDirectory = Path.Combine(Paths.ConfigPath, "expand_world");
+  // Dependencies use this field.
+  public static string Directory = BaseDirectory;
   public static string BackupDirectory = Path.Combine(Paths.ConfigPath, "expand_world_backups");
 
 
   public static string Read(string pattern)
   {
-    if (!Directory.Exists(BaseDirectory))
-      Directory.CreateDirectory(BaseDirectory);
-    var data = Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
+    if (!System.IO.Directory.Exists(BaseDirectory))
+      System.IO.Directory.CreateDirectory(BaseDirectory);
+    var data = System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
       string.Join("\n", File.ReadAllLines(name).ToList())
     );
     return string.Join("\n", data) ?? "";
@@ -116,8 +118,8 @@ public class Yaml
 
   public static void Init()
   {
-    if (!Directory.Exists(BaseDirectory))
-      Directory.CreateDirectory(BaseDirectory);
+    if (!System.IO.Directory.Exists(BaseDirectory))
+      System.IO.Directory.CreateDirectory(BaseDirectory);
   }
 
 
