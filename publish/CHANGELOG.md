@@ -1,3 +1,6 @@
+- v1.43
+  - Reverts some unintended changes messing up the terrain height, sorry!
+
 - v1.42
   - Fixes depending EW mods getting broken.
 
