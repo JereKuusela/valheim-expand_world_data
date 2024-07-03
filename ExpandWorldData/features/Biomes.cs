@@ -172,7 +172,7 @@ public class BiomeCalculator
       var mag = magnitude;
       var min = item.minDistance;
       if (min > 0 && item.wiggleDistanceWidth > 0f)
-        min += Mathf.Sin(worldAngle * item.wiggleDistanceLength);
+        min += Mathf.Sin(worldAngle * item.wiggleDistanceLength) * item.wiggleDistanceWidth;
       else if (min == 0f)
         min = -0.1f; // To handle the center (0,0) correctly.
       var max = item.maxDistance;
@@ -214,7 +214,7 @@ public class BiomeCalculator
     var dist = DUtils.Length(sx - item.centerX, sy - item.centerY);
     var min = item.minDistance;
     if (min > 0 && item.wiggleDistanceWidth > 0f)
-      min += Mathf.Sin(angle * item.wiggleDistanceLength);
+      min += Mathf.Sin(angle * item.wiggleDistanceLength) * item.wiggleDistanceWidth;
     else if (min == 0f)
       min = -0.1f; // To handle the center (0,0) correctly.
     return item.boiling * (dist - min) / 300f;
@@ -242,7 +242,7 @@ public class BiomeCalculator
       var mag = magnitude;
       var min = item.minDistance;
       if (min > 0 && item.wiggleDistanceWidth > 0f)
-        min += Mathf.Sin(worldAngle * item.wiggleDistanceLength);
+        min += Mathf.Sin(worldAngle * item.wiggleDistanceLength) * item.wiggleDistanceWidth;
       else if (min == 0f)
         min = -0.1f; // To handle the center (0,0) correctly.
       var max = item.maxDistance;

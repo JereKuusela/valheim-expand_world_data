@@ -70,10 +70,14 @@ public partial class Configuration
 
     section = "2. Features";
 
-    configDistanceWiggleLength = wrapper.BindFloat(section, "Distance wiggle length", 500f, true);
-    configDistanceWiggleWidth = wrapper.BindFloat(section, "Distance wiggle width", 0.01f, true);
-    configWiggleFrequency = wrapper.BindFloat(section, "Wiggle frequency", 20f, true, "How many wiggles are per each circle.");
-    configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, true, "How many meters are the wiggles.");
+    configDistanceWiggleLength = wrapper.BindFloat(section, "Distance wiggle length", 500f, false);
+    configDistanceWiggleLength.SettingChanged += (s, e) => WorldManager.FromFile();
+    configDistanceWiggleWidth = wrapper.BindFloat(section, "Distance wiggle width", 0.01f, false);
+    configDistanceWiggleWidth.SettingChanged += (s, e) => WorldManager.FromFile();
+    configWiggleFrequency = wrapper.BindFloat(section, "Wiggle frequency", 20f, false, "How many wiggles are per each circle.");
+    configWiggleFrequency.SettingChanged += (s, e) => WorldManager.FromFile();
+    configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, false, "How many meters are the wiggles.");
+    configWiggleWidth.SettingChanged += (s, e) => WorldManager.FromFile();
 
     section = "3. Data";
     configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.");

@@ -128,7 +128,20 @@ Each entry in the file adds a new rule. When determing the biome, the rules are 
 - stretch (default: `1.0`): Same as the Stretch biomes setting in Expand World Size but applied just to a single entry. Multiplies the size of biome areas (average total area stays the same).
 - seed: Overrides the random outcome of `amount`. Numeric value fixes the outcome. Biome name uses a biome specific value derived from the world seed. No value uses biome from the `terrain` parameter.
 - wiggleDistance (default: `true`): Applies "wiggle" to the `minDistance`.
+  - Wiggle adds a sin wave pattern to the borders for less artifical biome transitions.
+  - Frequency comes from the "Wiggle frequency" config setting.
+  - Amplitude comes from the "Wiggle width" config setting.
+- wiggleDistanceLength: If set, overrides the "Wiggle frequency" setting.
+  - The default value 20 causes 20 wiggles to appear over a full circle.
+- wiggleDistanceWidth: If set, overrides the "Wiggle width" setting.
+  - The default value 100 meters causes each wiggle to modify the minimum distance from -100 meters to +100 meters.
 - wiggleSector (default: `true`): Applies "wiggle" to the `maxSector` and `minSector`.
+  - Frequency comes from the "Distance wiggle length" config setting.
+  - Amplitude comes from the "Distance wiggle width" config setting.
+- wiggleSectorLength: If set, overrides the "Distance wiggle length" setting.
+  - The default value 500 meters causes a wiggle to appear every 2 \* Pi \* 500 = 3142 meters.
+- wiggleSectorWidth: If set, overrides the "Distance wiggle width" setting.
+  - The default value 0.01 causes each wiggle to modify the sector from -0.01 to +0.01.
 - boiling (default: `false`): If true, the water is boiling hot.
   - For Ashlands biome, the default value is `true` to keep old configurations working.
   - The boiling effect gradually increases over 300 meters.
@@ -183,10 +196,6 @@ Sectors start at the south and increase towards clock-wise direction. So that:
 - Bottom part is between sectors -0.25 and 0.25 (or 0.75 and 1.25).
 
 Note: Of course any number is valid for sectors. Like from 0.37 to 0.62.
-
-### Wiggle
-
-"Wiggle" adds a sin wave pattern to the distance/sector borders for less artifical biome transitions. The strength can be globally configured in the main .cfg file.
 
 ## Environments
 

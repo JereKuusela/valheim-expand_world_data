@@ -1,3 +1,6 @@
+- v1.44
+  - Adds new fields `wiggleDistanceLength`, `wiggleDistanceWidth`, `wiggleSectorLength`, and `wiggleSectorWidth` to the `expand_world.yaml` to support entry specific wiggling.
+
 - v1.43
   - Reverts some unintended changes messing up the terrain height, sorry!
 
