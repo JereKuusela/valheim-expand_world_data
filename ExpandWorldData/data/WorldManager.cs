@@ -35,7 +35,7 @@ public class WorldManager
       },
       new() {
         biome = "swamp",
-        wiggleDistanceWidth = 0f,
+        wiggleDistance = false,
         minDistance = 0.2f,
         maxDistance = 0.6f,
         minAltitude = -20f,

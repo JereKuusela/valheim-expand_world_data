@@ -382,7 +382,7 @@ public class LocationLoading
   {
     if (!BlueprintManager.TryGet(name, out var bp)) return false;
 
-    location.m_prefab = new() { m_name = name };
+    location.m_prefab = new(new()) { m_name = name };
     ApplyLocationData(location, bp.Radius + 5);
     return true;
   }
