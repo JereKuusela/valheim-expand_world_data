@@ -76,7 +76,13 @@ public class VegetationSpawning
   }
   private static bool InsideClearArea(List<ZoneSystem.ClearArea> areas, Vector3 point)
   {
-    var size = Extra.TryGetValue(CurrentVegetation, out var extra) ? extra.clearRadius : 0;
+    var size = 0f;
+    if (Extra.TryGetValue(CurrentVegetation, out var extra))
+    {
+      // Bit hacky to check this here but works.
+      if (!extra.IsDistanceOk(point)) return true;
+      size = extra.clearRadius;
+    }
     foreach (var clearArea in areas)
     {
       var distance = Utils.DistanceXZ(point, clearArea.m_center);

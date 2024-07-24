@@ -395,7 +395,10 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - gridSize (default: `0`): Size of the grid. Only for CampGrid.
 - tileWidth (default: `0` meters): Size of a single tile. Only for CampGrid.
 - spawnChance (default: `1`): Chance for each tile to spawn. Only for CampGrid.
-- interiorTransform (default: `false`): Some locations may require this being true. If you notice weird warnings, try setting this to true.
+- interiorTransform (default: `false`): Makes the dungeon to be generated at specific position instead of straight above the entrance.
+  - This gives more room to fill out the entire zone.
+  - The position is determined by the location entrance, so this only works if the location supports it.
+  - Currently there is no need to change this setting, but you may need to change this if you change the entrance location.
 - objectData: Replaces object data in the dungeon.
   - See [Object data](#object-data) for details.
 - objectSwap: Changes dungeon objects to other objects.

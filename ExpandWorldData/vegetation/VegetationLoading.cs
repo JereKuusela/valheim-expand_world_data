@@ -202,10 +202,17 @@ public class VegetationLoading
     if (prefabs.Count > 1)
       VegetationSpawning.Prefabs.Add(veg, prefabs);
 
-    if (veg.m_enable && data.requiredGlobalKey != "")
-      extra.requiredGlobalKeys = DataManager.ToList(data.requiredGlobalKey);
-    if (veg.m_enable && data.forbiddenGlobalKey != "")
-      extra.forbiddenGlobalKeys = DataManager.ToList(data.forbiddenGlobalKey);
+    if (veg.m_enable)
+    {
+      if (data.requiredGlobalKey != "")
+        extra.requiredGlobalKeys = DataManager.ToList(data.requiredGlobalKey);
+      if (data.forbiddenGlobalKey != "")
+        extra.forbiddenGlobalKeys = DataManager.ToList(data.forbiddenGlobalKey);
+      if (data.centerX != 0f || data.centerY != 0f)
+        extra.center = new(WorldEntry.ConvertDist(data.centerX), WorldEntry.ConvertDist(data.centerY));
+      if (data.minDistance != 0f || data.maxDistance != 0f)
+        extra.distance = new(WorldEntry.ConvertDist(data.minDistance), WorldEntry.ConvertDist(data.maxDistance));
+    }
     if (extra.IsValid())
       VegetationSpawning.Extra.Add(veg, extra);
     return veg;

@@ -13,6 +13,7 @@ public class EWD : BaseUnityPlugin
   public const string VERSION = "1.44";
 #nullable disable
   public static EWD Instance;
+  public static Harmony Harmony;
 #nullable enable
   public static ServerSync.ConfigSync ConfigSync = new(GUID)
   {
@@ -38,8 +39,8 @@ public class EWD : BaseUnityPlugin
     BiomeManager.SetupBiomeArrays();
     ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, InvokeRegenerate);
     Configuration.Init(wrapper);
-    Harmony harmony = new(GUID);
-    harmony.PatchAll();
+    Harmony = new(GUID);
+    Harmony.PatchAll();
     try
     {
       if (!System.IO.Directory.Exists(Yaml.BaseDirectory))

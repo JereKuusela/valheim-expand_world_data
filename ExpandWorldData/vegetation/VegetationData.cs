@@ -90,6 +90,14 @@ public class VegetationData
   public int surroundCheckLayers = 2;
   [DefaultValue(0f)]
   public float surroundBetterThanAverage = 0f;
+  [DefaultValue(0f)]
+  public float minDistance = 0f;
+  [DefaultValue(0f)]
+  public float maxDistance = 0f;
+  [DefaultValue(0f)]
+  public float centerX = 0f;
+  [DefaultValue(0f)]
+  public float centerY = 0f;
 }
 
 public class VegetationExtra
@@ -100,6 +108,23 @@ public class VegetationExtra
   public Range<Vector3>? scale;
   public float clearRadius = 0;
   public bool clearArea = false;
+  public Range<float>? distance;
+  public Vector2? center;
 
-  public bool IsValid() => requiredGlobalKeys != null || forbiddenGlobalKeys != null || data != null || scale != null || clearRadius != 0f || clearArea;
+  public bool IsDistanceOk(Vector3 pos)
+  {
+    if (distance == null) return true;
+    var d = Vector3.Distance(pos, center ?? Vector3.zero);
+    if (distance.Max == 0f) return distance.Min <= d;
+    return distance.Min <= d && d <= distance.Max;
+  }
+  public bool IsValid() =>
+    requiredGlobalKeys != null ||
+    forbiddenGlobalKeys != null ||
+    data != null ||
+    scale != null ||
+    clearRadius != 0f ||
+    clearArea ||
+    distance != null ||
+    center != null;
 }

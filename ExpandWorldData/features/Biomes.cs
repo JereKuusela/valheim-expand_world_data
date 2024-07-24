@@ -72,7 +72,9 @@ public class GetMaskColor
 {
   static void Prefix(ref Heightmap.Biome biome)
   {
-    biome = BiomeManager.GetTerrain(biome);
+    // Skipping AshLands for now, since people might want to change the terrain to get more area.
+    if (biome != Heightmap.Biome.AshLands)
+      biome = BiomeManager.GetTerrain(biome);
   }
 }
 

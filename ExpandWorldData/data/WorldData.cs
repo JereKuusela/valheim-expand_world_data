@@ -48,7 +48,7 @@ public class WorldData
 
 public class WorldEntry
 {
-  private static float ConvertDist(float percent) => percent * WorldInfo.Radius;
+  public static float ConvertDist(float percent) => percent * WorldInfo.Radius;
   public WorldEntry(WorldData data)
   {
     biome = DataManager.ToBiomes(data.biome);
