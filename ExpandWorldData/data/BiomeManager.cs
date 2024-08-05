@@ -20,7 +20,9 @@ public class BiomeManager
     EnvEntry env = new()
     {
       m_environment = data.environment,
-      m_weight = data.weight
+      m_weight = data.weight,
+      m_ashlandsOverride = data.ashlandsOverride ?? data.environment == "Ashlands_SeaStorm",
+      m_deepnorthOverride = data.deepNorthOverride ?? false
     };
     return env;
   }
@@ -29,7 +31,9 @@ public class BiomeManager
     return new()
     {
       environment = env.m_environment,
-      weight = env.m_weight
+      weight = env.m_weight,
+      ashlandsOverride = env.m_ashlandsOverride,
+      deepNorthOverride = env.m_deepnorthOverride
     };
   }
   private static readonly Dictionary<string, Heightmap.Biome> OriginalBiomes = new() {

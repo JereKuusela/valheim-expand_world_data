@@ -1,3 +1,6 @@
+- v1.45
+  - Adds new fields `ashlandsOverride` and `deepNorthOverride` to the `expand_biomes.yaml` to support overriding the Ocean weather in the Ashlands and Deep North areas.
+
 - v1.44
   - WARNING: This update changes terrain related code. Recommended to back up your save before updating.
   - Adds new fields `wiggleDistanceLength`, `wiggleDistanceWidth`, `wiggleSectorLength`, and `wiggleSectorWidth` to the `expand_world.yaml` to support entry specific wiggling.

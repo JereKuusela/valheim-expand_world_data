@@ -93,6 +93,11 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - waterDepthMultiplier (default: `1.0`): Multiplies negative terrain altitude.
 - forestMultiplier: Multiplier to the global forest multiplier. Using this requires an extra biome check which will lower the performance.
 - environments: List of available environments (weathers) and their relative chances.
+  - environment: Name of the environment.
+  - weight: Relative chance of this environment.
+  - ashlandsOverride (default: `false`): This weather will be used in the Ashlands area instead of the normal weather.
+  - deepNorthOverride (default: `false`): This weather will be used in the Deep North area instead of the normal weather.
+  - Note: For weather Ashlands_SeaStorm, the default value of `ashlandsOverride` is `true` to keep old configurations working.
 - maximumAltitude (default: `1000` meters): Maximum altitude.
 - minimumAltitude (default: `-1000` meters): Minimum altitude.
 - excessFactor (default: `0.5`): How strongly the altitude is reduced if over the maximum or minimum limit. For example 0.5 square roots the excess altitude.

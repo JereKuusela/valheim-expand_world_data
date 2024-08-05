@@ -9,6 +9,10 @@ public class BiomeEnvironment
   public string environment = "";
   [DefaultValue(1f)]
   public float weight = 1f;
+  [DefaultValue(false)]
+  public bool? ashlandsOverride;
+  [DefaultValue(false)]
+  public bool? deepNorthOverride;
 }
 
 public class BiomeYaml
