@@ -1,5 +1,9 @@
 - v1.45
   - Adds new fields `ashlandsOverride` and `deepNorthOverride` to the `expand_biomes.yaml` to support overriding the Ocean weather in the Ashlands and Deep North areas.
+  - Adds a new setting "Restrict Ashlands" to allow removing the Ashlands restrictions.
+  - Fixes location object swaps not always working on single player.
+  - Fixes chances not working when spawning blueprints with a location object.
+  - Fixed for the new update.
 
 - v1.44
   - WARNING: This update changes terrain related code. Recommended to back up your save before updating.

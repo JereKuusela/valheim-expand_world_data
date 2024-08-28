@@ -39,22 +39,22 @@ public class LocationSpawning
   }
   static readonly string DummyObj = "vfx_auto_pickup";
   public static GameObject DummySpawn => UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab(DummyObj), Vector3.zero, Quaternion.identity);
-  public static GameObject Object(GameObject prefab, Vector3 pos, Quaternion rot, List<GameObject> spawnedGhostObjects)
+  public static GameObject Object(GameObject prefab, Vector3 pos, Quaternion rot, int seed, List<GameObject> spawnedGhostObjects)
   {
     BlueprintObject bpo = new(Utils.GetPrefabName(prefab), pos, rot, prefab.transform.localScale, null, 1f);
-    var obj = Spawn.BPO(bpo, DataOverride, PrefabOverride, spawnedGhostObjects);
+    var obj = Spawn.BPO(bpo, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
     return obj ?? DummySpawn;
   }
 
 
-  public static void CustomObjects(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, Vector3 scale, List<GameObject> spawnedGhostObjects)
+  public static void CustomObjects(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, Vector3 scale, int seed, List<GameObject> spawnedGhostObjects)
   {
     if (!LocationLoading.Objects.TryGetValue(location.m_prefab.Name, out var objects)) return;
     //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefab.Name}");
     foreach (var obj in objects)
     {
       if (obj.Chance < 1f && Random.value > obj.Chance) continue;
-      Spawn.BPO(obj, pos, rot, scale, DataOverride, PrefabOverride, spawnedGhostObjects);
+      Spawn.BPO(obj, pos, rot, scale, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
     }
   }
 
@@ -90,10 +90,9 @@ public class LocationObjectDataAndSwap
 {
   static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos)
   {
-    Spawn.IgnoreHealth = LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data) && data.randomDamage == "all";
-    LocationSpawning.CurrentLocation = "";
     if (mode != ZoneSystem.SpawnMode.Client)
     {
+      Spawn.IgnoreHealth = LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data) && data.randomDamage == "all";
       LocationSpawning.CurrentLocation = location.m_prefab.Name;
       if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out data))
         pos.y += data.offset ?? data.groundOffset;
@@ -114,6 +113,7 @@ public class LocationObjectDataAndSwap
       .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_1))
       .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(Customize).operand))
       .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_2))
       .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, 6))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(LocationSpawning.Object).operand)
       .InstructionEnumeration();
@@ -122,36 +122,37 @@ public class LocationObjectDataAndSwap
 
   static void Postfix(ZoneSystem.ZoneLocation location, int seed, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode, List<GameObject> spawnedGhostObjects)
   {
-    if (mode != ZoneSystem.SpawnMode.Client)
-    {
-      var isBluePrint = BlueprintManager.Has(location.m_prefab.Name);
-      if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
-      {
-        WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
-        // Remove the applied offset.
-        var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
-        HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
-      }
-      Random.InitState(seed);
-      if (mode == ZoneSystem.SpawnMode.Ghost)
-        ZNetView.StartGhostInit();
-      var scale = Vector3.one;
-      if (LocationLoading.Scales.TryGetValue(location.m_prefab.Name, out var s)) scale = Helper.RandomValue(s);
-      if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.Name, out var bp))
-      {
-        Spawn.Blueprint(bp, pos, rot, scale, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
-      }
-      LocationSpawning.CustomObjects(location, pos, rot, scale, spawnedGhostObjects);
+    // Previously client mode cleared CurrentLocation which caused issued on single player.
+    // If the player teleports to the location, location placement would also run the client spawning.
+    if (mode == ZoneSystem.SpawnMode.Client) return;
 
-      WearNTear.m_randomInitialDamage = false;
-      SnapToGround.SnappAll();
-      if (mode == ZoneSystem.SpawnMode.Ghost)
-        ZNetView.FinishGhostInit();
+    var isBluePrint = BlueprintManager.Has(location.m_prefab.Name);
+    if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
+    {
+      WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
+      // Remove the applied offset.
+      var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
+      HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
     }
-    LocationSpawning.CurrentLocation = "";
+    Random.InitState(seed);
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      ZNetView.StartGhostInit();
+    var scale = Vector3.one;
+    if (LocationLoading.Scales.TryGetValue(location.m_prefab.Name, out var s)) scale = Helper.RandomValue(s);
+    if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.Name, out var bp))
+    {
+      Spawn.Blueprint(bp, pos, rot, scale, seed, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
+    }
+    LocationSpawning.CustomObjects(location, pos, rot, scale, seed, spawnedGhostObjects);
+
+    WearNTear.m_randomInitialDamage = false;
+    SnapToGround.SnappAll();
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      ZNetView.FinishGhostInit();
     Spawn.IgnoreHealth = false;
     if (LocationLoading.Commands.TryGetValue(location.m_prefab.Name, out var commands))
       CommandManager.Run(commands, pos, rot.eulerAngles);
+    LocationSpawning.CurrentLocation = "";
   }
 
   static void HandleTerrain(Vector3 pos, float radius, bool isBlueprint, LocationData data)

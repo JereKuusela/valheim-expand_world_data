@@ -15,20 +15,20 @@ namespace ExpandWorldData;
 public class Spawn
 {
   public static bool IgnoreHealth = false;
-  public static void Blueprint(string name, Vector3 pos, Quaternion rot, Vector3 scale, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
+  public static void Blueprint(string name, Vector3 pos, Quaternion rot, Vector3 scale, int seed, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
   {
     if (BlueprintManager.TryGet(name, out var bp))
-      Blueprint(bp, pos, rot, scale, dataOverride, prefabOverride, spawned);
+      Blueprint(bp, pos, rot, scale, seed, dataOverride, prefabOverride, spawned);
   }
-  public static void Blueprint(Blueprint bp, Vector3 pos, Quaternion rot, Vector3 scale, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
+  public static void Blueprint(Blueprint bp, Vector3 pos, Quaternion rot, Vector3 scale, int seed, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
   {
     foreach (var obj in bp.Objects)
     {
       if (obj.Chance < 1f && UnityEngine.Random.value > obj.Chance) continue;
-      BPO(obj, pos, rot, scale, dataOverride, prefabOverride, spawned);
+      BPO(obj, pos, rot, scale, seed, dataOverride, prefabOverride, spawned);
     }
   }
-  private static void SetData(GameObject prefab, Vector3 position, Quaternion rotation, Vector3? scale, DataEntry? data = null)
+  private static void SetData(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 scale, int seed, DataEntry? data = null)
   {
     // No override needed.
     if (data == null && scale == null) return;
@@ -40,6 +40,9 @@ public class Spawn
     // For random damage, health is not needed.
     if (IgnoreHealth)
       zdo?.RemoveFloat(ZDOVars.s_health);
+    // Blueprints can include locations, these would have fixed seed which messes up the random system.
+    if (prefab.name == "LocationProxy")
+      zdo?.Set(ZDOVars.s_seed, seed);
   }
 
   // Spawning a object should support following scenarions:
@@ -54,23 +57,26 @@ public class Spawn
   // 4. can be achieved by using a dummy object and then objectSwap to replace it.
 
   // This should be only called for custom objects and blueprints so not returning anything.
-  public static void BPO(BlueprintObject obj, Vector3 pos, Quaternion rot, Vector3 scale, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
+  public static void BPO(BlueprintObject obj, Vector3 pos, Quaternion rot, Vector3 scale, int seed, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
   {
-    var go = SharedBPO(obj, pos, rot, scale, dataOverride, prefabOverride, spawned);
+    var go = SharedBPO(obj, pos, rot, scale, seed, dataOverride, prefabOverride, spawned);
     if (go != null && go.TryGetComponent<DungeonGenerator>(out var dg))
     {
       // m_originalPosition is not set because not sure if it's needed for custom objects.
       dg.Generate(ZNetView.m_ghostInit ? ZoneSystem.SpawnMode.Ghost : ZoneSystem.SpawnMode.Full);
     }
   }
+  // Needed for EW Spawns.
+  public static void BPO(BlueprintObject obj, Vector3 pos, Quaternion rot, Vector3 scale, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
+   => BPO(obj, pos, rot, scale, 0, dataOverride, prefabOverride, spawned);
 
   // This is called for vanilla objects so it must be returned to the original code.
-  public static GameObject? BPO(BlueprintObject obj, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
+  public static GameObject? BPO(BlueprintObject obj, int seed, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
   {
     // Dungeon generate not called here because it's called in the original location code.
-    return SharedBPO(obj, Vector3.zero, Quaternion.identity, Vector3.one, dataOverride, prefabOverride, spawned);
+    return SharedBPO(obj, Vector3.zero, Quaternion.identity, Vector3.one, seed, dataOverride, prefabOverride, spawned);
   }
-  private static GameObject? SharedBPO(BlueprintObject obj, Vector3 pos, Quaternion rot, Vector3 scale, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
+  private static GameObject? SharedBPO(BlueprintObject obj, Vector3 pos, Quaternion rot, Vector3 scale, int seed, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
   {
     pos += rot * obj.Pos;
     if (obj.SnapToGround)
@@ -97,14 +103,14 @@ public class Spawn
     {
       if (BlueprintManager.TryGet(prefabName, out var bp))
       {
-        Blueprint(bp, pos, rot, sc, dataOverride, prefabOverride, spawned);
+        Blueprint(bp, pos, rot, sc, seed, dataOverride, prefabOverride, spawned);
         return null;
       }
       Log.Warning($"Blueprint / object prefab {prefabName} not found!");
       return null;
     }
     var data = dataOverride(obj.Data, prefabName);
-    SetData(prefab, pos, rot, sc, data);
+    SetData(prefab, pos, rot, sc, seed, data);
 
     //ExpandWorldData.Log.Debug($"Spawning {prefabName} at {Helper.Print(pos)} {source}");
     var go = UnityEngine.Object.Instantiate(prefab, pos, rot);

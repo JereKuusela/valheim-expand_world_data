@@ -5,12 +5,13 @@ using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocations), new[] { typeof(ZoneSystem.ZoneLocation) })]
+[HarmonyPatch(typeof(LoadingIndicator), nameof(LoadingIndicator.SetProgressVisibility))]
 public class GuaranteeLocations
 {
-  static void GuaranteeStartLocation(ZoneSystem zs, ZoneSystem.ZoneLocation location)
+  static void GuaranteeStartLocation(ZoneSystem zs)
   {
-    if (location.m_prefab.Name == Game.instance.m_StartLocation && Count(zs, location) == 0)
+    var location = zs.m_locations.FirstOrDefault(loc => loc.m_prefab.Name == Game.instance.m_StartLocation);
+    if (Count(zs, location) == 0)
     {
       Log.Info($"Forcefully placing {location.m_prefab.Name} location at the center.");
       var locationRadius = Mathf.Max(location.m_exteriorRadius, location.m_interiorRadius);
@@ -19,9 +20,10 @@ public class GuaranteeLocations
     }
   }
   static int Count(ZoneSystem zs, ZoneSystem.ZoneLocation location) => zs.m_locationInstances.Values.Count(loc => loc.m_location.m_prefab.Name == location.m_prefab.Name);
-  static void Finalizer(ZoneSystem __instance, ZoneSystem.ZoneLocation location)
+  static void Finalizer(bool visible)
   {
-    GuaranteeStartLocation(__instance, location);
+    if (visible) return;
+    GuaranteeStartLocation(ZoneSystem.instance);
   }
 }
 
