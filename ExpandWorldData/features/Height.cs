@@ -50,20 +50,17 @@ public class GetAshlandsHeight
 {
   private static readonly double DefaultWidthRestriction = 7500f;
   private static double WidthRestriction = DefaultWidthRestriction;
-  private static readonly double DefaultDepthRestriction = 600f;
-  private static double DepthRestriction = DefaultDepthRestriction;
-  private static readonly double DefaultDistanceRestriction = 1000f;
-  private static double DistanceRestriction = DefaultDistanceRestriction;
-  public static bool Patch(Harmony harmony, double widthRestriction, double depthRestriction, double distanceRestriction)
+  private static readonly double DefaultLengthRestriction = 1000f;
+  private static double LengthRestriction = DefaultLengthRestriction;
+  public static bool Patch(Harmony harmony, double widthRestriction, double lengthRestriction)
   {
-    if (WidthRestriction == widthRestriction && DepthRestriction == depthRestriction && DistanceRestriction == distanceRestriction) return false;
+    if (WidthRestriction == widthRestriction && LengthRestriction == lengthRestriction) return false;
     var method = AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsHeight));
     var transpiler = AccessTools.Method(typeof(GetAshlandsHeight), nameof(Transpiler));
     WidthRestriction = widthRestriction;
-    DepthRestriction = depthRestriction;
-    DistanceRestriction = distanceRestriction;
+    LengthRestriction = lengthRestriction;
     harmony.Unpatch(method, transpiler);
-    if (WidthRestriction != DefaultWidthRestriction && DepthRestriction != DefaultDepthRestriction && DistanceRestriction != DefaultDistanceRestriction)
+    if (WidthRestriction != DefaultWidthRestriction || LengthRestriction != DefaultLengthRestriction)
       harmony.Patch(method, transpiler: new HarmonyMethod(transpiler));
 
     return true;
@@ -73,11 +70,9 @@ public class GetAshlandsHeight
   {
     return new CodeMatcher(instructions)
       .MatchForward(false, new CodeMatch(OpCodes.Ldc_R8, 1000.0))
-      .SetOperandAndAdvance(DistanceRestriction)
+      .SetOperandAndAdvance(LengthRestriction)
       .MatchForward(false, new CodeMatch(OpCodes.Ldc_R8, 7500.0))
       .SetOperandAndAdvance(WidthRestriction)
-      .MatchForward(false, new CodeMatch(OpCodes.Ldc_R8, 600.0))
-      .SetOperandAndAdvance(DepthRestriction)
       .InstructionEnumeration();
   }
 }

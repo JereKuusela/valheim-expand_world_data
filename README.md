@@ -30,8 +30,6 @@ Settings are automatically reloaded (consider using [Configuration manager](http
 
 Note: Pay extra attention when loading old worlds. Certain configurations can cause alter the terrain significantly and destroy your buildings.
 
-Note: Old configuration from Expand World is automatically migrated to this mod.
-
 ### Server side
 
 This mod can be used server only, without requiring clients to have it. However only following files can be configured:
@@ -43,6 +41,16 @@ This mod can be used server only, without requiring clients to have it. However 
 - `expand_world.cfg`: Only setting Zone spawners.
 
 When doing this, enable `Server only` on the config to remove version check.
+
+## Ashlands & Deep North
+
+Ashlands and Deep North have special terrain features that can be modified in the config.
+
+Terrain is lowered before Ashland and Deep North to make Ocean appear. This can be disabled with settings "Ashlands gap" and "Deep North gap".
+
+Ashlands terrain is limited by the position. This can be fully disabled with setting ""Restrict Ashlands position" or modified with settings "Ashlands length restriction" and "Ashlands width restriction".
+
+Note: The same settings exist in Expand World Size mod. Only change these settings in one of the mods.
 
 ## Data
 

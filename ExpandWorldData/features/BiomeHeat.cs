@@ -33,7 +33,7 @@ public class Spawner
   static bool IsAshlands(float x, float y, ref bool __result)
   {
     var wg = WorldGenerator.instance;
-    if (wg.m_world.m_menu) return true;
+    if (wg == null || wg.m_world.m_menu) return true;
     if (!Configuration.DataWorld) return true;
     var boiling = BiomeCalculator.GetBoiling(wg, x, y);
     __result = boiling > 0f;

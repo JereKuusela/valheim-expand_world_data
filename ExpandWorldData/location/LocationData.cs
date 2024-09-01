@@ -5,7 +5,6 @@ namespace ExpandWorldData;
 public class LocationData
 {
   public string prefab = "";
-  [DefaultValue(true)]
   public bool enabled = true;
   [DefaultValue("")]
   public string dungeon = "";

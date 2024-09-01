@@ -30,15 +30,10 @@ public partial class Configuration
   public static ConfigEntry<string> configWiggleWidth;
   public static float WiggleWidth => ConfigWrapper.Floats[configWiggleWidth];
   public static ConfigEntry<string> configAshlandsWidthRestriction;
-  //public static double AshlandsWidthRestriction => RestrictAshlands ? ConfigWrapper.Floats[configAshlandsWidthRestriction] : double.PositiveInfinity;
-  public static double AshlandsWidthRestriction => RestrictAshlands ? 7500f : double.PositiveInfinity;
-  //public static double AshlandsDepthRestriction => RestrictAshlands ? ConfigWrapper.Floats[configAshlandsDepthRestriction] : double.PositiveInfinity;
-  public static double AshlandsDepthRestriction => RestrictAshlands ? 600f : double.PositiveInfinity;
-  public static ConfigEntry<string> configAshlandsDistanceRestriction;
-  //public static double AshlandsDistanceRestriction => RestrictAshlands ? ConfigWrapper.Floats[configAshlandsDistanceRestriction] : double.PositiveInfinity;
-  public static double AshlandsDistanceRestriction => RestrictAshlands ? 1000f : double.PositiveInfinity;
+  public static double AshlandsWidthRestriction => RestrictAshlands ? ConfigWrapper.Floats[configAshlandsWidthRestriction] : double.PositiveInfinity;
+  public static ConfigEntry<string> configAshlandsLengthRestriction;
+  public static double AshlandsLengthRestriction => RestrictAshlands ? ConfigWrapper.Floats[configAshlandsLengthRestriction] : double.PositiveInfinity;
 
-  public static ConfigEntry<string> configAshlandsDepthRestriction;
   public static ConfigEntry<bool> configRestrictAshlands;
   public static bool RestrictAshlands => configRestrictAshlands.Value;
   public static ConfigEntry<bool> configAshlandsGap;
@@ -82,7 +77,7 @@ public partial class Configuration
   public static void HandleRestrictAshlandsPosition()
   {
     if (WorldGenerator.instance == null) return;
-    if (GetAshlandsHeight.Patch(EWD.Harmony, AshlandsWidthRestriction, AshlandsDepthRestriction, AshlandsDistanceRestriction))
+    if (GetAshlandsHeight.Patch(EWD.Harmony, AshlandsWidthRestriction, AshlandsLengthRestriction))
       EWD.Instance.InvokeRegenerate();
   }
   public static void HandleAshlandsGap()
@@ -152,13 +147,10 @@ public partial class Configuration
     section = "4. Poles";
     configRestrictAshlands = wrapper.Bind(section, "Restrict Ashlands position", true, false, "If true, restricts Ashlands biome position.");
     configRestrictAshlands.SettingChanged += (s, e) => HandleRestrictAshlandsPosition();
-    /*
-    configAshlandsWidthRestriction = wrapper.BindFloat(section, "Ashlands width restriction", 7500f, false, "How many meters are the Ashlands biome width.");
+    configAshlandsWidthRestriction = wrapper.BindFloat(section, "Ashlands width restriction", 7500f, false, "How wide is the Ashlands biome (meters).");
     configAshlandsWidthRestriction.SettingChanged += (s, e) => HandleRestrictAshlandsPosition();
-    configAshlandsDistanceRestriction = wrapper.BindFloat(section, "Ashlands distance restriction", 1000f, false, "How many meters are the Ashlands biome distance.");
-    configAshlandsDistanceRestriction.SettingChanged += (s, e) => HandleRestrictAshlandsPosition();
-    configAshlandsDepthRestriction = wrapper.BindFloat(section, "Ashlands depth restriction", 600f, false, "How many meters are the Ashlands biome depth.");
-    configAshlandsDepthRestriction.SettingChanged += (s, e) => HandleRestrictAshlandsPosition();*/
+    configAshlandsLengthRestriction = wrapper.BindFloat(section, "Ashlands length restriction", 1000f, false, "How long/deep is the Ashlands biome (meters).");
+    configAshlandsLengthRestriction.SettingChanged += (s, e) => HandleRestrictAshlandsPosition();
     configAshlandsGap = wrapper.Bind(section, "Ashlands gap", true, false, "If true, Ashlands biome has an Ocean gap above it.");
     configAshlandsGap.SettingChanged += (s, e) => HandleAshlandsGap();
     configDeepNorthGap = wrapper.Bind(section, "Deep North gap", true, false, "If true, Deep North biome has an Ocean gap below it.");
