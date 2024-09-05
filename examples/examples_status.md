@@ -4,8 +4,10 @@
   - statusEffects:
     # Grants extra carry capacity.
     # Removed when leaving the biome / environment.
+    # Only applies to players who have defeated Eikthyr.
     - name: BeltStrength
       duration: 0
+      requiredPlayerKeys: defeated_eikthyr
     # Grants 10 seconds of corpse run.
     # Expires after 10 seconds when leaving the biome / environment.
     - name: CorpseRun
