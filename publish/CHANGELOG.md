@@ -1,5 +1,6 @@
 - v1.46
   - Adds new settings "Ashlands width restriction" and "Ashlands length restriction".
+  - Adds new fields `requiredGlobalKeys`, `forbiddenGlobalKeys`, `requiredPlayerKeys` and `forbiddenPlayerKeys` to the `expand_biomes.yaml` to support key based environments.
 
 - v1.45
   - Adds new fields `ashlandsOverride` and `deepNorthOverride` to the `expand_biomes.yaml` to support overriding the Ocean weather in the Ashlands and Deep North areas.

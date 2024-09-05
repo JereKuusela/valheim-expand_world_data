@@ -10,7 +10,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.44";
+  public const string VERSION = "1.46";
 #nullable disable
   public static EWD Instance;
   public static Harmony Harmony;
@@ -30,7 +30,7 @@ public class EWD : BaseUnityPlugin
     CancelInvoke("Regenerate");
     Invoke("Regenerate", 1.0f);
   }
-  public void Regenerate() => WorldInfo.AutomaticRegenerate();
+  public void Regenerate() => WorldInfo.AutomaticRegenerate(Harmony);
   public void Awake()
   {
     Instance = this;

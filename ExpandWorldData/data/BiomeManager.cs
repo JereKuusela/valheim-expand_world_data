@@ -14,8 +14,11 @@ public class BiomeManager
   public static string FileName = "expand_biomes.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_biomes*.yaml";
+  public static Dictionary<string, EnvironmentData> Extra = [];
 
-  public static EnvEntry FromData(BiomeEnvironment data)
+  public static Dictionary<EnvEntry, EnvEntryKeys> EnvKeys = [];
+
+  public static EnvEntry FromData(BiomeEnvironment data, Dictionary<EnvEntry, EnvEntryKeys> keys)
   {
     EnvEntry env = new()
     {
@@ -24,6 +27,9 @@ public class BiomeManager
       m_ashlandsOverride = data.ashlandsOverride ?? data.environment == "Ashlands_SeaStorm",
       m_deepnorthOverride = data.deepNorthOverride ?? false
     };
+    EnvEntryKeys key = new(data);
+    if (key.HasKeys())
+      keys[env] = key;
     return env;
   }
   public static BiomeEnvironment ToData(EnvEntry env)
@@ -63,12 +69,12 @@ public class BiomeManager
   public static bool TryGetDisplayName(Heightmap.Biome biome, out string name) => BiomeToDisplayName.TryGetValue(biome, out name);
   public static Heightmap.Biome GetTerrain(Heightmap.Biome biome) => BiomeToTerrain.TryGetValue(biome, out var terrain) ? terrain : biome;
   public static Heightmap.Biome GetNature(Heightmap.Biome biome) => BiomeToNature.TryGetValue(biome, out var nature) ? nature : biome;
-  public static BiomeEnvSetup FromData(BiomeYaml data)
+  public static BiomeEnvSetup FromData(BiomeYaml data, Dictionary<EnvEntry, EnvEntryKeys> keys)
   {
     var biome = new BiomeEnvSetup
     {
       m_biome = DataManager.ToBiomes(data.biome),
-      m_environments = data.environments.Select(FromData).ToList(),
+      m_environments = data.environments.Select(d => FromData(d, keys)).ToList(),
       m_musicMorning = data.musicMorning,
       m_musicEvening = data.musicEvening,
       m_musicDay = data.musicDay,
@@ -168,6 +174,7 @@ public class BiomeManager
     var rawData = Parse(yaml);
     if (rawData.Count > 0)
       Log.Info($"Reloading biome data ({rawData.Count} entries).");
+    EnvKeys.Clear();
     BiomeData.Clear();
     BiomeToColor.Clear();
     NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
@@ -195,6 +202,7 @@ public class BiomeManager
       if (extra.IsValid())
         BiomeData[biome] = extra;
       if (item.paint != "") BiomeToColor[biome] = Terrain.ParsePaint(item.paint);
+
     }
     BiomeToTerrain = rawData.ToDictionary(data => GetBiome(data.biome), data =>
     {
@@ -211,7 +219,7 @@ public class BiomeManager
       return GetBiome(data.biome);
     });
     BiomeForestMultiplier = rawData.Any(data => data.forestMultiplier != 1f);
-    Environments = rawData.Select(FromData).ToList();
+    Environments = rawData.Select(d => FromData(d, EnvKeys)).ToList();
     // This tracks if content (environments) have been loaded.
     if (ZoneSystem.instance.m_locationsByHash.Count > 0)
       LoadEnvironments();
@@ -283,6 +291,8 @@ public class BiomeManager
     for (int i = 0; i < indexToBiome.Length; ++i)
       Heightmap.s_biomeToIndex[indexToBiome[i]] = i;
   }
+
+  public static bool CheckKeys(EnvEntry env) => !EnvKeys.TryGetValue(env, out var keys) || keys.CheckKeys();
 }
 
 //[HarmonyPatch(typeof(Minimap), nameof(Minimap.GenerateWorldMap))]
@@ -316,5 +326,45 @@ public class UpdateBiome
   static void Postfix()
   {
     Localization.instance.m_endChars = OriginalChars;
+  }
+}
+
+[HarmonyPatch(typeof(EnvMan), nameof(EnvMan.GetAvailableEnvironments))]
+public class GetAvailableEnvironments
+{
+  static void Postfix(List<EnvEntry> __result)
+  {
+    if (__result == null) return;
+    if (BiomeManager.EnvKeys.Count == 0) return;
+    __result = __result.Where(BiomeManager.CheckKeys).ToList();
+  }
+}
+
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.RPC_GlobalKeys))]
+public class RPC_GlobalKeys
+{
+  static void Postfix()
+  {
+    if (BiomeManager.EnvKeys.Count > 0)
+      EnvMan.instance.m_environmentPeriod = 0;
+  }
+}
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.RPC_SetGlobalKey))]
+public class RPC_SetGlobalKey
+{
+  static void Postfix()
+  {
+    if (BiomeManager.EnvKeys.Count > 0)
+      EnvMan.instance.m_environmentPeriod = 0;
+  }
+}
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.RPC_RemoveGlobalKey))]
+public class RPC_RemoveGlobalKey
+{
+  static void Postfix()
+  {
+    if (BiomeManager.EnvKeys.Count > 0)
+      EnvMan.instance.m_environmentPeriod = 0;
   }
 }

@@ -13,6 +13,11 @@ public class BiomeEnvironment
   public bool? ashlandsOverride;
   [DefaultValue(false)]
   public bool? deepNorthOverride;
+  public string requiredGlobalKeys = "";
+  public string forbiddenGlobalKeys = "";
+  public string requiredPlayerKeys = "";
+  public string forbiddenPlayerKeys = "";
+
 }
 
 public class BiomeYaml
@@ -110,4 +115,24 @@ public class BiomeData
     noBuild ||
     mapColor.a != 0 ||
     forestMultiplier != 1f;
+}
+
+
+public class EnvEntryKeys(BiomeEnvironment data)
+{
+  public List<string> requiredGlobalKeys = DataManager.ToList(data.requiredGlobalKeys);
+  public List<string> forbiddenGlobalKeys = DataManager.ToList(data.forbiddenGlobalKeys);
+  public List<string> requiredPlayerKeys = DataManager.ToList(data.requiredPlayerKeys);
+  public List<string> forbiddenPlayerKeys = DataManager.ToList(data.forbiddenPlayerKeys);
+
+  public bool CheckKeys()
+  {
+    if (requiredGlobalKeys.Any(k => !ZoneSystem.instance.GetGlobalKey(k))) return false;
+    if (forbiddenGlobalKeys.Any(ZoneSystem.instance.GetGlobalKey)) return false;
+    var player = Player.m_localPlayer;
+    if (player && requiredPlayerKeys.Any(k => !player.HaveUniqueKey(k))) return false;
+    if (player && forbiddenPlayerKeys.Any(player.HaveUniqueKey)) return false;
+    return true;
+  }
+  public bool HasKeys() => requiredGlobalKeys.Count > 0 || forbiddenGlobalKeys.Count > 0 || requiredPlayerKeys.Count > 0 || forbiddenPlayerKeys.Count > 0;
 }

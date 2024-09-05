@@ -1,17 +1,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using BepInEx;
-using BepInEx.Configuration;
 using HarmonyLib;
 using Service;
 using UnityEngine;
-using YamlDotNet.Core;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 using Data;
 using SoftReferenceableAssets;
 
@@ -36,6 +30,7 @@ public class InitializeWorld
   // Saving is done later because that requires environments.
   static void Postfix()
   {
+    WorldInfo.CheckPatches(EWD.Harmony);
     // Only called for server so no need to check.
     BiomeManager.FromFile();
     WorldManager.FromFile();

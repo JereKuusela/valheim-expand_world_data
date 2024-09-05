@@ -77,10 +77,24 @@ public class EnvironmentYaml
 public class EnvironmentData
 {
   public List<Status> statusEffects = [];
+  public List<string> requiredGlobalKeys = [];
+  public List<string> forbiddenGlobalKeys = [];
+  public List<string> requiredPlayerKeys = [];
+  public List<string> forbiddenPlayerKeys = [];
   public EnvironmentData(EnvironmentYaml data)
   {
     if (data.statusEffects != null)
       statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
   }
-  public bool IsValid() => statusEffects.Count > 0;
+  public bool CheckKeys()
+  {
+    if (requiredGlobalKeys.Any(k => !ZoneSystem.instance.GetGlobalKey(k))) return false;
+    if (forbiddenGlobalKeys.Any(ZoneSystem.instance.GetGlobalKey)) return false;
+    var player = Player.m_localPlayer;
+    if (player && requiredPlayerKeys.Any(k => !player.HaveUniqueKey(k))) return false;
+    if (player && forbiddenPlayerKeys.Any(player.HaveUniqueKey)) return false;
+    return true;
+  }
+  public bool HasKeys() => requiredGlobalKeys.Count > 0 || forbiddenGlobalKeys.Count > 0 || requiredPlayerKeys.Count > 0 || forbiddenPlayerKeys.Count > 0;
+  public bool IsValid() => statusEffects.Count > 0 || HasKeys();
 }

@@ -1,7 +1,6 @@
 using System.IO;
 using BepInEx;
 using BepInEx.Configuration;
-using HarmonyLib;
 using ServerSync;
 using Service;
 
@@ -74,24 +73,6 @@ public partial class Configuration
   public static string BlueprintLocalFolder => Path.Combine(Paths.ConfigPath, configBlueprintFolder.Value);
 #nullable enable
 
-  public static void HandleRestrictAshlandsPosition()
-  {
-    if (WorldGenerator.instance == null) return;
-    if (GetAshlandsHeight.Patch(EWD.Harmony, AshlandsWidthRestriction, AshlandsLengthRestriction))
-      EWD.Instance.InvokeRegenerate();
-  }
-  public static void HandleAshlandsGap()
-  {
-    if (WorldGenerator.instance == null) return;
-    if (CreateAshlandsGap.Patch(EWD.Harmony, !AshlandsGap))
-      EWD.Instance.InvokeRegenerate();
-  }
-  public static void HandleDeepNorthGap()
-  {
-    if (WorldGenerator.instance == null) return;
-    if (CreateDeepNorthGap.Patch(EWD.Harmony, !DeepNorthGap))
-      EWD.Instance.InvokeRegenerate();
-  }
   public static void Init(ConfigWrapper wrapper)
   {
     var section = "1. General";
@@ -145,31 +126,10 @@ public partial class Configuration
     valueWorldData.ValueChanged += () => WorldManager.FromSetting(valueWorldData.Value);
 
     section = "4. Poles";
-    configRestrictAshlands = wrapper.Bind(section, "Restrict Ashlands position", true, false, "If true, restricts Ashlands biome position.");
-    configRestrictAshlands.SettingChanged += (s, e) => HandleRestrictAshlandsPosition();
-    configAshlandsWidthRestriction = wrapper.BindFloat(section, "Ashlands width restriction", 7500f, false, "How wide is the Ashlands biome (meters).");
-    configAshlandsWidthRestriction.SettingChanged += (s, e) => HandleRestrictAshlandsPosition();
-    configAshlandsLengthRestriction = wrapper.BindFloat(section, "Ashlands length restriction", 1000f, false, "How long/deep is the Ashlands biome (meters).");
-    configAshlandsLengthRestriction.SettingChanged += (s, e) => HandleRestrictAshlandsPosition();
-    configAshlandsGap = wrapper.Bind(section, "Ashlands gap", true, false, "If true, Ashlands biome has an Ocean gap above it.");
-    configAshlandsGap.SettingChanged += (s, e) => HandleAshlandsGap();
-    configDeepNorthGap = wrapper.Bind(section, "Deep North gap", true, false, "If true, Deep North biome has an Ocean gap below it.");
-    configDeepNorthGap.SettingChanged += (s, e) => HandleDeepNorthGap();
-  }
-}
-
-[HarmonyPatch(typeof(ZNet))]
-public class ZNetPatch
-{
-  // When the world is set on the server (applies to single player as well), we should select the correct loaded settings
-  [HarmonyPrefix, HarmonyPatch(nameof(ZNet.SetServer))]
-  private static void SetServerPrefix(bool server, World world)
-  {
-    if (server)
-    {
-      Configuration.HandleAshlandsGap();
-      Configuration.HandleDeepNorthGap();
-      Configuration.HandleRestrictAshlandsPosition();
-    }
+    configRestrictAshlands = wrapper.Bind(section, "Restrict Ashlands position", true, true, "If true, restricts Ashlands biome position.");
+    configAshlandsWidthRestriction = wrapper.BindFloat(section, "Ashlands width restriction", 7500f, true, "How wide is the Ashlands biome (meters).");
+    configAshlandsLengthRestriction = wrapper.BindFloat(section, "Ashlands length restriction", 1000f, true, "How long/deep is the Ashlands biome (meters).");
+    configAshlandsGap = wrapper.Bind(section, "Ashlands gap", true, true, "If true, Ashlands biome has an Ocean gap above it.");
+    configDeepNorthGap = wrapper.Bind(section, "Deep North gap", true, true, "If true, Deep North biome has an Ocean gap below it.");
   }
 }

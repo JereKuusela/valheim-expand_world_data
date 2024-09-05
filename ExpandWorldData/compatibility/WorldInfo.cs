@@ -17,6 +17,8 @@ public class WorldInfo
 
   public static void Set(float radius, float totalRadius, float stretch, float biomeStretch)
   {
+    // This check might have been removed at some point but it's good to prevent double regen.
+    if (Radius == radius && TotalRadius == totalRadius && Stretch == stretch && BiomeStretch == biomeStretch) return;
     Radius = radius;
     TotalRadius = totalRadius;
     Stretch = stretch;
@@ -27,10 +29,11 @@ public class WorldInfo
   {
     WaterLevel = waterLevel;
   }
-  public static void AutomaticRegenerate()
+  public static void AutomaticRegenerate(Harmony harmony)
   {
     if (WorldGenerator.instance == null) return;
     Log.Info("Regenerating the world.");
+    CheckPatches(harmony);
     WorldGenerator.instance.Pregenerate();
     foreach (var heightmap in Object.FindObjectsOfType<Heightmap>())
     {
@@ -44,6 +47,12 @@ public class WorldInfo
   {
     if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
       Minimap.instance?.GenerateWorldMap();
+  }
+  public static void CheckPatches(Harmony harmony)
+  {
+    GetAshlandsHeight.Patch(harmony, Configuration.AshlandsWidthRestriction, Configuration.AshlandsLengthRestriction);
+    CreateAshlandsGap.Patch(harmony, !Configuration.AshlandsGap);
+    CreateDeepNorthGap.Patch(harmony, !Configuration.DeepNorthGap);
   }
 }
 
