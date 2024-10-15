@@ -37,9 +37,9 @@ public class BiomeHeight
         __result *= data.waterDepthMultiplier;
       }
       if (__result > data.maximumAltitude)
-        __result = data.maximumAltitude + Mathf.Pow(__result - data.maximumAltitude, data.excessFactor);
+        __result = data.maximumAltitude + data.excessSign * Mathf.Pow(__result - data.maximumAltitude, data.excessFactor);
       if (__result < data.minimumAltitude)
-        __result = data.minimumAltitude - Mathf.Pow(data.minimumAltitude - __result, data.excessFactor);
+        __result = data.minimumAltitude - data.excessSign * Mathf.Pow(data.minimumAltitude - __result, data.excessFactor);
       __result += WorldInfo.WaterLevel;
     }
   }

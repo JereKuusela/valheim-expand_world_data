@@ -5,16 +5,16 @@ namespace Data;
 
 public class ZdoIdValue(string[] values) : AnyValue(values), IZdoIdValue
 {
-  public ZDOID? Get(Pars pars)
+  public ZDOID? Get(Parameters pars)
   {
     var value = GetValue(pars);
     if (value == null) return null;
     return Parse.ZdoId(value);
   }
-  public bool? Match(Pars pars, ZDOID value)
+  public bool? Match(Parameters pars, ZDOID value)
   {
     var values = GetAllValues(pars);
-    if (values.Length == 0) return null;
+    if (values.Count == 0) return null;
     return values.Any(v => Parse.ZdoId(v) == value);
   }
 }
@@ -22,12 +22,12 @@ public class ZdoIdValue(string[] values) : AnyValue(values), IZdoIdValue
 public class SimpleZdoIdValue(ZDOID value) : IZdoIdValue
 {
   private readonly ZDOID Value = value;
-  public ZDOID? Get(Pars pars) => Value;
-  public bool? Match(Pars pars, ZDOID value) => Value == value;
+  public ZDOID? Get(Parameters pars) => Value;
+  public bool? Match(Parameters pars, ZDOID value) => Value == value;
 }
 
 public interface IZdoIdValue
 {
-  ZDOID? Get(Pars pars);
-  bool? Match(Pars pars, ZDOID value);
+  ZDOID? Get(Parameters pars);
+  bool? Match(Parameters pars, ZDOID value);
 }

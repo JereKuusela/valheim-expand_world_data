@@ -8,42 +8,15 @@ namespace Data;
 
 public class DataHelper
 {
-  public static DataEntry? Merge(params DataEntry?[] datas)
-  {
-    var nonNull = datas.Where(d => d != null).ToArray();
-    if (nonNull.Length == 0) return null;
-    if (nonNull.Length == 1) return nonNull[0];
-    DataEntry result = new();
-    foreach (var data in nonNull)
-      result.Load(data!);
-    return result;
-  }
-  public static bool Exists(int hash) => DataLoading.Data.ContainsKey(hash);
-  public static bool Match(int hash, ZDO zdo)
-  {
-    if (DataLoading.Data.TryGetValue(hash, out var data))
-    {
-      return data.Match([], zdo);
-    }
-    return false;
-  }
-  public static bool Match(int hash, ZDO zdo, Dictionary<string, string> pars)
-  {
-    if (DataLoading.Data.TryGetValue(hash, out var data))
-    {
-      return data.Match(pars, zdo);
-    }
-    return false;
-  }
-  public static DataEntry? Get(string name) => name == "" ? null : DataLoading.Get(name);
   public static void Init(GameObject obj, Vector3 pos, Quaternion rot, Vector3? scale, DataEntry? data, Dictionary<string, string> pars)
   {
     if (data == null && scale == null) return;
     if (!obj.TryGetComponent<ZNetView>(out var view)) return;
-    var prefab = Utils.GetPrefabName(obj).GetStableHashCode();
+    var name = Utils.GetPrefabName(obj);
+    var prefab = name.GetStableHashCode();
     ZNetView.m_initZDO = ZDOMan.instance.CreateNewZDO(pos, prefab);
     if (data != null)
-      data.Write([], ZNetView.m_initZDO);
+      data.Write(new ObjectParameters(name, "", ZNetView.m_initZDO), ZNetView.m_initZDO);
     ZNetView.m_initZDO.m_rotation = rot.eulerAngles;
     ZNetView.m_initZDO.Type = view.m_type;
     ZNetView.m_initZDO.Distant = view.m_distant;
@@ -59,10 +32,11 @@ public class DataHelper
   {
     if (data == null && scale == null) return null;
     if (!obj.TryGetComponent<ZNetView>(out var view)) return null;
-    var prefab = Utils.GetPrefabName(obj).GetStableHashCode();
+    var name = Utils.GetPrefabName(obj);
+    var prefab = name.GetStableHashCode();
     ZNetView.m_initZDO = ZDOMan.instance.CreateNewZDO(pos, prefab);
     if (data != null)
-      data.Write([], ZNetView.m_initZDO);
+      data.Write(new ObjectParameters(name, "", ZNetView.m_initZDO), ZNetView.m_initZDO);
     ZNetView.m_initZDO.m_rotation = rot.eulerAngles;
     ZNetView.m_initZDO.Type = view.m_type;
     ZNetView.m_initZDO.Distant = view.m_distant;
@@ -79,6 +53,27 @@ public class DataHelper
   {
     ZNetView.m_initZDO = null;
   }
+  public static DataEntry? Merge(params DataEntry?[] datas)
+  {
+    var nonNull = datas.Where(d => d != null).ToArray();
+    if (nonNull.Length == 0) return null;
+    if (nonNull.Length == 1) return nonNull[0];
+    DataEntry result = new();
+    foreach (var data in nonNull)
+      result.Load(data!);
+    return result;
+  }
+  public static bool Exists(int hash) => DataLoading.Data.ContainsKey(hash);
+
+  public static bool Match(int hash, ZDO zdo, Parameters pars)
+  {
+    if (DataLoading.Data.TryGetValue(hash, out var data))
+    {
+      return data.Match(pars, zdo);
+    }
+    return false;
+  }
+  public static DataEntry? Get(string name) => name == "" ? null : DataLoading.Get(name);
 
   public static List<string>? GetValuesFromGroup(string group)
   {
@@ -117,30 +112,5 @@ public class DataHelper
   {
     var lower = key.ToLowerInvariant();
     return ZoneSystem.instance.m_globalKeysValues.FirstOrDefault(kvp => kvp.Key.ToLowerInvariant() == lower).Value ?? "0";
-  }
-
-  // Parameter value could be a value group, so that has to be resolved.
-  public static string ResolveValue(string value)
-  {
-    if (!value.StartsWith("<", StringComparison.OrdinalIgnoreCase)) return value;
-    if (!value.EndsWith(">", StringComparison.OrdinalIgnoreCase)) return value;
-    var sub = value.Substring(1, value.Length - 2);
-    if (TryGetValueFromGroup(sub, out var valueFromGroup))
-      return valueFromGroup;
-    return value;
-  }
-
-  public static bool TryGetValueFromGroup(string group, out string value)
-  {
-    var hash = group.ToLowerInvariant().GetStableHashCode();
-    if (!DataLoading.ValueGroups.ContainsKey(hash))
-    {
-      value = group;
-      return false;
-    }
-    var roll = UnityEngine.Random.Range(0, DataLoading.ValueGroups[hash].Count);
-    // Value from group could be another group, so yet another resolve is needed.
-    value = ResolveValue(DataLoading.ValueGroups[hash][roll]);
-    return true;
   }
 }

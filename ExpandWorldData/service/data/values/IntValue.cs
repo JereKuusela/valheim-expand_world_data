@@ -5,7 +5,7 @@ namespace Data;
 
 public class IntValue(string[] values) : AnyValue(values), IIntValue
 {
-  public int? Get(Pars pars)
+  public int? Get(Parameters pars)
   {
     var value = GetValue(pars);
     if (value == null)
@@ -39,13 +39,13 @@ public class IntValue(string[] values) : AnyValue(values), IIntValue
       return roll;
     return Calculator.EvaluateInt(split[3].Replace("<value>", roll.ToString()));
   }
-  public bool? Match(Pars pars, int value)
+  public bool? Match(Parameters pars, int value)
   {
     // If all values are null, default to a match.
     var allNull = true;
     foreach (var rawValue in Values)
     {
-      var v = ReplaceParameters(rawValue, pars);
+      var v = pars.Replace(rawValue);
       // Case 1: Simple value.
       if (!v.Contains(";"))
       {
@@ -124,11 +124,11 @@ public class IntValue(string[] values) : AnyValue(values), IIntValue
 public class SimpleIntValue(int value) : IIntValue
 {
   private readonly int Value = value;
-  public int? Get(Pars pars) => Value;
-  public bool? Match(Pars pars, int value) => Value == value;
+  public int? Get(Parameters pars) => Value;
+  public bool? Match(Parameters pars, int value) => Value == value;
 }
 public interface IIntValue
 {
-  int? Get(Pars pars);
-  bool? Match(Pars pars, int value);
+  int? Get(Parameters pars);
+  bool? Match(Parameters pars, int value);
 }

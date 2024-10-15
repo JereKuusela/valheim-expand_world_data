@@ -1,3 +1,7 @@
+- v1.47
+  - Adds support for negative `excessFactor` values in the `expand_biomes.yaml`.
+  - Updated data code to match latest changes from Expand World Prefabs mod.
+
 - v1.46
   - Adds new settings "Ashlands width restriction" and "Ashlands length restriction".
   - Adds new fields `requiredGlobalKeys`, `forbiddenGlobalKeys`, `requiredPlayerKeys` and `forbiddenPlayerKeys` to the `expand_biomes.yaml` to support key based environments.

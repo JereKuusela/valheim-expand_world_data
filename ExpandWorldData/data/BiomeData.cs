@@ -73,6 +73,7 @@ public class BiomeData
   public float waterDepthMultiplier = 1f;
   public float altitudeDelta = 0f;
   public float excessFactor = 0.5f;
+  public float excessSign = 1f;
   public float minimumAltitude = -1000f;
   public float maximumAltitude = 10000f;
   public float mapColorMultiplier = 1f;
@@ -89,7 +90,8 @@ public class BiomeData
     altitudeMultiplier = data.altitudeMultiplier;
     waterDepthMultiplier = data.waterDepthMultiplier;
     altitudeDelta = data.altitudeDelta;
-    excessFactor = data.excessFactor;
+    excessFactor = Mathf.Abs(data.excessFactor);
+    excessSign = Mathf.Sign(data.excessFactor);
     minimumAltitude = data.minimumAltitude;
     maximumAltitude = data.maximumAltitude;
     mapColorMultiplier = data.mapColorMultiplier;

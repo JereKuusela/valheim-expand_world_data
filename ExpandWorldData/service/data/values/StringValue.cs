@@ -5,12 +5,12 @@ namespace Data;
 public class StringValue(string[] values) : AnyValue(values), IStringValue
 {
   private readonly bool IsPattern = values.Any(v => v.Contains("*"));
-  public string? Get(Pars pars) => GetValue(pars);
+  public string? Get(Parameters pars) => GetValue(pars);
 
-  public bool? Match(Pars pars, string value)
+  public bool? Match(Parameters pars, string value)
   {
     var values = GetAllValues(pars);
-    if (values.Length == 0) return null;
+    if (values.Count == 0) return null;
     return IsPattern ? values.Any(v => SimpleStringValue.PatternMatch(value, v)) : values.Contains(value);
   }
 }
@@ -18,8 +18,8 @@ public class SimpleStringValue(string value) : IStringValue
 {
   private readonly string Value = value;
   private readonly bool IsPattern = value.Contains("*");
-  public string? Get(Pars pars) => Value;
-  public bool? Match(Pars pars, string value) => IsPattern ? PatternMatch(value, Value) : Value == value;
+  public string? Get(Parameters pars) => Value;
+  public bool? Match(Parameters pars, string value) => IsPattern ? PatternMatch(value, Value) : Value == value;
   public static bool PatternMatch(string value, string pattern)
   {
     if (value == pattern) return true;
@@ -41,6 +41,6 @@ public class SimpleStringValue(string value) : IStringValue
 }
 public interface IStringValue
 {
-  string? Get(Pars pars);
-  bool? Match(Pars pars, string value);
+  string? Get(Parameters pars);
+  bool? Match(Parameters pars, string value);
 }

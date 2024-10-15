@@ -239,6 +239,7 @@ public class DataManager : MonoBehaviour
 
   public static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot, DataEntry? data)
   {
+
     var zdo = DataHelper.Init(prefab, pos, rot, null, data);
     zdo?.RemoveLong(ZDOVars.s_creator);
     var obj = Instantiate(prefab, pos, rot);

@@ -20,14 +20,30 @@ public class Yaml
   public static string BackupDirectory = Path.Combine(Paths.ConfigPath, "expand_world_backups");
 
 
-  public static string Read(string pattern)
+  public static List<T> Read<T>(string pattern)
   {
     if (!System.IO.Directory.Exists(BaseDirectory))
       System.IO.Directory.CreateDirectory(BaseDirectory);
-    var data = System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
-      string.Join("\n", File.ReadAllLines(name).ToList())
-    );
-    return string.Join("\n", data) ?? "";
+    var files = System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().ToList();
+    return Read<T>(files);
+  }
+
+  public static List<T> Read<T>(List<string> files)
+  {
+    List<T> result = [];
+    foreach (var file in files)
+    {
+      try
+      {
+        var lines = File.ReadAllText(file);
+        result.AddRange(Deserialize<T>(lines, file));
+      }
+      catch (Exception ex)
+      {
+        Log.Error($"Error reading {Path.GetFileName(file)}: {ex.Message}");
+      }
+    }
+    return result;
   }
 
   public static Heightmap.Biome ToBiomes(string biomeStr)
