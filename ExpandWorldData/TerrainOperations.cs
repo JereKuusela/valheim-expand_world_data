@@ -100,7 +100,7 @@ public partial class Terrain
   }
   private static ZDO FindCompiler(Heightmap hm, Vector3 pos)
   {
-    var zone = ZoneSystem.instance.GetZone(pos);
+    var zone = ZoneSystem.GetZone(pos);
     var index = ZDOMan.instance.SectorToIndex(zone);
     if (index < 0 || index >= ZDOMan.instance.m_objectsBySector.Length)
       return hm.GetAndCreateTerrainCompiler().m_nview.GetZDO();

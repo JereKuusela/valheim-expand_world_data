@@ -97,7 +97,7 @@ public class StatusManager
     foreach (var statusEffect in es)
       Add(player, statusEffect);
   }
-
+  private static readonly int SpiritHash = "Spirit".GetStableHashCode();
   private static void Add(Player player, Status es)
   {
     if (es.requiredGlobalKeys.Any(k => !ZoneSystem.instance.GetGlobalKey(k))) return;
@@ -118,7 +118,7 @@ public class StatusManager
       if (!addDamage) return;
       var exists = seman.GetStatusEffect(es.hash) != null;
       // Heuristic to try detect the damage type.
-      if (se.NameHash() == Character.s_statusEffectSpirit)
+      if (se.NameHash() == SpiritHash)
       {
         var damage = CalculateDamage(seman, es, HitData.DamageType.Spirit);
         if (damage == 0) return;

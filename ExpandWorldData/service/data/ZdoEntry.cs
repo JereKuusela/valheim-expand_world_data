@@ -197,7 +197,7 @@ public class ZdoEntry(int Prefab, Vector3 Position, Vector3 rotation, ZDO zdo)
         zdo.Set(pair.Key, pair.Value);
     }
     zdo.m_position = Position;
-    zdo.SetSector(ZoneSystem.instance.GetZone(Position));
+    zdo.SetSector(ZoneSystem.GetZone(Position));
     zdo.m_rotation = Rotation;
     HandleConnection(zdo);
     HandleHashConnection(zdo);

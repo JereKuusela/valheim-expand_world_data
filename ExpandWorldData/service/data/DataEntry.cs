@@ -483,7 +483,7 @@ public class DataEntry
       if (pos.HasValue)
       {
         zdo.m_position = pos.Value;
-        zdo.SetSector(ZoneSystem.instance.GetZone(pos.Value));
+        zdo.SetSector(ZoneSystem.GetZone(pos.Value));
       }
     }
     if (Rotation != null)

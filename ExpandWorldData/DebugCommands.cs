@@ -145,7 +145,7 @@ public class DebugCommands
       }
       var db = DungeonDB.instance;
       if (!db) return;
-      var zone = ZoneSystem.instance.GetZone(room.transform.position);
+      var zone = ZoneSystem.GetZone(room.transform.position);
 
       collider.size = new Vector3(room.m_size.x, room.m_size.y, room.m_size.z);
       collider.transform.position = room.transform.position;
@@ -197,7 +197,7 @@ public class DebugCommands
         args.Context.AddString("No location found.");
         return;
       }
-      var zone = ZoneSystem.instance.GetZone(loc.transform.position);
+      var zone = ZoneSystem.GetZone(loc.transform.position);
 
       ZNetScene.instance.m_tempCurrentObjects.Clear();
       ZDOMan.instance.FindSectorObjects(zone, 1, 0, ZNetScene.instance.m_tempCurrentObjects);

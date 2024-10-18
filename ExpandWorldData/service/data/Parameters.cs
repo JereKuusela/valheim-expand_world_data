@@ -165,8 +165,8 @@ public class ObjectParameters(string prefab, string arg, ZDO zdo) : Parameters(p
     {
       "<zdo>" => zdo.m_uid.ToString(),
       "<pos>" => $"{Format(zdo.m_position.x)},{Format(zdo.m_position.z)},{Format(zdo.m_position.y)}",
-      "<i>" => ZoneSystem.instance.GetZone(zdo.m_position).x.ToString(),
-      "<j>" => ZoneSystem.instance.GetZone(zdo.m_position).y.ToString(),
+      "<i>" => ZoneSystem.GetZone(zdo.m_position).x.ToString(),
+      "<j>" => ZoneSystem.GetZone(zdo.m_position).y.ToString(),
       "<a>" => Format(zdo.m_rotation.y),
       "<rot>" => $"{Format(zdo.m_rotation.y)},{Format(zdo.m_rotation.x)},{Format(zdo.m_rotation.z)}",
       "<pid>" => GetPid(zdo),

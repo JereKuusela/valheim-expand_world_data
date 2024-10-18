@@ -49,8 +49,7 @@ public class NoBuildManager
   private static Dictionary<Vector2i, NoBuildData> NoBuild = [];
   public static bool IsInsideNoBuildZone(Vector3 point)
   {
-    var zs = ZoneSystem.instance;
-    var zone = zs.GetZone(point);
+    var zone = ZoneSystem.GetZone(point);
     for (var i = zone.x - 1; i <= zone.x + 1; ++i)
     {
       for (var j = zone.y - 1; j <= zone.y + 1; j++)
@@ -79,7 +78,7 @@ public class NoBuildManager
     {
       var data = Yaml.Deserialize<NoBuildData>(yaml, "");
       Log.Info($"Reloading no build data ({data.Count} entries).");
-      NoBuild = data.ToDictionary(data => ZoneSystem.instance.GetZone(new(data.X, 0, data.Z)));
+      NoBuild = data.ToDictionary(data => ZoneSystem.GetZone(new(data.X, 0, data.Z)));
     }
     catch (Exception e)
     {

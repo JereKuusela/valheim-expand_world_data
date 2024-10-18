@@ -18,7 +18,7 @@ public class EnvironmentBox
 
   private static void TryScale(Location loc)
   {
-    var zone = ZoneSystem.instance.GetZone(loc.transform.position);
+    var zone = ZoneSystem.GetZone(loc.transform.position);
     if (!Cache.TryGetValue(zone, out var size)) return;
     // Only interior locations can have the environment box.
     if (!loc.m_hasInterior) return;
@@ -38,8 +38,8 @@ public class EnvironmentBox
   static void ScaleEnvironmentBox1(DungeonGenerator __instance)
   {
     var pos = __instance.transform.position;
-    var zone = ZoneSystem.instance.GetZone(pos);
-    var center = ZoneSystem.instance.GetZonePos(zone) with { y = pos.y };
+    var zone = ZoneSystem.GetZone(pos);
+    var center = ZoneSystem.GetZonePos(zone) with { y = pos.y };
     var colliders = __instance.GetComponentsInChildren<Room>().SelectMany(room => room.GetComponentsInChildren<BoxCollider>()).ToList();
     Bounds bounds = new()
     {
@@ -57,7 +57,7 @@ public class EnvironmentBox
     extents.z = Mathf.Max(Mathf.Abs(offset.z + bounds.extents.z) + tweak, Mathf.Abs(offset.z - bounds.extents.z) + tweak);
     // ExpandWorldData.Log.Debug($"Bounds for {__instance.name} are {bounds.center} {bounds.extents} {center}.");
     Cache[zone] = 2 * extents;
-    var locsInZone = Location.m_allLocations.Where(loc => ZoneSystem.instance.GetZone(loc.transform.position) == zone).ToArray();
+    var locsInZone = Location.s_allLocations.Where(loc => ZoneSystem.GetZone(loc.transform.position) == zone).ToArray();
     foreach (var loc in locsInZone)
       TryScale(loc);
   }
