@@ -1,5 +1,6 @@
 - v1.47
   - Adds support for negative `excessFactor` values in the `expand_biomes.yaml`.
+  - Fixed for the new game version.
   - Updated data code to match latest changes from Expand World Prefabs mod.
 
 - v1.46
