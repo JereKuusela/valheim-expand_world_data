@@ -1,3 +1,7 @@
+
+- v1.48
+  - Fixes blueprint locations not working.
+
 - v1.47
   - Adds support for negative `excessFactor` values in the `expand_biomes.yaml`.
   - Fixed for the new game version.
