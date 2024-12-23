@@ -96,6 +96,8 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - name: Display name. Required for new biomes.
 - terrain: Identifier of the base biome. Determines which terrain algorithm to use. Required for new biomes.
 - nature: Identifier of the base biome. Determines which plants can grow here, whether bees are happy and foot steps. If not given, uses the terrain value.
+- lava (default: `false`): If true, the biome can have lava.
+  - Default value is true for Ashlands biome and terrain.
 - altitudeDelta: Flat increase/decrease to the terrain altitude. See Altitude section for more info.
 - altitudeMultiplier: Multiplier to the terrain altitude (relative to the water level).
 - waterDepthMultiplier (default: `1.0`): Multiplies negative terrain altitude.

@@ -46,6 +46,7 @@ public partial class Loader
     dg.m_perimeterSections = data.perimeterSections;
     dg.m_perimeterBuffer = data.perimeterBuffer;
     dg.m_useCustomInteriorTransform = data.interiorTransform;
+    dg.m_randomSeed = data.randomSeed;
     if (data.objectSwap != null)
     {
       dg.m_objectSwaps = Spawn.LoadSwaps(data.objectSwap);

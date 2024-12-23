@@ -13,9 +13,13 @@ public class BiomeEnvironment
   public bool? ashlandsOverride;
   [DefaultValue(false)]
   public bool? deepNorthOverride;
+  [DefaultValue("")]
   public string requiredGlobalKeys = "";
+  [DefaultValue("")]
   public string forbiddenGlobalKeys = "";
+  [DefaultValue("")]
   public string requiredPlayerKeys = "";
+  [DefaultValue("")]
   public string forbiddenPlayerKeys = "";
 
 }
@@ -101,7 +105,7 @@ public class BiomeData
     if (data.statusEffects != null)
       statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
     if (data.lava == "")
-      lava = data.biome.ToLower() == "ashlands";
+      lava = data.biome.ToLower() == "ashlands" || data.terrain.ToLower() == "ashlands";
     if (data.lava == "true")
       lava = true;
   }

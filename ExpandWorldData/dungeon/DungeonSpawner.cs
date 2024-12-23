@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData.Dungeon;
@@ -88,8 +89,19 @@ public class Spawner
   {
     DungeonObjects.CurrentDungeon = "";
   }
-
-
+  [HarmonyPatch(nameof(DungeonGenerator.GenerateRooms), typeof(ZoneSystem.SpawnMode)), HarmonyPostfix]
+  static void GenerateRooms()
+  {
+    Log.Info($"Dungeon generated with {DungeonGenerator.m_placedRooms.Count} rooms.");
+  }
+  [HarmonyPatch(nameof(DungeonGenerator.GetSeed)), HarmonyPrefix]
+  static void GetSeed()
+  {
+    if (!Configuration.DataDungeons) return;
+    if (!DungeonObjects.Generators.TryGetValue(DungeonObjects.CurrentDungeon, out var data)) return;
+    if (!data.m_randomSeed) return;
+    DungeonGenerator.m_forceSeed = System.DateTime.Now.Ticks.GetHashCode();
+  }
 
   // The dungeon prefab is only used for generating, so the properties can be just overwritten.
   public static void Override(DungeonGenerator dg, string name)

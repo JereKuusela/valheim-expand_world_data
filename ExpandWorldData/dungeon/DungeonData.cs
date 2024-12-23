@@ -26,6 +26,8 @@ public class DungeonData
   public bool alternative = false;
   [DefaultValue(false)]
   public bool roomWeights = false;
+  [DefaultValue(false)]
+  public bool randomSeed = false;
   [DefaultValue("")]
   public string themes = "";
   public DungeonDoorData[] doorTypes = [];
@@ -82,4 +84,5 @@ public class FakeDungeonGenerator
   public bool m_useCustomInteriorTransform;
   public Dictionary<string, List<Tuple<float, string>>> m_objectSwaps = [];
   public Dictionary<string, List<Tuple<float, DataEntry?>>> m_objectData = [];
+  public bool m_randomSeed;
 }

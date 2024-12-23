@@ -57,7 +57,7 @@ public class WorldEntry
     else if (BiomeManager.TryGetBiome(data.seed, out var biome))
       biomeSeed = biome;
 
-    if (data.boiling == "" && biome == Heightmap.Biome.AshLands)
+    if (data.boiling == "" && BiomeManager.TryGetData(biome, out var biomeData) && biomeData.lava)
       boiling = 1f;
     if (data.boiling == "true")
       boiling = 1f;
