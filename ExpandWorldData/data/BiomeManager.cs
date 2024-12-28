@@ -18,6 +18,9 @@ public class BiomeManager
 
   public static Dictionary<EnvEntry, EnvEntryKeys> EnvKeys = [];
 
+  public static Heightmap.Biome LavaBiomes = Heightmap.Biome.AshLands;
+  public static Heightmap.Biome NoBuildBiomes = 0;
+
   public static EnvEntry FromData(BiomeEnvironment data, Dictionary<EnvEntry, EnvEntryKeys> keys)
   {
     EnvEntry env = new()
@@ -177,6 +180,8 @@ public class BiomeManager
     EnvKeys.Clear();
     BiomeData.Clear();
     BiomeToColor.Clear();
+    LavaBiomes = 0;
+    NoBuildBiomes = 0;
     NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
     BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     var lastBiome = Heightmap.Biome.Mistlands;
@@ -199,6 +204,10 @@ public class BiomeManager
       DataManager.Sanity(ref item.mapColor);
       DataManager.Sanity(ref item.color);
       BiomeData extra = new(item);
+      if (extra.lava)
+        LavaBiomes |= biome;
+      if (extra.noBuild)
+        NoBuildBiomes |= biome;
       if (extra.IsValid())
         BiomeData[biome] = extra;
       if (item.paint != "") BiomeToColor[biome] = Terrain.ParsePaint(item.paint);

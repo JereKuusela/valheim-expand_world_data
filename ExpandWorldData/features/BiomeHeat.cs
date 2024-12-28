@@ -11,11 +11,36 @@ public class BiomeHeat
   [HarmonyPatch(typeof(Character), nameof(Character.UpdateLava)), HarmonyTranspiler]
   static IEnumerable<CodeInstruction> UpdateLava(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
 
-  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetLava)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> GetLava(IEnumerable<CodeInstruction> instructions) => PatchBiomeLava(instructions);
 
-  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.IsLava)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> IsLava(IEnumerable<CodeInstruction> instructions) => PatchBiomeLava(instructions);
+  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetLava)), HarmonyPrefix]
+  static bool GetLava(Heightmap __instance, Vector3 worldPos, ref float __result)
+  {
+    __result = GetLava(__instance, worldPos);
+    return false;
+  }
+  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.IsLava)), HarmonyPrefix]
+  static bool IsLava(Heightmap __instance, Vector3 worldPos, float lavaValue, ref bool __result)
+  {
+    __result = GetLava(__instance, worldPos) > lavaValue;
+    return false;
+  }
+
+  private static float GetLava(Heightmap hm, Vector3 pos)
+  {
+    var biome = hm.GetBiome(pos);
+    if (!HasLava(biome)) return 0f;
+    if (!hm.IsBiomeEdge()) return hm.GetVegetationMask(pos);
+    // Lava is only visible on Ashlands terrain (r and a channels higher than 0.92).
+    // Biome edges blend the color which removes the lava texture.
+    // So the terrain color must be checked to determine if lava would be visible.
+    hm.WorldToVertex(pos, out var x, out var y);
+    var index = x + y * hm.m_width;
+    var color = hm.m_renderMesh.colors32[index];
+    // 0.92 is still barely visible so safer to use 0.94.
+    if (color.r < 0.959f || color.a < 0.959f) return 0f;
+    return hm.GetVegetationMask(pos);
+  }
+
 
   [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetHeightOffset)), HarmonyTranspiler]
   static IEnumerable<CodeInstruction> GetHeightOffset(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
@@ -33,19 +58,10 @@ public class BiomeHeat
 
   private static IEnumerable<CodeInstruction> PatchBiomeHeat(IEnumerable<CodeInstruction> instructions) =>
     new CodeMatcher(instructions).MatchForward(false, new CodeMatch(OpCodes.Ldc_I4_S, (sbyte)32))
-    .SetAndAdvance(OpCodes.Call, Transpilers.EmitDelegate(HasHeat).operand)
+    .SetAndAdvance(OpCodes.Call, Transpilers.EmitDelegate(HasLava).operand)
     .SetOpcodeAndAdvance(OpCodes.Brfalse)
     .InstructionEnumeration();
 
-  private static IEnumerable<CodeInstruction> PatchBiomeLava(IEnumerable<CodeInstruction> instructions) =>
-    new CodeMatcher(instructions).MatchForward(false, new CodeMatch(OpCodes.Ldc_I4_S, (sbyte)32))
-    .SetAndAdvance(OpCodes.Call, Transpilers.EmitDelegate(HasHeat).operand)
-    .SetOpcodeAndAdvance(OpCodes.Brfalse)
-    .MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Heightmap), nameof(Heightmap.IsBiomeEdge))))
-    .Advance(-1)
-    .SetAndAdvance(OpCodes.Ldc_I4_0, null)
-    .SetAndAdvance(OpCodes.Nop, null)
-    .InstructionEnumeration();
 
   /*
     [HarmonyPatch(typeof(CinderSpawner), nameof(CinderSpawner.CanSpawnCinder), typeof(Transform), typeof(Heightmap.Biome)), HarmonyTranspiler]
@@ -57,11 +73,11 @@ public class BiomeHeat
 
   private static IEnumerable<CodeInstruction> PatchBiomeHeat2(IEnumerable<CodeInstruction> instructions) =>
     new CodeMatcher(instructions).MatchForward(false, new CodeMatch(OpCodes.Ldc_I4_S, (sbyte)32))
-    .SetAndAdvance(OpCodes.Call, Transpilers.EmitDelegate(HasHeat).operand)
+    .SetAndAdvance(OpCodes.Call, Transpilers.EmitDelegate(HasLava).operand)
     .SetOpcodeAndAdvance(OpCodes.Brtrue)
     .InstructionEnumeration();
 
-  private static bool HasHeat(Heightmap.Biome biome) => BiomeManager.TryGetData(biome, out var data) && data.lava;
+  private static bool HasLava(Heightmap.Biome biome) => (biome & BiomeManager.LavaBiomes) != 0;
 
 
 

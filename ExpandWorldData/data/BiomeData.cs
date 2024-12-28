@@ -53,7 +53,7 @@ public class BiomeYaml
   public Color color = new(0, 0, 0, 0);
   [DefaultValue(1f)]
   public float mapColorMultiplier = 1f;
-  public Color mapColor = new(0, 0, 0, 0);
+  public Color mapColor = Color.black;
   [DefaultValue("")]
   public string musicMorning = "morning";
   [DefaultValue("")]
@@ -104,21 +104,20 @@ public class BiomeData
     forestMultiplier = data.forestMultiplier;
     if (data.statusEffects != null)
       statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
+    // Lava only visually appears on Ashlands terrain, so that can be used as the default.
     if (data.lava == "")
-      lava = data.biome.ToLower() == "ashlands" || data.terrain.ToLower() == "ashlands";
-    if (data.lava == "true")
-      lava = true;
+      lava = data.color.a > 0.959f && data.color.r > 0.959f;
+    else
+      lava = data.lava == "true";
   }
   public bool IsValid() =>
     statusEffects.Count > 0 ||
     altitudeMultiplier != 1f ||
     waterDepthMultiplier != 1f ||
     altitudeDelta != 0f ||
-    excessFactor != 0.5f ||
     minimumAltitude != -1000f ||
     maximumAltitude != 10000f ||
     mapColorMultiplier != 1f ||
-    noBuild ||
     mapColor.a != 0 ||
     forestMultiplier != 1f;
 }

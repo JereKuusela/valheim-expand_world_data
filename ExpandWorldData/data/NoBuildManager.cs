@@ -69,7 +69,7 @@ public class NoBuildManager
   public static bool IsInsideNoBuildBiome(Vector3 point)
   {
     var biome = WorldGenerator.instance.GetBiome(point);
-    return BiomeManager.TryGetData(biome, out var biomeData) && biomeData.noBuild;
+    return (biome & BiomeManager.NoBuildBiomes) != 0;
   }
   public static void Load(string yaml)
   {
