@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -29,6 +30,17 @@ public class BiomeHeight
 
     if (BiomeManager.TryGetData(__state, out var data))
     {
+      if (data.lavaAmount != 1f)
+      {
+        // Biome seed wouldn't make sense because then lava intensity would match the biome shape.
+        var seed = data.lavaSeed;
+        var lava = Mathf.PerlinNoise(seed + wx * data.lavaStretch, seed + wy * data.lavaStretch);
+        if (lava > data.lavaAmount)
+          mask.a = 0;
+        else
+          mask.a = lava / data.lavaAmount;
+        __result -= mask.a;
+      }
       __result -= WorldInfo.WaterLevel;
       __result *= data.altitudeMultiplier;
       __result += data.altitudeDelta;

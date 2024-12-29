@@ -68,6 +68,10 @@ public class BiomeYaml
   public StatusData[]? statusEffects;
   [DefaultValue("")]
   public string lava = "";
+  [DefaultValue(1f)]
+  public float lavaAmount = 1f;
+  [DefaultValue(1f)]
+  public float lavaStretch = 1f;
 }
 
 public class BiomeData
@@ -85,6 +89,9 @@ public class BiomeData
   public Color mapColor = new(0, 0, 0, 0);
   public float forestMultiplier = 1f;
   public bool lava = false;
+  public float lavaAmount = 1f;
+  public float lavaStretch = 1f;
+  public float lavaSeed = 0f;
 
   public List<Status> statusEffects = [];
 
@@ -106,9 +113,12 @@ public class BiomeData
       statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
     // Lava only visually appears on Ashlands terrain, so that can be used as the default.
     if (data.lava == "")
-      lava = data.color.a > 0.959f && data.color.r > 0.959f;
+      lava = data.color.a > 0.929f && data.color.r > 0.929f;
     else
       lava = data.lava == "true";
+    lavaAmount = data.lavaAmount;
+    lavaStretch = 0.01f / data.lavaStretch;
+    lavaSeed = Random.Range(-10000, 10000);
   }
   public bool IsValid() =>
     statusEffects.Count > 0 ||
@@ -119,7 +129,8 @@ public class BiomeData
     maximumAltitude != 10000f ||
     mapColorMultiplier != 1f ||
     mapColor.a != 0 ||
-    forestMultiplier != 1f;
+    forestMultiplier != 1f ||
+    lavaAmount != 1f;
 }
 
 

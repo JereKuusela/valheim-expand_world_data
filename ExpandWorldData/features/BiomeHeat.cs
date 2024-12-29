@@ -29,16 +29,19 @@ public class BiomeHeat
   {
     var biome = hm.GetBiome(pos);
     if (!HasLava(biome)) return 0f;
-    if (!hm.IsBiomeEdge()) return hm.GetVegetationMask(pos);
+    if (HasFullLava(biome) && !hm.IsBiomeEdge()) return hm.GetVegetationMask(pos);
     // Lava is only visible on Ashlands terrain (r and a channels higher than 0.92).
     // Biome edges blend the color which removes the lava texture.
     // So the terrain color must be checked to determine if lava would be visible.
     hm.WorldToVertex(pos, out var x, out var y);
-    var index = x + y * hm.m_width;
+    var index = y + x * (hm.m_width + 1);
     var color = hm.m_renderMesh.colors32[index];
-    // 0.92 is still barely visible so safer to use 0.94.
-    if (color.r < 0.959f || color.a < 0.959f) return 0f;
-    return hm.GetVegetationMask(pos);
+    // 0.92 is still barely visible so safer to use 0.93 (* 255).
+    if (color.r < 237 || color.a < 237) return 0f;
+    // Multiplier used to lower damage on barely visible lava.
+    // 0.5 ensures that there is always some damage.
+    var multiplier = color.a == 255 ? 1f : 0.5f + (color.a - 237) / 36;
+    return hm.GetVegetationMask(pos) * multiplier;
   }
 
 
@@ -78,6 +81,7 @@ public class BiomeHeat
     .InstructionEnumeration();
 
   private static bool HasLava(Heightmap.Biome biome) => (biome & BiomeManager.LavaBiomes) != 0;
+  private static bool HasFullLava(Heightmap.Biome biome) => (biome & BiomeManager.FullLavaBiomes) != 0;
 
 
 

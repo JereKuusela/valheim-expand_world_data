@@ -57,7 +57,7 @@ public class WorldEntry
     else if (BiomeManager.TryGetBiome(data.seed, out var biome))
       biomeSeed = biome;
 
-    if (data.boiling == "" && BiomeManager.TryGetData(biome, out var biomeData) && biomeData.lava)
+    if (data.boiling == "" && (biome & BiomeManager.LavaBiomes) != 0)
       boiling = 1f;
     if (data.boiling == "true")
       boiling = 1f;

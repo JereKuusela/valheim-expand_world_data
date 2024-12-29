@@ -1,3 +1,8 @@
+- v1.49
+  - Adds lava support for custom biomes.
+  - Adds support for lower lava intensity when terrain color alpha is less than 1.
+  - Adds new fields `lavaAmount` and `lavaStretch` to the `expand_biomes.yaml` to support lava pattern for custom biomes.
+  - Fixes invisible lava when Ashlands biome is adjacent to some other biome.
 
 - v1.48
   - Fixes blueprint locations not working.
@@ -17,20 +22,3 @@
   - Fixes location object swaps not always working on single player.
   - Fixes chances not working when spawning blueprints with a location object.
   - Fixed for the new update.
-
-- v1.44
-  - WARNING: This update changes terrain related code. Recommended to back up your save before updating.
-  - Adds new fields `wiggleDistanceLength`, `wiggleDistanceWidth`, `wiggleSectorLength`, and `wiggleSectorWidth` to the `expand_world.yaml` to support entry specific wiggling.
-  - Fixes the default `expand_world.yaml` file not working.
-
-- v1.43
-  - Reverts some unintended changes messing up the terrain height, sorry!
-
-- v1.42
-  - Fixes depending EW mods getting broken.
-
-- v1.41
-  - Updates the data system to match latest changes and fixes from Expand World Prefabs mod.
-
-- v1.40
-  - Fixes blueprint rooms not always loading.

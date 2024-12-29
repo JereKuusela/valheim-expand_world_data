@@ -96,8 +96,6 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - name: Display name. Required for new biomes.
 - terrain: Identifier of the base biome. Determines which terrain algorithm to use. Required for new biomes.
 - nature: Identifier of the base biome. Determines which plants can grow here, whether bees are happy and foot steps. If not given, uses the terrain value.
-- lava (default: `false`): If true, the biome can have lava.
-  - Default value is true for Ashlands biome and terrain.
 - altitudeDelta: Flat increase/decrease to the terrain altitude. See Altitude section for more info.
 - altitudeMultiplier: Multiplier to the terrain altitude (relative to the water level).
 - waterDepthMultiplier (default: `1.0`): Multiplies negative terrain altitude.
@@ -127,6 +125,13 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - statusEffects: List of status effects that are active in this environment.
   - See [Status effects](#status-effects) for format and more information.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
+- lava (default: `false`): If true, the biome can have lava.
+  - Default value is true when `color` r and a values are greater than 0.92.
+  - Can be manually set to true for other colors, but the lava is not visually shown.
+  - Only Ashlands and Mistlands `terrain` have a lava pattern by default.
+  - Other biomes have lava everywhere.
+- lavaAmount (default: `1`): Amount of lava in the biome (1 = 100%). Uses Perlin noise.
+- lavaStretch (default: `1`): Multiplies the size of lava areas (average total area stays the same).
 
 ## World
 

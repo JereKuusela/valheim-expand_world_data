@@ -19,6 +19,8 @@ public class BiomeManager
   public static Dictionary<EnvEntry, EnvEntryKeys> EnvKeys = [];
 
   public static Heightmap.Biome LavaBiomes = Heightmap.Biome.AshLands;
+  // Minor optimization to skip terrain color based calculations.
+  public static Heightmap.Biome FullLavaBiomes = Heightmap.Biome.AshLands;
   public static Heightmap.Biome NoBuildBiomes = 0;
 
   public static EnvEntry FromData(BiomeEnvironment data, Dictionary<EnvEntry, EnvEntryKeys> keys)
@@ -181,10 +183,14 @@ public class BiomeManager
     BiomeData.Clear();
     BiomeToColor.Clear();
     LavaBiomes = 0;
+    FullLavaBiomes = 0;
     NoBuildBiomes = 0;
     NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
     BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     var lastBiome = Heightmap.Biome.Mistlands;
+
+    UnityEngine.Random.State state = UnityEngine.Random.state;
+    UnityEngine.Random.InitState(ZNet.m_world.m_seed);
     foreach (var item in rawData)
     {
       var biome = lastBiome;
@@ -206,6 +212,8 @@ public class BiomeManager
       BiomeData extra = new(item);
       if (extra.lava)
         LavaBiomes |= biome;
+      if (extra.lava && item.color.a == 1 && item.color.r == 1)
+        FullLavaBiomes |= biome;
       if (extra.noBuild)
         NoBuildBiomes |= biome;
       if (extra.IsValid())
@@ -213,6 +221,7 @@ public class BiomeManager
       if (item.paint != "") BiomeToColor[biome] = Terrain.ParsePaint(item.paint);
 
     }
+    UnityEngine.Random.state = state;
     BiomeToTerrain = rawData.ToDictionary(data => GetBiome(data.biome), data =>
     {
       if (TryGetBiome(data.terrain, out var terrain))
