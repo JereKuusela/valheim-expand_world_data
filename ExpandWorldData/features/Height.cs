@@ -33,7 +33,7 @@ public class BiomeHeight
       if (data.lavaAmount != 1f)
       {
         // Biome seed wouldn't make sense because then lava intensity would match the biome shape.
-        var seed = data.lavaSeed;
+        var seed = data.GetLavaSeed();
         var lava = Mathf.PerlinNoise(seed + wx * data.lavaStretch, seed + wy * data.lavaStretch);
         if (lava > data.lavaAmount)
           mask.a = 0;

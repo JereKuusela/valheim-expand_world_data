@@ -53,7 +53,7 @@ public class BiomeYaml
   public Color color = new(0, 0, 0, 0);
   [DefaultValue(1f)]
   public float mapColorMultiplier = 1f;
-  public Color mapColor = Color.black;
+  public Color mapColor = new(0, 0, 0, 0);
   [DefaultValue("")]
   public string musicMorning = "morning";
   [DefaultValue("")]
@@ -91,7 +91,18 @@ public class BiomeData
   public bool lava = false;
   public float lavaAmount = 1f;
   public float lavaStretch = 1f;
-  public float lavaSeed = 0f;
+  private float? lavaSeed = null;
+  public float GetLavaSeed()
+  {
+    if (lavaSeed == null)
+    {
+      Random.State state = Random.state;
+      Random.InitState(ZNet.m_world.m_seed);
+      lavaSeed = Random.Range(-10000, 10000);
+      Random.state = state;
+    }
+    return lavaSeed.Value;
+  }
 
   public List<Status> statusEffects = [];
 
@@ -118,7 +129,6 @@ public class BiomeData
       lava = data.lava == "true";
     lavaAmount = data.lavaAmount;
     lavaStretch = 0.01f / data.lavaStretch;
-    lavaSeed = Random.Range(-10000, 10000);
   }
   public bool IsValid() =>
     statusEffects.Count > 0 ||

@@ -15,7 +15,7 @@ public class EWD : BaseUnityPlugin
   public static EWD Instance;
   public static Harmony Harmony;
 #nullable enable
-  public static ServerSync.ConfigSync ConfigSync = new(GUID)
+  public static ServerSync.ConfigSync ConfigSync = new(GUID, true)
   {
     DisplayName = NAME,
     CurrentVersion = VERSION,

@@ -20,9 +20,10 @@ public class PlantUpdateHealth
   static void Prefix() => GetBiomeHM.Nature = true;
   static void Finalizer() => GetBiomeHM.Nature = false;
 }
-[HarmonyPatch(typeof(FootStep), nameof(FootStep.GetGroundMaterial))]
-public class FootStepGetGroundMaterial
+[HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetGroundMaterial))]
+public class HeightmapGetGroundMaterial
 {
   static void Prefix() => GetBiomeHM.Nature = true;
   static void Finalizer() => GetBiomeHM.Nature = false;
 }
+

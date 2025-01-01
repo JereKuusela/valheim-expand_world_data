@@ -189,8 +189,6 @@ public class BiomeManager
     BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     var lastBiome = Heightmap.Biome.Mistlands;
 
-    UnityEngine.Random.State state = UnityEngine.Random.state;
-    UnityEngine.Random.InitState(ZNet.m_world.m_seed);
     foreach (var item in rawData)
     {
       var biome = lastBiome;
@@ -221,7 +219,6 @@ public class BiomeManager
       if (item.paint != "") BiomeToColor[biome] = Terrain.ParsePaint(item.paint);
 
     }
-    UnityEngine.Random.state = state;
     BiomeToTerrain = rawData.ToDictionary(data => GetBiome(data.biome), data =>
     {
       if (TryGetBiome(data.terrain, out var terrain))
@@ -281,11 +278,11 @@ public class BiomeManager
   }
   public static void SetupWatcher()
   {
-    var callback = () =>
+    static void callback()
     {
       if (ZNet.m_instance == null) NamesFromFile();
       else FromFile();
-    };
+    }
     Yaml.SetupWatcher(Pattern, callback);
   }
 

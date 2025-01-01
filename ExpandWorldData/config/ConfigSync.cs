@@ -181,11 +181,12 @@ public class ConfigSync
     RuntimeHelpers.RunClassConstructor(typeof(VersionCheck).TypeHandle);
   }
 
-  public ConfigSync(string name)
+  public ConfigSync(string name) : this(name, false) { }
+  public ConfigSync(string name, bool sendBiomes)
   {
     Name = name;
     configSyncs.Add(this);
-    _ = new VersionCheck(this);
+    _ = new VersionCheck(this) { SendBiomes = sendBiomes };
   }
 
   public SyncedConfigEntry<T> AddConfigEntry<T>(ConfigEntry<T> configEntry)
@@ -1138,6 +1139,7 @@ public class VersionCheck
   }
 
   private string? currentVersion;
+  public bool SendBiomes { get; set; } = false;
 
   public string CurrentVersion
   {
@@ -1295,7 +1297,7 @@ public class VersionCheck
     }
     if (matched)
     {
-      if (!ZNet.instance.IsServer())
+      if (!ZNet.instance.IsServer() && pkg.GetPos() < pkg.Size())
       {
         Dictionary<Heightmap.Biome, string> biomes = [];
         while (pkg.m_reader.BaseStream.Position != pkg.m_reader.BaseStream.Length)
@@ -1383,7 +1385,7 @@ public class VersionCheck
       zpackage.Write(check.Name);
       zpackage.Write(check.MinimumRequiredVersion);
       zpackage.Write(check.CurrentVersion);
-      if (ZNet.instance.IsServer())
+      if (ZNet.instance.IsServer() && check.SendBiomes)
       {
         foreach (var kvp in BiomeManager.BiomeToDisplayName)
         {

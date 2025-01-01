@@ -395,6 +395,7 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
   - Reasonable maximum is 3 zones which is 192 meters.
   - Note: Zone size is 64m x 64m. So values above that causes overflow to the adjacent zones.
   - Note: Dungeons have an environment cube that has 64 meter size. This is automatically scaled, unless running in the server side only mode.
+- randomSeed (default: `false`): If true, the generation result is always different instead of depending on the dungeon coordinates.
 - themes: List of available room sets separated by ",".
   - For example `SunkenCrypt,ForestCrypt` would use both sets.
 - maxRooms (default: `1`): Maximum amount of rooms. Only for Dungeon and CampRadial.

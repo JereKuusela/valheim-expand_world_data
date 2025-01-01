@@ -2,6 +2,7 @@
   - Adds lava support for custom biomes.
   - Adds support for lower lava intensity when terrain color alpha is less than 1.
   - Adds new fields `lavaAmount` and `lavaStretch` to the `expand_biomes.yaml` to support lava pattern for custom biomes.
+  - Adds a new field `randomSeed` to the `expand_dungeons.yaml` to randomize the result for every dungeon reset.
   - Fixes invisible lava when Ashlands biome is adjacent to some other biome.
 
 - v1.48

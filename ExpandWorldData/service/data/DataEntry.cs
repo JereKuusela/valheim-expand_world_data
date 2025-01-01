@@ -181,7 +181,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse float {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        Floats.Add(Hash(kvp.Key), DataValue.Float(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (Floats.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate float key {kvp.Key}.");
+        Floats[hash] = DataValue.Float(kvp.Value);
       }
     }
     if (data.ints != null)
@@ -193,7 +196,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse int {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        Ints.Add(Hash(kvp.Key), DataValue.Int(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (Ints.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate int key {kvp.Key}.");
+        Ints[hash] = DataValue.Int(kvp.Value);
       }
     }
     if (data.bools != null)
@@ -205,7 +211,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse bool {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        Bools.Add(Hash(kvp.Key), DataValue.Bool(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (Bools.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate bool key {kvp.Key}.");
+        Bools[hash] = DataValue.Bool(kvp.Value);
       }
     }
     if (data.hashes != null)
@@ -217,7 +226,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse hash {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        Hashes.Add(Hash(kvp.Key), DataValue.Hash(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (Hashes.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate hash key {kvp.Key}.");
+        Hashes[hash] = DataValue.Hash(kvp.Value);
       }
     }
     if (data.longs != null)
@@ -229,7 +241,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse long {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        Longs.Add(Hash(kvp.Key), DataValue.Long(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (Longs.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate long key {kvp.Key}.");
+        Longs[hash] = DataValue.Long(kvp.Value);
       }
     }
     if (data.strings != null)
@@ -241,7 +256,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse string {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        Strings.Add(Hash(kvp.Key), DataValue.String(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (Strings.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate string key {kvp.Key}.");
+        Strings[hash] = DataValue.String(kvp.Value);
       }
     }
     if (data.vecs != null)
@@ -253,7 +271,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse vector {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        Vecs.Add(Hash(kvp.Key), DataValue.Vector3(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (Vecs.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate vector key {kvp.Key}.");
+        Vecs[hash] = DataValue.Vector3(kvp.Value);
       }
     }
     if (data.quats != null)
@@ -265,7 +286,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse quaternion {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        Quats.Add(Hash(kvp.Key), DataValue.Quaternion(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (Quats.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate quaternion key {kvp.Key}.");
+        Quats[hash] = DataValue.Quaternion(kvp.Value);
       }
     }
     if (data.bytes != null)
@@ -277,7 +301,10 @@ public class DataEntry
         if (kvp.Key == "") throw new InvalidOperationException($"Failed to parse byte array {value}.");
         if (kvp.Key.Contains("."))
           componentsToAdd.Add(kvp.Key.Split('.')[0]);
-        ByteArrays.Add(Hash(kvp.Key), Convert.FromBase64String(kvp.Value));
+        var hash = Hash(kvp.Key);
+        if (ByteArrays.ContainsKey(hash))
+          Log.Warning($"Data {data.name}: Duplicate byte array key {kvp.Key}.");
+        ByteArrays[hash] = Convert.FromBase64String(kvp.Value);
       }
     }
     if (data.items != null)
