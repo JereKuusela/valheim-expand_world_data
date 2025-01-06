@@ -65,8 +65,7 @@ public class VegetationLoading
   {
     try
     {
-      var yaml = DataManager.Read(Pattern);
-      return Yaml.Deserialize<VegetationData>(yaml, FileName).Select(FromData)
+      return DataManager.ReadData<VegetationData>(Pattern).Select(FromData)
         .Where(veg => veg.m_prefab).ToList();
     }
     catch (Exception e)

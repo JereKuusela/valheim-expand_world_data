@@ -99,7 +99,7 @@ public class ClutterManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataClutter ? DataManager.Read(Pattern) : "";
+    var yaml = Configuration.DataClutter ? DataManager.Read<ClutterData>(Pattern) : "";
     Configuration.valueClutterData.Value = yaml;
   }
 
@@ -121,7 +121,7 @@ public class ClutterManager
     }
     try
     {
-      data = Yaml.Deserialize<ClutterData>(yaml, FileName)
+      data = Yaml.Deserialize<ClutterData>(yaml, "Clutter")
           .Select(FromData).Where(clutter => clutter.m_prefab).ToList();
     }
     catch (Exception e)

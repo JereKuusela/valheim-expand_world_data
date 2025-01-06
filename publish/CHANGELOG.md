@@ -1,3 +1,6 @@
+- v1.50
+  - Improves the config loading to show the actual file and row numbers when an error occurs.
+
 - v1.49
   - Adds lava support for custom biomes.
   - Adds support for lower lava intensity when terrain color alpha is less than 1.

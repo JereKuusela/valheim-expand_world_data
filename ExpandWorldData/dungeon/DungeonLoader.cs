@@ -40,7 +40,7 @@ public partial class Loader
   {
     try
     {
-      var data = Yaml.Deserialize<DungeonData>(DataManager.Read(Pattern), FileName);
+      var data = DataManager.ReadData<DungeonData>(Pattern);
       return data.ToDictionary(data => data.name, From);
     }
     catch (Exception e)

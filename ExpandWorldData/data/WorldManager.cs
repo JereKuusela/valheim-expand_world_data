@@ -83,7 +83,7 @@ public class WorldManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataWorld ? DataManager.Read(Pattern) : "";
+    var yaml = Configuration.DataWorld ? DataManager.Read<WorldData>(Pattern) : "";
     Configuration.valueWorldData.Value = yaml;
     Set(yaml);
   }
@@ -96,7 +96,7 @@ public class WorldManager
     if (yaml == "" || !Configuration.DataWorld) return;
     try
     {
-      Data = Yaml.Deserialize<WorldData>(yaml, FileName);
+      Data = Yaml.Deserialize<WorldData>(yaml, "World");
       if (Data.Count == 0)
       {
         Log.Warning($"Failed to load any world data.");

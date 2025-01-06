@@ -76,7 +76,7 @@ public class NoBuildManager
     if (yaml == "") return;
     try
     {
-      var data = Yaml.Deserialize<NoBuildData>(yaml, "");
+      var data = Yaml.Deserialize<NoBuildData>(yaml, "No build");
       Log.Info($"Reloading no build data ({data.Count} entries).");
       NoBuild = data.ToDictionary(data => ZoneSystem.GetZone(new(data.X, 0, data.Z)));
     }

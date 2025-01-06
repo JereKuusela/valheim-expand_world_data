@@ -248,8 +248,7 @@ public class RoomLoading
   {
     try
     {
-      var yaml = DataManager.Read(Pattern);
-      return Yaml.Deserialize<RoomData>(yaml, FileName).Select(FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
+      return DataManager.ReadData<RoomData>(Pattern).Select(FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
     }
     catch (Exception e)
     {

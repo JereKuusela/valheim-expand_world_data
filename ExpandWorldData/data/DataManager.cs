@@ -260,13 +260,25 @@ public class DataManager : MonoBehaviour
       ZNetScene.instance.m_instances.Remove(view.GetZDO());
     }
   }
-  public static string Read(string pattern)
+  public static List<T> ReadData<T>(string pattern)
+  {
+    if (!Directory.Exists(Yaml.BaseDirectory))
+      Directory.CreateDirectory(Yaml.BaseDirectory);
+    var data = Directory.GetFiles(Yaml.BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().SelectMany(name =>
+      Yaml.Deserialize<T>(File.ReadAllText(name), Path.GetFileNameWithoutExtension(name))).ToList();
+    return data;
+  }
+  public static string Read<T>(string pattern)
   {
     if (!Directory.Exists(Yaml.BaseDirectory))
       Directory.CreateDirectory(Yaml.BaseDirectory);
     var data = Directory.GetFiles(Yaml.BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
-      string.Join("\n", File.ReadAllLines(name).ToList())
-    );
+    {
+      var yaml = File.ReadAllText(name);
+      // Clients need data in a single string, so file specific verification must be done here.
+      var ok = Yaml.Deserialize<T>(File.ReadAllText(name), Path.GetFileNameWithoutExtension(name)).Count > 0;
+      return ok ? yaml : "";
+    });
     return string.Join("\n", data) ?? "";
   }
   public static void Sanity(ref Color color)

@@ -355,8 +355,7 @@ public class LocationLoading
   {
     try
     {
-      var yaml = DataManager.Read(Pattern);
-      return Yaml.Deserialize<LocationData>(yaml, FileName).Select(FromData)
+      return DataManager.ReadData<LocationData>(Pattern).Select(FromData)
         .Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name)).ToList();
     }
     catch (Exception e)

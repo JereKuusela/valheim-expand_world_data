@@ -122,7 +122,7 @@ public class EnvironmentManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataEnvironments ? DataManager.Read(Pattern) : "";
+    var yaml = Configuration.DataEnvironments ? DataManager.Read<EnvironmentYaml>(Pattern) : "";
     Configuration.valueEnvironmentData.Value = yaml;
     Set(yaml);
   }
@@ -147,7 +147,7 @@ public class EnvironmentManager
     if (yaml == "" || !Configuration.DataEnvironments) return;
     try
     {
-      var data = Yaml.Deserialize<EnvironmentYaml>(yaml, FileName)
+      var data = Yaml.Deserialize<EnvironmentYaml>(yaml, "Environments")
         .Select(FromData).ToList();
       if (data.Count == 0)
       {

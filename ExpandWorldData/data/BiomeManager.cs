@@ -116,14 +116,14 @@ public class BiomeManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataBiome ? DataManager.Read(Pattern) : "";
+    var yaml = Configuration.DataBiome ? DataManager.Read<BiomeYaml>(Pattern) : "";
     Configuration.valueBiomeData.Value = yaml;
     Set(yaml);
   }
   public static void NamesFromFile()
   {
     if (!Configuration.DataBiome) return;
-    LoadNames(DataManager.Read(Pattern));
+    LoadNames(DataManager.ReadData<BiomeYaml>(Pattern));
   }
   public static void FromSetting(string yaml)
   {
@@ -138,7 +138,7 @@ public class BiomeManager
     {
       try
       {
-        rawData = Yaml.Deserialize<BiomeYaml>(yaml, FileName);
+        rawData = Yaml.Deserialize<BiomeYaml>(yaml, "Biomes");
       }
       catch (Exception e)
       {
@@ -155,9 +155,8 @@ public class BiomeManager
     NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLowerInvariant(), kvp => kvp.Key);
     Log.Info($"Received {BiomeToDisplayName.Count} biome names.");
   }
-  private static void LoadNames(string yaml)
+  private static void LoadNames(List<BiomeYaml> rawData)
   {
-    var rawData = Parse(yaml);
     if (rawData.Count > 0)
       Log.Info($"Preloading biome names ({rawData.Count} entries).");
     var originalNames = OriginalBiomes.Select(kvp => kvp.Key.ToLowerInvariant()).ToHashSet();
