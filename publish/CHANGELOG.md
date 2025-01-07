@@ -1,4 +1,6 @@
 - v1.50
+  - Adds a new setting "Random locations" to randomize the result of every location reset.
+  - Adds a new field `randomSeed` to the `expand_locations.yaml` to randomize the result for every location reset.
   - Improves the config loading to show the actual file and row numbers when an error occurs.
 
 - v1.49

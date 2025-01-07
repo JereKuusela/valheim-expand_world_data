@@ -19,6 +19,8 @@ public partial class Configuration
 
   public static ConfigEntry<bool> configZoneSpawners;
   public static bool ZoneSpawners => configZoneSpawners.Value;
+  public static ConfigEntry<bool> configRandomLocations;
+  public static bool RandomLocations => configRandomLocations.Value;
 
   public static ConfigEntry<string> configDistanceWiggleLength;
   public static float DistanceWiggleLength => ConfigWrapper.Floats[configDistanceWiggleLength];
@@ -80,6 +82,7 @@ public partial class Configuration
     configServerOnly = wrapper.Bind(section, "Server only", false, false, "If true, enables server side only mode and clients can't have the mod installed.");
     configLegacyGeneration = wrapper.Bind(section, "Legacy generation", false, true, "Old Expand World had a bug that cause incorrect generation near biome borders. Set this true for older worlds.");
     configZoneSpawners = wrapper.Bind(section, "Zone spawners", true, false, "If disabled, zone spawners are not generated.");
+    configRandomLocations = wrapper.Bind(section, "Random locations", false, false, "If true, all locations have a random generation instead of depending on the location coordinates.");
 
     section = "2. Features";
 

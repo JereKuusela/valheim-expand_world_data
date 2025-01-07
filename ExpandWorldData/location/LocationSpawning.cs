@@ -88,14 +88,17 @@ public class FixGhostInit
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.SpawnLocation))]
 public class LocationObjectDataAndSwap
 {
-  static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos)
+  static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos, ref int seed)
   {
     if (mode != ZoneSystem.SpawnMode.Client)
     {
-      Spawn.IgnoreHealth = LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data) && data.randomDamage == "all";
       LocationSpawning.CurrentLocation = location.m_prefab.Name;
-      if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out data))
+      if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
+      {
+        Spawn.IgnoreHealth = data.randomDamage == "all";
         pos.y += data.offset ?? data.groundOffset;
+        if (Configuration.RandomLocations || data.randomSeed) seed = System.DateTime.Now.Ticks.GetHashCode();
+      }
     }
     // Blueprints won't have any znetviews to spawn or other logic to handle.
     return location.m_prefab.IsValid;

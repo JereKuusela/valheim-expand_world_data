@@ -97,10 +97,12 @@ public class Spawner
   [HarmonyPatch(nameof(DungeonGenerator.GetSeed)), HarmonyPrefix]
   static void GetSeed()
   {
-    if (!Configuration.DataDungeons) return;
-    if (!DungeonObjects.Generators.TryGetValue(DungeonObjects.CurrentDungeon, out var data)) return;
-    if (!data.m_randomSeed) return;
-    DungeonGenerator.m_forceSeed = System.DateTime.Now.Ticks.GetHashCode();
+    if (Configuration.RandomLocations)
+      DungeonGenerator.m_forceSeed = System.DateTime.Now.Ticks.GetHashCode();
+    else if (Configuration.DataLocation && LocationLoading.LocationData.TryGetValue(LocationSpawning.CurrentLocation, out var locData) && locData.randomSeed)
+      DungeonGenerator.m_forceSeed = System.DateTime.Now.Ticks.GetHashCode();
+    else if (Configuration.DataDungeons && DungeonObjects.Generators.TryGetValue(DungeonObjects.CurrentDungeon, out var genData) && genData.m_randomSeed)
+      DungeonGenerator.m_forceSeed = System.DateTime.Now.Ticks.GetHashCode();
   }
 
   // The dungeon prefab is only used for generating, so the properties can be just overwritten.

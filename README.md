@@ -38,7 +38,7 @@ This mod can be used server only, without requiring clients to have it. However 
 - `expand_locations.yaml`: All fields.
 - `expand_rooms.yaml`: All fields.
 - `expand_vegetation.yaml`: All fields.
-- `expand_world.cfg`: Only setting Zone spawners.
+- `expand_world.cfg`: Only setting Zone spawners or Random locations.
 
 When doing this, enable `Server only` on the config to remove version check.
 
@@ -326,6 +326,9 @@ Locations are pregenerated at world generation. You must use `genloc` command to
   - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
   - Putting anything on the third value causes the icon to pulse. This is not supported with meters.
 - randomRotation (default: `false`): Randomly rotates the location (unaffected by world seed).
+- randomSeed (default: `false`): If true, the generation result is always different instead of depending on the location coordinates.
+  - This also randomizes the generated dungeon.
+  - To enable this for every location, set "Random locations" to true in the main config.
 - slopeRotation (default: `false`): Rotates based on the terrain angle. For example for locations at mountain sides.
 - snapToWater (default: `false`): Placed at the water level instead of the terrain.
 - minTerrainDelta (default: `0` meters): Minimum nearby terrain height difference.

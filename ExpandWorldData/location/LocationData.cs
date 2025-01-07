@@ -27,6 +27,8 @@ public class LocationData
   public bool centerFirst = false;
   [DefaultValue(false)]
   public bool unique = false;
+  [DefaultValue(false)]
+  public bool randomSeed = false;
   [DefaultValue("")]
   public string group = "";
   [DefaultValue("")]
