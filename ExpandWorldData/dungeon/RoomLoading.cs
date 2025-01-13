@@ -177,7 +177,7 @@ public class RoomLoading
         conn.transform.localRotation = Parse.AngleYXZ(split, 3);
     }
   }
-  private static DungeonDB.RoomData FromData(RoomData data)
+  private static DungeonDB.RoomData FromData(RoomData data, string fileName)
   {
     var snapPieces = data.connections.Select(c => c.position).ToArray();
     var roomData = CreateRoomData(data.name, snapPieces);
@@ -207,11 +207,11 @@ public class RoomLoading
     roomData.m_enabled = room.m_enabled;
     UpdateConnections(room, data.connections);
     if (data.objects != null)
-      DungeonObjects.Objects[roomData] = Helper.ParseObjects(data.objects);
+      DungeonObjects.Objects[roomData] = Helper.ParseObjects(data.objects, fileName);
     if (data.objectSwap != null)
       DungeonObjects.ObjectSwaps[roomData] = Spawn.LoadSwaps(data.objectSwap);
     if (data.objectData != null)
-      DungeonObjects.ObjectData[roomData] = Spawn.LoadData(data.objectData);
+      DungeonObjects.ObjectData[roomData] = Spawn.LoadData(data.objectData, fileName);
     return roomData;
   }
   private static RoomData ToData(DungeonDB.RoomData roomData)
@@ -248,7 +248,7 @@ public class RoomLoading
   {
     try
     {
-      return DataManager.ReadData<RoomData>(Pattern).Select(FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
+      return DataManager.ReadData<RoomData, DungeonDB.RoomData>(Pattern, FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
     }
     catch (Exception e)
     {

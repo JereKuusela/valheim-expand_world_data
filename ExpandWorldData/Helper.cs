@@ -10,14 +10,14 @@ namespace ExpandWorldData;
 
 public static class Helper
 {
-  public static List<BlueprintObject> ParseObjects(string[] args)
+  public static List<BlueprintObject> ParseObjects(string[] args, string fileName)
   {
     return args.Select(s => Parse.Split(s)).Select(split => new BlueprintObject(
         split[0],
         Parse.VectorXZY(split, 1),
         Parse.AngleYXZ(split, 4),
         Parse.VectorXZY(split, 7, Vector3.one),
-        DataHelper.Get(split.Length > 11 ? split[11] : ""),
+        DataHelper.Get(split.Length > 11 ? split[11] : "", fileName),
         Parse.Float(split, 10, 1f),
         split.Length > 3 && split[3].ToLowerInvariant() == "snap"
       )).ToList();

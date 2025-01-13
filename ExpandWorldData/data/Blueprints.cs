@@ -185,7 +185,7 @@ public class Blueprints
         else if (row.StartsWith("#", StringComparison.Ordinal))
           continue;
         else if (piece)
-          bp.Objects.Add(GetPlanBuildObject(row));
+          bp.Objects.Add(GetPlanBuildObject(row, bp.Name));
         else
           bp.SnapPoints.Add(new(GetPlanBuildSnapPoint(row), Quaternion.identity));
       }
@@ -197,7 +197,7 @@ public class Blueprints
     }
     return bp;
   }
-  private static BlueprintObject GetPlanBuildObject(string row)
+  private static BlueprintObject GetPlanBuildObject(string row, string fileName)
   {
     if (row.IndexOf(',') > -1) row = row.Replace(',', '.');
     var split = row.Split(';');
@@ -215,7 +215,7 @@ public class Blueprints
     var scaleZ = InvariantFloat(split, 12, 1f);
     var data = split.Length > 13 ? split[13] : "";
     var chance = InvariantFloat(split, 14, 1f);
-    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), new(scaleX, scaleY, scaleZ), DataHelper.Get(data), chance);
+    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), new(scaleX, scaleY, scaleZ), DataHelper.Get(data, fileName), chance);
   }
   private static Vector3 GetPlanBuildSnapPoint(string row)
   {
@@ -228,10 +228,10 @@ public class Blueprints
   }
   private static Blueprint GetBuildShare(Blueprint bp, string[] rows)
   {
-    bp.Objects = rows.Select(GetBuildShareObject).ToList();
+    bp.Objects = rows.Select(r => GetBuildShareObject(r, bp.Name)).ToList();
     return bp;
   }
-  private static BlueprintObject GetBuildShareObject(string row)
+  private static BlueprintObject GetBuildShareObject(string row, string fileName)
   {
     if (row.IndexOf(',') > -1) row = row.Replace(',', '.');
     var split = row.Split(' ');
@@ -245,7 +245,7 @@ public class Blueprints
     var posZ = InvariantFloat(split, 7);
     var data = split.Length > 8 ? split[8] : "";
     var chance = split.Length > 9 ? InvariantFloat(split, 9, 1f) : 1f;
-    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), Vector3.one, DataHelper.Get(data), chance);
+    return new(name, new(posX, posY, posZ), new(rotX, rotY, rotZ, rotW), Vector3.one, DataHelper.Get(data, fileName), chance);
   }
   private static float InvariantFloat(string[] row, int index, float defaultValue = 0f)
   {

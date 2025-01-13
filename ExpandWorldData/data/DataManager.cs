@@ -110,7 +110,7 @@ public class DataManager : MonoBehaviour
 
   public static string FromList(IEnumerable<string> array) => string.Join(", ", array);
   public static string FromList(IEnumerable<ItemDrop> array) => FromList(array.Select(i => FindItemName(i.m_itemData.m_shared?.m_name ?? "")));
-  public static List<string> ToList(string str, bool removeEmpty = true) => Parse.Split(str, removeEmpty).ToList();
+  public static List<string> ToList(string str, bool removeEmpty = true) => [.. Parse.Split(str, removeEmpty)];
   private static readonly Dictionary<string, int> ItemDropCache = [];
   private static ItemDrop FindItem(string name)
   {
@@ -195,7 +195,7 @@ public class DataManager : MonoBehaviour
     }
     return (T)(object)value;
   }
-  public static Heightmap.Biome ToBiomes(string biomeStr)
+  public static Heightmap.Biome ToBiomes(string biomeStr, string fileName)
   {
     Heightmap.Biome result = 0;
     if (biomeStr == "")
@@ -213,27 +213,32 @@ public class DataManager : MonoBehaviour
         else
         {
           if (int.TryParse(biome, out var value)) result += value;
-          else throw new InvalidOperationException($"Invalid biome {biome}.");
+          else Log.Warning($"{fileName}: Invalid biome {biome}.");
         }
       }
     }
     return result;
   }
-  public static Heightmap.BiomeArea ToBiomeAreas(string m_biome)
+  public static Heightmap.BiomeArea ToBiomeAreas(string m_biome, string fileName)
   {
     if (m_biome == "") return Heightmap.BiomeArea.Edge | Heightmap.BiomeArea.Median;
     var biomes = Parse.Split(m_biome);
-    var biomeAreas = biomes.Select(s => Enum.TryParse<Heightmap.BiomeArea>(s, true, out var area) ? area : 0);
+    var biomeAreas = biomes.Select(s =>
+    {
+      if (Enum.TryParse<Heightmap.BiomeArea>(s, true, out var area)) return area;
+      Log.Warning($"{fileName}: Invalid biome area {s}.");
+      return (Heightmap.BiomeArea)0;
+    });
     Heightmap.BiomeArea result = 0;
     foreach (var biome in biomeAreas) result |= biome;
     return result;
   }
-  public static GameObject? ToPrefab(string str)
+  public static GameObject? ToPrefab(string str, string fileName)
   {
     if (ZNetScene.instance.m_namedPrefabs.TryGetValue(str.GetStableHashCode(), out var obj))
       return obj;
     else
-      Log.Warning($"Prefab {str} not found!");
+      Log.Warning($"{fileName}: Prefab {str} not found!");
     return null;
   }
 
@@ -260,23 +265,28 @@ public class DataManager : MonoBehaviour
       ZNetScene.instance.m_instances.Remove(view.GetZDO());
     }
   }
-  public static List<T> ReadData<T>(string pattern)
+  public static List<U> ReadData<T, U>(string pattern, Func<T, string, U> converter)
   {
     if (!Directory.Exists(Yaml.BaseDirectory))
       Directory.CreateDirectory(Yaml.BaseDirectory);
     var data = Directory.GetFiles(Yaml.BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().SelectMany(name =>
-      Yaml.Deserialize<T>(File.ReadAllText(name), Path.GetFileNameWithoutExtension(name))).ToList();
+    {
+      var fileName = Path.GetFileNameWithoutExtension(name);
+      return Yaml.Deserialize<T>(File.ReadAllText(name), fileName).Select(d => converter(d, fileName));
+    }).ToList();
+
     return data;
   }
-  public static string Read<T>(string pattern)
+  public static string Read<T, U>(string pattern, Func<T, string, U> converter)
   {
     if (!Directory.Exists(Yaml.BaseDirectory))
       Directory.CreateDirectory(Yaml.BaseDirectory);
     var data = Directory.GetFiles(Yaml.BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
     {
+      var fileName = Path.GetFileNameWithoutExtension(name);
       var yaml = File.ReadAllText(name);
       // Clients need data in a single string, so file specific verification must be done here.
-      var ok = Yaml.Deserialize<T>(File.ReadAllText(name), Path.GetFileNameWithoutExtension(name)).Count > 0;
+      var ok = Yaml.Deserialize<T>(File.ReadAllText(name), fileName).Select(d => converter(d, fileName)).Count() > 0;
       return ok ? yaml : "";
     });
     return string.Join("\n", data) ?? "";

@@ -74,11 +74,11 @@ public class BiomeManager
   public static bool TryGetDisplayName(Heightmap.Biome biome, out string name) => BiomeToDisplayName.TryGetValue(biome, out name);
   public static Heightmap.Biome GetTerrain(Heightmap.Biome biome) => BiomeToTerrain.TryGetValue(biome, out var terrain) ? terrain : biome;
   public static Heightmap.Biome GetNature(Heightmap.Biome biome) => BiomeToNature.TryGetValue(biome, out var nature) ? nature : biome;
-  public static BiomeEnvSetup FromData(BiomeYaml data, Dictionary<EnvEntry, EnvEntryKeys> keys)
+  public static BiomeEnvSetup FromData(BiomeYaml data, Dictionary<EnvEntry, EnvEntryKeys> keys, string fileName)
   {
     var biome = new BiomeEnvSetup
     {
-      m_biome = DataManager.ToBiomes(data.biome),
+      m_biome = DataManager.ToBiomes(data.biome, fileName),
       m_environments = data.environments.Select(d => FromData(d, keys)).ToList(),
       m_musicMorning = data.musicMorning,
       m_musicEvening = data.musicEvening,
@@ -116,15 +116,16 @@ public class BiomeManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataBiome ? DataManager.Read<BiomeYaml>(Pattern) : "";
+    var yaml = Configuration.DataBiome ? DataManager.Read<BiomeYaml, BiomeYaml>(Pattern, From) : "";
     Configuration.valueBiomeData.Value = yaml;
     Set(yaml);
   }
   public static void NamesFromFile()
   {
     if (!Configuration.DataBiome) return;
-    LoadNames(DataManager.ReadData<BiomeYaml>(Pattern));
+    LoadNames(DataManager.ReadData<BiomeYaml, BiomeYaml>(Pattern, From));
   }
+  private static BiomeYaml From(BiomeYaml data, string file) => data;
   public static void FromSetting(string yaml)
   {
     if (Helper.IsClient()) Set(yaml);
@@ -233,7 +234,7 @@ public class BiomeManager
       return GetBiome(data.biome);
     });
     BiomeForestMultiplier = rawData.Any(data => data.forestMultiplier != 1f);
-    Environments = rawData.Select(d => FromData(d, EnvKeys)).ToList();
+    Environments = rawData.Select(d => FromData(d, EnvKeys, "Biomes")).ToList();
     // This tracks if content (environments) have been loaded.
     if (ZoneSystem.instance.m_locationsByHash.Count > 0)
       LoadEnvironments();

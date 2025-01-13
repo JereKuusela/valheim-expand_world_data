@@ -73,7 +73,7 @@ public class DataHelper
     }
     return false;
   }
-  public static DataEntry? Get(string name) => name == "" ? null : DataLoading.Get(name);
+  public static DataEntry? Get(string name, string fileName) => name == "" ? null : DataLoading.Get(name, fileName);
 
   public static List<string>? GetValuesFromGroup(string group)
   {

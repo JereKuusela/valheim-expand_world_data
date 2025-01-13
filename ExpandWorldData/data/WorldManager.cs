@@ -67,7 +67,7 @@ public class WorldManager
         biome = "meadows",
       },
     ];
-  public static List<WorldEntry> DefaultEntries = DefaultData.Select(s => new WorldEntry(s)).ToList();
+  public static List<WorldEntry> DefaultEntries = DefaultData.Select(s => new WorldEntry(s, "default world")).ToList();
 
   public static List<WorldData> Data = DefaultData;
 
@@ -83,7 +83,7 @@ public class WorldManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataWorld ? DataManager.Read<WorldData>(Pattern) : "";
+    var yaml = Configuration.DataWorld ? DataManager.Read<WorldData, WorldEntry>(Pattern, (d, f) => new WorldEntry(d, f)) : "";
     Configuration.valueWorldData.Value = yaml;
     Set(yaml);
   }
@@ -105,7 +105,7 @@ public class WorldManager
       }
       else
         Log.Info($"Reloading world data ({Data.Count} entries).");
-      BiomeCalculator.Data = Data.Select(s => new WorldEntry(s)).ToList(); ;
+      BiomeCalculator.Data = Data.Select(s => new WorldEntry(s, "world")).ToList(); ;
       BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
       EWD.Instance.InvokeRegenerate();
     }
@@ -118,7 +118,7 @@ public class WorldManager
   public static void Reload()
   {
     Log.Info($"Reloading world data ({Data.Count} entries).");
-    BiomeCalculator.Data = Data.Select(s => new WorldEntry(s)).ToList(); ;
+    BiomeCalculator.Data = Data.Select(s => new WorldEntry(s, "world")).ToList();
     BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
     EWD.Instance.InvokeRegenerate();
   }

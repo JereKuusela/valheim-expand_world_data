@@ -8,13 +8,13 @@ namespace ExpandWorldData.Dungeon;
 
 public partial class Loader
 {
-  public static FakeDungeonGenerator From(DungeonData data)
+  public static FakeDungeonGenerator From(DungeonData data, string fileName)
   {
     FakeDungeonGenerator dg = new();
     if (Enum.TryParse<DungeonGenerator.Algorithm>(data.algorithm, true, out var algorithm))
       dg.m_algorithm = algorithm;
     else
-      Log.Warning($"Failed to find dungeon algorithm {data.algorithm}.");
+      Log.Warning($"{fileName}: Failed to find dungeon algorithm {data.algorithm}.");
     dg.name = data.name;
     if (data.bounds == "")
       dg.m_zoneSize = new(64f, 256f, 64f);
@@ -30,14 +30,14 @@ public partial class Loader
     {
       m_chance = type.chance,
       m_connectionType = type.connectionType,
-      m_prefab = DataManager.ToPrefab(type.prefab)
+      m_prefab = DataManager.ToPrefab(type.prefab, fileName)
     }).ToList();
     dg.m_maxRooms = data.maxRooms;
     dg.m_minRooms = data.minRooms;
     dg.m_maxTilt = data.maxTilt;
     dg.m_minAltitude = data.minAltitude;
     dg.m_minRequiredRooms = data.minRequiredRooms;
-    dg.m_excludedRooms = RoomLoading.ParseRooms(data.excludedRooms).ToHashSet();
+    dg.m_excludedRooms = [.. RoomLoading.ParseRooms(data.excludedRooms)];
     dg.m_requiredRooms = RoomLoading.ParseRooms(data.requiredRooms);
     dg.m_themes = DataManager.ToList(data.themes);
     dg.m_tileWidth = data.tileWidth;
@@ -53,7 +53,7 @@ public partial class Loader
       //ExpandWorldData.Log.Debug($"Loaded {dg.m_objectSwaps.Count} object swaps for {dg.name}.");
     }
     if (data.objectData != null)
-      dg.m_objectData = Spawn.LoadData(data.objectData);
+      dg.m_objectData = Spawn.LoadData(data.objectData, fileName);
     return dg;
   }
   public static DungeonData To(DungeonGenerator dg)

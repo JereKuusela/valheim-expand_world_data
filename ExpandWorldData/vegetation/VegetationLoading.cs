@@ -65,7 +65,7 @@ public class VegetationLoading
   {
     try
     {
-      return DataManager.ReadData<VegetationData>(Pattern).Select(FromData)
+      return DataManager.ReadData<VegetationData, ZoneSystem.ZoneVegetation>(Pattern, FromData)
         .Where(veg => veg.m_prefab).ToList();
     }
     catch (Exception e)
@@ -132,7 +132,7 @@ public class VegetationLoading
     }
   }
 
-  public static ZoneSystem.ZoneVegetation FromData(VegetationData data)
+  public static ZoneSystem.ZoneVegetation FromData(VegetationData data, string fileName)
   {
     ZoneSystem.ZoneVegetation veg = new()
     {
@@ -145,8 +145,8 @@ public class VegetationLoading
       m_scaleMax = Parse.Scale(data.scaleMax).x,
       m_randTilt = data.randTilt,
       m_chanceToUseGroundTilt = data.chanceToUseGroundTilt,
-      m_biome = DataManager.ToBiomes(data.biome),
-      m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea),
+      m_biome = DataManager.ToBiomes(data.biome, fileName),
+      m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName),
       m_blockCheck = data.blockCheck,
       m_minAltitude = data.minAltitude,
       m_maxAltitude = data.maxAltitude,
@@ -182,7 +182,7 @@ public class VegetationLoading
     if (Helper.IsMultiAxis(scale))
       extra.scale = scale;
     if (data.data != "")
-      extra.data = DataHelper.Get(data.data);
+      extra.data = DataHelper.Get(data.data, fileName);
 
 
     var prefabs = DataManager.ToList(data.prefab).Select(p =>

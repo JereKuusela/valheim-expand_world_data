@@ -24,7 +24,7 @@ public class LocationLoading
   public static Dictionary<string, string[]> Commands = [];
   public static Dictionary<string, LocationData> LocationData = [];
   public static Dictionary<string, string> Dungeons = [];
-  public static ZoneSystem.ZoneLocation FromData(LocationData data)
+  public static ZoneSystem.ZoneLocation FromData(LocationData data, string fileName)
   {
     var loc = new ZoneSystem.ZoneLocation();
     LocationData[data.prefab] = data;
@@ -33,10 +33,10 @@ public class LocationLoading
       ZDOData[data.prefab] = data.data;
     if (data.dungeon != "")
       Dungeons[data.prefab] = data.dungeon;
-    LoadObjectData(data);
+    LoadObjectData(data, fileName);
     LoadObjectSwaps(data);
     if (data.objects != null)
-      Objects[data.prefab] = Helper.ParseObjects(data.objects);
+      Objects[data.prefab] = Helper.ParseObjects(data.objects, fileName);
     if (data.commands != null)
     {
       Commands[data.prefab] = data.commands;
@@ -51,8 +51,8 @@ public class LocationLoading
       Scales[data.prefab] = scale;
 
     loc.m_enable = data.enabled;
-    loc.m_biome = DataManager.ToBiomes(data.biome);
-    loc.m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea);
+    loc.m_biome = DataManager.ToBiomes(data.biome, fileName);
+    loc.m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName);
     loc.m_quantity = data.quantity;
     loc.m_prioritized = data.prioritized;
     loc.m_centerFirst = data.centerFirst;
@@ -82,23 +82,23 @@ public class LocationLoading
     loc.m_surroundCheckLayers = data.surroundCheckLayers;
     loc.m_surroundBetterThanAverage = data.surroundBetterThanAverage;
 
-    Setup(data.prefab, loc);
+    Setup(data.prefab, loc, fileName);
     return loc;
   }
 
-  private static void LoadObjectData(LocationData data)
+  private static void LoadObjectData(LocationData data, string fileName)
   {
     Dictionary<string, List<Tuple<float, DataEntry?>>>? locationobjectData = null;
     Dictionary<string, List<Tuple<float, DataEntry?>>>? dungeonobjectData = null;
 
     if (data.objectData != null)
     {
-      locationobjectData = Spawn.LoadData(data.objectData);
-      dungeonobjectData = Spawn.LoadData(data.objectData);
+      locationobjectData = Spawn.LoadData(data.objectData, fileName);
+      dungeonobjectData = Spawn.LoadData(data.objectData, fileName);
     }
     if (data.locationObjectData != null)
     {
-      var objectData = Spawn.LoadData(data.locationObjectData);
+      var objectData = Spawn.LoadData(data.locationObjectData, fileName);
       if (locationobjectData == null)
       {
         locationobjectData = objectData;
@@ -111,7 +111,7 @@ public class LocationLoading
     }
     if (data.dungeonObjectData != null)
     {
-      var objectData = Spawn.LoadData(data.dungeonObjectData);
+      var objectData = Spawn.LoadData(data.dungeonObjectData, fileName);
       if (dungeonobjectData == null)
       {
         dungeonobjectData = objectData;
@@ -355,7 +355,7 @@ public class LocationLoading
   {
     try
     {
-      return DataManager.ReadData<LocationData>(Pattern).Select(FromData)
+      return DataManager.ReadData<LocationData, ZoneSystem.ZoneLocation>(Pattern, FromData)
         .Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name)).ToList();
     }
     catch (Exception e)
@@ -386,13 +386,13 @@ public class LocationLoading
     return true;
   }
   ///<summary>Copies setup from locations.</summary>
-  private static void Setup(string name, ZoneSystem.ZoneLocation item)
+  private static void Setup(string name, ZoneSystem.ZoneLocation item, string fileName)
   {
     var baseName = Parse.Name(name);
     if (!Locations.TryGetValue(baseName, out var zoneLocation) || !zoneLocation.m_prefab.IsValid)
     {
       if (SetupBlueprint(name, item)) return;
-      Log.Warning($"Location prefab {baseName} not found!");
+      Log.Warning($"{fileName}: Location prefab {baseName} not found!");
       return;
     }
     item.m_prefab = new(zoneLocation.m_prefab.m_assetID) { m_name = name };

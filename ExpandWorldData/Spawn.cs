@@ -166,8 +166,8 @@ public class Spawn
     return swaps;
   }
 
-  private static List<Tuple<float, DataEntry?>> ParseDataItems(IEnumerable<string> items, float weight) => items.Select(s => Parse.Split(s, false, ':')).Select(s => Tuple.Create(Parse.Float(s, 1, 1f) * weight, DataHelper.Get(s[0]))).ToList();
-  public static Dictionary<string, List<Tuple<float, DataEntry?>>> LoadData(string[] objectData)
+  private static List<Tuple<float, DataEntry?>> ParseDataItems(IEnumerable<string> items, float weight, string fileName) => items.Select(s => Parse.Split(s, false, ':')).Select(s => Tuple.Create(Parse.Float(s, 1, 1f) * weight, DataHelper.Get(s[0], fileName))).ToList();
+  public static Dictionary<string, List<Tuple<float, DataEntry?>>> LoadData(string[] objectData, string fileName)
   {
     Dictionary<string, List<Tuple<float, DataEntry?>>> datas = [];
     // Empty items are kept to support spawning nothing.
@@ -183,7 +183,7 @@ public class Spawn
       var prefabs = DataHelper.ResolvePrefabs(s[0]);
       var name = s[0];
       var weight = Parse.Float(s, 1, 1f);
-      var dataItems = ParseDataItems(row.Skip(1), weight);
+      var dataItems = ParseDataItems(row.Skip(1), weight, fileName);
       foreach (var prefab in prefabs)
       {
         if (!datas.ContainsKey(prefab))

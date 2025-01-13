@@ -26,16 +26,16 @@ public class ClutterManager
       FromFile();
     }
   }
-  public static ClutterSystem.Clutter FromData(ClutterData data)
+  public static ClutterSystem.Clutter FromData(ClutterData data, string fileName)
   {
     ClutterSystem.Clutter clutter = new();
     if (Prefabs.TryGetValue(data.prefab, out var prefab))
       clutter.m_prefab = prefab;
     else
-      Log.Warning($"Failed to find clutter prefab {data.prefab}.");
+      Log.Warning($"{fileName}: Failed to find clutter prefab {data.prefab}.");
     clutter.m_enabled = data.enabled;
     clutter.m_amount = data.amount;
-    clutter.m_biome = DataManager.ToBiomes(data.biome);
+    clutter.m_biome = DataManager.ToBiomes(data.biome, fileName);
     clutter.m_instanced = data.instanced;
     clutter.m_onUncleared = data.onUncleared;
     clutter.m_onCleared = data.onCleared;
@@ -99,7 +99,7 @@ public class ClutterManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataClutter ? DataManager.Read<ClutterData>(Pattern) : "";
+    var yaml = Configuration.DataClutter ? DataManager.Read<ClutterData, ClutterSystem.Clutter>(Pattern, FromData) : "";
     Configuration.valueClutterData.Value = yaml;
   }
 
@@ -122,7 +122,7 @@ public class ClutterManager
     try
     {
       data = Yaml.Deserialize<ClutterData>(yaml, "Clutter")
-          .Select(FromData).Where(clutter => clutter.m_prefab).ToList();
+          .Select(d => FromData(d, "Clutter")).Where(clutter => clutter.m_prefab).ToList();
     }
     catch (Exception e)
     {

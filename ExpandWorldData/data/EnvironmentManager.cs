@@ -13,7 +13,7 @@ public class EnvironmentManager
   public static string Pattern = "expand_environments*.yaml";
   private static Dictionary<string, EnvSetup> Originals = [];
   public static Dictionary<string, EnvironmentData> Extra = [];
-  public static EnvSetup FromData(EnvironmentYaml data)
+  public static EnvSetup FromData(EnvironmentYaml data, string fileName)
   {
     EnvSetup env = new() { m_psystems = [] };
     if (Originals.TryGetValue(data.particles, out var setup))
@@ -21,7 +21,7 @@ public class EnvironmentManager
     else if (Originals.TryGetValue(data.name, out setup))
       env = setup.Clone();
     else
-      Log.Warning($"Failed to find a particle system \"{data.particles}\" for environment {data.name}. Make sure field \"particles\" is set correctly or remove this entry.");
+      Log.Warning($"{fileName}: Failed to find a particle system \"{data.particles}\" for environment {data.name}. Make sure field \"particles\" is set correctly or remove this entry.");
 
     env.m_name = data.name;
     env.m_default = data.isDefault;
@@ -122,7 +122,8 @@ public class EnvironmentManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataEnvironments ? DataManager.Read<EnvironmentYaml>(Pattern) : "";
+    SetOriginals();
+    var yaml = Configuration.DataEnvironments ? DataManager.Read<EnvironmentYaml, EnvSetup>(Pattern, FromData) : "";
     Configuration.valueEnvironmentData.Value = yaml;
     Set(yaml);
   }
@@ -148,7 +149,7 @@ public class EnvironmentManager
     try
     {
       var data = Yaml.Deserialize<EnvironmentYaml>(yaml, "Environments")
-        .Select(FromData).ToList();
+        .Select(d => FromData(d, "Environments")).ToList();
       if (data.Count == 0)
       {
         Log.Warning($"Failed to load any environment data.");
