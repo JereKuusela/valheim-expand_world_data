@@ -1,3 +1,6 @@
+- v1.51
+  - Possible fix for lava related "index out of range" error.
+
 - v1.50
   - Adds a new setting "Random locations" to randomize the result of every location reset.
   - Adds a new field `randomSeed` to the `expand_locations.yaml` to randomize the result for every location reset.

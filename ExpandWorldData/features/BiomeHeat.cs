@@ -24,7 +24,6 @@ public class BiomeHeat
     __result = GetLava(__instance, worldPos) > lavaValue;
     return false;
   }
-
   private static float GetLava(Heightmap hm, Vector3 pos)
   {
     var biome = hm.GetBiome(pos);
@@ -33,9 +32,12 @@ public class BiomeHeat
     // Lava is only visible on Ashlands terrain (r and a channels higher than 0.92).
     // Biome edges blend the color which removes the lava texture.
     // So the terrain color must be checked to determine if lava would be visible.
-    hm.WorldToVertex(pos, out var x, out var y);
+    hm.WorldToVertexMask(pos, out var x, out var y);
     var index = y + x * (hm.m_width + 1);
-    var color = hm.m_renderMesh.colors32[index];
+    var colors = hm.m_renderMesh.colors32;
+    // Some user got index out of bounds. Not sure why but this should fix that.
+    if (index < 0 || index >= colors.Length) return hm.GetVegetationMask(pos);
+    var color = colors[index];
     // 0.92 is still barely visible so safer to use 0.93 (* 255).
     if (color.r < 237 || color.a < 237) return 0f;
     // Multiplier used to lower damage on barely visible lava.
