@@ -169,7 +169,7 @@ Each entry in the file adds a new rule. When determing the biome, the rules are 
 - boiling (default: `false`): If true, the water is boiling hot.
   - For Ashlands biome, the default value is `true` to keep old configurations working.
   - The boiling effect gradually increases over 300 meters.
-    - This can be modified by using a numeric value instead of true/false.
+    - This can be modified by using a numeric value instead of `true`.
     - For example `0.5` would make the effect increase over 600 meters while `2.0` would make the effect increase over 150 meters.
 
 Note: The world edge is always ocean. This is currently hardcoded.
