@@ -1,3 +1,7 @@
+- v1.52
+  - Adds dependency to YamlDotNet.
+  - Fixed for the new update.
+
 - v1.51
   - Possible fix for lava related "index out of range" error.
 

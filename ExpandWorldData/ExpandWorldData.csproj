@@ -6,7 +6,7 @@
     <nullable>enable</nullable>
     <DoILRepack>false</DoILRepack>
   </PropertyGroup>
-  <Target Name="CopyDLL" AfterTargets="ILRepacker">
+  <Target Name="CopyDLL" AfterTargets="Build">
     <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(ProjectDir)\..\..\Libs" />
     <Message Text="Copied to Libs folder." Importance="High" />
   </Target>
@@ -53,9 +53,8 @@
     <Reference Include="assembly_guiutils">
       <HintPath>..\..\Libs\assembly_guiutils.dll</HintPath>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.34.2" />
-    <PackageReference Include="YamlDotNet" Version="16.1.3" />
+    <Reference Include="YamlDotNet">
+      <HintPath>..\..\Libs\YamlDotNet.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

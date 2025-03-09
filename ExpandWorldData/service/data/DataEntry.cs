@@ -40,10 +40,13 @@ public class DataEntry
   public Vector2i? ContainerSize;
   private Vector2i GetContainerSize() => ContainerSize ?? new(4, 2);
   public IIntValue? ItemAmount;
-  public ZDOExtraData.ConnectionType ConnectionType = ZDOExtraData.ConnectionType.None;
+  public ZDOExtraData.ConnectionType? ConnectionType;
   public int ConnectionHash = 0;
   public IZdoIdValue? OriginalId;
   public IZdoIdValue? TargetConnectionId;
+  public IBoolValue? Persistent;
+  public IBoolValue? Distant;
+  public ZDO.ObjectType? Priority;
   public IVector3Value? Position;
   public IQuaternionValue? Rotation;
 
@@ -68,6 +71,9 @@ public class DataEntry
       TargetConnectionId = new SimpleZdoIdValue(zdoConn.m_target);
       ConnectionType = zdoConn.m_type;
     }
+    Persistent = new SimpleBoolValue(zdo.Persistent);
+    Distant = new SimpleBoolValue(zdo.Distant);
+    Priority = zdo.Type;
   }
   public void Load(DataEntry data)
   {
@@ -140,6 +146,12 @@ public class DataEntry
     ConnectionHash = data.ConnectionHash;
     OriginalId = data.OriginalId;
     TargetConnectionId = data.TargetConnectionId;
+    if (data.Persistent != null)
+      Persistent = data.Persistent;
+    if (data.Distant != null)
+      Distant = data.Distant;
+    if (data.Priority != null)
+      Priority = data.Priority;
     if (data.Position != null)
       Position = data.Position;
     if (data.Rotation != null)
@@ -160,12 +172,15 @@ public class DataEntry
     Items = null;
     ContainerSize = null;
     ItemAmount = null;
-    ConnectionType = ZDOExtraData.ConnectionType.None;
+    ConnectionType = null;
     ConnectionHash = 0;
     OriginalId = null;
     TargetConnectionId = null;
     Position = null;
     Rotation = null;
+    Distant = null;
+    Persistent = null;
+    Priority = null;
     Load(data);
     return this;
   }
@@ -309,7 +324,7 @@ public class DataEntry
     }
     if (data.items != null)
     {
-      Items = data.items.Select(item => new ItemValue(item)).ToList();
+      Items = [.. data.items.Select(item => new ItemValue(item))];
     }
     if (!string.IsNullOrWhiteSpace(data.containerSize))
       ContainerSize = Parse.Vector2Int(data.containerSize!);
@@ -326,10 +341,20 @@ public class DataEntry
       Position = DataValue.Vector3(data.position!);
     if (!string.IsNullOrWhiteSpace(data.rotation))
       Rotation = DataValue.Quaternion(data.rotation!);
+    if (data.persistent != null)
+      Persistent = DataValue.Bool(data.persistent);
+    if (data.distant != null)
+      Distant = DataValue.Bool(data.distant);
+    if (data.priority != null)
+      Priority = Enum.TryParse<ZDO.ObjectType>(data.priority, true, out var parsed) ? parsed : null;
     if (!string.IsNullOrWhiteSpace(data.connection))
     {
       var split = Parse.SplitWithEmpty(data.connection!);
-      if (split.Length > 1)
+      if (split.Length == 1)
+      {
+        ConnectionType = ToByteEnum<ZDOExtraData.ConnectionType>([.. split]);
+      }
+      else
       {
         var types = split.Take(split.Length - 1).ToList();
         var hash = split[split.Length - 1];
@@ -408,7 +433,173 @@ public class DataEntry
       ConnectionType = (ZDOExtraData.ConnectionType)pkg.ReadByte();
       ConnectionHash = pkg.ReadInt();
     }
+    if ((num & 512) != 0)
+      Persistent = new SimpleBoolValue(pkg.ReadBool());
+    if ((num & 1024) != 0)
+      Distant = new SimpleBoolValue(pkg.ReadBool());
+    if ((num & 2048) != 0)
+      Priority = (ZDO.ObjectType)pkg.ReadByte();
   }
+  public bool Match(Parameters pars, ZDO zdo)
+  {
+    if (Strings != null && Strings.Any(pair => pair.Value.Match(pars, zdo.GetString(pair.Key)) == false)) return false;
+    if (Floats != null && Floats.Any(pair => pair.Value.Match(pars, zdo.GetFloat(pair.Key)) == false)) return false;
+    if (Ints != null && Ints.Any(pair => pair.Value.Match(pars, zdo.GetInt(pair.Key)) == false)) return false;
+    if (Longs != null && Longs.Any(pair => pair.Value.Match(pars, zdo.GetLong(pair.Key)) == false)) return false;
+    if (Bools != null && Bools.Any(pair => pair.Value.Match(pars, zdo.GetBool(pair.Key)) == false)) return false;
+    if (Hashes != null && Hashes.Any(pair => pair.Value.Match(pars, zdo.GetInt(pair.Key)) == false)) return false;
+    if (Vecs != null && Vecs.Any(pair => pair.Value.Match(pars, zdo.GetVec3(pair.Key, Vector3.zero)) == false)) return false;
+    if (Quats != null && Quats.Any(pair => pair.Value.Match(pars, zdo.GetQuaternion(pair.Key, Quaternion.identity)) == false)) return false;
+    if (ByteArrays != null && ByteArrays.Any(pair => pair.Value.SequenceEqual(zdo.GetByteArray(pair.Key)) == false)) return false;
+    if (Persistent != null && Persistent.Match(pars, zdo.Persistent) == false) return false;
+    if (Distant != null && Distant.Match(pars, zdo.Distant) == false) return false;
+    if (Priority != null && Priority.Value != zdo.Type) return false;
+    if (Items != null) return ItemValue.Match(pars, Items, zdo, ItemAmount);
+    else if (ItemAmount != null) return ItemValue.Match(pars, zdo, ItemAmount);
+    if (ConnectionType.HasValue)
+    {
+      if (ConnectionType.Value == ZDOExtraData.ConnectionType.None)
+      {
+        var conn = zdo.GetConnection();
+        if (conn != null && conn.m_target != ZDOID.None) return false;
+      }
+      else
+      {
+        var conn = zdo.GetConnectionZDOID(ConnectionType.Value);
+        if (TargetConnectionId == null)
+        {
+          if (conn == ZDOID.None) return false;
+        }
+        else
+        {
+          var target = TargetConnectionId.Get(pars);
+          if (target != null && conn != target) return false;
+        }
+      }
+    }
+    return true;
+  }
+  public bool Unmatch(Parameters pars, ZDO zdo)
+  {
+    if (Strings != null && Strings.Any(pair => pair.Value.Match(pars, zdo.GetString(pair.Key)) == true)) return false;
+    if (Floats != null && Floats.Any(pair => pair.Value.Match(pars, zdo.GetFloat(pair.Key)) == true)) return false;
+    if (Ints != null && Ints.Any(pair => pair.Value.Match(pars, zdo.GetInt(pair.Key)) == true)) return false;
+    if (Longs != null && Longs.Any(pair => pair.Value.Match(pars, zdo.GetLong(pair.Key)) == true)) return false;
+    if (Bools != null && Bools.Any(pair => pair.Value.Match(pars, zdo.GetBool(pair.Key)) == true)) return false;
+    if (Hashes != null && Hashes.Any(pair => pair.Value.Match(pars, zdo.GetInt(pair.Key)) == true)) return false;
+    if (Vecs != null && Vecs.Any(pair => pair.Value.Match(pars, zdo.GetVec3(pair.Key, Vector3.zero)) == true)) return false;
+    if (Quats != null && Quats.Any(pair => pair.Value.Match(pars, zdo.GetQuaternion(pair.Key, Quaternion.identity)) == true)) return false;
+    if (ByteArrays != null && ByteArrays.Any(pair => pair.Value.SequenceEqual(zdo.GetByteArray(pair.Key)) == true)) return false;
+    if (Persistent != null && Persistent.Match(pars, zdo.Persistent) == true) return false;
+    if (Distant != null && Distant.Match(pars, zdo.Distant) == true) return false;
+    if (Priority != null && Priority.Value == zdo.Type) return false;
+    if (Items != null) return !ItemValue.Match(pars, Items, zdo, ItemAmount);
+    else if (ItemAmount != null) return !ItemValue.Match(pars, zdo, ItemAmount);
+    if (ConnectionType.HasValue)
+    {
+      if (ConnectionType.Value == ZDOExtraData.ConnectionType.None)
+      {
+        var conn = zdo.GetConnection();
+        if (conn == null || conn.m_target == ZDOID.None) return false;
+      }
+      else
+      {
+        var conn = zdo.GetConnectionZDOID(ConnectionType.Value);
+        if (TargetConnectionId == null)
+        {
+          if (conn != ZDOID.None) return false;
+        }
+        else
+        {
+          var target = TargetConnectionId.Get(pars);
+          if (target != null && conn == target) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public static string PrintVectorXZY(Vector3 vector)
+  {
+    return vector.x.ToString("0.##", CultureInfo.InvariantCulture) + " " + vector.z.ToString("0.##", CultureInfo.InvariantCulture) + " " + vector.y.ToString("0.##", CultureInfo.InvariantCulture);
+  }
+  public static string PrintAngleYXZ(Quaternion quaternion)
+  {
+    return PrintVectorYXZ(quaternion.eulerAngles);
+  }
+  private static string PrintVectorYXZ(Vector3 vector)
+  {
+    return vector.y.ToString("0.##", CultureInfo.InvariantCulture) + " " + vector.x.ToString("0.##", CultureInfo.InvariantCulture) + " " + vector.z.ToString("0.##", CultureInfo.InvariantCulture);
+  }
+
+  private static T ToByteEnum<T>(List<string> list) where T : struct, Enum
+  {
+
+    byte value = 0;
+    foreach (var item in list)
+    {
+      var trimmed = item.Trim();
+      if (Enum.TryParse<T>(trimmed, true, out var parsed))
+        value += (byte)(object)parsed;
+      else
+        Log.Warning($"Failed to parse value {trimmed} as {nameof(T)}.");
+    }
+    return (T)(object)value;
+  }
+
+  public void RollItems(Parameters pars)
+  {
+    if (Items?.Count > 0)
+    {
+      var encoded = ItemValue.LoadItems(pars, Items, GetContainerSize(), ItemAmount?.Get(pars) ?? 0);
+      Strings ??= [];
+      Strings[ZDOVars.s_items] = DataValue.Simple(encoded);
+    }
+  }
+
+  public void AddItems(Parameters parameters, ZDO zdo)
+  {
+    if (Items == null || Items.Count == 0) return;
+    var size = GetContainerSize();
+    var inv = ItemValue.CreateInventory(zdo, size.x, size.y);
+    var items = GenerateItems(parameters, size);
+    foreach (var item in items)
+      item.AddTo(parameters, inv);
+    ZPackage pkg = new();
+    inv.Save(pkg);
+    zdo.Set(ZDOVars.s_items, pkg.GetBase64());
+  }
+  public void RemoveItems(Parameters parameters, ZDO zdo)
+  {
+    if (Items == null || Items.Count == 0) return;
+    var inv = ItemValue.CreateInventory(zdo);
+    if (inv.m_inventory.Count == 0) return;
+
+    var items = GenerateItems(parameters, new(10000, 10000));
+    foreach (var item in items)
+      item.RemoveFrom(parameters, inv);
+    ZPackage pkg = new();
+    inv.Save(pkg);
+    zdo.Set(ZDOVars.s_items, pkg.GetBase64());
+  }
+  public List<ItemValue> GenerateItems(Parameters pars, Vector2i size)
+  {
+    if (Items == null) throw new ArgumentNullException(nameof(Items));
+    return ItemValue.Generate(pars, Items, size, ItemAmount?.Get(pars) ?? 0);
+  }
+
+  public static int Hash(string key)
+  {
+    if (Parse.TryInt(key, out var result)) return result;
+    if (key.StartsWith("$", StringComparison.InvariantCultureIgnoreCase))
+    {
+      var hash = ZSyncAnimation.GetHash(key.Substring(1));
+      if (key == "$anim_speed") return hash;
+      return 438569 + hash;
+    }
+    return key.GetStableHashCode();
+  }
+
   public void Write(Parameters pars, ZDO zdo)
   {
     var id = zdo.m_uid;
@@ -502,6 +693,12 @@ public class DataEntry
       foreach (var pair in ByteArrays)
         ZDOExtraData.s_byteArrays[id].SetValue(pair.Key, pair.Value);
     }
+    if (Persistent != null)
+      zdo.Persistent = Persistent.GetBool(pars) ?? zdo.Persistent;
+    if (Distant != null)
+      zdo.Distant = Distant.GetBool(pars) ?? zdo.Distant;
+    if (Priority != null)
+      zdo.Type = Priority.Value;
     HandleConnection(zdo, pars);
     HandleHashConnection(zdo);
     if (Position != null)
@@ -524,6 +721,7 @@ public class DataEntry
   private void HandleConnection(ZDO ownZdo, Parameters pars)
   {
     if (OriginalId == null) return;
+    if (ConnectionType == null) return;
     var ownId = ownZdo.m_uid;
     if (TargetConnectionId != null)
     {
@@ -533,7 +731,7 @@ public class DataEntry
       var otherZdo = ZDOMan.instance.GetZDO(targetId.Value);
       if (otherZdo == null) return;
 
-      ownZdo.SetConnection(ConnectionType, targetId.Value);
+      ownZdo.SetConnection(ConnectionType.Value, targetId.Value);
       // Portal is two way.
       if (ConnectionType == ZDOExtraData.ConnectionType.Portal)
         otherZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, ownId);
@@ -555,19 +753,19 @@ public class DataEntry
   private void HandleHashConnection(ZDO ownZdo)
   {
     if (ConnectionHash == 0) return;
-    if (ConnectionType == ZDOExtraData.ConnectionType.None) return;
+    if (ConnectionType == null || ConnectionType == ZDOExtraData.ConnectionType.None) return;
     var ownId = ownZdo.m_uid;
 
     // Hash data is regenerated on world save.
     // But in this case, it's manually set, so might be needed later.
-    ZDOExtraData.SetConnectionData(ownId, ConnectionType, ConnectionHash);
+    ZDOExtraData.SetConnectionData(ownId, ConnectionType.Value, ConnectionHash);
 
     // While actual connection can be one way, hash is always two way.
     // One of the hashes always has the target type.
     var otherType = ConnectionType ^ ZDOExtraData.ConnectionType.Target;
     var isOtherTarget = (ConnectionType & ZDOExtraData.ConnectionType.Target) == 0;
-    var zdos = ZDOExtraData.GetAllConnectionZDOIDs(otherType);
-    var otherId = zdos.FirstOrDefault(z => ZDOExtraData.GetConnectionHashData(z, ConnectionType)?.m_hash == ConnectionHash);
+    var zdos = ZDOExtraData.GetAllConnectionZDOIDs(otherType.Value);
+    var otherId = zdos.FirstOrDefault(z => ZDOExtraData.GetConnectionHashData(z, ConnectionType.Value)?.m_hash == ConnectionHash);
     if (otherId == ZDOID.None) return;
     var otherZdo = ZDOMan.instance.GetZDO(otherId);
     if (otherZdo == null) return;
@@ -591,130 +789,5 @@ public class DataEntry
       otherZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, ownId);
       ownZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, otherId);
     }
-  }
-  public bool Match(Parameters pars, ZDO zdo)
-  {
-    if (Strings != null && Strings.Any(pair => pair.Value.Match(pars, zdo.GetString(pair.Key)) == false)) return false;
-    if (Floats != null && Floats.Any(pair => pair.Value.Match(pars, zdo.GetFloat(pair.Key)) == false)) return false;
-    if (Ints != null && Ints.Any(pair => pair.Value.Match(pars, zdo.GetInt(pair.Key)) == false)) return false;
-    if (Longs != null && Longs.Any(pair => pair.Value.Match(pars, zdo.GetLong(pair.Key)) == false)) return false;
-    if (Bools != null && Bools.Any(pair => pair.Value.Match(pars, zdo.GetBool(pair.Key)) == false)) return false;
-    if (Hashes != null && Hashes.Any(pair => pair.Value.Match(pars, zdo.GetInt(pair.Key)) == false)) return false;
-    if (Vecs != null && Vecs.Any(pair => pair.Value.Match(pars, zdo.GetVec3(pair.Key, Vector3.zero)) == false)) return false;
-    if (Quats != null && Quats.Any(pair => pair.Value.Match(pars, zdo.GetQuaternion(pair.Key, Quaternion.identity)) == false)) return false;
-    if (ByteArrays != null && ByteArrays.Any(pair => pair.Value.SequenceEqual(zdo.GetByteArray(pair.Key)) == false)) return false;
-    if (Items != null) return ItemValue.Match(pars, Items, zdo, ItemAmount);
-    else if (ItemAmount != null) return ItemValue.Match(pars, zdo, ItemAmount);
-    if (ConnectionType != ZDOExtraData.ConnectionType.None && TargetConnectionId != null)
-    {
-      var conn = zdo.GetConnectionZDOID(ConnectionType);
-      var target = TargetConnectionId.Get(pars);
-      if (target != null && conn != target) return false;
-    }
-    return true;
-  }
-  public bool Unmatch(Parameters pars, ZDO zdo)
-  {
-    if (Strings != null && Strings.Any(pair => pair.Value.Match(pars, zdo.GetString(pair.Key)) == true)) return false;
-    if (Floats != null && Floats.Any(pair => pair.Value.Match(pars, zdo.GetFloat(pair.Key)) == true)) return false;
-    if (Ints != null && Ints.Any(pair => pair.Value.Match(pars, zdo.GetInt(pair.Key)) == true)) return false;
-    if (Longs != null && Longs.Any(pair => pair.Value.Match(pars, zdo.GetLong(pair.Key)) == true)) return false;
-    if (Bools != null && Bools.Any(pair => pair.Value.Match(pars, zdo.GetBool(pair.Key)) == true)) return false;
-    if (Hashes != null && Hashes.Any(pair => pair.Value.Match(pars, zdo.GetInt(pair.Key)) == true)) return false;
-    if (Vecs != null && Vecs.Any(pair => pair.Value.Match(pars, zdo.GetVec3(pair.Key, Vector3.zero)) == true)) return false;
-    if (Quats != null && Quats.Any(pair => pair.Value.Match(pars, zdo.GetQuaternion(pair.Key, Quaternion.identity)) == true)) return false;
-    if (ByteArrays != null && ByteArrays.Any(pair => pair.Value.SequenceEqual(zdo.GetByteArray(pair.Key)) == true)) return false;
-    if (Items != null) return !ItemValue.Match(pars, Items, zdo, ItemAmount);
-    else if (ItemAmount != null) return !ItemValue.Match(pars, zdo, ItemAmount);
-    if (ConnectionType != ZDOExtraData.ConnectionType.None && TargetConnectionId != null)
-    {
-      var conn = zdo.GetConnectionZDOID(ConnectionType);
-      var target = TargetConnectionId.Get(pars);
-      if (target != null && conn == target) return false;
-    }
-    return true;
-  }
-
-  private static string Format(float value) => value.ToString("0.#####", NumberFormatInfo.InvariantInfo);
-  private static string Format(double value) => value.ToString("0.#####", NumberFormatInfo.InvariantInfo);
-  public static string PrintVectorXZY(Vector3 vector)
-  {
-    return vector.x.ToString("0.##", CultureInfo.InvariantCulture) + " " + vector.z.ToString("0.##", CultureInfo.InvariantCulture) + " " + vector.y.ToString("0.##", CultureInfo.InvariantCulture);
-  }
-  public static string PrintAngleYXZ(Quaternion quaternion)
-  {
-    return PrintVectorYXZ(quaternion.eulerAngles);
-  }
-  private static string PrintVectorYXZ(Vector3 vector)
-  {
-    return vector.y.ToString("0.##", CultureInfo.InvariantCulture) + " " + vector.x.ToString("0.##", CultureInfo.InvariantCulture) + " " + vector.z.ToString("0.##", CultureInfo.InvariantCulture);
-  }
-
-  private static T ToByteEnum<T>(List<string> list) where T : struct, Enum
-  {
-
-    byte value = 0;
-    foreach (var item in list)
-    {
-      var trimmed = item.Trim();
-      if (Enum.TryParse<T>(trimmed, true, out var parsed))
-        value += (byte)(object)parsed;
-      else
-        Log.Warning($"Failed to parse value {trimmed} as {nameof(T)}.");
-    }
-    return (T)(object)value;
-  }
-
-  public void RollItems(Parameters pars)
-  {
-    if (Items?.Count > 0)
-    {
-      var encoded = ItemValue.LoadItems(pars, Items, GetContainerSize(), ItemAmount?.Get(pars) ?? 0);
-      Strings ??= [];
-      Strings[ZDOVars.s_items] = DataValue.Simple(encoded);
-    }
-  }
-
-  public void AddItems(Parameters parameters, ZDO zdo)
-  {
-    if (Items == null || Items.Count == 0) return;
-    var size = GetContainerSize();
-    var inv = ItemValue.CreateInventory(zdo, size.x, size.y);
-    var items = GenerateItems(parameters, size);
-    foreach (var item in items)
-      item.AddTo(parameters, inv);
-    ZPackage pkg = new();
-    inv.Save(pkg);
-    zdo.Set(ZDOVars.s_items, pkg.GetBase64());
-  }
-  public void RemoveItems(Parameters parameters, ZDO zdo)
-  {
-    if (Items == null || Items.Count == 0) return;
-    var inv = ItemValue.CreateInventory(zdo);
-    if (inv.m_inventory.Count == 0) return;
-
-    var items = GenerateItems(parameters, new(10000, 10000));
-    foreach (var item in items)
-      item.RemoveFrom(parameters, inv);
-    ZPackage pkg = new();
-    inv.Save(pkg);
-    zdo.Set(ZDOVars.s_items, pkg.GetBase64());
-  }
-  public List<ItemValue> GenerateItems(Parameters pars, Vector2i size)
-  {
-    if (Items == null) throw new ArgumentNullException(nameof(Items));
-    return ItemValue.Generate(pars, Items, size, ItemAmount?.Get(pars) ?? 0);
-  }
-
-  private static int Hash(string key)
-  {
-    if (Parse.TryInt(key, out var result)) return result;
-    if (key.StartsWith("$", StringComparison.InvariantCultureIgnoreCase))
-    {
-      var hash = ZSyncAnimation.GetHash(key.Substring(1));
-      if (key == "$anim_speed") return hash;
-      return 438569 + hash;
-    }
-    return key.GetStableHashCode();
   }
 }

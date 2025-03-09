@@ -23,7 +23,11 @@ public class Spawner
 
   static IEnumerable<CodeInstruction> Transpile(IEnumerable<CodeInstruction> instructions)
   {
-    var instantiator = typeof(Object).GetMethods().First(m => m.Name == nameof(Object.Instantiate) && m.IsGenericMethodDefinition && m.GetParameters().Skip(1).Select(p => p.ParameterType).SequenceEqual(new[] { typeof(Vector3), typeof(Quaternion) })).MakeGenericMethod(typeof(GameObject));
+    var instantiator = AccessTools.FirstMethod(typeof(Object), info => info.Name == nameof(Object.Instantiate) && info.IsGenericMethodDefinition &&
+            info.GetParameters().Length == 3 &&
+            info.GetParameters()[1].ParameterType == typeof(Vector3) &&
+            info.GetParameters()[2].ParameterType == typeof(Quaternion))
+      .MakeGenericMethod(typeof(GameObject));
     return new CodeMatcher(instructions)
       .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(CustomObject).operand)

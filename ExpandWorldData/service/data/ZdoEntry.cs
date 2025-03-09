@@ -19,20 +19,22 @@ public class ZdoEntry(int Prefab, Vector3 Position, Vector3 rotation, ZDO zdo)
   public Dictionary<int, Vector3>? Vecs;
   public Dictionary<int, Quaternion>? Quats;
   public Dictionary<int, byte[]>? ByteArrays;
-  public ZDOExtraData.ConnectionType ConnectionType = ZDOExtraData.ConnectionType.None;
+  public ZDOExtraData.ConnectionType? ConnectionType;
   public int ConnectionHash = 0;
   public ZDOID? OriginalId;
   public ZDOID? TargetConnectionId;
   public Vector3 Rotation = rotation;
   public long Owner = zdo.GetOwner();
+  public bool Persistent = zdo.Persistent;
+  public bool Distant = zdo.Distant;
+  public ZDO.ObjectType Type = zdo.Type;
 
   public ZdoEntry(ZDO zdo) : this(zdo.m_prefab, zdo.m_position, zdo.m_rotation, zdo) { }
 
   public ZDO? Create()
   {
     if (Prefab == 0) return null;
-    var obj = ZNetScene.instance.GetPrefab(Prefab);
-    if (!obj || !obj.TryGetComponent<ZNetView>(out var view))
+    if (!ZNetScene.instance.HasPrefab(Prefab))
     {
       Log.Error($"Can't spawn missing prefab: {Prefab}");
       return null;
@@ -40,9 +42,9 @@ public class ZdoEntry(int Prefab, Vector3 Position, Vector3 rotation, ZDO zdo)
     // Prefab hash is used to check whether to trigger rules.
     var zdo = ZDOMan.instance.CreateNewZDO(Position, Prefab);
     zdo.m_prefab = Prefab;
-    zdo.Persistent = view.m_persistent;
-    zdo.Type = view.m_type;
-    zdo.Distant = view.m_distant;
+    zdo.Persistent = Persistent;
+    zdo.Type = Type;
+    zdo.Distant = Distant;
     zdo.SetOwnerInternal(Owner);
     Write(zdo);
     return zdo;
@@ -147,6 +149,9 @@ public class ZdoEntry(int Prefab, Vector3 Position, Vector3 rotation, ZDO zdo)
       OriginalId = data.OriginalId.Get(pars);
     if (data.TargetConnectionId != null)
       TargetConnectionId = data.TargetConnectionId.Get(pars);
+    Distant = data.Distant?.GetBool(pars) ?? Distant;
+    Persistent = data.Persistent?.GetBool(pars) ?? Persistent;
+    Type = data.Priority ?? Type;
     Position = data.Position?.Get(pars) ?? Position;
     Rotation = data.Rotation?.Get(pars)?.eulerAngles ?? Rotation;
   }
@@ -199,6 +204,9 @@ public class ZdoEntry(int Prefab, Vector3 Position, Vector3 rotation, ZDO zdo)
     zdo.m_position = Position;
     zdo.SetSector(ZoneSystem.GetZone(Position));
     zdo.m_rotation = Rotation;
+    zdo.Persistent = Persistent;
+    zdo.Distant = Distant;
+    zdo.Type = Type;
     HandleConnection(zdo);
     HandleHashConnection(zdo);
   }
@@ -206,6 +214,7 @@ public class ZdoEntry(int Prefab, Vector3 Position, Vector3 rotation, ZDO zdo)
   private void HandleConnection(ZDO ownZdo)
   {
     if (OriginalId == null) return;
+    if (ConnectionType == null) return;
     var ownId = ownZdo.m_uid;
     if (TargetConnectionId != null)
     {
@@ -213,7 +222,7 @@ public class ZdoEntry(int Prefab, Vector3 Position, Vector3 rotation, ZDO zdo)
       var otherZdo = ZDOMan.instance.GetZDO(TargetConnectionId.Value);
       if (otherZdo == null) return;
 
-      ownZdo.SetConnection(ConnectionType, TargetConnectionId.Value);
+      ownZdo.SetConnection(ConnectionType.Value, TargetConnectionId.Value);
       // Portal is two way.
       if (ConnectionType == ZDOExtraData.ConnectionType.Portal)
         otherZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, ownId);
@@ -233,37 +242,37 @@ public class ZdoEntry(int Prefab, Vector3 Position, Vector3 rotation, ZDO zdo)
   private void HandleHashConnection(ZDO ownZdo)
   {
     if (ConnectionHash == 0) return;
-    if (ConnectionType == ZDOExtraData.ConnectionType.None) return;
+    if (ConnectionType == null) return;
     var ownId = ownZdo.m_uid;
 
     // Hash data is regenerated on world save.
     // But in this case, it's manually set, so might be needed later.
-    ZDOExtraData.SetConnectionData(ownId, ConnectionType, ConnectionHash);
+    ZDOExtraData.SetConnectionData(ownId, ConnectionType.Value, ConnectionHash);
 
     // While actual connection can be one way, hash is always two way.
     // One of the hashes always has the target type.
-    var otherType = ConnectionType ^ ZDOExtraData.ConnectionType.Target;
-    var isOtherTarget = (ConnectionType & ZDOExtraData.ConnectionType.Target) == 0;
+    var otherType = ConnectionType.Value ^ ZDOExtraData.ConnectionType.Target;
+    var isOtherTarget = (ConnectionType.Value & ZDOExtraData.ConnectionType.Target) == 0;
     var zdos = ZDOExtraData.GetAllConnectionZDOIDs(otherType);
-    var otherId = zdos.FirstOrDefault(z => ZDOExtraData.GetConnectionHashData(z, ConnectionType)?.m_hash == ConnectionHash);
+    var otherId = zdos.FirstOrDefault(z => ZDOExtraData.GetConnectionHashData(z, ConnectionType.Value)?.m_hash == ConnectionHash);
     if (otherId == ZDOID.None) return;
     var otherZdo = ZDOMan.instance.GetZDO(otherId);
     if (otherZdo == null) return;
-    if ((ConnectionType & ZDOExtraData.ConnectionType.Spawned) > 0)
+    if ((ConnectionType.Value & ZDOExtraData.ConnectionType.Spawned) > 0)
     {
       // Spawn is one way.
       var connZDO = isOtherTarget ? ownZdo : otherZdo;
       var targetId = isOtherTarget ? otherId : ownId;
       connZDO.SetConnection(ZDOExtraData.ConnectionType.Spawned, targetId);
     }
-    if ((ConnectionType & ZDOExtraData.ConnectionType.SyncTransform) > 0)
+    if ((ConnectionType.Value & ZDOExtraData.ConnectionType.SyncTransform) > 0)
     {
       // Sync is one way.
       var connZDO = isOtherTarget ? ownZdo : otherZdo;
       var targetId = isOtherTarget ? otherId : ownId;
       connZDO.SetConnection(ZDOExtraData.ConnectionType.SyncTransform, targetId);
     }
-    if ((ConnectionType & ZDOExtraData.ConnectionType.Portal) > 0)
+    if ((ConnectionType.Value & ZDOExtraData.ConnectionType.Portal) > 0)
     {
       // Portal is two way.
       otherZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, ownId);

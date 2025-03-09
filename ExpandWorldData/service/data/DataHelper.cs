@@ -8,26 +8,6 @@ namespace Data;
 
 public class DataHelper
 {
-  public static void Init(GameObject obj, Vector3 pos, Quaternion rot, Vector3? scale, DataEntry? data, Dictionary<string, string> pars)
-  {
-    if (data == null && scale == null) return;
-    if (!obj.TryGetComponent<ZNetView>(out var view)) return;
-    var name = Utils.GetPrefabName(obj);
-    var prefab = name.GetStableHashCode();
-    ZNetView.m_initZDO = ZDOMan.instance.CreateNewZDO(pos, prefab);
-    if (data != null)
-      data.Write(new ObjectParameters(name, "", ZNetView.m_initZDO), ZNetView.m_initZDO);
-    ZNetView.m_initZDO.m_rotation = rot.eulerAngles;
-    ZNetView.m_initZDO.Type = view.m_type;
-    ZNetView.m_initZDO.Distant = view.m_distant;
-    ZNetView.m_initZDO.Persistent = view.m_persistent;
-    ZNetView.m_initZDO.m_prefab = prefab;
-    if (view.m_syncInitialScale && scale != null)
-      ZNetView.m_initZDO.Set(ZDOVars.s_scaleHash, scale.Value);
-    ZNetView.m_initZDO.DataRevision = 0;
-    // This is needed to trigger the ZDO sync.
-    ZNetView.m_initZDO.IncreaseDataRevision();
-  }
   public static ZDO? Init(GameObject obj, Vector3 pos, Quaternion rot, Vector3? scale, DataEntry? data)
   {
     if (data == null && scale == null) return null;
@@ -35,12 +15,13 @@ public class DataHelper
     var name = Utils.GetPrefabName(obj);
     var prefab = name.GetStableHashCode();
     ZNetView.m_initZDO = ZDOMan.instance.CreateNewZDO(pos, prefab);
+    var pars = new ObjectParameters(name, "", ZNetView.m_initZDO);
     if (data != null)
-      data.Write(new ObjectParameters(name, "", ZNetView.m_initZDO), ZNetView.m_initZDO);
+      data.Write(pars, ZNetView.m_initZDO);
     ZNetView.m_initZDO.m_rotation = rot.eulerAngles;
-    ZNetView.m_initZDO.Type = view.m_type;
-    ZNetView.m_initZDO.Distant = view.m_distant;
-    ZNetView.m_initZDO.Persistent = view.m_persistent;
+    ZNetView.m_initZDO.Type = data?.Priority ?? view.m_type;
+    ZNetView.m_initZDO.Distant = data?.Distant?.GetBool(pars) ?? view.m_distant;
+    ZNetView.m_initZDO.Persistent = data?.Persistent?.GetBool(pars) ?? view.m_persistent;
     ZNetView.m_initZDO.m_prefab = prefab;
     if (view.m_syncInitialScale && scale != null)
       ZNetView.m_initZDO.Set(ZDOVars.s_scaleHash, scale.Value);

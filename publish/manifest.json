@@ -1,9 +1,10 @@
 {
   "name": "Expand_World_Data",
-  "version_number": "1.51.0",
+  "version_number": "1.52.0",
   "website_url": "https://github.com/JereKuusela/valheim-expand_world_data",
   "description": "Allows adding new biomes and changing most of the world generation.",
   "dependencies": [
-    "denikson-BepInExPack_Valheim-5.4.2202"
+    "denikson-BepInExPack_Valheim-5.4.2202",
+    "ValheimModding-YamlDotNet-16.3.0"
   ]
 }
