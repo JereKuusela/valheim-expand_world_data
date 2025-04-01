@@ -307,8 +307,8 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome).
 - dungeon: Overrides the default dungeon generator with a custom one from `expand_dungeons.yaml`.
 - quantity: Maximum amount. Actual amount is determined if enough suitable positions are found. The base .cfg has a setting to multiply these.
-- minDistance (default: `0.0` of world radius): Minimum distance from the world center. Values over 2.0 are considered as meters.
-- maxDistance (default: `1.0` of world radius): Maximum distance from the world center. Values over 2.0 are considered as meters.
+- minDistance (default: `0.0` of world radius): Minimum distance from the world center.
+- maxDistance (default: `1.0` of world radius): Maximum distance from the world center.
 - minAltitude (default: `0`): Minimum altitude.
 - maxAltitude (default: `1000`): Maximum altitude.
 - prioritized (default: `false`): Generated first with more attempts.
@@ -504,6 +504,10 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
 - maxAltitude (default: `1000` meters): Maximum terrain altitude.
 - minOceanDepth (default: `0` meters): Minimum ocean depth (interpolated from zone corners so slightly different from `minAltitude`).
 - maxOceanDepth (default: `0` meters): Maximum ocean depth (interpolated from zone corners so slightly different from `maxAltitude`).
+- minDistance (default: `0.0` of world radius): Minimum distance from the world center.
+- maxDistance (default: `1.0` of world radius): Maximum distance from the world center.
+- centerX (default: `0.0`): Custom center point for the distance check.
+- centerY (default: `0.0`): Custom center point for the distance check.
 - minVegetation (default: `0`): Minimum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
 - maxVegetation (default: `0`): Maximum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
 - surroundCheckVegetation (default: `false`): If enabled, the vegetation is placed near higher vegetation mask.

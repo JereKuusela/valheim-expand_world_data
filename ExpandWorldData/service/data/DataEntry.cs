@@ -21,10 +21,6 @@ public class DataEntry
   {
     Load(data);
   }
-  public DataEntry(ZDO zdo)
-  {
-    Load(zdo);
-  }
 
   // Nulls add more code but should be more performant.
   public Dictionary<int, IStringValue>? Strings;
@@ -50,31 +46,6 @@ public class DataEntry
   public IVector3Value? Position;
   public IQuaternionValue? Rotation;
 
-  public void Load(ZDO zdo)
-  {
-    var id = zdo.m_uid;
-    Floats = ZDOExtraData.s_floats.ContainsKey(id) ? ZDOExtraData.s_floats[id].ToDictionary(kvp => kvp.Key, kvp => DataValue.Simple(kvp.Value)) : null;
-    Ints = ZDOExtraData.s_ints.ContainsKey(id) ? ZDOExtraData.s_ints[id].ToDictionary(kvp => kvp.Key, kvp => DataValue.Simple(kvp.Value)) : null;
-    Longs = ZDOExtraData.s_longs.ContainsKey(id) ? ZDOExtraData.s_longs[id].ToDictionary(kvp => kvp.Key, kvp => DataValue.Simple(kvp.Value)) : null;
-    Strings = ZDOExtraData.s_strings.ContainsKey(id) ? ZDOExtraData.s_strings[id].ToDictionary(kvp => kvp.Key, kvp => DataValue.Simple(kvp.Value)) : null;
-    Vecs = ZDOExtraData.s_vec3.ContainsKey(id) ? ZDOExtraData.s_vec3[id].ToDictionary(kvp => kvp.Key, kvp => DataValue.Simple(kvp.Value)) : null;
-    Quats = ZDOExtraData.s_quats.ContainsKey(id) ? ZDOExtraData.s_quats[id].ToDictionary(kvp => kvp.Key, kvp => DataValue.Simple(kvp.Value)) : null;
-    ByteArrays = ZDOExtraData.s_byteArrays.ContainsKey(id) ? ZDOExtraData.s_byteArrays[id].ToDictionary(kvp => kvp.Key, kvp => kvp.Value) : null;
-    if (ZDOExtraData.s_connectionsHashData.TryGetValue(id, out var conn))
-    {
-      ConnectionType = conn.m_type;
-      ConnectionHash = conn.m_hash;
-    }
-    OriginalId = new SimpleZdoIdValue(id);
-    if (ZDOExtraData.s_connections.TryGetValue(id, out var zdoConn) && zdoConn.m_target != ZDOID.None)
-    {
-      TargetConnectionId = new SimpleZdoIdValue(zdoConn.m_target);
-      ConnectionType = zdoConn.m_type;
-    }
-    Persistent = new SimpleBoolValue(zdo.Persistent);
-    Distant = new SimpleBoolValue(zdo.Distant);
-    Priority = zdo.Type;
-  }
   public void Load(DataEntry data)
   {
     if (data.Floats != null)

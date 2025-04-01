@@ -134,6 +134,10 @@ public class VegetationLoading
 
   public static ZoneSystem.ZoneVegetation FromData(VegetationData data, string fileName)
   {
+    if (data.minDistance > 0f)
+      data.minDistance = WorldEntry.ConvertDist(data.minDistance);
+    if (data.maxDistance > 0f)
+      data.maxDistance = WorldEntry.ConvertDist(data.maxDistance);
     ZoneSystem.ZoneVegetation veg = new()
     {
       m_name = data.prefab,
@@ -167,7 +171,9 @@ public class VegetationLoading
       m_groupRadius = data.groupRadius,
       m_inForest = data.inForest,
       m_forestTresholdMin = data.forestTresholdMin,
-      m_forestTresholdMax = data.forestTresholdMax
+      m_forestTresholdMax = data.forestTresholdMax,
+      m_minDistanceFromCenter = data.minDistance,
+      m_maxDistanceFromCenter = data.maxDistance,
     };
     Range<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
     {
@@ -208,9 +214,14 @@ public class VegetationLoading
       if (data.forbiddenGlobalKey != "")
         extra.forbiddenGlobalKeys = DataManager.ToList(data.forbiddenGlobalKey);
       if (data.centerX != 0f || data.centerY != 0f)
+      {
+        // Center is not supported in the original game, so to have to fallback to the custom check.
+        veg.m_minDistanceFromCenter = 0;
+        veg.m_maxDistanceFromCenter = 0;
         extra.center = new(WorldEntry.ConvertDist(data.centerX), WorldEntry.ConvertDist(data.centerY));
-      if (data.minDistance != 0f || data.maxDistance != 0f)
-        extra.distance = new(WorldEntry.ConvertDist(data.minDistance), WorldEntry.ConvertDist(data.maxDistance));
+        if (data.minDistance != 0f || data.maxDistance != 0f)
+          extra.distance = new(data.minDistance, data.maxDistance);
+      }
     }
     if (extra.IsValid())
       VegetationSpawning.Extra.Add(veg, extra);
@@ -256,6 +267,8 @@ public class VegetationLoading
       surroundCheckDistance = veg.m_surroundCheckDistance,
       surroundCheckLayers = veg.m_surroundCheckLayers,
       surroundBetterThanAverage = veg.m_surroundBetterThanAverage,
+      maxDistance = veg.m_maxDistanceFromCenter / 10000f,
+      minDistance = veg.m_minDistanceFromCenter / 10000f,
     };
     return data;
   }

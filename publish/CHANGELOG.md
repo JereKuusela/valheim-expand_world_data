@@ -1,3 +1,6 @@
+- v1.53
+  - Fixed for the new update.
+
 - v1.52
   - Adds dependency to YamlDotNet.
   - Fixed for the new update.

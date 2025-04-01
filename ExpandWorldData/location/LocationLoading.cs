@@ -7,6 +7,7 @@ using HarmonyLib;
 using Service;
 using UnityEngine;
 using Data;
+using BepInEx.Logging;
 namespace ExpandWorldData;
 
 public class LocationLoading
@@ -69,8 +70,8 @@ public class LocationLoading
     loc.m_inForest = data.inForest;
     loc.m_forestTresholdMin = data.forestTresholdMin;
     loc.m_forestTresholdMax = data.forestTresholdMax;
-    loc.m_minDistance = data.minDistance * 10000f;
-    loc.m_maxDistance = data.maxDistance * 10000f;
+    loc.m_minDistance = WorldEntry.ConvertDist(data.minDistance);
+    loc.m_maxDistance = WorldEntry.ConvertDist(data.maxDistance);
     loc.m_minAltitude = data.minAltitude;
     loc.m_maxAltitude = data.maxAltitude;
     loc.m_groupMax = data.groupMax;
@@ -175,6 +176,11 @@ public class LocationLoading
     // For migrations, ensures that old data is preserved.
     if (LocationData.TryGetValue(loc.m_prefab.Name, out var existing))
       data = existing;
+    // Original game has two fields for min/max distance from center. This merges the implementations.
+    if (loc.m_minDistanceFromCenter != 0f && (loc.m_minDistance == 0f || loc.m_minDistanceFromCenter > loc.m_minDistance))
+      loc.m_minDistance = loc.m_minDistanceFromCenter;
+    if (loc.m_maxDistanceFromCenter != 0f && (loc.m_maxDistance == 0f || loc.m_maxDistanceFromCenter < loc.m_maxDistance))
+      loc.m_maxDistance = loc.m_maxDistanceFromCenter;
     data.prefab = loc.m_prefab.Name;
     data.enabled = loc.m_enable;
     data.biome = DataManager.FromBiomes(loc.m_biome);
