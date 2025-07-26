@@ -2,7 +2,7 @@ using System.ComponentModel;
 using Service;
 namespace ExpandWorldData;
 
-public class WorldData
+public class WorldYaml
 {
   public string biome = "";
   [DefaultValue(10000f)]
@@ -48,7 +48,7 @@ public class WorldData
 public class WorldEntry
 {
   public static float ConvertDist(float percent) => percent * WorldInfo.Radius;
-  public WorldEntry(WorldData data, string fileName)
+  public WorldEntry(WorldYaml data, string fileName)
   {
     biome = DataManager.ToBiomes(data.biome, fileName);
     biomeSeed = BiomeManager.GetTerrain(biome);

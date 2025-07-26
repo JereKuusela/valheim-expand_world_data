@@ -1,3 +1,6 @@
+- v1.54
+  - Adds experimental API for other mods to directly add new biomes and modify world generation
+
 - v1.53
   - Fixed for the new update.
 

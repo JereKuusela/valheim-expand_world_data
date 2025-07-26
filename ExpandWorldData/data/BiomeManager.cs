@@ -9,6 +9,7 @@ using UnityEngine;
 
 // TODO: Biomes should be optimized. Scale them by world size on load.
 namespace ExpandWorldData;
+
 public class BiomeManager
 {
   public static string FileName = "expand_biomes.yaml";
@@ -59,6 +60,14 @@ public class BiomeManager
     { "Ocean", Heightmap.Biome.Ocean},
     { "Mistlands", Heightmap.Biome.Mistlands},
   };
+  private static readonly Dictionary<string, BiomeYaml> ExtraBiomeYamls = [];
+  public static void AddBiome(BiomeYaml yaml)
+  {
+    var name = yaml.name;
+    if (ExtraBiomeYamls.ContainsKey(name))
+      throw new Exception($"Biome {name} already exists.");
+    ExtraBiomeYamls[name] = yaml;
+  }
   ///<summary>Lower case biome names for easier data loading.</summary>
   private static Dictionary<string, Heightmap.Biome> NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
   ///<summary>Original biome names because some mods rely on Enum.GetName(s) returning uppercase values.</summary>
@@ -76,7 +85,7 @@ public class BiomeManager
   public static Heightmap.Biome GetNature(Heightmap.Biome biome) => BiomeToNature.TryGetValue(biome, out var nature) ? nature : biome;
   public static BiomeEnvSetup FromData(BiomeYaml data, Dictionary<EnvEntry, EnvEntryKeys> keys, string fileName)
   {
-    var biome = new BiomeEnvSetup
+    BiomeEnvSetup biome = new()
     {
       m_biome = DataManager.ToBiomes(data.biome, fileName),
       m_environments = data.environments.Select(d => FromData(d, keys)).ToList(),
@@ -110,8 +119,12 @@ public class BiomeManager
     if (Helper.IsClient() || !Configuration.DataBiome) return;
     if (File.Exists(FilePath)) return;
     var biomes = OriginalBiomes.Values.Select(b => EnvMan.instance.m_biomes.Find(ev => ev.m_biome == b)).Where(b => b != null);
-    var yaml = Yaml.Serializer().Serialize(biomes.Select(ToData).ToList());
+    List<BiomeYaml> data = [.. biomes.Select(ToData).ToList(), .. ExtraBiomeYamls.Values];
+    var yaml = Yaml.Serializer().Serialize(data);
     File.WriteAllText(FilePath, yaml);
+    // Biomes are important so that other files work, so this guarantees that custom biomes get loaded.
+    if (ExtraBiomeYamls.Count > 0)
+      FromFile();
   }
   public static void FromFile()
   {

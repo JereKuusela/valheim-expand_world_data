@@ -11,7 +11,7 @@ public class WorldManager
   public static string FileName = "expand_world.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_world*.yaml";
-  public static List<WorldData> DefaultData = [
+  public static List<WorldYaml> DefaultData = [
       new() {
         biome = "ashlands",
         centerY = 0.4f,
@@ -68,10 +68,14 @@ public class WorldManager
       },
     ];
   public static List<WorldEntry> DefaultEntries = DefaultData.Select(s => new WorldEntry(s, "default world")).ToList();
+  public static void AddWorld(WorldYaml data, int index)
+  {
+    DefaultData.Insert(index, data);
+    DefaultEntries.Insert(index, new WorldEntry(data, ""));
+  }
+  public static List<WorldYaml> Data = DefaultData;
 
-  public static List<WorldData> Data = DefaultData;
-
-  public static WorldData ToData(WorldData biome) => biome;
+  public static WorldYaml ToData(WorldYaml biome) => biome;
 
   public static void ToFile()
   {
@@ -83,7 +87,7 @@ public class WorldManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataWorld ? DataManager.Read<WorldData, WorldEntry>(Pattern, (d, f) => new WorldEntry(d, f)) : "";
+    var yaml = Configuration.DataWorld ? DataManager.Read<WorldYaml, WorldEntry>(Pattern, (d, f) => new WorldEntry(d, f)) : "";
     Configuration.valueWorldData.Value = yaml;
     Set(yaml);
   }
@@ -96,7 +100,7 @@ public class WorldManager
     if (yaml == "" || !Configuration.DataWorld) return;
     try
     {
-      Data = Yaml.Deserialize<WorldData>(yaml, "World");
+      Data = Yaml.Deserialize<WorldYaml>(yaml, "World");
       if (Data.Count == 0)
       {
         Log.Warning($"Failed to load any world data.");
@@ -105,7 +109,7 @@ public class WorldManager
       }
       else
         Log.Info($"Reloading world data ({Data.Count} entries).");
-      BiomeCalculator.Data = Data.Select(s => new WorldEntry(s, "world")).ToList(); ;
+      BiomeCalculator.Data = [.. Data.Select(s => new WorldEntry(s, "world"))]; ;
       BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
       EWD.Instance.InvokeRegenerate();
     }
