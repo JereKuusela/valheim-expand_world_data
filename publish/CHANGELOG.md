@@ -1,3 +1,6 @@
+- v1.55
+  - Adds new color fields using a simple "r, g, b, a" format to declutter the yaml files.
+
 - v1.54
   - Adds experimental API for other mods to directly add new biomes and modify world generation
 

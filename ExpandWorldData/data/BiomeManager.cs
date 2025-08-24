@@ -101,13 +101,13 @@ public class BiomeManager
     return new()
     {
       biome = DataManager.FromBiomes(biome.m_biome),
-      environments = biome.m_environments.Select(ToData).ToArray(),
+      environments = [.. biome.m_environments.Select(ToData)],
       musicMorning = biome.m_musicMorning,
       musicEvening = biome.m_musicEvening,
       musicDay = biome.m_musicDay,
       musicNight = biome.m_musicNight,
-      color = Heightmap.GetBiomeColor(biome.m_biome),
-      mapColor = Minimap.instance.GetPixelColor(biome.m_biome),
+      colorTerrain = DataManager.FromColor(Heightmap.GetBiomeColor(biome.m_biome)),
+      colorMap = DataManager.FromColor(Minimap.instance.GetPixelColor(biome.m_biome)),
       // Reduces the mountains on the map.
       mapColorMultiplier = biome.m_biome == Heightmap.Biome.AshLands ? 0.5f : 1f,
       lava = biome.m_biome == Heightmap.Biome.AshLands ? "true" : ""
@@ -218,12 +218,10 @@ public class BiomeManager
         BiomeToDisplayName[biome] = item.biome;
         AddTranslation(biome, item.name);
       }
-      DataManager.Sanity(ref item.mapColor);
-      DataManager.Sanity(ref item.color);
       BiomeData extra = new(item);
       if (extra.lava)
         LavaBiomes |= biome;
-      if (extra.lava && item.color.a == 1 && item.color.r == 1)
+      if (extra.lava && extra.colorTerrain.a == 1 && extra.colorTerrain.r == 1)
         FullLavaBiomes |= biome;
       if (extra.noBuild)
         NoBuildBiomes |= biome;

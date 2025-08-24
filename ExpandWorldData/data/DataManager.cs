@@ -241,7 +241,22 @@ public class DataManager : MonoBehaviour
       Log.Warning($"{fileName}: Prefab {str} not found!");
     return null;
   }
-
+  public static string FromColor(Color? color) => color == null ? "0,0,0" : FromColor(color.Value);
+  public static string FromColor(Color color)
+  {
+    if (color.a < 1.0f)
+      return $"{FormatColor(color.r)}, {FormatColor(color.g)}, {FormatColor(color.b)}, {FormatColor(color.a)}";
+    return $"{FormatColor(color.r)}, {FormatColor(color.g)}, {FormatColor(color.b)}";
+  }
+  private static string FormatColor(float color) => color.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+  public static Color ToColor(string? str)
+  {
+    if (str == null) return Color.white;
+    var parts = str.Split(',');
+    if (parts.Length == 4 && float.TryParse(parts[0], out var r) && float.TryParse(parts[1], out var g) && float.TryParse(parts[2], out var b) && float.TryParse(parts[3], out var a))
+      return new Color(r, g, b, a);
+    return Color.white;
+  }
   public static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot, DataEntry? data)
   {
 
@@ -291,20 +306,4 @@ public class DataManager : MonoBehaviour
     });
     return string.Join("\n", data) ?? "";
   }
-  public static void Sanity(ref Color color)
-  {
-    if (color.r > 1.0f) color.r /= 255f;
-    if (color.g > 1.0f) color.g /= 255f;
-    if (color.b > 1.0f) color.b /= 255f;
-    if (color.a > 1.0f) color.a /= 255f;
-  }
-  public static Color Sanity(Color color)
-  {
-    if (color.r > 1.0f) color.r /= 255f;
-    if (color.g > 1.0f) color.g /= 255f;
-    if (color.b > 1.0f) color.b /= 255f;
-    if (color.a > 1.0f) color.a /= 255f;
-    return color;
-  }
-
 }

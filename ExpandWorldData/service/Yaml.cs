@@ -145,10 +145,6 @@ public class Yaml
   .WithYamlFormatter(formatter).IgnoreUnmatchedProperties().Build();
   public static ISerializer Serializer() => new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).DisableAliases()
     .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults).WithYamlFormatter(formatter)
-      .WithAttributeOverride<Color>(c => c.gamma, new YamlIgnoreAttribute())
-      .WithAttributeOverride<Color>(c => c.grayscale, new YamlIgnoreAttribute())
-      .WithAttributeOverride<Color>(c => c.linear, new YamlIgnoreAttribute())
-      .WithAttributeOverride<Color>(c => c.maxColorComponent, new YamlIgnoreAttribute())
       .Build();
   private static readonly YamlFormatter formatter = new() { NumberFormat = NumberFormatInfo.InvariantInfo };
 

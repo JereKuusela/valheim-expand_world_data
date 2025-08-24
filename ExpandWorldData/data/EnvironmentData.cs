@@ -42,20 +42,34 @@ public class EnvironmentYaml
   public string musicDay = "";
   [DefaultValue("")]
   public string musicNight = "";
-  public Color ambColorDay = Color.white;
-  public Color ambColorNight = Color.white;
-  public Color sunColorMorning = Color.white;
-  public Color sunColorDay = Color.white;
-  public Color sunColorEvening = Color.white;
-  public Color sunColorNight = Color.white;
-  public Color fogColorMorning = Color.white;
-  public Color fogColorDay = Color.white;
-  public Color fogColorEvening = Color.white;
-  public Color fogColorNight = Color.white;
-  public Color fogColorSunMorning = Color.white;
-  public Color fogColorSunDay = Color.white;
-  public Color fogColorSunEvening = Color.white;
-  public Color fogColorSunNight = Color.white;
+  public string? colorAmbientDay;
+  public string? colorAmbientNight;
+  public string? colorSunMorning;
+  public string? colorSunDay;
+  public string? colorSunEvening;
+  public string? colorSunNight;
+  public string? colorFogMorning;
+  public string? colorFogDay;
+  public string? colorFogEvening;
+  public string? colorFogNight;
+  public string? colorFogSunMorning;
+  public string? colorFogSunDay;
+  public string? colorFogSunEvening;
+  public string? colorFogSunNight;
+  public Color? ambColorDay;
+  public Color? ambColorNight;
+  public Color? sunColorMorning;
+  public Color? sunColorDay;
+  public Color? sunColorEvening;
+  public Color? sunColorNight;
+  public Color? fogColorMorning;
+  public Color? fogColorDay;
+  public Color? fogColorEvening;
+  public Color? fogColorNight;
+  public Color? fogColorSunMorning;
+  public Color? fogColorSunDay;
+  public Color? fogColorSunEvening;
+  public Color? fogColorSunNight;
   [DefaultValue(0.01f)]
   public float fogDensityMorning = 0.01f;
   [DefaultValue(0.01f)]

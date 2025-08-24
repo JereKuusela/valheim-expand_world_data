@@ -20,7 +20,7 @@ public class GetBiomeColor
   static bool Prefix(Heightmap.Biome biome, ref Color32 __result)
   {
     if (!BiomeManager.TryGetData(biome, out var data)) return true;
-    __result = data.color;
+    __result = data.colorTerrain;
     return false;
   }
 }
@@ -31,7 +31,7 @@ public class GetMapColor
   static bool Prefix(Heightmap.Biome biome, ref Color __result)
   {
     if (!BiomeManager.TryGetData(biome, out var data)) return true;
-    __result = data.mapColor;
+    __result = data.colorMap;
     return false;
   }
 }

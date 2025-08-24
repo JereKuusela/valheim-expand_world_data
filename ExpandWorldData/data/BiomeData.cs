@@ -50,10 +50,13 @@ public class BiomeYaml
   public BiomeEnvironment[] environments = [];
   [DefaultValue("")]
   public string paint = "";
-  public Color color = new(0, 0, 0, 0);
+  public Color? color = null;
   [DefaultValue(1f)]
   public float mapColorMultiplier = 1f;
-  public Color mapColor = new(0, 0, 0, 0);
+  public Color? mapColor = null;
+  public string? colorWater = null;
+  public string? colorMap = null;
+  public string? colorTerrain = null;
   [DefaultValue("")]
   public string musicMorning = "morning";
   [DefaultValue("")]
@@ -85,8 +88,9 @@ public class BiomeData
   public float minimumAltitude = -1000f;
   public float maximumAltitude = 10000f;
   public float mapColorMultiplier = 1f;
-  public Color color = new(0, 0, 0, 0);
-  public Color mapColor = new(0, 0, 0, 0);
+  public Color colorTerrain = new(0, 0, 0, 0);
+  public Color colorMap = new(0, 0, 0, 0);
+  public Color? colorWater = null;
   public float forestMultiplier = 1f;
   public bool lava = false;
   public float lavaAmount = 1f;
@@ -117,14 +121,15 @@ public class BiomeData
     minimumAltitude = data.minimumAltitude;
     maximumAltitude = data.maximumAltitude;
     mapColorMultiplier = data.mapColorMultiplier;
-    color = data.color;
-    mapColor = data.mapColor;
+    colorTerrain = data.color ?? DataManager.ToColor(data.colorTerrain);
+    colorMap = data.mapColor ?? DataManager.ToColor(data.colorMap);
+    colorWater = data.colorWater == null ? null : DataManager.ToColor(data.colorWater);
     forestMultiplier = data.forestMultiplier;
     if (data.statusEffects != null)
       statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
     // Lava only visually appears on Ashlands terrain, so that can be used as the default.
     if (data.lava == "")
-      lava = data.color.a > 0.929f && data.color.r > 0.929f;
+      lava = colorTerrain.a > 0.929f && colorTerrain.r > 0.929f;
     else
       lava = data.lava == "true";
     lavaAmount = data.lavaAmount;
@@ -138,7 +143,7 @@ public class BiomeData
     minimumAltitude != -1000f ||
     maximumAltitude != 10000f ||
     mapColorMultiplier != 1f ||
-    mapColor.a != 0 ||
+    colorMap.a != 0 ||
     forestMultiplier != 1f ||
     lavaAmount != 1f;
 }
