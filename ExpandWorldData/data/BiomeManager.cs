@@ -245,7 +245,7 @@ public class BiomeManager
       return GetBiome(data.biome);
     });
     BiomeForestMultiplier = rawData.Any(data => data.forestMultiplier != 1f);
-    Environments = rawData.Select(d => FromData(d, EnvKeys, "Biomes")).ToList();
+    Environments = [.. rawData.Select(d => FromData(d, EnvKeys, "Biomes"))];
     // This tracks if content (environments) have been loaded.
     if (ZoneSystem.instance.m_locationsByHash.Count > 0)
       LoadEnvironments();

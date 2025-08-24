@@ -3,6 +3,7 @@ using BepInEx;
 using Data;
 using HarmonyLib;
 using Service;
+using UnityEngine;
 namespace ExpandWorldData;
 
 [BepInPlugin(GUID, NAME, VERSION)]
@@ -11,7 +12,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.55";
+  public const string VERSION = "1.54";
 #nullable disable
   public static EWD Instance;
   public static Harmony Harmony;
@@ -70,6 +71,10 @@ public class EWD : BaseUnityPlugin
   {
     BiomeManager.NamesFromFile();
     new DebugCommands();
+  }
+  public void LateUpdate()
+  {
+    WaterColor.Transition(Time.deltaTime);
   }
 
 #pragma warning disable IDE0051

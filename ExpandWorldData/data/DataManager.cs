@@ -253,9 +253,11 @@ public class DataManager : MonoBehaviour
   {
     if (str == null) return Color.white;
     var parts = str.Split(',');
-    if (parts.Length == 4 && float.TryParse(parts[0], out var r) && float.TryParse(parts[1], out var g) && float.TryParse(parts[2], out var b) && float.TryParse(parts[3], out var a))
-      return new Color(r, g, b, a);
-    return Color.white;
+    var r = Parse.Float(parts, 0);
+    var g = Parse.Float(parts, 1);
+    var b = Parse.Float(parts, 2);
+    var a = Parse.Float(parts, 3, 1f);
+    return new Color(r, g, b, a);
   }
   public static GameObject Instantiate(GameObject prefab, Vector3 pos, Quaternion rot, DataEntry? data)
   {

@@ -40,6 +40,7 @@ public class WorldInfo
       heightmap.m_buildData = null;
       heightmap.Regenerate();
     }
+    WaterColor.Regenerate();
     ClutterSystem.instance?.ClearAll();
     if (Configuration.RegenerateMap) RegenerateMap();
   }

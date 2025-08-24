@@ -54,9 +54,12 @@ public class BiomeYaml
   [DefaultValue(1f)]
   public float mapColorMultiplier = 1f;
   public Color? mapColor = null;
-  public string? colorWater = null;
   public string? colorMap = null;
   public string? colorTerrain = null;
+  public string? colorWaterSurface = null;
+  public string? colorWaterTop = null;
+  public string? colorWaterBottom = null;
+  public string? colorWaterShallow = null;
   [DefaultValue("")]
   public string musicMorning = "morning";
   [DefaultValue("")]
@@ -90,7 +93,10 @@ public class BiomeData
   public float mapColorMultiplier = 1f;
   public Color colorTerrain = new(0, 0, 0, 0);
   public Color colorMap = new(0, 0, 0, 0);
-  public Color? colorWater = null;
+  public Color? colorWaterTop = null;
+  public Color? colorWaterBottom = null;
+  public Color? colorWaterShallow = null;
+  public Color? colorWaterSurface = null;
   public float forestMultiplier = 1f;
   public bool lava = false;
   public float lavaAmount = 1f;
@@ -123,7 +129,10 @@ public class BiomeData
     mapColorMultiplier = data.mapColorMultiplier;
     colorTerrain = data.color ?? DataManager.ToColor(data.colorTerrain);
     colorMap = data.mapColor ?? DataManager.ToColor(data.colorMap);
-    colorWater = data.colorWater == null ? null : DataManager.ToColor(data.colorWater);
+    colorWaterBottom = data.colorWaterBottom == null ? null : DataManager.ToColor(data.colorWaterBottom);
+    colorWaterTop = data.colorWaterTop == null ? null : DataManager.ToColor(data.colorWaterTop);
+    colorWaterShallow = data.colorWaterShallow == null ? null : DataManager.ToColor(data.colorWaterShallow);
+    colorWaterSurface = data.colorWaterSurface == null ? null : DataManager.ToColor(data.colorWaterSurface);
     forestMultiplier = data.forestMultiplier;
     if (data.statusEffects != null)
       statusEffects = data.statusEffects.Select(s => new Status(s)).ToList();
