@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 
 namespace ExpandWorldData;
+
 public class DebugCommands
 {
   private string GetRoomItems(DungeonDB.RoomData room)
@@ -121,7 +122,7 @@ public class DebugCommands
         return;
       }
       // Find all room objects and find the one where Player is inside.
-      var rooms = UnityEngine.Object.FindObjectsOfType<Room>();
+      var rooms = UnityEngine.Object.FindObjectsByType<Room>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
       var player = Player.m_localPlayer;
       if (!player) return;
       if (goCollider == null)
@@ -185,7 +186,7 @@ public class DebugCommands
         return;
       }
       var distance = args.TryParameterFloat(2, 50f);
-      var locations = UnityEngine.Object.FindObjectsOfType<LocationProxy>();
+      var locations = UnityEngine.Object.FindObjectsByType<LocationProxy>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
       var player = Player.m_localPlayer;
       if (!player) return;
       var loc = locations

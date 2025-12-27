@@ -1049,10 +1049,70 @@ public class ConfigSync
       }
       return;
     }
-
-    ZRpc.Serialize(new[] { value }, ref package);
+    if (value != null)
+      Serialize(value, ref package);
   }
 
+  private static void Serialize(object obj, ref ZPackage pkg)
+  {
+    if (obj is int i)
+    {
+      pkg.Write(i);
+    }
+    else if (obj is uint u)
+    {
+      pkg.Write(u);
+    }
+    else if (obj is long l)
+    {
+      pkg.Write(l);
+    }
+    else if (obj is float f)
+    {
+      pkg.Write(f);
+    }
+    else if (obj is double d)
+    {
+      pkg.Write(d);
+    }
+    else if (obj is bool b)
+    {
+      pkg.Write(b);
+    }
+    else if (obj is string s)
+    {
+      pkg.Write(s);
+    }
+    else if (obj is ZPackage package)
+    {
+      pkg.Write(package);
+    }
+    else if (obj is Vector3 vector)
+    {
+      pkg.Write(vector.x);
+      pkg.Write(vector.y);
+      pkg.Write(vector.z);
+    }
+    else if (obj is Quaternion quaternion)
+    {
+      pkg.Write(quaternion.x);
+      pkg.Write(quaternion.y);
+      pkg.Write(quaternion.z);
+      pkg.Write(quaternion.w);
+    }
+    else if (obj is ZDOID zdoid)
+    {
+      pkg.Write(zdoid);
+    }
+    else if (obj is HitData hitData)
+    {
+      hitData.Serialize(ref pkg);
+    }
+    else if (obj is ISerializableParameter serializableParameter)
+    {
+      serializableParameter.Serialize(ref pkg);
+    }
+  }
   private static object ReadValueWithTypeFromZPackage(ZPackage package, Type type)
   {
     if (type is { IsValueType: true, IsPrimitive: false, IsEnum: false })
@@ -1090,23 +1150,56 @@ public class ConfigSync
       }
       return dict;
     }
-    if (type != typeof(List<string>) && type.IsGenericType && typeof(ICollection<>).MakeGenericType(type.GenericTypeArguments[0]) is { } collectionType && collectionType.IsAssignableFrom(type))
+    if (type.IsGenericType && typeof(ICollection<>).MakeGenericType(type.GenericTypeArguments[0]) is Type collectionType && collectionType.IsAssignableFrom(type))
     {
       int entriesCount = package.ReadInt();
       object list = Activator.CreateInstance(type);
       MethodInfo adder = collectionType.GetMethod("Add")!;
       for (int i = 0; i < entriesCount; ++i)
       {
-        adder.Invoke(list, new[] { ReadValueWithTypeFromZPackage(package, type.GenericTypeArguments[0]) });
+        adder.Invoke(list, [ReadValueWithTypeFromZPackage(package, type.GenericTypeArguments[0])]);
       }
       return list;
     }
-
-    ParameterInfo param = (ParameterInfo)FormatterServices.GetUninitializedObject(typeof(ParameterInfo));
-    AccessTools.DeclaredField(typeof(ParameterInfo), "ClassImpl").SetValue(param, type);
-    List<object> data = [];
-    ZRpc.Deserialize(new[] { null, param }, package, ref data);
-    return data.First();
+    return Deserialize(type, package);
+  }
+  private static object Deserialize(Type type, ZPackage pkg)
+  {
+    if (type == typeof(int))
+      return pkg.ReadInt();
+    else if (type == typeof(uint))
+      return pkg.ReadUInt();
+    else if (type == typeof(long))
+      return pkg.ReadLong();
+    else if (type == typeof(float))
+      return pkg.ReadSingle();
+    else if (type == typeof(double))
+      return pkg.ReadDouble();
+    else if (type == typeof(bool))
+      return pkg.ReadBool();
+    else if (type == typeof(string))
+      return pkg.ReadString();
+    else if (type == typeof(ZPackage))
+      return pkg.ReadPackage();
+    else if (type == typeof(Vector3))
+      return new Vector3(pkg.ReadSingle(), pkg.ReadSingle(), pkg.ReadSingle());
+    else if (type == typeof(Quaternion))
+      return new Quaternion(pkg.ReadSingle(), pkg.ReadSingle(), pkg.ReadSingle(), pkg.ReadSingle());
+    else if (type == typeof(ZDOID))
+      return pkg.ReadZDOID();
+    else if (type == typeof(HitData))
+    {
+      HitData hitData = new();
+      hitData.Deserialize(ref pkg);
+      return hitData;
+    }
+    else if (typeof(ISerializableParameter).IsAssignableFrom(type))
+    {
+      ISerializableParameter serializableParameter = (ISerializableParameter)Activator.CreateInstance(type);
+      serializableParameter.Deserialize(ref pkg);
+      return serializableParameter;
+    }
+    throw new NotSupportedException($"Type {type} is not supported for deserialization");
   }
 
   private class InvalidDeserializationTypeException : Exception

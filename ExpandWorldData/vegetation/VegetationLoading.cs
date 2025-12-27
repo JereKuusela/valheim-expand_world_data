@@ -58,6 +58,7 @@ public class VegetationLoading
     }
     Log.Info($"Reloading vegetation data ({data.Count} entries).");
     ZoneSystem.instance.m_vegetation = data;
+    IdManager.SendVegetationIds();
 
   }
   ///<summary>Loads all yaml files returning the deserialized vegetation entries.</summary>

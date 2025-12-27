@@ -5,6 +5,7 @@ using ServerSync;
 using Service;
 
 namespace ExpandWorldData;
+
 public partial class Configuration
 {
 #nullable disable
@@ -16,11 +17,15 @@ public partial class Configuration
   public static bool LegacyGeneration => configLegacyGeneration.Value;
   public static ConfigEntry<bool> configRegenerateMap;
   public static bool RegenerateMap => configRegenerateMap.Value;
+  public static ConfigEntry<bool> configCustomWaterColor;
+  public static bool CustomWaterColor => configCustomWaterColor.Value;
 
   public static ConfigEntry<bool> configZoneSpawners;
   public static bool ZoneSpawners => configZoneSpawners.Value;
   public static ConfigEntry<bool> configRandomLocations;
   public static bool RandomLocations => configRandomLocations.Value;
+  public static ConfigEntry<bool> configScaleLocationAltitudeRequirement;
+  public static bool ScaleLocationAltitudeRequirement => configScaleLocationAltitudeRequirement.Value;
 
   public static ConfigEntry<string> configDistanceWiggleLength;
   public static float DistanceWiggleLength => ConfigWrapper.Floats[configDistanceWiggleLength];
@@ -94,6 +99,8 @@ public partial class Configuration
     configWiggleFrequency.SettingChanged += (s, e) => WorldManager.FromFile();
     configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, false, "How many meters are the wiggles.");
     configWiggleWidth.SettingChanged += (s, e) => WorldManager.FromFile();
+    configScaleLocationAltitudeRequirement = wrapper.Bind(section, "Scale location altitude requirement", false, false, "If true, location requirements are scaled based on the biome altitude delta and multiplier.");
+    configCustomWaterColor = wrapper.Bind(section, "Custom water color", false, false, "If true, custom water color system is enabled.");
 
     section = "3. Data";
     configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.");

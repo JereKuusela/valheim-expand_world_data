@@ -5,6 +5,7 @@ using HarmonyLib;
 using Service;
 using UnityEngine;
 using Data;
+using System.Diagnostics;
 
 namespace ExpandWorldData;
 
@@ -205,4 +206,36 @@ public class LocationObjectDataAndSwap
       return true;
     }
   }
+}
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocationsTimeSliced), typeof(ZoneSystem.ZoneLocation), typeof(Stopwatch), typeof(ZPackage))]
+[HarmonyPatch(MethodType.Enumerator)]
+public class ScaleLocationHeightRequirement
+{
+  static float ScaleHeight(float height, Heightmap.Biome biome)
+  {
+    if (!Configuration.ScaleLocationAltitudeRequirement) return height;
+    if (!BiomeManager.TryGetData(biome, out var data))
+      return height;
+
+    height *= data.altitudeMultiplier;
+    height += data.altitudeDelta;
+    if (height < 0f)
+      height *= data.waterDepthMultiplier;
+    return height;
+  }
+
+  [HarmonyTranspiler]
+  static IEnumerable<CodeInstruction> TranspileMoveNext(IEnumerable<CodeInstruction> instructions) =>
+      new CodeMatcher(instructions)
+        .MatchForward(useEnd: false, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_minAltitude))))
+        .Advance(1)
+        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 9))
+        .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ScaleHeight).operand))
+        .MatchForward(true, new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_maxAltitude))))
+        .Advance(1)
+        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 9))
+        .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ScaleHeight).operand))
+        .InstructionEnumeration();
+
 }

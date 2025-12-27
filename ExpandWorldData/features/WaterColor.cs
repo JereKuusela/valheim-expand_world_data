@@ -7,7 +7,8 @@ public class StartColorTransition
 {
   public static void Postfix(Heightmap.Biome biome)
   {
-    WaterColor.StartTransition(biome);
+    if (Configuration.CustomWaterColor)
+      WaterColor.StartTransition(biome);
   }
 }
 

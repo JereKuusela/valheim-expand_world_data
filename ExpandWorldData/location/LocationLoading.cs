@@ -7,7 +7,6 @@ using HarmonyLib;
 using Service;
 using UnityEngine;
 using Data;
-using BepInEx.Logging;
 namespace ExpandWorldData;
 
 public class LocationLoading
@@ -295,6 +294,7 @@ public class LocationLoading
     NoBuildManager.UpdateData();
     MinimapIcon.Clear();
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
+    IdManager.SendLocationIds();
   }
   private static void UpdateHashes()
   {
