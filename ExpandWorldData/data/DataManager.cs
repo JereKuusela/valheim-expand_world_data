@@ -251,7 +251,7 @@ public class DataManager : MonoBehaviour
   private static string FormatColor(float color) => color.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
   public static Color ToColor(string? str)
   {
-    if (str == null) return Color.white;
+    if (str == null) return new Color(0, 0, 0, 0);
     var parts = str.Split(',');
     var r = Parse.Float(parts, 0);
     var g = Parse.Float(parts, 1);

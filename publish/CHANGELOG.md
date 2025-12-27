@@ -1,3 +1,7 @@
+- v1.56
+  - Fixes default terrain color being color that is considered lava. Sorry for the issue!
+  - This caused entire Meadows to turn into lava for some older configs that did not specify terrain color.
+
 - v1.55
   - Adds new color fields using a simple "r, g, b, a" format to declutter the yaml files.
   - Adds water color support.
@@ -12,6 +16,3 @@
 - v1.52
   - Adds dependency to YamlDotNet.
   - Fixed for the new update.
-
-- v1.51
-  - Possible fix for lava related "index out of range" error.
