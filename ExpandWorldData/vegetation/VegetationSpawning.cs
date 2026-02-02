@@ -73,7 +73,7 @@ public class VegetationSpawning
     if (isUniform) view.GetZDO().RemoveVec3(ZDOVars.s_scaleHash);
     else view.GetZDO().RemoveFloat(ZDOVars.s_scaleScalarHash);
   }
-  private static bool InsideClearArea(List<ZoneSystem.ClearArea> areas, Vector3 point)
+  public static bool InsideClearArea(List<ZoneSystem.ClearArea> areas, Vector3 point)
   {
     var size = 0f;
     if (Extra.TryGetValue(CurrentVegetation, out var extra))
@@ -99,8 +99,6 @@ public class VegetationSpawning
     return new CodeMatcher(instructions)
       .MatchForward(false, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ZoneSystem.ZoneVegetation), nameof(ZoneSystem.ZoneVegetation.m_enable))))
       .Insert(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(SetVeg).operand))
-      .MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(ZoneSystem), nameof(ZoneSystem.InsideClearArea))))
-      .Set(OpCodes.Call, Transpilers.EmitDelegate(InsideClearArea).operand)
       .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
       .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, 5))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(Instantiate).operand)
@@ -123,6 +121,18 @@ public class VegetationSpawning
       if (extra.forbiddenGlobalKeys != null && Helper.HasAnyGlobalKey(extra.forbiddenGlobalKeys)) veg.m_enable = false;
       if (extra.requiredGlobalKeys != null && !Helper.HasEveryGlobalKey(extra.requiredGlobalKeys)) veg.m_enable = false;
     }
+  }
+}
+
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.InsideClearArea))]
+public class InsideClearArea
+{
+  // Prefix so that original method is called for other mods to patch.
+  static bool Prefix(ref bool __result, List<ZoneSystem.ClearArea> areas, Vector3 point)
+  {
+    __result = VegetationSpawning.InsideClearArea(areas, point);
+    return false;
   }
 }
 

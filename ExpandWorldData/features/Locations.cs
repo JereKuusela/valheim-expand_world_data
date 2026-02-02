@@ -5,7 +5,8 @@ using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
-[HarmonyPatch(typeof(LoadingIndicator), nameof(LoadingIndicator.SetProgressVisibility))]
+
+[HarmonyPatch(typeof(LoadingIndicator), nameof(LoadingIndicator.SetShowProgress))]
 public class GuaranteeLocations
 {
   static void GuaranteeStartLocation(ZoneSystem zs)
@@ -20,9 +21,9 @@ public class GuaranteeLocations
     }
   }
   static int Count(ZoneSystem zs, ZoneSystem.ZoneLocation location) => zs.m_locationInstances.Values.Count(loc => loc.m_location.m_prefab.Name == location.m_prefab.Name);
-  static void Finalizer(bool visible)
+  static void Finalizer(bool show)
   {
-    if (visible) return;
+    if (show) return;
     GuaranteeStartLocation(ZoneSystem.instance);
   }
 }

@@ -1,3 +1,7 @@
+- v1.57
+  - Fixes for the new update.
+  - Fixes compatibility issue with Better Continents mod.
+
 - v1.56
   - Fixes default terrain color being color that is considered lava. Sorry for the issue!
   - This caused entire Meadows to turn into lava for some older configs that did not specify terrain color.
@@ -11,8 +15,4 @@
   - Adds experimental API for other mods to directly add new biomes and modify world generation
 
 - v1.53
-  - Fixed for the new update.
-
-- v1.52
-  - Adds dependency to YamlDotNet.
   - Fixed for the new update.
