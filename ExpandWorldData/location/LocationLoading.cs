@@ -216,18 +216,21 @@ public class LocationLoading
     else
       data.maxAltitude = loc.m_maxAltitude;
     loc.m_prefab.Load();
-    var prefab = loc.m_prefab.Asset.GetComponent<Location>();
-    if (prefab)
+    if (loc.m_prefab.Asset != null)
     {
-      data.randomDamage = prefab.m_applyRandomDamage ? "true" : "";
-      data.exteriorRadius = prefab.m_exteriorRadius;
-      data.clearArea = prefab.m_clearArea;
-      data.discoverLabel = prefab.m_discoverLabel;
-      data.noBuild = prefab.m_noBuild ? "true" : "";
-      if (prefab.m_noBuild && prefab.m_noBuildRadiusOverride > 0f)
-        data.noBuild = prefab.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
+      var prefab = loc.m_prefab.Asset.GetComponent<Location>();
+      if (prefab)
+      {
+        data.randomDamage = prefab.m_applyRandomDamage ? "true" : "";
+        data.exteriorRadius = prefab.m_exteriorRadius;
+        data.clearArea = prefab.m_clearArea;
+        data.discoverLabel = prefab.m_discoverLabel;
+        data.noBuild = prefab.m_noBuild ? "true" : "";
+        if (prefab.m_noBuild && prefab.m_noBuildRadiusOverride > 0f)
+          data.noBuild = prefab.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
+      }
+      loc.m_prefab.Release();
     }
-    loc.m_prefab.Release();
     return data;
   }
   public static bool IsValid(ZoneSystem.ZoneLocation loc) => loc.m_prefab.IsValid;
