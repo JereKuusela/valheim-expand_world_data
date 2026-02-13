@@ -215,22 +215,21 @@ public class LocationLoading
       data.maxAltitude = 10000f;
     else
       data.maxAltitude = loc.m_maxAltitude;
-    loc.m_prefab.Load();
-    if (loc.m_prefab.Asset != null)
+    var asset = Helper.SafeLoad(loc);
+    if (asset == null)
+      return data;
+    var prefab = asset.GetComponent<Location>();
+    if (prefab)
     {
-      var prefab = loc.m_prefab.Asset.GetComponent<Location>();
-      if (prefab)
-      {
-        data.randomDamage = prefab.m_applyRandomDamage ? "true" : "";
-        data.exteriorRadius = prefab.m_exteriorRadius;
-        data.clearArea = prefab.m_clearArea;
-        data.discoverLabel = prefab.m_discoverLabel;
-        data.noBuild = prefab.m_noBuild ? "true" : "";
-        if (prefab.m_noBuild && prefab.m_noBuildRadiusOverride > 0f)
-          data.noBuild = prefab.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
-      }
-      loc.m_prefab.Release();
+      data.randomDamage = prefab.m_applyRandomDamage ? "true" : "";
+      data.exteriorRadius = prefab.m_exteriorRadius;
+      data.clearArea = prefab.m_clearArea;
+      data.discoverLabel = prefab.m_discoverLabel;
+      data.noBuild = prefab.m_noBuild ? "true" : "";
+      if (prefab.m_noBuild && prefab.m_noBuildRadiusOverride > 0f)
+        data.noBuild = prefab.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
     }
+    loc.m_prefab.Release();
     return data;
   }
   public static bool IsValid(ZoneSystem.ZoneLocation loc) => loc.m_prefab.IsValid;

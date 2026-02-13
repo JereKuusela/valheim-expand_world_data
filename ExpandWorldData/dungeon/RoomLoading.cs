@@ -110,13 +110,15 @@ public class RoomLoading
     {
       // Variants need to load the base room to get the connections.
       roomData.m_prefab = baseRoom.m_prefab;
-      baseRoom.m_prefab.Load();
+      var asset = Helper.SafeLoad(baseRoom);
+      if (asset == null)
+        return roomData;
       room.m_musicPrefab = baseRoom.RoomInPrefab.m_musicPrefab;
       var connections = baseRoom.RoomInPrefab.GetConnections();
       if (connections.Length != snapPieces.Length)
         Log.Warning($"Room {name} has {snapPieces.Length} connections, but base room {baseRoom.m_prefab.Name} has {connections.Length} connections.");
       // Initialize with base connections to allow data missing from the yaml.
-      room.m_roomConnections = connections.Select(c =>
+      room.m_roomConnections = [.. connections.Select(c =>
         {
           var conn = new GameObject(c.name).AddComponent<RoomConnection>();
           CreatedObjects.Add(conn.gameObject);
@@ -128,7 +130,7 @@ public class RoomLoading
           conn.m_allowDoor = c.m_allowDoor;
           conn.m_doorOnlyIfOtherAlsoAllowsDoor = c.m_doorOnlyIfOtherAlsoAllowsDoor;
           return conn;
-        }).ToArray();
+        })];
       baseRoom.m_prefab.Release();
     }
     else if (BlueprintManager.Load(baseName, snapPieces))
@@ -139,13 +141,13 @@ public class RoomLoading
         m_name = name,
         m_loadedAsset = room.gameObject
       };
-      room.m_roomConnections = snapPieces.Select(c =>
+      room.m_roomConnections = [.. snapPieces.Select(c =>
       {
         var conn = new GameObject("").AddComponent<RoomConnection>();
         CreatedObjects.Add(conn.gameObject);
         conn.transform.parent = room.transform;
         return conn;
-      }).ToArray();
+      })];
     }
     return roomData;
   }
@@ -216,7 +218,9 @@ public class RoomLoading
   }
   private static RoomData ToData(DungeonDB.RoomData roomData)
   {
-    roomData.m_prefab.Load();
+    var asset = Helper.SafeLoad(roomData);
+    if (asset == null)
+      return null!;
     var room = roomData.RoomInPrefab;
     RoomData data = new()
     {
@@ -293,7 +297,7 @@ public class RoomLoading
       var file = Path.Combine(Yaml.BaseDirectory, $"expand_rooms{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));
+      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData).Where(d => d != null));
       File.WriteAllText(file, yaml);
     }
   }

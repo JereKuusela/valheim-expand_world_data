@@ -10,16 +10,18 @@ public class DebugCommands
 {
   private string GetRoomItems(DungeonDB.RoomData room)
   {
-    room.m_prefab.Load();
-    var items = Utils.GetEnabledComponentsInChildren<ZNetView>(room.m_prefab.Asset).Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
+    var asset = Helper.SafeLoad(room);
+    if (!asset) return "";
+    var items = Utils.GetEnabledComponentsInChildren<ZNetView>(asset).Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
     room.m_prefab.Release();
     return string.Join(", ", items);
   }
 
   private string GetLocationItems(ZoneSystem.ZoneLocation loc)
   {
-    loc.m_prefab.Load();
-    var items = Utils.GetEnabledComponentsInChildren<ZNetView>(loc.m_prefab.Asset).Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
+    var asset = Helper.SafeLoad(loc);
+    if (!asset) return "";
+    var items = Utils.GetEnabledComponentsInChildren<ZNetView>(asset).Select(netView => Utils.GetPrefabName(netView.gameObject)).GroupBy(name => name).Select(group => group.Key + " x" + group.Count());
     loc.m_prefab.Release();
     return string.Join(", ", items);
   }

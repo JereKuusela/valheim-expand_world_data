@@ -1,3 +1,6 @@
+- v1.58
+  - Adds error handling for invalid location or room assets. Thanks warpalicious!
+
 - v1.57
   - Fixes for the new update.
   - Fixes compatibility issue with Better Continents mod.
@@ -13,6 +16,3 @@
 
 - v1.54
   - Adds experimental API for other mods to directly add new biomes and modify world generation
-
-- v1.53
-  - Fixed for the new update.

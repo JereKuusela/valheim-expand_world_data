@@ -10,6 +10,34 @@ namespace ExpandWorldData;
 
 public static class Helper
 {
+  public static GameObject? SafeLoad(DungeonDB.RoomData room)
+  {
+    try
+    {
+      room.m_prefab.Load();
+      return room.m_prefab.Asset;
+    }
+    catch
+    {
+      Log.Warning($"Failed to load room {room.m_prefab.Name}. This is most likely issue with the mod adding the room.");
+      room.m_prefab.Release();
+      return null;
+    }
+  }
+  public static GameObject? SafeLoad(ZoneSystem.ZoneLocation loc)
+  {
+    try
+    {
+      loc.m_prefab.Load();
+      return loc.m_prefab.Asset;
+    }
+    catch
+    {
+      Log.Warning($"Failed to load location {loc.m_prefab.Name}. This is most likely issue with the mod adding the location.");
+      loc.m_prefab.Release();
+      return null;
+    }
+  }
   public static List<BlueprintObject> ParseObjects(string[] args, string fileName)
   {
     return args.Select(s => Parse.Split(s)).Select(split => new BlueprintObject(
