@@ -114,9 +114,13 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - minimumAltitude (default: `-1000` meters): Minimum altitude.
 - excessFactor (default: `0.5`): How strongly the altitude is reduced if over the maximum or minimum limit. For example 0.5 square roots the excess altitude.
 - paint: Default terrain paint. Format is `dirt,cultivated,paved,vegetation` (from 0.0 to 1.0) or a pre-defined color (cultivated, dirt, grass, grass_dark, patches, paved, paved_dark, paved_dirt, paved_moss)
-- color: Terrain style. Not fully sure how this works but the color value somehow determines which default biome terrain style to use.
+- colorTerrain (r,g,b,a): Terrain style. Not fully sure how this works but the color value somehow determines which default biome terrain style to use.
 - mapColorMultiplier (default: `1.0`): Changes how quickly the terrain altitude affects the map color. Increasing the value can be useful for low altitude biomes to show the altitude differences better. Lowering the value can be useful for high altitude biomes to reduce amount of white color (from mountain altitudes). Negative value can be useful for underwater biomes to show the map color (normally all underwater areas get blueish color).
-- mapColor: Color in the minimap (red, green, blue, alpha).
+- colorMap (r,g,b,a): Color in the minimap.
+- colorWaterSurface (r,g,b,a): Custom water surface color. Requires "Custom water color" setting enabled in the config.
+- colorWaterTop (r,g,b,a): Custom water top color. Requires "Custom water color" setting enabled in the config.
+- colorWaterBottom (r,g,b,a): Custom water bottom color. Requires "Custom water color" setting enabled in the config.
+- colorWaterShallow (r,g,b,a): Custom shallow water bottom color. Requires "Custom water color" setting enabled in the config.
 - musicMorning: Music override for the morning time.
 - musicDay: Music override for the day time.
 - musicEvening: Music override for the evening time.
@@ -321,6 +325,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
   - Format is `icon,size,pulse`.
   - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
   - Putting anything on the third value causes the icon to pulse. This is not supported with meters.
+  - Icon name StartTemple is used as the default spawn point for players. This can be used to spawn players on some other location.
 - iconPlaced: Location icon to show when the location is generated. Use `ew_icons` to see what is available.
   - Format is `icon,size,pulse`.
   - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
@@ -472,6 +477,7 @@ New rooms can be created from blueprints or cloning an existing room by adding `
   - type: Type of the connection. Only connections with the same type are connected.
   - entrance (default: `false`): If true, used for the entrance.
   - door (default: `true`): If true, allows placing door. If `other`, allows placing door if the other connection also allows placing a door.
+  - exitOnly (default: `false`): If true, this connection is only used for already placed rooms. This can be used to force room direction.
 - objects: Extra objects in the room.
   - See [Custom objects](#custom-objects) for details.
 - objectSwap: Changes room objects to other objects.

@@ -1,6 +1,6 @@
 {
   "name": "Expand_World_Data",
-  "version_number": "1.58.0",
+  "version_number": "1.59.0",
   "website_url": "https://discord.gg/VFRJcPwUdm",
   "description": "Allows adding new biomes and changing most of the world generation.",
   "dependencies": [

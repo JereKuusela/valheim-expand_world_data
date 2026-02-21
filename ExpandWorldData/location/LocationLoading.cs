@@ -415,10 +415,35 @@ public class LocationLoading
   }
 }
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GetLocationIcons))]
-public class LocationIcons
+
+[HarmonyPatch(typeof(ZoneSystem))]
+public static class ZoneSystemPatches
 {
-  static bool Prefix(ZoneSystem __instance, Dictionary<Vector3, string> icons)
+  [HarmonyPatch(nameof(ZoneSystem.GetLocationIcon))]
+  [HarmonyPrefix]
+  static bool GetLocationIcon(ZoneSystem __instance, string name, ref Vector3 pos, ref bool __result)
+  {
+    if (!ZNet.instance.IsServer())
+      return true;
+    // Server should also use GetLocationIcons so that single player matches the dedicated server behavior.
+    __instance.tempIconList.Clear();
+    __instance.GetLocationIcons(__instance.tempIconList);
+    foreach (var kvp in __instance.tempIconList)
+    {
+      if (kvp.Value != name)
+        continue;
+      pos = kvp.Key;
+      __result = true;
+      return false;
+    }
+    pos = Vector3.zero;
+    __result = false;
+    return false;
+  }
+
+  [HarmonyPatch(nameof(ZoneSystem.GetLocationIcons))]
+  [HarmonyPrefix]
+  static bool GetLocationIcons(ZoneSystem __instance, Dictionary<Vector3, string> icons)
   {
     if (!Configuration.DataLocation) return true;
     if (!ZNet.instance.IsServer()) return true;
@@ -449,14 +474,12 @@ public class LocationIcons
     }
     return false;
   }
-}
 
-// Vanilla checks that location prefabs are valid.
-// This doesn't work with blueprints because they would need proper asset ID (which might conflict with other mods).
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GetLocation), typeof(string))]
-public class GetLocation
-{
-  static bool Prefix(ZoneSystem __instance, string name, ref ZoneSystem.ZoneLocation __result)
+  // Vanilla checks that location prefabs are valid.
+  // This doesn't work with blueprints because they would need proper asset ID (which might conflict with other mods).
+  [HarmonyPatch(nameof(ZoneSystem.GetLocation), typeof(string))]
+  [HarmonyPrefix]
+  static bool GetLocation(ZoneSystem __instance, string name, ref ZoneSystem.ZoneLocation __result)
   {
     foreach (ZoneSystem.ZoneLocation zoneLocation in __instance.m_locations)
     {

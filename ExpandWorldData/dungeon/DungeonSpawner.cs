@@ -34,6 +34,22 @@ public class Spawner
       .InstructionEnumeration();
   }
 
+  // The code loads connections from the prefab, instead of the room data. This overrides any customization.
+  [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(RoomConnection), typeof(DungeonDB.RoomData), typeof(ZoneSystem.SpawnMode)), HarmonyTranspiler]
+  static IEnumerable<CodeInstruction> FixConnections(IEnumerable<CodeInstruction> instructions)
+  {
+    // Replaces the code that gets room compopnent from prefab with our saved data.
+    return new CodeMatcher(instructions)
+      .MatchForward(false, new CodeMatch(OpCodes.Stloc_1, null))
+      .Advance(-3)
+      .SetAndAdvance(OpCodes.Ldarg_2, null)
+      .SetAndAdvance(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(DungeonDB.RoomData), nameof(DungeonDB.RoomData.RoomInPrefab)))
+      .SetAndAdvance(OpCodes.Nop, null)
+      .InstructionEnumeration();
+  }
+
+
+
   // Room objects in the dungeon.
   [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyTranspiler]
   static IEnumerable<CodeInstruction> DungeonSpawnObjects(IEnumerable<CodeInstruction> instructions) => Transpile(instructions);
@@ -162,7 +178,7 @@ public class Spawner
     {
       var connData = data.connections[i];
       var cTo = connTo[i];
-      cTo.m_type = connData.type;
+      cTo.m_type = connData.type.StartsWith(">") ? connData.type.Substring(1) : connData.type;
       cTo.m_entrance = connData.entrance;
       cTo.m_allowDoor = connData.door == "true";
       cTo.m_doorOnlyIfOtherAlsoAllowsDoor = connData.door == "other";

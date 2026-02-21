@@ -12,6 +12,8 @@ public class GuaranteeLocations
   static void GuaranteeStartLocation(ZoneSystem zs)
   {
     var location = zs.m_locations.FirstOrDefault(loc => loc.m_prefab.Name == Game.instance.m_StartLocation);
+    if (!location.m_enable || location.m_quantity == 0)
+      return;
     if (Count(zs, location) == 0)
     {
       Log.Info($"Forcefully placing {location.m_prefab.Name} location at the center.");

@@ -91,5 +91,4 @@ public class RoomSpawning
     size *= 0.5f;
     return bounds.Contains(pos + rot * new Vector3(size.x, size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, -size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, -size.y, -size.z)) && bounds.Contains(pos + rot * new Vector3(size.x, -size.y, size.z)) && bounds.Contains(pos + rot * new Vector3(-size.x, -size.y, size.z));
   }
-
 }

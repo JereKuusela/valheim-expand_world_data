@@ -9,6 +9,8 @@ public class RoomConnectionData
   public string type = "";
   [DefaultValue(false)]
   public bool entrance = false;
+  [DefaultValue(false)]
+  public bool exitOnly = false;
   [DefaultValue("true")]
   public string door = "true";
 }

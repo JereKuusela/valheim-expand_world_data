@@ -95,7 +95,7 @@ public class RoomLoading
     Log.Info($"Reloading room themes ({NameToTheme.Count} entries).");
     Log.Info($"Reloading room data ({data.Count} entries).");
 
-    RoomNames = data.ToDictionary(room => room.m_prefab.Name.ToLowerInvariant(), room => room.m_prefab.Name);
+    RoomNames = Helper.ToDict(data, item => item.m_prefab.Name.ToLowerInvariant(), item => item.m_prefab.Name);
     DungeonDB.instance.m_rooms = data;
   }
   private static readonly List<GameObject> CreatedObjects = [];
@@ -166,7 +166,7 @@ public class RoomLoading
       var conn = room.m_roomConnections[i];
       if (conn.name == "")
         conn.name = connData.type;
-      conn.m_type = connData.type;
+      conn.m_type = connData.exitOnly ? $">{connData.type}" : connData.type;
       conn.m_entrance = connData.entrance;
       conn.m_allowDoor = connData.door == "true";
       conn.m_doorOnlyIfOtherAlsoAllowsDoor = connData.door == "other";

@@ -1,3 +1,10 @@
+- v1.59
+  - Adds new field exitOnly to dungeon room connections.
+  - Fixes start location being forcefully placed even when disabled.
+  - Fixes dungeon room clones not working.
+  - Fixes dungeon room connection changes not working for non-blueprint rooms.
+  - Fixes custom location icons not working on single player respawn check.
+
 - v1.58
   - Adds error handling for invalid location or room assets. Thanks warpalicious!
 
