@@ -70,6 +70,24 @@ public class Spawner
     DungeonObjects.CurrentDungeon = dungeonName;
   }
 
+  [HarmonyPatch(nameof(DungeonGenerator.GetWeightedRoom)), HarmonyPrefix]
+  // Prevents index out of bounds error.
+  static bool GetWeightedRoomIndexCheck(List<DungeonDB.RoomData> rooms) => rooms.Count > 0;
+
+  [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(RoomConnection), typeof(DungeonDB.RoomData), typeof(ZoneSystem.SpawnMode)), HarmonyPrefix]
+  // Prevent null reference error.
+  static bool PlaceRoomNullCheck(RoomConnection connection, DungeonDB.RoomData roomData)
+  {
+    if (roomData == null)
+    {
+      Log.Warning("No room found for connection type " + connection.m_type);
+      return false;
+    }
+    return true;
+  }
+
+
+
   [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPrefix]
   static void SpawnBlueprintRoom(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
   {
@@ -160,8 +178,51 @@ public class Spawner
     if (!DungeonObjects.Generators.TryGetValue(name, out var gen)) return;
     if (gen.m_excludedRooms.Count == 0) return;
     DungeonGenerator.m_availableRooms = DungeonGenerator.m_availableRooms.Where(room => !gen.m_excludedRooms.Contains(room.m_prefab.Name)).ToList();
-
   }
+
+  private static readonly List<RoomConnection> endConnections = [];
+
+  private static void MoveConnection(RoomConnection conn)
+  {
+    endConnections.Add(conn);
+    DungeonGenerator.m_openConnections.Remove(conn);
+  }
+
+  [HarmonyPatch(nameof(DungeonGenerator.PlaceOneRoom)), HarmonyTranspiler]
+  static IEnumerable<CodeInstruction> PlaceOneRoom(IEnumerable<CodeInstruction> instructions)
+  {
+    // Original code doesn't remove failed connections, so the same connection can be tried multiple times (which is bit wasteful).
+    // This moves them to endConnections list to be handled later.
+    return new CodeMatcher(instructions)
+      .End()
+      .Advance(-1)
+      .Insert(new CodeInstruction(OpCodes.Ldloc_0), new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(MoveConnection).operand))
+      .InstructionEnumeration();
+  }
+
+  [HarmonyPatch(nameof(DungeonGenerator.CheckRequiredRooms)), HarmonyPrefix]
+  public static bool CheckRequiredRooms(ref bool __result)
+  {
+    // This is used as early exit if ther are no connections left to try.
+    if (DungeonGenerator.m_openConnections.Count == 0)
+    {
+      __result = true;
+      return false;
+    }
+    return true;
+  }
+
+  // This is needed to restore connection for end cap handling.
+  [HarmonyPatch(nameof(DungeonGenerator.PlaceRooms)), HarmonyPostfix]
+  public static void PlaceRooms()
+  {
+    foreach (var conn in endConnections)
+    {
+      DungeonGenerator.m_openConnections.Add(conn);
+    }
+    endConnections.Clear();
+  }
+
 
   [HarmonyPatch(nameof(DungeonGenerator.AddOpenConnections)), HarmonyPrefix]
   static void AddOpenConnections(Room newRoom)
