@@ -34,14 +34,13 @@ public class DataHelper
   {
     ZNetView.m_initZDO = null;
   }
-  public static DataEntry? Merge(params DataEntry?[] datas)
+  public static DataEntry? Merge(DataEntry? first, DataEntry? second)
   {
-    var nonNull = datas.Where(d => d != null).ToArray();
-    if (nonNull.Length == 0) return null;
-    if (nonNull.Length == 1) return nonNull[0];
+    if (first == null) return second;
+    if (second == null) return first;
     DataEntry result = new();
-    foreach (var data in nonNull)
-      result.Load(data!);
+    result.Load(first);
+    result.Load(second);
     return result;
   }
   public static bool Exists(int hash) => DataLoading.Data.ContainsKey(hash);
@@ -74,7 +73,8 @@ public class DataHelper
   }
   private static void ResolvePrefabsSub(HashSet<string> prefabs, string value)
   {
-    if (value == "all" || ZNetScene.instance.m_namedPrefabs.ContainsKey(value.GetStableHashCode()))
+    // Components are added directly, as they are handled separately.
+    if (value == "all" || DataLoading.IsComponentGroup(value) || ZNetScene.instance.m_namedPrefabs.ContainsKey(value.GetStableHashCode()))
     {
       prefabs.Add(value);
       return;

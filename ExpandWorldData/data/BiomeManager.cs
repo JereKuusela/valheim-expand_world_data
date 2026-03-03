@@ -23,6 +23,7 @@ public class BiomeManager
   // Minor optimization to skip terrain color based calculations.
   public static Heightmap.Biome FullLavaBiomes = Heightmap.Biome.AshLands;
   public static Heightmap.Biome NoBuildBiomes = 0;
+  private static HashSet<string> UsedGlobalKeys = [];
 
   public static EnvEntry FromData(BiomeEnvironment data, Dictionary<EnvEntry, EnvEntryKeys> keys)
   {
@@ -193,6 +194,7 @@ public class BiomeManager
     if (rawData.Count > 0)
       Log.Info($"Reloading biome data ({rawData.Count} entries).");
     EnvKeys.Clear();
+    UsedGlobalKeys.Clear();
     BiomeData.Clear();
     BiomeToColor.Clear();
     LavaBiomes = 0;
@@ -246,6 +248,11 @@ public class BiomeManager
     });
     BiomeForestMultiplier = rawData.Any(data => data.forestMultiplier != 1f);
     Environments = [.. rawData.Select(d => FromData(d, EnvKeys, "Biomes"))];
+    UsedGlobalKeys = EnvKeys.Values
+      .SelectMany(data => data.requiredGlobalKeys.Concat(data.forbiddenGlobalKeys))
+      .Where(key => key != null && key != "")
+      .Select(NormalizeKey)
+      .ToHashSet();
     // This tracks if content (environments) have been loaded.
     if (ZoneSystem.instance.m_locationsByHash.Count > 0)
       LoadEnvironments();
@@ -319,9 +326,32 @@ public class BiomeManager
   }
 
   public static bool CheckKeys(EnvEntry env) => !EnvKeys.TryGetValue(env, out var keys) || keys.CheckKeys();
+  private static string NormalizeKey(string key) => key.Trim().ToLowerInvariant();
+  public static bool UsesGlobalKey(string key)
+  {
+    if (UsedGlobalKeys.Count == 0) return false;
+    if (key == null || key == "") return false;
+    return UsedGlobalKeys.Contains(NormalizeKey(key));
+  }
+  public static bool HasRelevantGlobalKeyChanges(HashSet<string> oldKeys, List<string> newKeys)
+  {
+    if (UsedGlobalKeys.Count == 0) return false;
+    HashSet<string> oldRelevant = [];
+    HashSet<string> newRelevant = [];
+    foreach (var key in oldKeys)
+    {
+      if (UsesGlobalKey(key))
+        oldRelevant.Add(key);
+    }
+    foreach (var key in newKeys)
+    {
+      if (UsesGlobalKey(key))
+        newRelevant.Add(key);
+    }
+    return !oldRelevant.SetEquals(newRelevant);
+  }
 }
 
-//[HarmonyPatch(typeof(Minimap), nameof(Minimap.GenerateWorldMap))]
 public class GenerateWorldMap
 {
 
@@ -358,11 +388,11 @@ public class UpdateBiome
 [HarmonyPatch(typeof(EnvMan), nameof(EnvMan.GetAvailableEnvironments))]
 public class GetAvailableEnvironments
 {
-  static void Postfix(List<EnvEntry> __result)
+  static List<EnvEntry> Postfix(List<EnvEntry> result)
   {
-    if (__result == null) return;
-    if (BiomeManager.EnvKeys.Count == 0) return;
-    __result = __result.Where(BiomeManager.CheckKeys).ToList();
+    if (result == null) return null!;
+    if (BiomeManager.EnvKeys.Count == 0) return result;
+    return [.. result.Where(BiomeManager.CheckKeys)];
   }
 }
 
@@ -370,27 +400,33 @@ public class GetAvailableEnvironments
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.RPC_GlobalKeys))]
 public class RPC_GlobalKeys
 {
-  static void Postfix()
+  static void Prefix(List<string> keys)
   {
-    if (BiomeManager.EnvKeys.Count > 0)
-      EnvMan.instance.m_environmentPeriod = 0;
+    if (!BiomeManager.HasRelevantGlobalKeyChanges(ZoneSystem.instance.m_globalKeys, keys))
+      return;
+    EnvMan.instance.m_environmentPeriod = 0;
   }
 }
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.RPC_SetGlobalKey))]
-public class RPC_SetGlobalKey
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GlobalKeyAdd))]
+public class GlobalKeyAdd
 {
-  static void Postfix()
+  static void Postfix(string keyStr)
   {
-    if (BiomeManager.EnvKeys.Count > 0)
-      EnvMan.instance.m_environmentPeriod = 0;
+    if (!BiomeManager.UsesGlobalKey(keyStr))
+      return;
+    EnvMan.instance.m_environmentPeriod = 0;
   }
 }
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.RPC_RemoveGlobalKey))]
-public class RPC_RemoveGlobalKey
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GlobalKeyRemove))]
+public class GlobalKeyRemove
 {
-  static void Postfix()
+  static void Postfix(string keyStr, bool __result)
   {
-    if (BiomeManager.EnvKeys.Count > 0)
-      EnvMan.instance.m_environmentPeriod = 0;
+    // Nothing removed, nothing to do.
+    if (!__result) return;
+    if (!BiomeManager.UsesGlobalKey(keyStr))
+      return;
+    EnvMan.instance.m_environmentPeriod = 0;
   }
 }

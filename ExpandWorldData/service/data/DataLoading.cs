@@ -101,10 +101,18 @@ public class DataLoading
     }
   }
   private static readonly Dictionary<int, List<string>> DefaultValueGroups = [];
+  private static readonly Dictionary<string, List<string>> DefaultPrefabComponents = [];
   private static readonly int WearNTearHash = "wearntear".GetStableHashCode();
   private static readonly int HumanoidHash = "humanoid".GetStableHashCode();
   private static readonly int CreatureHash = "creature".GetStableHashCode();
   private static readonly int StructureHash = "structure".GetStableHashCode();
+  public static bool IsComponentGroup(string group) => DefaultValueGroups.ContainsKey(group.ToLowerInvariant().GetStableHashCode());
+  public static List<string> GetDefaultComponents(string prefabName)
+  {
+    if (DefaultPrefabComponents.TryGetValue(prefabName, out var components))
+      return components;
+    return [];
+  }
   private static void LoadDefaultValueGroups()
   {
     if (DefaultValueGroups.Count == 0)
@@ -112,13 +120,23 @@ public class DataLoading
       foreach (var prefab in ZNetScene.instance.m_namedPrefabs.Values)
       {
         if (!prefab) continue;
+        var prefabName = prefab.name;
+        if (!DefaultPrefabComponents.ContainsKey(prefabName))
+          DefaultPrefabComponents[prefabName] = [];
         prefab.GetComponentsInChildren(ZNetView.m_tempComponents);
         foreach (var component in ZNetView.m_tempComponents)
         {
-          var hash = component.GetType().Name.ToLowerInvariant().GetStableHashCode();
+          var componentName = component.GetType().Name.ToLowerInvariant();
+          var hash = componentName.GetStableHashCode();
           if (!DefaultValueGroups.ContainsKey(hash))
             DefaultValueGroups[hash] = [];
           DefaultValueGroups[hash].Add(prefab.name);
+
+          DefaultPrefabComponents[prefabName].Add(componentName);
+          if (componentName == "humanoid")
+            DefaultPrefabComponents[prefabName].Add("character");
+          if (componentName == "wearntear")
+            DefaultPrefabComponents[prefabName].Add("structure");
         }
       }
       // Some key codes are hardcoded for legacy reasons.

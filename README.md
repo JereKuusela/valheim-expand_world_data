@@ -626,17 +626,22 @@ Note: Objects can be removed by swapping to nothing.
 
 Initial object data in locations can be changed by using the `objectData` field. This affects both original, custom and blueprint objects.
 
-Data is merged from multiple levels. The order is:
+Data is merged from multiple layers and levels. The order for layers is:
 
-1. `all` data from `expand_locations.yaml` or `expand_vegetations.yaml`.
-2. Object specific data from `expand_locations.yaml` or `expand_vegetations.yaml`.
-3. `all` data from `expand_dungeons.yaml`.
-4. Object specific data from `expand_dungeons.yaml`.
-5. `all` data from `expand_rooms.yaml`.
-6. Object specific data from `expand_rooms.yaml`.
-7. Blueprint or custom object data (the highest priority).
+1. Data from location.
+2. Data from dungeon.
+3. Data from room.
+4. Data from blueprint or custom object (the highest priority).
 
-For example if the blueprint has infinite health then it can't be changed by using the `objectData` field. But other data could be set like wear from Structure Tweaks mod.
+Each layer has three levels:
+
+1. `all` data applying to all objects.
+2. Component specific data applying to all objects with the component.
+3. Object specific data applying to specific objects.
+
+The order matters if multiple data entries set the same field. Higher numbers are applied later, overriding any previous values.
+
+For example you can override location specific data with room data, but not the other way around. Or if the blueprint has infinite health then it can't be changed by using the `objectData` field. But other data could be set like wear from Structure Tweaks mod.
 
 There are two ways to set data:
 

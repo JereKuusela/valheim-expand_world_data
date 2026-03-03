@@ -41,24 +41,22 @@ public static class DungeonObjects
 
   public static DataEntry? DataOverride(DataEntry? pgk, string prefab)
   {
-    var locationData = LocationSpawning.DungeonDataOverride(prefab);
-    var dungeonData = DataDungeonOverride(prefab);
-    var roomData = DataRoomOverride(prefab);
-    return DataHelper.Merge(locationData, dungeonData, roomData, pgk);
+    DataEntry? result = null;
+    result = DataHelper.Merge(result, LocationSpawning.DungeonDataOverride(prefab));
+    result = DataHelper.Merge(result, DataDungeonOverride(prefab));
+    result = DataHelper.Merge(result, DataRoomOverride(prefab));
+    return DataHelper.Merge(result, pgk);
   }
+
   private static DataEntry? DataDungeonOverride(string prefab)
   {
     if (!Generators.TryGetValue(CurrentDungeon, out var gen)) return null;
-    var allData = gen.m_objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
-    var prefabData = gen.m_objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
-    return DataHelper.Merge(allData, prefabData);
+    return Spawn.GetData(gen.m_objectData, prefab);
   }
   public static DataEntry? DataRoomOverride(string prefab)
   {
     if (!ObjectData.TryGetValue(CurrentRoom!, out var objectData)) return null;
-    var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
-    var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
-    return DataHelper.Merge(allData, prefabData);
+    return Spawn.GetData(objectData, prefab);
   }
 
 }

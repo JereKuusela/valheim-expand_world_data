@@ -15,16 +15,13 @@ public class LocationSpawning
   public static DataEntry? DataOverride(DataEntry? pkg, string prefab)
   {
     if (!LocationLoading.LocationObjectData.TryGetValue(CurrentLocation, out var objectData)) return pkg;
-    var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
-    var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
-    return DataHelper.Merge(allData, prefabData, pkg);
+    var data = Spawn.GetData(objectData, prefab);
+    return DataHelper.Merge(data, pkg);
   }
   public static DataEntry? DungeonDataOverride(string prefab)
   {
     if (!LocationLoading.DungeonObjectData.TryGetValue(CurrentLocation, out var objectData)) return null;
-    var allData = objectData.TryGetValue("all", out var data1) ? Spawn.RandomizeData(data1) : null;
-    var prefabData = objectData.TryGetValue(prefab, out var data2) ? Spawn.RandomizeData(data2) : null;
-    return DataHelper.Merge(allData, prefabData);
+    return Spawn.GetData(objectData, prefab);
   }
   public static string PrefabOverride(string prefab)
   {

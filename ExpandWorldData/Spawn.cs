@@ -229,4 +229,20 @@ public class Spawn
     }
     return swaps[swaps.Count - 1].Item2;
   }
+
+  public static DataEntry? GetData(Dictionary<string, List<Tuple<float, DataEntry?>>> data, string prefab)
+  {
+    DataEntry? result = null;
+    if (data.TryGetValue("all", out var d))
+      result = DataHelper.Merge(result, RandomizeData(d));
+    var components = DataLoading.GetDefaultComponents(prefab);
+    foreach (var component in components)
+    {
+      if (data.TryGetValue(component, out d))
+        result = DataHelper.Merge(result, RandomizeData(d));
+    }
+    if (data.TryGetValue(prefab, out d))
+      result = DataHelper.Merge(result, RandomizeData(d));
+    return result;
+  }
 }
