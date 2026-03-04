@@ -43,6 +43,18 @@ public class DataHelper
     result.Load(second);
     return result;
   }
+
+  // Needed for EW spawns and events until they start using the new function.
+  public static DataEntry? Merge(params DataEntry?[] datas)
+  {
+    var nonNull = datas.Where(d => d != null).ToArray();
+    if (nonNull.Length == 0) return null;
+    if (nonNull.Length == 1) return nonNull[0];
+    DataEntry result = new();
+    foreach (var data in nonNull)
+      result.Load(data!);
+    return result;
+  }
   public static bool Exists(int hash) => DataLoading.Data.ContainsKey(hash);
 
   public static bool Match(int hash, ZDO zdo, Parameters pars)

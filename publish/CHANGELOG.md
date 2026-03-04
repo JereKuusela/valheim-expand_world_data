@@ -1,3 +1,6 @@
+- v1.61
+  - Fixes error with Expand World Events caused by previous update.
+
 - v1.60
   - Adds third level to data merging (components).
   - Fixes key based environments not working.
