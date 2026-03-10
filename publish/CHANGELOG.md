@@ -1,3 +1,6 @@
+- v1.62
+  - Fixes data system not working for components (was case sensitive, now correctly case insensitive).
+
 - v1.61
   - Fixes error with Expand World Events caused by previous update.
 
@@ -16,11 +19,3 @@
 
 - v1.58
   - Adds error handling for invalid location or room assets. Thanks warpalicious!
-
-- v1.57
-  - Fixes for the new update.
-  - Fixes compatibility issue with Better Continents mod.
-
-- v1.56
-  - Fixes default terrain color being color that is considered lava. Sorry for the issue!
-  - This caused entire Meadows to turn into lava for some older configs that did not specify terrain color.

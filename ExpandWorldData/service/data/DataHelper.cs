@@ -86,7 +86,12 @@ public class DataHelper
   private static void ResolvePrefabsSub(HashSet<string> prefabs, string value)
   {
     // Components are added directly, as they are handled separately.
-    if (value == "all" || DataLoading.IsComponentGroup(value) || ZNetScene.instance.m_namedPrefabs.ContainsKey(value.GetStableHashCode()))
+    if (value == "all" || DataLoading.IsComponentGroup(value))
+    {
+      prefabs.Add(value.ToLowerInvariant());
+      return;
+    }
+    if (ZNetScene.instance.m_namedPrefabs.ContainsKey(value.GetStableHashCode()))
     {
       prefabs.Add(value);
       return;

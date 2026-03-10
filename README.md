@@ -240,7 +240,7 @@ The file `expand_environments.yaml` sets the available weathers. Command `ew_mus
 - alwaysDark (default: `false`): If true, causes constant darkness.
 - windMin (default: `0.0`): The minimum wind strength.
 - windMax (default: `1.0`): The maximum wind strength.
-- rainCloudAlpha (default: `0.0`): ???.
+- rainCloudAlpha (default: `0.0`): Amount of clouds in the sky.
 - ambientVol (default: `0.3`): ???.
 - ambientList: ???.
 - musicMorning: Music override for the morning time. Higher priority than the biome value.
