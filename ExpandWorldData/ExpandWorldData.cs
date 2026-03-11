@@ -12,7 +12,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.62";
+  public const string VERSION = "1.62.1";
 #nullable disable
   public static EWD Instance;
   public static Harmony Harmony;

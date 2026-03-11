@@ -236,3 +236,32 @@ public class ScaleLocationHeightRequirement
         .InstructionEnumeration();
 
 }
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.CreateLocalZones))]
+public class CreateLocalZones
+{
+  public static bool LocationsPregenerated = false;
+  static bool Postfix(bool result, ZoneSystem __instance)
+  {
+    // If vanilla zone generated, wait until next attempt.
+    if (result) return result;
+    if (LocationsPregenerated) return result;
+
+    foreach (var kvp in __instance.m_locationInstances)
+    {
+      var loc = kvp.Value.m_location;
+      if (loc == null) continue;
+      if (!LocationLoading.LocationData.TryGetValue(loc.m_prefab.Name, out var data)) continue;
+      if (!data.pregenerate) continue;
+      // Vanilla returns true if poke is successful (doesn't fully make sense but it is what it is).
+      if (__instance.PokeLocalZone(kvp.Key))
+        return true;
+      // Poke can return false when generation is not done yet, so have to manually check this.
+      if (!__instance.IsZoneGenerated(kvp.Key))
+        return false;
+    }
+
+    LocationsPregenerated = true;
+    return result;
+  }
+}

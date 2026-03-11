@@ -293,6 +293,7 @@ public class LocationLoading
       Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
     UpdateHashes();
     UpdateInstances();
+    CreateLocalZones.LocationsPregenerated = false;
     NoBuildManager.UpdateData();
     MinimapIcon.Clear();
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);

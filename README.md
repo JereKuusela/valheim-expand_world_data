@@ -390,6 +390,8 @@ Locations are pregenerated at world generation. You must use `genloc` command to
   - Note: All objects can't be scaled without using Structure Tweaks mod.
 - scaleMax (default: `1`): Maximum scale. Number or x,z,y (with y being the height).
 - scaleUniform (default: `true`): If disabled, each axis is scaled independently.
+- pregenerate (default: `false`): If true, the zone is automatically generated, even when not explored.
+  - This can be useful for Expand World Prefabs mod, if some object in the location needs to be available.
 
 ## Dungeons
 

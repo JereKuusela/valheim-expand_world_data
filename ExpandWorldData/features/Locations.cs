@@ -27,6 +27,7 @@ public class GuaranteeLocations
   {
     if (show) return;
     GuaranteeStartLocation(ZoneSystem.instance);
+    CreateLocalZones.LocationsPregenerated = false;
   }
 }
 

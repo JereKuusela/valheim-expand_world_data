@@ -29,6 +29,8 @@ public class LocationData
   public bool unique = false;
   [DefaultValue(false)]
   public bool randomSeed = false;
+  [DefaultValue(false)]
+  public bool pregenerate = false;
   [DefaultValue("")]
   public string group = "";
   [DefaultValue("")]

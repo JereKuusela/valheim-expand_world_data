@@ -1,3 +1,6 @@
+- v1.63
+  - Adds new field `pregenerate` to location data, which allows forcing the zone to be generated even when not explored.
+
 - v1.62
   - Fixes data system not working for components (was case sensitive, now correctly case insensitive).
 
@@ -16,6 +19,3 @@
   - Fixes dungeon room connection changes not working for non-blueprint rooms.
   - Fixes custom location icons not working on single player respawn check.
   - Optimizes dungeon generation (especially with high amounts of rooms).
-
-- v1.58
-  - Adds error handling for invalid location or room assets. Thanks warpalicious!
