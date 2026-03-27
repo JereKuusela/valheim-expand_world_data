@@ -9,7 +9,14 @@ namespace ExpandWorldData;
 public class BiomeHeat
 {
   [HarmonyPatch(typeof(Character), nameof(Character.UpdateLava)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> UpdateLava(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
+  static IEnumerable<CodeInstruction> UpdateLava(IEnumerable<CodeInstruction> instructions) => new CodeMatcher(PatchBiomeHeat(instructions))
+  // Vanilla code has bug that heat doesn't reset when not in hot biome.
+    .MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.IsAshlands))))
+    .Advance(2)
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, 0f))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(Character), nameof(Character.m_lavaHeatLevel))))
+    .InstructionEnumeration();
 
 
   [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetLava)), HarmonyPrefix]
