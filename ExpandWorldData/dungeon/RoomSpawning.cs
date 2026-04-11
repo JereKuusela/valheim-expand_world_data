@@ -20,7 +20,7 @@ public class RoomSpawning
   public static Dictionary<string, DungeonDB.RoomData> Prefabs = [];
 
   public static Dictionary<Room, Vector3> RoomSizes = [];
-  public static Dictionary<DungeonDB.RoomData, RoomData> Data = [];
+  public static Dictionary<DungeonDB.RoomData, RoomYaml> Data = [];
   public static Dictionary<DungeonDB.RoomData, string> Blueprints = [];
 
   private static bool IsBaseRoom(DungeonDB.RoomData room)

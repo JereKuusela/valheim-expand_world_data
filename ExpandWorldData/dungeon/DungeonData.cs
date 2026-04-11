@@ -5,13 +5,14 @@ using UnityEngine;
 using Data;
 
 namespace ExpandWorldData.Dungeon;
-public class DungeonDoorData
+
+public class DungeonDoorYaml
 {
   public string prefab = "";
   public string connectionType = "";
   public float chance = 0f;
 }
-public class DungeonData
+public class DungeonYaml
 {
   public string name = "";
   public string algorithm = "";
@@ -30,7 +31,7 @@ public class DungeonData
   public bool randomSeed = false;
   [DefaultValue("")]
   public string themes = "";
-  public DungeonDoorData[] doorTypes = [];
+  public DungeonDoorYaml[] doorTypes = [];
   public float doorChance;
   [DefaultValue(90f)]
   public float maxTilt = 90f;

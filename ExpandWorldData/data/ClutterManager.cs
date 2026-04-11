@@ -26,7 +26,7 @@ public class ClutterManager
       FromFile();
     }
   }
-  public static ClutterSystem.Clutter FromData(ClutterData data, string fileName)
+  public static ClutterSystem.Clutter FromData(ClutterYaml data, string fileName)
   {
     ClutterSystem.Clutter clutter = new();
     if (Prefabs.TryGetValue(data.prefab, out var prefab))
@@ -61,9 +61,9 @@ public class ClutterManager
     clutter.m_fractalTresholdMax = data.fractalThresholdMax;
     return clutter;
   }
-  public static ClutterData ToData(ClutterSystem.Clutter clutter)
+  public static ClutterYaml ToData(ClutterSystem.Clutter clutter)
   {
-    ClutterData data = new()
+    ClutterYaml data = new()
     {
       prefab = clutter.m_prefab.name,
       enabled = clutter.m_enabled,
@@ -99,7 +99,7 @@ public class ClutterManager
   public static void FromFile()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataClutter ? DataManager.Read<ClutterData, ClutterSystem.Clutter>(Pattern, FromData) : "";
+    var yaml = Configuration.DataClutter ? DataManager.Read<ClutterYaml, ClutterSystem.Clutter>(Pattern, FromData) : "";
     Configuration.valueClutterData.Value = yaml;
   }
 
@@ -121,7 +121,7 @@ public class ClutterManager
     }
     try
     {
-      data = Yaml.Deserialize<ClutterData>(yaml, "Clutter")
+      data = Yaml.Deserialize<ClutterYaml>(yaml, "Clutter")
           .Select(d => FromData(d, "Clutter")).Where(clutter => clutter.m_prefab).ToList();
     }
     catch (Exception e)

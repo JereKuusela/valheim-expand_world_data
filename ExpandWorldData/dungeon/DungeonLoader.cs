@@ -40,7 +40,7 @@ public partial class Loader
   {
     try
     {
-      var data = DataManager.ReadData<DungeonData, FakeDungeonGenerator>(Pattern, From);
+      var data = DataManager.ReadData<DungeonYaml, FakeDungeonGenerator>(Pattern, From);
       return data.ToDictionary(data => data.name);
     }
     catch (Exception e)

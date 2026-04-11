@@ -22,9 +22,9 @@ public class LocationLoading
   public static Dictionary<string, List<BlueprintObject>> Objects = [];
   public static Dictionary<string, Range<Vector3>> Scales = [];
   public static Dictionary<string, string[]> Commands = [];
-  public static Dictionary<string, LocationData> LocationData = [];
+  public static Dictionary<string, LocationYaml> LocationData = [];
   public static Dictionary<string, string> Dungeons = [];
-  public static ZoneSystem.ZoneLocation FromData(LocationData data, string fileName)
+  public static ZoneSystem.ZoneLocation FromData(LocationYaml data, string fileName)
   {
     var loc = new ZoneSystem.ZoneLocation();
     LocationData[data.prefab] = data;
@@ -86,7 +86,7 @@ public class LocationLoading
     return loc;
   }
 
-  private static void LoadObjectData(LocationData data, string fileName)
+  private static void LoadObjectData(LocationYaml data, string fileName)
   {
     Dictionary<string, List<Tuple<float, DataEntry?>>>? locationobjectData = null;
     Dictionary<string, List<Tuple<float, DataEntry?>>>? dungeonobjectData = null;
@@ -127,7 +127,7 @@ public class LocationLoading
     if (locationobjectData != null)
       LocationObjectData[data.prefab] = locationobjectData;
   }
-  private static void LoadObjectSwaps(LocationData data)
+  private static void LoadObjectSwaps(LocationYaml data)
   {
     Dictionary<string, List<Tuple<float, string>>>? locationobjectSwaps = null;
     Dictionary<string, List<Tuple<float, string>>>? dungeonobjectSwaps = null;
@@ -169,9 +169,9 @@ public class LocationLoading
       LocationObjectSwaps[data.prefab] = locationobjectSwaps;
   }
 
-  public static LocationData ToData(ZoneSystem.ZoneLocation loc)
+  public static LocationYaml ToData(ZoneSystem.ZoneLocation loc)
   {
-    LocationData data = new();
+    LocationYaml data = new();
     // For migrations, ensures that old data is preserved.
     if (LocationData.TryGetValue(loc.m_prefab.Name, out var existing))
       data = existing;
@@ -364,7 +364,7 @@ public class LocationLoading
   {
     try
     {
-      return DataManager.ReadData<LocationData, ZoneSystem.ZoneLocation>(Pattern, FromData)
+      return DataManager.ReadData<LocationYaml, ZoneSystem.ZoneLocation>(Pattern, FromData)
         .Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name)).ToList();
     }
     catch (Exception e)

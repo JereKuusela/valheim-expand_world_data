@@ -160,7 +160,7 @@ public class LocationObjectDataAndSwap
     LocationSpawning.CurrentLocation = "";
   }
 
-  static void HandleTerrain(Vector3 pos, float radius, bool isBlueprint, LocationData data)
+  static void HandleTerrain(Vector3 pos, float radius, bool isBlueprint, LocationYaml data)
   {
     var level = false;
     if (data.levelArea == "") level = isBlueprint;

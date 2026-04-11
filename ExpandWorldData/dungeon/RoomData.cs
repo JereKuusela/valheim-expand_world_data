@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 namespace ExpandWorldData;
 
-public class RoomConnectionData
+public class RoomConnectionYaml
 {
   public string position = "";
   [DefaultValue("")]
@@ -14,7 +14,7 @@ public class RoomConnectionData
   [DefaultValue("true")]
   public string door = "true";
 }
-public class RoomData
+public class RoomYaml
 {
   public string name = "";
   public string theme = "";
@@ -37,7 +37,7 @@ public class RoomData
   [DefaultValue(false)]
   public bool perimeter = false;
   public string size = "";
-  public RoomConnectionData[] connections = [];
+  public RoomConnectionYaml[] connections = [];
   [DefaultValue(null)]
   public string[]? objectSwap = null;
   [DefaultValue(null)]

@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 namespace ExpandWorldData;
 
-public class LocationData
+public class LocationYaml
 {
   public string prefab = "";
   public bool enabled = true;

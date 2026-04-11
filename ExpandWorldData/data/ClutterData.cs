@@ -1,6 +1,7 @@
 using System.ComponentModel;
 namespace ExpandWorldData;
-public class ClutterData
+
+public class ClutterYaml
 {
   public string prefab = "";
   [DefaultValue(true)]

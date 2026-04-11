@@ -151,7 +151,7 @@ public class RoomLoading
     }
     return roomData;
   }
-  private static void UpdateConnections(Room room, RoomConnectionData[] data)
+  private static void UpdateConnections(Room room, RoomConnectionYaml[] data)
   {
     for (var i = 0; i < data.Length; ++i)
     {
@@ -179,7 +179,7 @@ public class RoomLoading
         conn.transform.localRotation = Parse.AngleYXZ(split, 3);
     }
   }
-  private static DungeonDB.RoomData FromData(RoomData data, string fileName)
+  private static DungeonDB.RoomData FromData(RoomYaml data, string fileName)
   {
     var snapPieces = data.connections.Select(c => c.position).ToArray();
     var roomData = CreateRoomData(data.name, snapPieces);
@@ -216,13 +216,13 @@ public class RoomLoading
       DungeonObjects.ObjectData[roomData] = Spawn.LoadData(data.objectData, fileName);
     return roomData;
   }
-  private static RoomData ToData(DungeonDB.RoomData roomData)
+  private static RoomYaml ToData(DungeonDB.RoomData roomData)
   {
     var asset = Helper.SafeLoad(roomData);
     if (asset == null)
       return null!;
     var room = roomData.RoomInPrefab;
-    RoomData data = new()
+    RoomYaml data = new()
     {
       name = room.gameObject.name,
       theme = DataManager.FromEnum(room.m_theme),
@@ -236,7 +236,7 @@ public class RoomLoading
       faceCenter = room.m_faceCenter,
       perimeter = room.m_perimeter,
       endCapPriority = room.m_endCapPrio,
-      connections = room.GetConnections().Select(connection => new RoomConnectionData
+      connections = room.GetConnections().Select(connection => new RoomConnectionYaml
       {
         position = $"{Helper.Print(connection.transform.localPosition)},{Helper.Print(connection.transform.localRotation)}",
         type = connection.m_type,
@@ -252,7 +252,7 @@ public class RoomLoading
   {
     try
     {
-      return DataManager.ReadData<RoomData, DungeonDB.RoomData>(Pattern, FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
+      return DataManager.ReadData<RoomYaml, DungeonDB.RoomData>(Pattern, FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
     }
     catch (Exception e)
     {

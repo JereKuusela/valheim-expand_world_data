@@ -8,7 +8,7 @@ namespace ExpandWorldData.Dungeon;
 
 public partial class Loader
 {
-  public static FakeDungeonGenerator From(DungeonData data, string fileName)
+  public static FakeDungeonGenerator From(DungeonYaml data, string fileName)
   {
     FakeDungeonGenerator dg = new();
     if (Enum.TryParse<DungeonGenerator.Algorithm>(data.algorithm, true, out var algorithm))
@@ -56,9 +56,9 @@ public partial class Loader
       dg.m_objectData = Spawn.LoadData(data.objectData, fileName);
     return dg;
   }
-  public static DungeonData To(DungeonGenerator dg)
+  public static DungeonYaml To(DungeonGenerator dg)
   {
-    DungeonData data = new()
+    DungeonYaml data = new()
     {
       name = Utils.GetPrefabName(dg.gameObject),
       algorithm = dg.m_algorithm.ToString(),
@@ -72,7 +72,7 @@ public partial class Loader
     if (dg.m_algorithm == DungeonGenerator.Algorithm.Dungeon)
     {
       data.doorChance = dg.m_doorChance;
-      data.doorTypes = dg.m_doorTypes.Select(type => new DungeonDoorData()
+      data.doorTypes = dg.m_doorTypes.Select(type => new DungeonDoorYaml()
       {
         chance = type.m_chance,
         connectionType = type.m_connectionType,
