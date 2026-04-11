@@ -14,6 +14,12 @@ public class VegetationLoading
   private static readonly string FileName = "expand_vegetation.yaml";
   private static readonly string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   private static readonly string Pattern = "expand_vegetation*.yaml";
+  private static readonly List<VegetationYaml> ExtraVegetationYamls = [];
+
+  public static void AddVegetation(VegetationYaml yaml)
+  {
+    ExtraVegetationYamls.Add(yaml);
+  }
 
 
   // Default items are stored to track missing entries.
@@ -39,7 +45,7 @@ public class VegetationLoading
     }
     if (!File.Exists(FilePath))
     {
-      Save(DefaultEntries, false);
+      ToFile();
       // Watcher triggers reload.
       return;
     }
@@ -61,12 +67,19 @@ public class VegetationLoading
     IdManager.SendVegetationIds();
 
   }
+  private static void ToFile()
+  {
+    var data = DefaultEntries.Select(ToData).ToList();
+    if (ExtraVegetationYamls.Count > 0)
+      data.AddRange(ExtraVegetationYamls);
+    Save(data, false);
+  }
   ///<summary>Loads all yaml files returning the deserialized vegetation entries.</summary>
   private static List<ZoneSystem.ZoneVegetation> FromFile()
   {
     try
     {
-      return DataManager.ReadData<VegetationData, ZoneSystem.ZoneVegetation>(Pattern, FromData)
+      return DataManager.ReadData<VegetationYaml, ZoneSystem.ZoneVegetation>(Pattern, FromData)
         .Where(veg => veg.m_prefab).ToList();
     }
     catch (Exception e)
@@ -93,7 +106,6 @@ public class VegetationLoading
   // Note: This is needed people add new content mods and then complain that Expand World doesn't spawn them.
   private static bool AddMissingEntries(List<ZoneSystem.ZoneVegetation> entries)
   {
-    Dictionary<string, List<ZoneSystem.ZoneVegetation>> perFile = [];
     var missingKeys = DefaultKeys.ToHashSet();
     // Some mods override prefabs so the m_prefab.name is not reliable.
     foreach (var entry in entries)
@@ -104,36 +116,36 @@ public class VegetationLoading
     }
     if (missingKeys.Count == 0) return false;
     // But don't use m_name because it can be anything for original items.
-    var missing = DefaultEntries.Where(veg => missingKeys.Contains(veg.m_prefab.name)).ToList();
+    var missing = DefaultEntries.Where(veg => missingKeys.Contains(veg.m_prefab.name)).Select(ToData).ToList();
     Log.Warning($"Adding {missing.Count} missing vegetation to the expand_vegetation.yaml file.");
     Save(missing, true);
     return true;
   }
-  private static void Save(List<ZoneSystem.ZoneVegetation> data, bool log)
+  private static void Save(List<VegetationYaml> data, bool log)
   {
-    Dictionary<string, List<ZoneSystem.ZoneVegetation>> perFile = [];
+    Dictionary<string, List<VegetationYaml>> perFile = [];
     foreach (var item in data)
     {
-      var mod = AssetTracker.GetModFromPrefab(item.m_prefab.name);
+      var mod = AssetTracker.GetModFromPrefab(item.prefab);
       var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
       if (!perFile.ContainsKey(file))
         perFile[file] = [];
       perFile[file].Add(item);
 
       if (log)
-        Log.Warning($"{mod}: {item.m_prefab.name}");
+        Log.Warning($"{mod}: {item.prefab}");
     }
     foreach (var kvp in perFile)
     {
       var file = Path.Combine(Yaml.BaseDirectory, $"expand_vegetation{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));
+      yaml += Yaml.Serializer().Serialize(kvp.Value);
       File.WriteAllText(file, yaml);
     }
   }
 
-  public static ZoneSystem.ZoneVegetation FromData(VegetationData data, string fileName)
+  public static ZoneSystem.ZoneVegetation FromData(VegetationYaml data, string fileName)
   {
     if (data.minDistance > 0f)
       data.minDistance = WorldEntry.ConvertDist(data.minDistance);
@@ -228,9 +240,9 @@ public class VegetationLoading
       VegetationSpawning.Extra.Add(veg, extra);
     return veg;
   }
-  public static VegetationData ToData(ZoneSystem.ZoneVegetation veg)
+  public static VegetationYaml ToData(ZoneSystem.ZoneVegetation veg)
   {
-    VegetationData data = new()
+    VegetationYaml data = new()
     {
       enabled = veg.m_enable,
       prefab = veg.m_prefab.name,

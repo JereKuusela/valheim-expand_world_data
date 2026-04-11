@@ -13,8 +13,20 @@ public class ClutterManager
   public static string FileName = "expand_clutter.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_clutter*.yaml";
+  private static readonly List<ClutterYaml> ExtraClutterYamls = [];
   private static List<ClutterSystem.Clutter> DefaultEntries = [];
   private static Dictionary<string, GameObject> Prefabs = [];
+  public static void AddClutter(ClutterYaml yaml)
+  {
+    ExtraClutterYamls.Add(yaml);
+  }
+  private static void ToFile()
+  {
+    var data = DefaultEntries.Select(ToData).ToList();
+    if (ExtraClutterYamls.Count > 0)
+      data.AddRange(ExtraClutterYamls);
+    Save(data, false);
+  }
   public static void Initialize()
   {
     Prefabs = Helper.ToDict(ClutterSystem.instance.m_clutter, item => item.m_prefab.name, item => item.m_prefab);
@@ -22,7 +34,7 @@ public class ClutterManager
     if (Helper.IsServer())
     {
       if (!File.Exists(FilePath))
-        Save(ClutterSystem.instance.m_clutter, false);
+        ToFile();
       FromFile();
     }
   }
@@ -147,36 +159,35 @@ public class ClutterManager
   }
   private static bool AddMissingEntries(List<ClutterSystem.Clutter> entries)
   {
-    Dictionary<string, List<ClutterSystem.Clutter>> perFile = [];
     var missingKeys = DefaultEntries.Select(s => s.m_prefab.name).Distinct().ToHashSet();
     foreach (var entry in entries)
       missingKeys.Remove(entry.m_prefab.name);
     if (missingKeys.Count == 0) return false;
-    var missing = DefaultEntries.Where(clutter => missingKeys.Contains(clutter.m_prefab.name)).ToList();
+    var missing = DefaultEntries.Where(clutter => missingKeys.Contains(clutter.m_prefab.name)).Select(ToData).ToList();
     Log.Warning($"Adding {missing.Count} missing clutters to the expand_clutter.yaml file.");
     Save(missing, true);
     return true;
   }
-  private static void Save(List<ClutterSystem.Clutter> data, bool log)
+  private static void Save(List<ClutterYaml> data, bool log)
   {
-    Dictionary<string, List<ClutterSystem.Clutter>> perFile = [];
+    Dictionary<string, List<ClutterYaml>> perFile = [];
     foreach (var item in data)
     {
-      var mod = AssetTracker.GetModFromPrefab(item.m_prefab.name);
+      var mod = AssetTracker.GetModFromPrefab(item.prefab);
       var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
       if (!perFile.ContainsKey(file))
         perFile[file] = [];
       perFile[file].Add(item);
 
       if (log)
-        Log.Warning($"{mod}: {item.m_prefab.name}");
+        Log.Warning($"{mod}: {item.prefab}");
     }
     foreach (var kvp in perFile)
     {
       var file = Path.Combine(Yaml.BaseDirectory, $"expand_clutter{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));
+      yaml += Yaml.Serializer().Serialize(kvp.Value);
       File.WriteAllText(file, yaml);
     }
   }

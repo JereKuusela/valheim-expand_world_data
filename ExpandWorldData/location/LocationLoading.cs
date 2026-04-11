@@ -14,6 +14,7 @@ public class LocationLoading
   public static string FileName = "expand_locations.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_locations*.yaml";
+  private static readonly List<LocationYaml> ExtraLocationYamls = [];
   public static Dictionary<string, string> ZDOData = [];
   public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> LocationObjectSwaps = [];
   public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> DungeonObjectSwaps = [];
@@ -24,6 +25,10 @@ public class LocationLoading
   public static Dictionary<string, string[]> Commands = [];
   public static Dictionary<string, LocationYaml> LocationData = [];
   public static Dictionary<string, string> Dungeons = [];
+  public static void AddLocation(LocationYaml yaml)
+  {
+    ExtraLocationYamls.Add(yaml);
+  }
   public static ZoneSystem.ZoneLocation FromData(LocationYaml data, string fileName)
   {
     var loc = new ZoneSystem.ZoneLocation();
@@ -237,7 +242,10 @@ public class LocationLoading
   private static void ToFile()
   {
     if (File.Exists(FilePath)) return;
-    Save(ZoneSystem.instance.m_locations.Where(IsValid).ToList(), false);
+    var data = ZoneSystem.instance.m_locations.Where(IsValid).Select(ToData).ToList();
+    if (ExtraLocationYamls.Count > 0)
+      data.AddRange(ExtraLocationYamls);
+    Save(data, false);
   }
   public static void Initialize()
   {
@@ -326,36 +334,35 @@ public class LocationLoading
   private static Dictionary<string, ZoneSystem.ZoneLocation> Locations = [];
   private static bool AddMissingEntries(List<ZoneSystem.ZoneLocation> items)
   {
-    Dictionary<string, List<ZoneSystem.ZoneLocation>> perFile = [];
     var missingKeys = Locations.Keys.ToHashSet();
     foreach (var item in items)
       missingKeys.Remove(item.m_prefab.Name);
     if (missingKeys.Count == 0) return false;
-    var missing = DefaultEntries.Where(loc => missingKeys.Contains(loc.m_prefab.Name)).ToList();
+    var missing = DefaultEntries.Where(loc => missingKeys.Contains(loc.m_prefab.Name)).Select(ToData).ToList();
     Log.Warning($"Adding {missing.Count} missing locations to the expand_locations.yaml file.");
     Save(missing, true);
     return true;
   }
-  private static void Save(List<ZoneSystem.ZoneLocation> data, bool log)
+  private static void Save(List<LocationYaml> data, bool log)
   {
-    Dictionary<string, List<ZoneSystem.ZoneLocation>> perFile = [];
+    Dictionary<string, List<LocationYaml>> perFile = [];
     foreach (var item in data)
     {
-      var mod = AssetTracker.GetModFromPrefab(item.m_prefab.Name);
+      var mod = AssetTracker.GetModFromPrefab(item.prefab);
       var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
       if (!perFile.ContainsKey(file))
         perFile[file] = [];
       perFile[file].Add(item);
 
       if (log)
-        Log.Warning($"{mod}: {item.m_prefab.Name}");
+        Log.Warning($"{mod}: {item.prefab}");
     }
     foreach (var kvp in perFile)
     {
       var file = Path.Combine(Yaml.BaseDirectory, $"expand_locations{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData));
+      yaml += Yaml.Serializer().Serialize(kvp.Value);
       File.WriteAllText(file, yaml);
     }
   }

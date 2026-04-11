@@ -13,6 +13,12 @@ public class RoomLoading
   public static string FileName = "expand_rooms.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_rooms*.yaml";
+  private static readonly List<RoomYaml> ExtraRoomYamls = [];
+
+  public static void AddRoom(RoomYaml yaml)
+  {
+    ExtraRoomYamls.Add(yaml);
+  }
 
 
   private static List<DungeonDB.RoomData> DefaultEntries = [];
@@ -32,7 +38,10 @@ public class RoomLoading
   }
   private static void ToFile()
   {
-    Save(DefaultEntries, false);
+    var data = DefaultEntries.Select(ToData).Where(d => d != null).ToList();
+    if (ExtraRoomYamls.Count > 0)
+      data.AddRange(ExtraRoomYamls);
+    Save(data, false);
   }
 
   // Hard coded to not go through the enum patch..
@@ -268,36 +277,35 @@ public class RoomLoading
   }
   private static bool AddMissingEntries(List<DungeonDB.RoomData> entries)
   {
-    Dictionary<string, List<DungeonDB.RoomData>> perFile = [];
     var missingKeys = DefaultEntries.Select(entry => entry.m_prefab.Name).Distinct().ToHashSet();
     foreach (var entry in entries)
       missingKeys.Remove(entry.m_prefab.Name);
     if (missingKeys.Count == 0) return false;
-    var missing = DefaultEntries.Where(entry => missingKeys.Contains(entry.m_prefab.Name)).ToList();
+    var missing = DefaultEntries.Where(entry => missingKeys.Contains(entry.m_prefab.Name)).Select(ToData).Where(d => d != null).ToList();
     Log.Warning($"Adding {missing.Count} missing rooms to the expand_rooms.yaml file.");
     Save(missing, true);
     return true;
   }
-  private static void Save(List<DungeonDB.RoomData> data, bool log)
+  private static void Save(List<RoomYaml> data, bool log)
   {
-    Dictionary<string, List<DungeonDB.RoomData>> perFile = [];
+    Dictionary<string, List<RoomYaml>> perFile = [];
     foreach (var item in data)
     {
-      var mod = AssetTracker.GetModFromPrefab(item.m_prefab.Name);
+      var mod = AssetTracker.GetModFromPrefab(item.name);
       var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
       if (!perFile.ContainsKey(file))
         perFile[file] = [];
       perFile[file].Add(item);
 
       if (log)
-        Log.Warning($"{mod}: {item.m_prefab.Name}");
+        Log.Warning($"{mod}: {item.name}");
     }
     foreach (var kvp in perFile)
     {
       var file = Path.Combine(Yaml.BaseDirectory, $"expand_rooms{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(ToData).Where(d => d != null));
+      yaml += Yaml.Serializer().Serialize(kvp.Value);
       File.WriteAllText(file, yaml);
     }
   }

@@ -25,10 +25,10 @@ Use the API in your mod code.
 Recommended work flow:
 
 1. Modify Expand World Data configs until you are happy with the results.
-2. Copy the relevant parts of the `expand_biomes.yaml` and `expand_world.yaml` files to your mod code.
+2. Copy the relevant parts of the `expand_*.yaml` files to your mod code.
 3. Test by removing the Expand World Data configs and restarting the game.
 
-For example:
+Basic example:
 
 ```csharp
   public void Start()
@@ -50,5 +50,49 @@ For example:
     // See the default `expand_world.yaml` to see how the biomes are ordered.
     int ordinal = 2;
     ExpandWorldData.Api.ChangeWorld(worldChange, ordinal);
+
+    ExpandWorldData.ClutterYaml myClutter = new()
+    {
+      // fields...
+    };
+    ExpandWorldData.Api.AddClutter(myClutter);
+
+    ExpandWorldData.DungeonYaml myDungeon = new()
+    {
+      id = "mydungeon",
+      // other fields...
+    };
+    ExpandWorldData.Api.AddDungeon(myDungeon);
+
+    ExpandWorldData.LocationYaml myLocation = new()
+    {
+      prefab = "MyLocationPrefab",
+      // other fields...
+    };
+    ExpandWorldData.Api.AddLocation(myLocation);
+
+    ExpandWorldData.RoomYaml myRoom = new()
+    {
+      name = "MyRoom",
+      // other fields...
+    };
+    ExpandWorldData.Api.AddRoom(myRoom);
+
+    ExpandWorldData.VegetationYaml myVegetation = new()
+    {
+      prefab = "MyPlantPrefab",
+      // other fields...
+    };
+    ExpandWorldData.Api.AddVegetation(myVegetation);
   }
 ```
+
+## API reference
+
+- `Api.AddBiome(BiomeYaml data)`: Adds new biome data.
+- `Api.AddClutter(ClutterYaml data)`: Adds new clutter data.
+- `Api.AddDungeon(DungeonYaml data)`: Adds new dungeon data.
+- `Api.AddLocation(LocationYaml data)`: Adds new location data.
+- `Api.AddRoom(RoomYaml data)`: Adds new room data.
+- `Api.AddVegetation(VegetationYaml data)`: Adds new vegetation data.
+- `Api.ChangeWorld(WorldYaml data, int index)`: Inserts world generation data at the given order index.

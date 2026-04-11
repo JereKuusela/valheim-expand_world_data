@@ -4,7 +4,7 @@ using System.ComponentModel;
 using UnityEngine;
 using Data;
 
-namespace ExpandWorldData.Dungeon;
+namespace ExpandWorldData;
 
 public class DungeonDoorYaml
 {

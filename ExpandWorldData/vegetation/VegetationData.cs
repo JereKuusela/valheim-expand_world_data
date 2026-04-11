@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace ExpandWorldData;
 
-public class VegetationData
+public class VegetationYaml
 {
   public string prefab = "";
   public bool enabled = true;

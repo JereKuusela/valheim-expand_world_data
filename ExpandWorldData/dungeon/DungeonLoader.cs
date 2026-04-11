@@ -16,8 +16,13 @@ public partial class Loader
   public static string FileName = "expand_dungeons.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_dungeons*.yaml";
+  private static readonly List<DungeonYaml> ExtraDungeonYamls = [];
 
   private static Dictionary<string, DungeonGenerator> DefaultGenerators = [];
+  public static void AddDungeon(DungeonYaml yaml)
+  {
+    ExtraDungeonYamls.Add(yaml);
+  }
 
   public static void Initialize()
   {
@@ -33,7 +38,10 @@ public partial class Loader
 
   private static void ToFile()
   {
-    Save([.. DefaultGenerators.Values], false);
+    var data = DefaultGenerators.Values.Select(To).ToList();
+    if (ExtraDungeonYamls.Count > 0)
+      data.AddRange(ExtraDungeonYamls);
+    Save(data, false);
   }
 
   private static Dictionary<string, FakeDungeonGenerator> FromFile()
@@ -85,18 +93,18 @@ public partial class Loader
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>
   private static bool AddMissingEntries(Dictionary<string, FakeDungeonGenerator> entries)
   {
-    Dictionary<string, List<DungeonGenerator>> perFile = [];
     var missingKeys = DefaultGenerators.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     foreach (var kvp in entries)
       missingKeys.Remove(kvp.Key);
     if (missingKeys.Count == 0) return false;
     Log.Warning($"Adding {missingKeys.Count} missing dungeon generators to the expand_dungeons.yaml file.");
-    Save([.. missingKeys.Values], true);
+    var missingData = missingKeys.Values.Select(To).ToList();
+    Save(missingData, true);
     return true;
   }
-  private static void Save(List<DungeonGenerator> data, bool log)
+  private static void Save(List<DungeonYaml> data, bool log)
   {
-    Dictionary<string, List<DungeonGenerator>> perFile = [];
+    Dictionary<string, List<DungeonYaml>> perFile = [];
     foreach (var item in data)
     {
       var mod = AssetTracker.GetModFromPrefab(item.name);
@@ -113,7 +121,7 @@ public partial class Loader
       var file = Path.Combine(Yaml.BaseDirectory, $"expand_dungeons{kvp.Key}.yaml");
       var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
       // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value.Select(To));
+      yaml += Yaml.Serializer().Serialize(kvp.Value);
       File.WriteAllText(file, yaml);
     }
   }
