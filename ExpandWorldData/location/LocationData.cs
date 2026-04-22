@@ -33,8 +33,12 @@ public class LocationYaml
   public bool pregenerate = false;
   [DefaultValue("")]
   public string group = "";
+  [DefaultValue(null)]
+  public string[]? groups = null;
   [DefaultValue("")]
   public string groupMax = "";
+  [DefaultValue(null)]
+  public string[]? groupsMax = null;
   [DefaultValue(0f)]
   public float minDistanceFromSimilar = 0f;
   [DefaultValue(0f)]

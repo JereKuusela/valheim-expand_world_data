@@ -15,171 +15,60 @@ public class LocationLoading
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_locations*.yaml";
   private static readonly List<LocationYaml> ExtraLocationYamls = [];
-  public static Dictionary<string, string> ZDOData = [];
-  public static Dictionary<ZoneSystem.ZoneLocation, Dictionary<string, List<Tuple<float, string>>>> LocationObjectSwaps = [];
-  public static Dictionary<ZoneSystem.ZoneLocation, Dictionary<string, List<Tuple<float, string>>>> DungeonObjectSwaps = [];
-  public static Dictionary<ZoneSystem.ZoneLocation, Dictionary<string, List<Tuple<float, DataEntry?>>>> LocationObjectData = [];
-  public static Dictionary<ZoneSystem.ZoneLocation, Dictionary<string, List<Tuple<float, DataEntry?>>>> DungeonObjectData = [];
-  public static Dictionary<string, List<BlueprintObject>> Objects = [];
-  public static Dictionary<string, Range<Vector3>> Scales = [];
-  public static Dictionary<string, string[]> Commands = [];
-  public static Dictionary<ZoneSystem.ZoneLocation, LocationYaml> LocationData = [];
-  public static Dictionary<string, string> Dungeons = [];
   public static void AddLocation(LocationYaml yaml)
   {
     ExtraLocationYamls.Add(yaml);
   }
   public static ZoneSystem.ZoneLocation FromData(LocationYaml data, string fileName)
   {
-    var loc = new ZoneSystem.ZoneLocation();
-    LocationData[loc] = data;
-    loc.m_prefabName = data.prefab;
-    if (data.data != "")
-      ZDOData[data.prefab] = data.data;
-    if (data.dungeon != "")
-      Dungeons[data.prefab] = data.dungeon;
-    LoadObjectData(loc, data, fileName);
-    LoadObjectSwaps(loc, data);
-    if (data.objects != null)
-      Objects[data.prefab] = Helper.ParseObjects(data.objects, fileName);
-    if (data.commands != null)
+    var loc = new ZoneSystem.ZoneLocation
     {
-      Commands[data.prefab] = data.commands;
-    }
+      m_prefabName = data.prefab,
 
-
-    Range<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
-    {
-      Uniform = data.scaleUniform
+      m_enable = data.enabled,
+      m_biome = DataManager.ToBiomes(data.biome, fileName),
+      m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName),
+      m_quantity = data.quantity,
+      m_prioritized = data.prioritized,
+      m_centerFirst = data.centerFirst,
+      m_unique = data.unique,
+      m_group = data.group,
+      m_minDistanceFromSimilar = data.minDistanceFromSimilar,
+      m_iconAlways = data.iconAlways != "" && data.iconAlways != "false",
+      m_iconPlaced = data.iconPlaced != "" && data.iconPlaced != "false",
+      m_randomRotation = data.randomRotation,
+      m_slopeRotation = data.slopeRotation,
+      m_snapToWater = data.snapToWater,
+      m_minTerrainDelta = data.minTerrainDelta,
+      m_maxTerrainDelta = data.maxTerrainDelta,
+      m_inForest = data.inForest,
+      m_forestTresholdMin = data.forestTresholdMin,
+      m_forestTresholdMax = data.forestTresholdMax,
+      m_minDistance = WorldEntry.ConvertDist(data.minDistance),
+      m_maxDistance = WorldEntry.ConvertDist(data.maxDistance),
+      m_minAltitude = data.minAltitude,
+      m_maxAltitude = data.maxAltitude,
+      m_groupMax = data.groupMax,
+      m_maxDistanceFromSimilar = data.maxDistanceFromSimilar,
+      m_minimumVegetation = data.minVegetation,
+      m_maximumVegetation = data.maxVegetation,
+      m_surroundCheckVegetation = data.surroundCheckVegetation,
+      m_surroundCheckDistance = data.surroundCheckDistance,
+      m_surroundCheckLayers = data.surroundCheckLayers,
+      m_surroundBetterThanAverage = data.surroundBetterThanAverage
     };
-    if (scale.Min != scale.Max)
-      Scales[data.prefab] = scale;
-
-    loc.m_enable = data.enabled;
-    loc.m_biome = DataManager.ToBiomes(data.biome, fileName);
-    loc.m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName);
-    loc.m_quantity = data.quantity;
-    loc.m_prioritized = data.prioritized;
-    loc.m_centerFirst = data.centerFirst;
-    loc.m_unique = data.unique;
-    loc.m_group = data.group;
-    loc.m_minDistanceFromSimilar = data.minDistanceFromSimilar;
-    loc.m_iconAlways = data.iconAlways != "" && data.iconAlways != "false";
-    loc.m_iconPlaced = data.iconPlaced != "" && data.iconPlaced != "false";
-    loc.m_randomRotation = data.randomRotation;
-    loc.m_slopeRotation = data.slopeRotation;
-    loc.m_snapToWater = data.snapToWater;
-    loc.m_minTerrainDelta = data.minTerrainDelta;
-    loc.m_maxTerrainDelta = data.maxTerrainDelta;
-    loc.m_inForest = data.inForest;
-    loc.m_forestTresholdMin = data.forestTresholdMin;
-    loc.m_forestTresholdMax = data.forestTresholdMax;
-    loc.m_minDistance = WorldEntry.ConvertDist(data.minDistance);
-    loc.m_maxDistance = WorldEntry.ConvertDist(data.maxDistance);
-    loc.m_minAltitude = data.minAltitude;
-    loc.m_maxAltitude = data.maxAltitude;
-    loc.m_groupMax = data.groupMax;
-    loc.m_maxDistanceFromSimilar = data.maxDistanceFromSimilar;
-    loc.m_minimumVegetation = data.minVegetation;
-    loc.m_maximumVegetation = data.maxVegetation;
-    loc.m_surroundCheckVegetation = data.surroundCheckVegetation;
-    loc.m_surroundCheckDistance = data.surroundCheckDistance;
-    loc.m_surroundCheckLayers = data.surroundCheckLayers;
-    loc.m_surroundBetterThanAverage = data.surroundBetterThanAverage;
+    LocationExtra.AddInfo(loc, data, fileName);
 
     Setup(data.prefab, loc, fileName);
     return loc;
-  }
-
-  private static void LoadObjectData(ZoneSystem.ZoneLocation loc, LocationYaml data, string fileName)
-  {
-    Dictionary<string, List<Tuple<float, DataEntry?>>>? locationobjectData = null;
-    Dictionary<string, List<Tuple<float, DataEntry?>>>? dungeonobjectData = null;
-
-    if (data.objectData != null)
-    {
-      locationobjectData = Spawn.LoadData(data.objectData, fileName);
-      dungeonobjectData = Spawn.LoadData(data.objectData, fileName);
-    }
-    if (data.locationObjectData != null)
-    {
-      var objectData = Spawn.LoadData(data.locationObjectData, fileName);
-      if (locationobjectData == null)
-      {
-        locationobjectData = objectData;
-      }
-      else
-      {
-        foreach (var kvp in objectData)
-          locationobjectData[kvp.Key] = kvp.Value;
-      }
-    }
-    if (data.dungeonObjectData != null)
-    {
-      var objectData = Spawn.LoadData(data.dungeonObjectData, fileName);
-      if (dungeonobjectData == null)
-      {
-        dungeonobjectData = objectData;
-      }
-      else
-      {
-        foreach (var kvp in objectData)
-          dungeonobjectData[kvp.Key] = kvp.Value;
-      }
-    }
-    if (dungeonobjectData != null)
-      DungeonObjectData[loc] = dungeonobjectData;
-    if (locationobjectData != null)
-      LocationObjectData[loc] = locationobjectData;
-  }
-  private static void LoadObjectSwaps(ZoneSystem.ZoneLocation loc, LocationYaml data)
-  {
-    Dictionary<string, List<Tuple<float, string>>>? locationobjectSwaps = null;
-    Dictionary<string, List<Tuple<float, string>>>? dungeonobjectSwaps = null;
-
-    if (data.objectSwap != null)
-    {
-      locationobjectSwaps = Spawn.LoadSwaps(data.objectSwap);
-      dungeonobjectSwaps = Spawn.LoadSwaps(data.objectSwap);
-    }
-    if (data.locationObjectSwap != null)
-    {
-      var objectSwap = Spawn.LoadSwaps(data.locationObjectSwap);
-      if (locationobjectSwaps == null)
-      {
-        locationobjectSwaps = objectSwap;
-      }
-      else
-      {
-        foreach (var kvp in objectSwap)
-          locationobjectSwaps[kvp.Key] = kvp.Value;
-      }
-    }
-    if (data.dungeonObjectSwap != null)
-    {
-      var objectSwap = Spawn.LoadSwaps(data.dungeonObjectSwap);
-      if (dungeonobjectSwaps == null)
-      {
-        dungeonobjectSwaps = objectSwap;
-      }
-      else
-      {
-        foreach (var kvp in objectSwap)
-          dungeonobjectSwaps[kvp.Key] = kvp.Value;
-      }
-    }
-    if (dungeonobjectSwaps != null)
-      DungeonObjectSwaps[loc] = dungeonobjectSwaps;
-    if (locationobjectSwaps != null)
-      LocationObjectSwaps[loc] = locationobjectSwaps;
   }
 
   public static LocationYaml ToData(ZoneSystem.ZoneLocation loc)
   {
     LocationYaml data = new();
     // For migrations, ensures that old data is preserved.
-    if (LocationData.TryGetValue(loc, out var existing))
-      data = existing;
+    if (LocationExtra.TryGetData(loc, out var extra))
+      data = extra;
     // Original game has two fields for min/max distance from center. This merges the implementations.
     if (loc.m_minDistanceFromCenter != 0f && (loc.m_minDistance == 0f || loc.m_minDistanceFromCenter > loc.m_minDistance))
       loc.m_minDistance = loc.m_minDistanceFromCenter;
@@ -260,16 +149,7 @@ public class LocationLoading
   }
   public static void Load()
   {
-    ZDOData.Clear();
-    LocationObjectSwaps.Clear();
-    DungeonObjectSwaps.Clear();
-    LocationObjectData.Clear();
-    DungeonObjectData.Clear();
-    Dungeons.Clear();
-    Objects.Clear();
-    Scales.Clear();
-    Commands.Clear();
-    LocationData.Clear();
+    LocationExtra.ClearInfo();
     if (Helper.IsClient()) return;
     ZoneSystem.instance.m_locations = DefaultEntries;
     if (Configuration.DataLocation)
@@ -383,7 +263,7 @@ public class LocationLoading
   }
   private static void ApplyLocationData(ZoneSystem.ZoneLocation item, float? radius = null)
   {
-    if (!LocationData.TryGetValue(item, out var data)) return;
+    if (!LocationExtra.TryGetData(item, out var data)) return;
     // Old config won't have exterior radius so don't set anything.
     if (data.exteriorRadius == 0f && radius == null) return;
     item.m_exteriorRadius = data.exteriorRadius;
@@ -460,7 +340,7 @@ public static class ZoneSystemPatches
       var loc = kvp.Value.m_location;
       var pos = kvp.Value.m_position;
       if (loc == null) continue;
-      if (LocationLoading.LocationData.TryGetValue(loc, out var data))
+      if (LocationExtra.TryGetData(loc, out var data))
       {
         var placed = data.iconPlaced == "true" ? loc.m_prefab.Name : data.iconPlaced == "false" ? "" : data.iconPlaced;
         if (kvp.Value.m_placed && placed != "")

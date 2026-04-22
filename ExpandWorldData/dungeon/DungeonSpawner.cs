@@ -62,10 +62,8 @@ public class Spawner
   [HarmonyPatch(nameof(DungeonGenerator.Generate), typeof(ZoneSystem.SpawnMode)), HarmonyPrefix]
   static void Generate(DungeonGenerator __instance, ZoneSystem.SpawnMode mode)
   {
-    if (LocationSpawning.CurrentLocation == null || mode == ZoneSystem.SpawnMode.Client || Helper.IsClient()) return;
-    var dungeonName = Utils.GetPrefabName(__instance.gameObject);
-    if (LocationLoading.LocationData.TryGetValue(LocationSpawning.CurrentLocation, out var data) && data.dungeon != "")
-      dungeonName = data.dungeon;
+    if (mode == ZoneSystem.SpawnMode.Client || Helper.IsClient()) return;
+    var dungeonName = LocationExtra.GetDungeonName(LocationSpawning.CurrentLocation, __instance);
     Override(__instance, dungeonName);
     DungeonObjects.CurrentDungeon = dungeonName;
   }
@@ -137,7 +135,7 @@ public class Spawner
   {
     if (Configuration.RandomLocations)
       DungeonGenerator.m_forceSeed = System.DateTime.Now.Ticks.GetHashCode();
-    else if (Configuration.DataLocation && LocationSpawning.CurrentLocation != null && LocationLoading.LocationData.TryGetValue(LocationSpawning.CurrentLocation, out var locData) && locData.randomSeed)
+    else if (Configuration.DataLocation && LocationSpawning.CurrentLocation != null && LocationExtra.TryGetData(LocationSpawning.CurrentLocation, out var locData) && locData.randomSeed)
       DungeonGenerator.m_forceSeed = System.DateTime.Now.Ticks.GetHashCode();
     else if (Configuration.DataDungeons && DungeonObjects.Generators.TryGetValue(DungeonObjects.CurrentDungeon, out var genData) && genData.m_randomSeed)
       DungeonGenerator.m_forceSeed = System.DateTime.Now.Ticks.GetHashCode();

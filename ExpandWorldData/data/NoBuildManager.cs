@@ -21,13 +21,13 @@ public class NoBuildManager
   public static void UpdateData()
   {
     if (ZoneSystem.instance.m_locationInstances.Count == 0) return;
-    var noBuilds = LocationLoading.LocationData.Where(kvp => !string.IsNullOrEmpty(kvp.Value.noBuild) || !string.IsNullOrEmpty(kvp.Value.noBuildDungeon)).Select(kvp => kvp.Key).ToHashSet();
+    var noBuilds = LocationExtra.GetNoBuilds();
     var locations = ZoneSystem.instance.m_locationInstances.Values.Where(loc => noBuilds.Contains(loc.m_location));
     var data = locations.Select(loc =>
     {
       var noBuild = "false";
       var noBuildDungeon = "false";
-      if (LocationLoading.LocationData.TryGetValue(loc.m_location, out var locationData))
+      if (LocationExtra.TryGetData(loc.m_location, out var locationData))
       {
         noBuild = locationData.noBuild;
         noBuildDungeon = locationData.noBuildDungeon;
