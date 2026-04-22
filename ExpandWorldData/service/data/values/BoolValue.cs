@@ -6,13 +6,13 @@ public class BoolValue(string[] values) : AnyValue(values), IBoolValue
   {
     var value = GetValue(pars);
     if (value == null) return null;
-    return value == "true" ? 1 : 0;
+    return value == "true" || value == "1" ? 1 : 0;
   }
   public bool? GetBool(Parameters pars)
   {
     var value = GetValue(pars);
     if (value == null) return null;
-    return value == "true";
+    return value == "true" || value == "1";
   }
   public bool? Match(Parameters pars, bool value)
   {
@@ -24,7 +24,7 @@ public class BoolValue(string[] values) : AnyValue(values), IBoolValue
       var v = pars.Replace(rawValue);
       if (v == null) continue;
       allNull = false;
-      var truthy = v == "true";
+      var truthy = v == "true" || v == "1";
       if (truthy == value)
         return true;
     }

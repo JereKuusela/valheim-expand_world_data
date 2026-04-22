@@ -37,6 +37,8 @@ public class LocationYaml
   public string groupMax = "";
   [DefaultValue(0f)]
   public float minDistanceFromSimilar = 0f;
+  [DefaultValue(0f)]
+  public float maxDistanceFromSimilar = 0f;
   [DefaultValue("")]
   public string discoverLabel = "";
   [DefaultValue("")]
@@ -109,8 +111,6 @@ public class LocationYaml
   public string scaleMax = "1";
   [DefaultValue(true)]
   public bool scaleUniform = true;
-  [DefaultValue(0f)]
-  public float maxDistanceFromSimilar = 0f;
   [DefaultValue(0f)]
   public float minVegetation = 0f;
   [DefaultValue(1f)]

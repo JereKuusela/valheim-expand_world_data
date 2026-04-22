@@ -320,6 +320,9 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - unique (default: `false`): When placed, all other unplaced locations are removed. Guaranteed maximum of one instance.
 - group: Group name for `minDistanceFromSimilar`.
 - minDistanceFromSimilar (default: `0` meters): Minimum distance between the same location, or locations in the `group` if given.
+- groupMax: Group name for `maxDistanceFromSimilar`.
+- maxDistanceFromSimilar (default: `0` meters): Maximum distance between the same location, or locations in the `groupMax` if given.
+  - Note: This fails if the location or group doesn't exist. So you need an entry without this check to get started.
 - discoverLabel: Shown text when the location is discovered.
 - iconAlways: Location icon that is always shown. Use `ew_icons` to see what is available.
   - Format is `icon,size,pulse`.

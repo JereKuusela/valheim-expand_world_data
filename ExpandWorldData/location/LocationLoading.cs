@@ -16,14 +16,14 @@ public class LocationLoading
   public static string Pattern = "expand_locations*.yaml";
   private static readonly List<LocationYaml> ExtraLocationYamls = [];
   public static Dictionary<string, string> ZDOData = [];
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> LocationObjectSwaps = [];
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, string>>>> DungeonObjectSwaps = [];
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, DataEntry?>>>> LocationObjectData = [];
-  public static Dictionary<string, Dictionary<string, List<Tuple<float, DataEntry?>>>> DungeonObjectData = [];
+  public static Dictionary<ZoneSystem.ZoneLocation, Dictionary<string, List<Tuple<float, string>>>> LocationObjectSwaps = [];
+  public static Dictionary<ZoneSystem.ZoneLocation, Dictionary<string, List<Tuple<float, string>>>> DungeonObjectSwaps = [];
+  public static Dictionary<ZoneSystem.ZoneLocation, Dictionary<string, List<Tuple<float, DataEntry?>>>> LocationObjectData = [];
+  public static Dictionary<ZoneSystem.ZoneLocation, Dictionary<string, List<Tuple<float, DataEntry?>>>> DungeonObjectData = [];
   public static Dictionary<string, List<BlueprintObject>> Objects = [];
   public static Dictionary<string, Range<Vector3>> Scales = [];
   public static Dictionary<string, string[]> Commands = [];
-  public static Dictionary<string, LocationYaml> LocationData = [];
+  public static Dictionary<ZoneSystem.ZoneLocation, LocationYaml> LocationData = [];
   public static Dictionary<string, string> Dungeons = [];
   public static void AddLocation(LocationYaml yaml)
   {
@@ -32,14 +32,14 @@ public class LocationLoading
   public static ZoneSystem.ZoneLocation FromData(LocationYaml data, string fileName)
   {
     var loc = new ZoneSystem.ZoneLocation();
-    LocationData[data.prefab] = data;
+    LocationData[loc] = data;
     loc.m_prefabName = data.prefab;
     if (data.data != "")
       ZDOData[data.prefab] = data.data;
     if (data.dungeon != "")
       Dungeons[data.prefab] = data.dungeon;
-    LoadObjectData(data, fileName);
-    LoadObjectSwaps(data);
+    LoadObjectData(loc, data, fileName);
+    LoadObjectSwaps(loc, data);
     if (data.objects != null)
       Objects[data.prefab] = Helper.ParseObjects(data.objects, fileName);
     if (data.commands != null)
@@ -91,7 +91,7 @@ public class LocationLoading
     return loc;
   }
 
-  private static void LoadObjectData(LocationYaml data, string fileName)
+  private static void LoadObjectData(ZoneSystem.ZoneLocation loc, LocationYaml data, string fileName)
   {
     Dictionary<string, List<Tuple<float, DataEntry?>>>? locationobjectData = null;
     Dictionary<string, List<Tuple<float, DataEntry?>>>? dungeonobjectData = null;
@@ -128,11 +128,11 @@ public class LocationLoading
       }
     }
     if (dungeonobjectData != null)
-      DungeonObjectData[data.prefab] = dungeonobjectData;
+      DungeonObjectData[loc] = dungeonobjectData;
     if (locationobjectData != null)
-      LocationObjectData[data.prefab] = locationobjectData;
+      LocationObjectData[loc] = locationobjectData;
   }
-  private static void LoadObjectSwaps(LocationYaml data)
+  private static void LoadObjectSwaps(ZoneSystem.ZoneLocation loc, LocationYaml data)
   {
     Dictionary<string, List<Tuple<float, string>>>? locationobjectSwaps = null;
     Dictionary<string, List<Tuple<float, string>>>? dungeonobjectSwaps = null;
@@ -169,16 +169,16 @@ public class LocationLoading
       }
     }
     if (dungeonobjectSwaps != null)
-      DungeonObjectSwaps[data.prefab] = dungeonobjectSwaps;
+      DungeonObjectSwaps[loc] = dungeonobjectSwaps;
     if (locationobjectSwaps != null)
-      LocationObjectSwaps[data.prefab] = locationobjectSwaps;
+      LocationObjectSwaps[loc] = locationobjectSwaps;
   }
 
   public static LocationYaml ToData(ZoneSystem.ZoneLocation loc)
   {
     LocationYaml data = new();
     // For migrations, ensures that old data is preserved.
-    if (LocationData.TryGetValue(loc.m_prefab.Name, out var existing))
+    if (LocationData.TryGetValue(loc, out var existing))
       data = existing;
     // Original game has two fields for min/max distance from center. This merges the implementations.
     if (loc.m_minDistanceFromCenter != 0f && (loc.m_minDistance == 0f || loc.m_minDistanceFromCenter > loc.m_minDistance))
@@ -383,7 +383,7 @@ public class LocationLoading
   }
   private static void ApplyLocationData(ZoneSystem.ZoneLocation item, float? radius = null)
   {
-    if (!LocationData.TryGetValue(item.m_prefab.Name, out var data)) return;
+    if (!LocationData.TryGetValue(item, out var data)) return;
     // Old config won't have exterior radius so don't set anything.
     if (data.exteriorRadius == 0f && radius == null) return;
     item.m_exteriorRadius = data.exteriorRadius;
@@ -460,7 +460,7 @@ public static class ZoneSystemPatches
       var loc = kvp.Value.m_location;
       var pos = kvp.Value.m_position;
       if (loc == null) continue;
-      if (LocationLoading.LocationData.TryGetValue(loc.m_prefab.Name, out var data))
+      if (LocationLoading.LocationData.TryGetValue(loc, out var data))
       {
         var placed = data.iconPlaced == "true" ? loc.m_prefab.Name : data.iconPlaced == "false" ? "" : data.iconPlaced;
         if (kvp.Value.m_placed && placed != "")

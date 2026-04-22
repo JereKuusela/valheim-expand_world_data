@@ -11,26 +11,30 @@ namespace ExpandWorldData;
 
 public class LocationSpawning
 {
-  public static string CurrentLocation = "";
+  public static ZoneSystem.ZoneLocation? CurrentLocation = null;
   public static DataEntry? DataOverride(DataEntry? pkg, string prefab)
   {
+    if (CurrentLocation == null) return pkg;
     if (!LocationLoading.LocationObjectData.TryGetValue(CurrentLocation, out var objectData)) return pkg;
     var data = Spawn.GetData(objectData, prefab);
     return DataHelper.Merge(data, pkg);
   }
   public static DataEntry? DungeonDataOverride(string prefab)
   {
+    if (CurrentLocation == null) return null;
     if (!LocationLoading.DungeonObjectData.TryGetValue(CurrentLocation, out var objectData)) return null;
     return Spawn.GetData(objectData, prefab);
   }
   public static string PrefabOverride(string prefab)
   {
+    if (CurrentLocation == null) return prefab;
     if (!LocationLoading.LocationObjectSwaps.TryGetValue(CurrentLocation, out var objectSwaps)) return prefab;
     if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
     return Spawn.RandomizeSwap(swaps);
   }
   public static string DungeonPrefabOverride(string prefab)
   {
+    if (CurrentLocation == null) return prefab;
     if (!LocationLoading.DungeonObjectSwaps.TryGetValue(CurrentLocation, out var objectSwaps)) return prefab;
     if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
     return Spawn.RandomizeSwap(swaps);
@@ -90,8 +94,8 @@ public class LocationObjectDataAndSwap
   {
     if (mode != ZoneSystem.SpawnMode.Client)
     {
-      LocationSpawning.CurrentLocation = location.m_prefab.Name;
-      if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
+      LocationSpawning.CurrentLocation = location;
+      if (LocationLoading.LocationData.TryGetValue(location, out var data))
       {
         Spawn.IgnoreHealth = data.randomDamage == "all";
         pos.y += data.offset ?? data.groundOffset;
@@ -103,7 +107,7 @@ public class LocationObjectDataAndSwap
   }
   static void Customize(ZoneSystem.ZoneLocation location)
   {
-    if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
+    if (LocationLoading.LocationData.TryGetValue(location, out var data))
       WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
   }
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -132,7 +136,7 @@ public class LocationObjectDataAndSwap
     if (mode == ZoneSystem.SpawnMode.Client) return;
 
     var isBluePrint = BlueprintManager.Has(location.m_prefab.Name);
-    if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
+    if (LocationLoading.LocationData.TryGetValue(location, out var data))
     {
       WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
       // Remove the applied offset.
@@ -157,7 +161,7 @@ public class LocationObjectDataAndSwap
     Spawn.IgnoreHealth = false;
     if (LocationLoading.Commands.TryGetValue(location.m_prefab.Name, out var commands))
       CommandManager.Run(commands, pos, rot.eulerAngles);
-    LocationSpawning.CurrentLocation = "";
+    LocationSpawning.CurrentLocation = null;
   }
 
   static void HandleTerrain(Vector3 pos, float radius, bool isBlueprint, LocationYaml data)
@@ -251,7 +255,7 @@ public class CreateLocalZones
     {
       var loc = kvp.Value.m_location;
       if (loc == null) continue;
-      if (!LocationLoading.LocationData.TryGetValue(loc.m_prefab.Name, out var data)) continue;
+      if (!LocationLoading.LocationData.TryGetValue(loc, out var data)) continue;
       if (!data.pregenerate) continue;
       // Vanilla returns true if poke is successful (doesn't fully make sense but it is what it is).
       if (__instance.PokeLocalZone(kvp.Key))
@@ -262,6 +266,19 @@ public class CreateLocalZones
     }
 
     LocationsPregenerated = true;
+    return result;
+  }
+}
+
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange))]
+public class HaveLocationInRange
+{
+  static bool Postfix(bool result, ZoneSystem __instance, string prefabName, string group, Vector3 p, float radius, bool maxGroup = false)
+  {
+    if (result) return result;
+    if (LocationSpawning.CurrentLocation == null) return result;
+    if (!LocationLoading.LocationData.TryGetValue(LocationSpawning.CurrentLocation, out var data)) return result;
     return result;
   }
 }
