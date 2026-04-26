@@ -67,6 +67,21 @@ public class WaterColor
       if (data.colorWaterSurface.HasValue)
         TargetSurfaceColor = data.colorWaterSurface.Value;
     }
+    if (Player.m_localPlayer)
+    {
+      var territory = BiomeCalculator.GetTerritory(Player.m_localPlayer.transform.position.x, Player.m_localPlayer.transform.position.z);
+      if (territory != null)
+      {
+        if (territory.colorWaterTop.HasValue)
+          TargetTopColor = territory.colorWaterTop.Value;
+        if (territory.colorWaterBottom.HasValue)
+          TargetBottomColor = territory.colorWaterBottom.Value;
+        if (territory.colorWaterShallow.HasValue)
+          TargetShallowColor = territory.colorWaterShallow.Value;
+        if (territory.colorWaterSurface.HasValue)
+          TargetSurfaceColor = territory.colorWaterSurface.Value;
+      }
+    }
     // Minor optimization to keep the current transition if the target doesn't change.
     if (prevBottomColor == TargetBottomColor &&
         prevTopColor == TargetTopColor &&

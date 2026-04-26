@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 namespace ExpandWorldData;
@@ -14,25 +15,23 @@ public class WorldAngle
   }
 }
 
-[HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetBiomeColor), new[] { typeof(Heightmap.Biome) })]
-public class GetBiomeColor
-{
-  static bool Prefix(Heightmap.Biome biome, ref Color32 __result)
-  {
-    if (!BiomeManager.TryGetData(biome, out var data)) return true;
-    __result = data.colorTerrain;
-    return false;
-  }
-}
-
 [HarmonyPatch(typeof(Minimap), nameof(Minimap.GetPixelColor))]
 public class GetMapColor
 {
   static bool Prefix(Heightmap.Biome biome, ref Color __result)
   {
-    if (!BiomeManager.TryGetData(biome, out var data)) return true;
-    __result = data.colorMap;
-    return false;
+    var territory = BiomeCalculator.GetTerritory(BiomeHeight.LastX, BiomeHeight.LastY);
+    if (territory != null && territory.colorMap.HasValue)
+    {
+      __result = territory.colorMap.Value;
+      return false;
+    }
+    if (BiomeManager.TryGetData(biome, out var data))
+    {
+      __result = data.colorMap;
+      return false;
+    }
+    return true;
   }
 }
 
@@ -131,10 +130,17 @@ public class GetAshlandsOceanGradient
 
 public class BiomeCalculator
 {
-  public static List<WorldEntry> GetData() => Data ?? WorldManager.DefaultEntries;
-  public static List<WorldEntry>? Data = null;
+  public static List<WorldEntry> GetBiomeData() => BiomeData ?? WorldManager.DefaultEntries;
+  public static List<WorldEntry>? BiomeData = null;
+  public static List<WorldEntry>? TerritoryData = null;
   public static bool CheckAngles = false;
   public static Dictionary<Heightmap.Biome, float> Offsets = [];
+
+  public static void SetData(List<WorldEntry> data)
+  {
+    BiomeData = [.. data.Where(item => item.biome != Heightmap.Biome.None)];
+    TerritoryData = [.. data.Where(item => item.territory != "")];
+  }
 
   private static float GetOffset(WorldGenerator obj, Heightmap.Biome biome)
   {
@@ -146,14 +152,34 @@ public class BiomeCalculator
   public static Heightmap.Biome Get(WorldGenerator obj, float wx, float wy)
   {
     var angle = Mathf.Atan2(wx, wy);
-    return GetEntry(obj, wx, wy, angle)?.biome ?? Heightmap.Biome.Ocean;
+    return GetEntry(obj, GetBiomeData(), wx, wy, angle)?.biome ?? Heightmap.Biome.Ocean;
+  }
+  public static WorldEntry? GetBiomeEntry(WorldGenerator obj, float wx, float wy)
+  {
+    var angle = Mathf.Atan2(wx, wy);
+    return GetEntry(obj, GetBiomeData(), wx, wy, angle);
+  }
+  public static WorldEntry? GetTerritoryEntry(WorldGenerator wg, float wx, float wy)
+  {
+    if (TerritoryData == null || TerritoryData.Count == 0)
+      return null;
+    var angle = Mathf.Atan2(wx, wy);
+    return GetEntry(wg, TerritoryData, wx, wy, angle);
+  }
+  public static TerritoryData? GetTerritory(float wx, float wy)
+  {
+    var wg = WorldGenerator.instance;
+    if (wg == null || wg.m_world.m_menu) return null;
+    var entry = GetTerritoryEntry(wg, wx, wy);
+    if (entry == null) return null;
+    return TerritoryManager.TryGetData(entry.territory, out var territory) ? territory : null;
   }
   // Bit annoying to maintain two versions of the same code.
   // But biome generation is performance critical so trying to keep it simple.
   public static Heightmap.Biome GetLegacy(WorldGenerator obj, float wx, float wy)
   {
     var worldAngle = Mathf.Atan2(wx, wy);
-    var data = GetData();
+    var data = GetBiomeData();
     var sx = wx * WorldInfo.Stretch;
     var sy = wy * WorldInfo.Stretch;
     var magnitude = new Vector2(sx, sy).magnitude;
@@ -208,7 +234,7 @@ public class BiomeCalculator
   public static float GetBoiling(WorldGenerator obj, float wx, float wy)
   {
     var angle = Mathf.Atan2(wx, wy);
-    var item = GetEntry(obj, wx, wy, angle);
+    var item = GetEntry(obj, GetBiomeData(), wx, wy, angle);
     if (item == null || item.boiling <= 0f) return -1f;
     var sx = wx * WorldInfo.Stretch;
     var sy = wy * WorldInfo.Stretch;
@@ -221,9 +247,8 @@ public class BiomeCalculator
     return item.boiling * (dist - min) / 300f;
   }
 
-  private static WorldEntry? GetEntry(WorldGenerator obj, float wx, float wy, float worldAngle)
+  private static WorldEntry? GetEntry(WorldGenerator obj, List<WorldEntry> data, float wx, float wy, float worldAngle)
   {
-    var data = GetData();
     var sx = wx * WorldInfo.Stretch;
     var sy = wy * WorldInfo.Stretch;
     var magnitude = new Vector2(sx, sy).magnitude;

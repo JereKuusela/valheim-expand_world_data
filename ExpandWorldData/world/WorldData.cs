@@ -5,6 +5,8 @@ namespace ExpandWorldData;
 public class WorldYaml
 {
   public string biome = "";
+  [DefaultValue("")]
+  public string territory = "";
   [DefaultValue(10000f)]
   public float maxAltitude = 10000f;
   [DefaultValue(-1000f)]
@@ -50,6 +52,7 @@ public class WorldEntry
   public static float ConvertDist(float percent) => percent * WorldInfo.Radius;
   public WorldEntry(WorldYaml data, string fileName)
   {
+    territory = data.territory;
     biome = DataManager.ToBiomes(data.biome, fileName);
     biomeSeed = BiomeManager.GetTerrain(biome);
     if (Parse.TryInt(data.seed, out var s))
@@ -95,6 +98,7 @@ public class WorldEntry
     if (maxSector > 1f) maxSector -= 1f;
   }
   public Heightmap.Biome biome = Heightmap.Biome.None;
+  public string territory = "";
   public float maxAltitude = 10000f;
   public float minAltitude = -1000f;
   public float maxDistance = 1f;

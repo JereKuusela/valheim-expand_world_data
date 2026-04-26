@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
@@ -8,14 +9,46 @@ namespace ExpandWorldData;
 [HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight))]
 public class BiomeHeight
 {
+  private static float ApplyHeight(float height, BiomeData data)
+  {
+    height *= data.altitudeMultiplier;
+    height += data.altitudeDelta;
+    if (height < 0f)
+      height *= data.waterDepthMultiplier;
+    if (height > data.maximumAltitude)
+      height = data.maximumAltitude + data.excessSign * Mathf.Pow(height - data.maximumAltitude, data.excessFactor);
+    if (height < data.minimumAltitude)
+      height = data.minimumAltitude - data.excessSign * Mathf.Pow(data.minimumAltitude - height, data.excessFactor);
+    return height;
+  }
+
+  private static float ApplyHeight(float height, TerritoryData data)
+  {
+    height *= data.altitudeMultiplier;
+    height += data.altitudeDelta;
+    if (height < 0f)
+      height *= data.waterDepthMultiplier;
+    if (height > data.maximumAltitude)
+      height = data.maximumAltitude + data.excessSign * Mathf.Pow(height - data.maximumAltitude, data.excessFactor);
+    if (height < data.minimumAltitude)
+      height = data.minimumAltitude - data.excessSign * Mathf.Pow(data.minimumAltitude - height, data.excessFactor);
+    return height;
+  }
+
   static void Prefix(WorldGenerator __instance, ref Heightmap.Biome biome, ref Heightmap.Biome __state)
   {
     if (__instance.m_world.m_menu) return;
     __state = biome;
     biome = BiomeManager.GetTerrain(biome);
   }
+  [ThreadStatic]
+  public static float LastX = 0f;
+  [ThreadStatic]
+  public static float LastY = 0f;
   static void Postfix(WorldGenerator __instance, Heightmap.Biome __state, Heightmap.Biome biome, float wx, float wy, ref Color mask, ref float __result)
   {
+    LastX = wx;
+    LastY = wy;
     // TODO: Add patch for minimap generation and modify height while there.
     //if (BiomeManager.TryGetData(biome, out var data))
     //              biomeHeight = Configuration.WaterLevel + (biomeHeight - Configuration.WaterLevel) * data.mapColorMultiplier;
@@ -40,19 +73,24 @@ public class BiomeHeight
           mask.a = lava / data.lavaAmount;
         __result -= mask.a;
       }
-      __result -= WorldInfo.WaterLevel;
-      __result *= data.altitudeMultiplier;
-      __result += data.altitudeDelta;
-      if (__result < 0f)
-      {
-        __result *= data.waterDepthMultiplier;
-      }
-      if (__result > data.maximumAltitude)
-        __result = data.maximumAltitude + data.excessSign * Mathf.Pow(__result - data.maximumAltitude, data.excessFactor);
-      if (__result < data.minimumAltitude)
-        __result = data.minimumAltitude - data.excessSign * Mathf.Pow(data.minimumAltitude - __result, data.excessFactor);
-      __result += WorldInfo.WaterLevel;
     }
+
+    var biomeEntry = BiomeCalculator.GetBiomeEntry(__instance, wx, wy);
+    var territoryEntry = BiomeCalculator.GetTerritoryEntry(__instance, wx, wy);
+    if (ReferenceEquals(territoryEntry, biomeEntry))
+      territoryEntry = null;
+
+    if (territoryEntry != null && TerritoryManager.TryGetData(territoryEntry.territory, out var territoryColorData) && territoryColorData.colorTerrain.HasValue)
+      mask = territoryColorData.colorTerrain.Value;
+
+    __result -= WorldInfo.WaterLevel;
+    if (BiomeManager.TryGetData(__state, out data))
+      __result = ApplyHeight(__result, data);
+
+    if (territoryEntry != null && TerritoryManager.TryGetData(territoryEntry.territory, out var territory))
+      __result = ApplyHeight(__result, territory);
+
+    __result += WorldInfo.WaterLevel;
   }
 }
 

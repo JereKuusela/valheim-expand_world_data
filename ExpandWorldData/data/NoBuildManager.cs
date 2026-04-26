@@ -71,6 +71,11 @@ public class NoBuildManager
     var biome = WorldGenerator.instance.GetBiome(point);
     return (biome & BiomeManager.NoBuildBiomes) != 0;
   }
+  public static bool IsInsideNoBuildTerritory(Vector3 point)
+  {
+    var territory = BiomeCalculator.GetTerritory(point.x, point.z);
+    return territory != null && territory.noBuild;
+  }
   public static void Load(string yaml)
   {
     if (yaml == "") return;
@@ -94,7 +99,10 @@ public class IsInsideNoBuildLocation
 
   static bool Postfix(bool result, Vector3 point)
   {
-    return result || NoBuildManager.IsInsideNoBuildZone(point) || NoBuildManager.IsInsideNoBuildBiome(point);
+    return result ||
+           NoBuildManager.IsInsideNoBuildZone(point) ||
+           NoBuildManager.IsInsideNoBuildTerritory(point) ||
+           NoBuildManager.IsInsideNoBuildBiome(point);
   }
 }
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.Load))]

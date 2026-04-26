@@ -17,6 +17,7 @@ public class StatusManager
   private static string PreviousWeather = "";
   private static bool PreviousDay = false;
   private static Heightmap.Biome PreviousBiome = Heightmap.Biome.None;
+  private static TerritoryData? PreviousTerritory = null;
 
   static void Postfix(Player __instance, float dt)
   {
@@ -25,29 +26,30 @@ public class StatusManager
     var weather = EnvMan.instance.GetCurrentEnvironment()?.m_name ?? "";
     var day = EnvMan.IsDay();
     var biome = EnvMan.instance.GetBiome();
-
-    RemoveBiomeEffects(__instance, day, biome);
+    var territory = BiomeCalculator.GetTerritory(__instance.transform.position.x, __instance.transform.position.z);
+    RemoveBiomeEffects(__instance, day, biome, territory);
     RemoveWeatherEffects(__instance, day, weather);
-    ApplyBiomeEffects(__instance, day, biome);
+    ApplyBiomeEffects(__instance, day, biome, territory);
     ApplyWeatherEffects(__instance, day, weather);
 
     if (DamageTimer >= TickRate) DamageTimer = 0f;
     PreviousWeather = weather;
     PreviousDay = day;
     PreviousBiome = biome;
+    PreviousTerritory = territory;
   }
 
-  private static void RemoveBiomeEffects(Player player, bool day, Heightmap.Biome biome)
+  private static void RemoveBiomeEffects(Player player, bool day, Heightmap.Biome biome, TerritoryData? territory)
   {
-    if (!BiomeManager.TryGetData(PreviousBiome, out var data)) return;
-    if (biome != PreviousBiome)
+    if (!TryGetBiomeStatusEffects(PreviousBiome, PreviousTerritory, out var effects)) return;
+    if (biome != PreviousBiome || territory != PreviousTerritory)
     {
-      Remove(player, data.statusEffects);
+      Remove(player, effects);
     }
     if (day != PreviousDay)
     {
-      if (day) Remove(player, data.statusEffects.Where(s => !s.day).ToList());
-      else Remove(player, data.statusEffects.Where(s => !s.night).ToList());
+      if (day) Remove(player, effects.Where(s => !s.day).ToList());
+      else Remove(player, effects.Where(s => !s.night).ToList());
     }
   }
   private static void RemoveWeatherEffects(Player player, bool day, string weather)
@@ -63,23 +65,38 @@ public class StatusManager
       else Remove(player, data.statusEffects.Where(s => !s.night).ToList());
     }
   }
-  private static void ApplyBiomeEffects(Player player, bool day, Heightmap.Biome biome)
+  private static void ApplyBiomeEffects(Player player, bool day, Heightmap.Biome biome, TerritoryData? territory)
   {
-    if (!BiomeManager.TryGetData(biome, out var data)) return;
-    if (day) Add(player, data.statusEffects.Where(s => s.day).ToList());
-    else Add(player, data.statusEffects.Where(s => s.night).ToList());
+    if (!TryGetBiomeStatusEffects(biome, territory, out var effects)) return;
+    if (day) Add(player, [.. effects.Where(s => s.day)]);
+    else Add(player, [.. effects.Where(s => s.night)]);
   }
   private static void ApplyWeatherEffects(Player player, bool day, string weather)
   {
     if (!EnvironmentManager.Extra.TryGetValue(weather, out var data)) return;
-    if (day) Add(player, data.statusEffects.Where(s => s.day).ToList());
-    else Add(player, data.statusEffects.Where(s => s.night).ToList());
+    if (day) Add(player, [.. data.statusEffects.Where(s => s.day)]);
+    else Add(player, [.. data.statusEffects.Where(s => s.night)]);
   }
 
   private static void Remove(Player player, List<Status> es)
   {
     foreach (var statusEffect in es)
       Remove(player, statusEffect);
+  }
+  private static bool TryGetBiomeStatusEffects(Heightmap.Biome biome, TerritoryData? territory, out List<Status> effects)
+  {
+    if (territory != null && territory.statusEffects.Count > 0)
+    {
+      effects = territory.statusEffects;
+      return true;
+    }
+    if (BiomeManager.TryGetData(biome, out var biomeData))
+    {
+      effects = biomeData.statusEffects;
+      return true;
+    }
+    effects = [];
+    return false;
   }
   private static void Remove(Player player, Status es)
   {

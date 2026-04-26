@@ -7,6 +7,10 @@ public static class Api
   {
     BiomeManager.AddBiome(data);
   }
+  public static void AddTerritory(TerritoryYaml data)
+  {
+    TerritoryManager.AddTerritory(data);
+  }
   public static void AddClutter(ClutterYaml data)
   {
     ClutterManager.AddClutter(data);

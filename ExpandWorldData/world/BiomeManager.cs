@@ -374,10 +374,26 @@ public class UpdateBiome
   // Last biome gets negative number that can't be translated.
   static readonly char[] EmptyChars = [];
   static char[] OriginalChars = [];
+  static string AppendTerritoryName(string text, Vector3 coords)
+  {
+    var territory = BiomeCalculator.GetTerritory(coords.x, coords.z);
+    if (territory == null || territory.name == "") return text;
+    return $"{text} ({territory.name})";
+  }
   static void Prefix()
   {
     OriginalChars = Localization.instance.m_endChars;
     Localization.instance.m_endChars = EmptyChars;
+  }
+  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+  {
+    return new CodeMatcher(instructions)
+      .MatchForward(false, new CodeMatch(OpCodes.Stloc_2))
+      .Insert(
+        new CodeInstruction(OpCodes.Ldloc_0),
+        new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(AppendTerritoryName).operand)
+      )
+      .InstructionEnumeration();
   }
   static void Postfix()
   {

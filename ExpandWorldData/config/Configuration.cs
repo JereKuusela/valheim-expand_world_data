@@ -49,6 +49,7 @@ public partial class Configuration
 
 
   public static CustomSyncedValue<string> valueBiomeData;
+  public static CustomSyncedValue<string> valueTerritoryData;
   public static CustomSyncedValue<string> valueWorldData;
   public static CustomSyncedValue<string> valueClutterData;
   public static CustomSyncedValue<string> valueEnvironmentData;
@@ -68,6 +69,8 @@ public partial class Configuration
   public static bool DataLocation => configDataLocation.Value;
   public static ConfigEntry<bool> configDataBiome;
   public static bool DataBiome => configDataBiome.Value;
+  public static ConfigEntry<bool> configDataTerritory;
+  public static bool DataTerritory => configDataTerritory.Value;
   public static ConfigEntry<bool> configDataWorld;
   public static bool DataWorld => configDataWorld.Value;
   public static ConfigEntry<bool> configDataMigration;
@@ -110,6 +113,8 @@ public partial class Configuration
     configDataEnvironments.SettingChanged += (s, e) => EnvironmentManager.FromSetting(valueEnvironmentData.Value);
     configDataBiome = wrapper.Bind(section, "Biome data", true, true, "Use biome data");
     configDataBiome.SettingChanged += (s, e) => BiomeManager.FromSetting(valueBiomeData.Value);
+    configDataTerritory = wrapper.Bind(section, "Territory data", true, true, "Use territory data");
+    configDataTerritory.SettingChanged += (s, e) => TerritoryManager.FromSetting(valueTerritoryData.Value);
     configDataClutter = wrapper.Bind(section, "Clutter data", true, false, "Use clutter data");
     configDataClutter.SettingChanged += (s, e) => ClutterManager.FromFile();
     configDataDungeons = wrapper.Bind(section, "Dungeon data", true, false, "Use dungeon data");
@@ -130,6 +135,8 @@ public partial class Configuration
     valueEnvironmentData.ValueChanged += () => EnvironmentManager.FromSetting(valueEnvironmentData.Value);
     valueBiomeData = wrapper.AddValue("biome_data");
     valueBiomeData.ValueChanged += () => BiomeManager.FromSetting(valueBiomeData.Value);
+    valueTerritoryData = wrapper.AddValue("territory_data");
+    valueTerritoryData.ValueChanged += () => TerritoryManager.FromSetting(valueTerritoryData.Value);
     valueClutterData = wrapper.AddValue("clutter_data");
     valueClutterData.ValueChanged += () => ClutterManager.Set(valueClutterData.Value);
     valueWorldData = wrapper.AddValue("world_data");

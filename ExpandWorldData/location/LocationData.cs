@@ -127,4 +127,12 @@ public class LocationYaml
   public int surroundCheckLayers = 2;
   [DefaultValue(0f)]
   public float surroundBetterThanAverage = 0f;
+
+  // These are used by Location Placement Accelerator.
+  [DefaultValue(false)]
+  public bool relaxableunique = false;
+  [DefaultValue(false)]
+  public bool relaxable = false;
+  [DefaultValue(0.5)]
+  public float relaxableamount = 0.5f;
 }
