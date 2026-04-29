@@ -154,11 +154,6 @@ public class BiomeCalculator
     var angle = Mathf.Atan2(wx, wy);
     return GetEntry(obj, GetBiomeData(), wx, wy, angle)?.biome ?? Heightmap.Biome.Ocean;
   }
-  public static WorldEntry? GetBiomeEntry(WorldGenerator obj, float wx, float wy)
-  {
-    var angle = Mathf.Atan2(wx, wy);
-    return GetEntry(obj, GetBiomeData(), wx, wy, angle);
-  }
   public static WorldEntry? GetTerritoryEntry(WorldGenerator wg, float wx, float wy)
   {
     if (TerritoryData == null || TerritoryData.Count == 0)

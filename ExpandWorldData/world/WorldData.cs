@@ -4,6 +4,7 @@ namespace ExpandWorldData;
 
 public class WorldYaml
 {
+  [DefaultValue("")]
   public string biome = "";
   [DefaultValue("")]
   public string territory = "";
@@ -53,7 +54,8 @@ public class WorldEntry
   public WorldEntry(WorldYaml data, string fileName)
   {
     territory = data.territory;
-    biome = DataManager.ToBiomes(data.biome, fileName);
+    if (data.biome != "")
+      biome = DataManager.ToBiomes(data.biome, fileName);
     biomeSeed = BiomeManager.GetTerrain(biome);
     if (Parse.TryInt(data.seed, out var s))
       seed = s;

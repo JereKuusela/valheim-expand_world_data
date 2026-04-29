@@ -9,16 +9,24 @@ namespace ExpandWorldData;
 public class LocationExtra
 {
   public static Dictionary<ZoneSystem.ZoneLocation, LocationExtraInfo> ExtraInfo = [];
+  public static Dictionary<string, LocationExtraInfo> ExtraInfoByGroup = [];
 
   public static void AddInfo(ZoneSystem.ZoneLocation loc, LocationYaml data, string fileName)
   {
     var extra = new LocationExtraInfo(data, fileName);
     ExtraInfo[loc] = extra;
+    ExtraInfoByGroup[loc.m_group] = extra;
+    // Groups might update these.
+    loc.m_minDistanceFromSimilar = data.minDistanceFromSimilar;
+    loc.m_maxDistanceFromSimilar = data.maxDistanceFromSimilar;
+    loc.m_group = data.group;
+    loc.m_groupMax = data.groupMax;
   }
 
   public static void ClearInfo()
   {
     ExtraInfo.Clear();
+    ExtraInfoByGroup.Clear();
   }
 
   public static HashSet<ZoneSystem.ZoneLocation> GetNoBuilds()
@@ -28,13 +36,16 @@ public class LocationExtra
 
   public static List<Tuple<string, float>>? GetGroups(ZoneSystem.ZoneLocation? loc, bool maxGroup)
   {
-    if (TryGet(loc, out var extra))
-    {
-      var groups = maxGroup ? extra.GroupsMax : extra.Groups;
-      if (groups != null && groups.Count > 0)
-        return groups;
-    }
-    return null;
+    if (!TryGet(loc, out var extra))
+      return null;
+    return maxGroup ? extra.GroupsMax : extra.Groups;
+  }
+
+  public static List<Tuple<string, float>>? GetGroups(string group, bool maxGroup)
+  {
+    if (string.IsNullOrEmpty(group)) return null;
+    if (!ExtraInfoByGroup.TryGetValue(group, out var extra)) return null;
+    return maxGroup ? extra.GroupsMax : extra.Groups;
   }
 
   private static DataEntry? ResolveData(LocationExtraInfo extra, string prefab, bool dungeon)
@@ -127,6 +138,8 @@ public class LocationExtra
 }
 public class LocationExtraInfo
 {
+  private static int VirtualGroupId = 0;
+
   public string? ZDOData;
   public string? Dungeon;
   public List<Tuple<string, float>>? Groups;
@@ -199,6 +212,13 @@ public class LocationExtraInfo
     groups.Add(new(group, distance));
   }
 
+  // Group check uses location prefab name which is not distinct, so group name is used instead for unique identifier.
+  private static string CreateVirtualGroupName()
+  {
+    VirtualGroupId += 1;
+    return $"_{VirtualGroupId}";
+  }
+
   private void LoadGroups(LocationYaml data)
   {
     var defaultMin = data.minDistanceFromSimilar;
@@ -216,16 +236,25 @@ public class LocationExtraInfo
     var groups = ParseGroups(data.groups, defaultMin) ?? [];
     var groupsMax = ParseGroups(data.groupsMax, defaultMax) ?? [];
 
+
+
     AddGroup(groups, data.group, defaultMin);
     AddGroup(groupsMax, data.groupMax, defaultMax);
 
-    if (data.group == "" && groups.Count > 0)
-      data.group = groups[0].Item1;
-    if (data.groupMax == "" && groupsMax.Count > 0)
-      data.groupMax = groupsMax[0].Item1;
+    if (groups.Count == 0 && groupsMax.Count == 0) return;
+    // Virtual group is used as identifier so can be shared.
+    var virtualGroup = CreateVirtualGroupName();
+    if (groups.Count > 0)
+    {
+      data.group = virtualGroup;
+      Groups = groups;
+    }
 
-    Groups = groups.Count == 0 ? null : groups;
-    GroupsMax = groupsMax.Count == 0 ? null : groupsMax;
+    if (groupsMax.Count > 0)
+    {
+      data.groupMax = virtualGroup;
+      GroupsMax = groupsMax;
+    }
   }
 
   private void LoadObjectData(LocationYaml data, string fileName)

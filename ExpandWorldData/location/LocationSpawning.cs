@@ -6,7 +6,6 @@ using Service;
 using UnityEngine;
 using Data;
 using System.Diagnostics;
-using System;
 
 namespace ExpandWorldData;
 
@@ -265,15 +264,15 @@ public class CreateLocalZones
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange))]
 public class HaveLocationInRange
 {
-  static bool Prefix(ref bool __result, ZoneSystem __instance, string prefabName, Vector3 p, float radius, bool maxGroup)
+  static bool Prefix(ref bool __result, ZoneSystem __instance, string prefabName, string group, Vector3 p, float radius, bool maxGroup)
   {
-    __result = InRange(__instance, prefabName, p, radius, maxGroup);
+    __result = InRange(__instance, prefabName, group, p, radius, maxGroup);
     return false;
   }
 
-  private static bool InRange(ZoneSystem zs, string prefabName, Vector3 p, float radius, bool maxGroup)
+  private static bool InRange(ZoneSystem zs, string prefabName, string group, Vector3 p, float radius, bool maxGroup)
   {
-    var sourceGroups = LocationExtra.GetGroups(LocationSpawning.CurrentLocation, maxGroup);
+    var sourceGroups = LocationExtra.GetGroups(group, maxGroup);
 
     foreach (var locationInstance in zs.m_locationInstances.Values)
     {

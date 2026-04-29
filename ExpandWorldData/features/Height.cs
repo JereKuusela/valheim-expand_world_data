@@ -75,11 +75,7 @@ public class BiomeHeight
       }
     }
 
-    var biomeEntry = BiomeCalculator.GetBiomeEntry(__instance, wx, wy);
     var territoryEntry = BiomeCalculator.GetTerritoryEntry(__instance, wx, wy);
-    if (ReferenceEquals(territoryEntry, biomeEntry))
-      territoryEntry = null;
-
     if (territoryEntry != null && TerritoryManager.TryGetData(territoryEntry.territory, out var territoryColorData) && territoryColorData.colorTerrain.HasValue)
       mask = territoryColorData.colorTerrain.Value;
 
