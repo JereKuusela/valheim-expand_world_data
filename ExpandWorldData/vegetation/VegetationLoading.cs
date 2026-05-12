@@ -14,6 +14,7 @@ public class VegetationLoading
   private static readonly string FileName = "expand_vegetation.yaml";
   private static readonly string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   private static readonly string Pattern = "expand_vegetation*.yaml";
+  public static readonly int HashDrop = "ews_drops".GetStableHashCode();
   private static readonly List<VegetationYaml> ExtraVegetationYamls = [];
 
   public static void AddVegetation(VegetationYaml yaml)
@@ -202,6 +203,13 @@ public class VegetationLoading
       extra.scale = scale;
     if (data.data != "")
       extra.data = DataHelper.Get(data.data, fileName);
+    if (data.drops != "")
+    {
+      DataEntry entry = new()
+      {
+        Hashes = new Dictionary<int, IHashValue> { { HashDrop, DataValue.Hash(data.drops) } }
+      };
+    }
 
 
     var prefabs = DataManager.ToList(data.prefab).Select(p =>
