@@ -123,4 +123,12 @@ public class LocationYaml
   public int surroundCheckLayers = 2;
   [DefaultValue(0f)]
   public float surroundBetterThanAverage = 0f;
+  //LPA keywords
+  [DefaultValue(false)]
+  public bool relaxable = false;
+  [DefaultValue(0.5f)]
+  public float relaxableamount = 0.5f;
+  [DefaultValue(false)]
+  public bool relaxableunique = false;
+
 }

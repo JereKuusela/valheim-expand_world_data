@@ -137,7 +137,15 @@ public class LocationObjectDataAndSwap
       WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
       // Remove the applied offset.
       var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
-      HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
+        //  the HandleTerrain execution is now gated behind mode == ZoneSystem.SpawnMode.Full.
+        //  Modifying terrain implies a permanent ZDO write, which makes absolutely no sense during a temporary ghost preview.
+        //  My theory:  LPA just placed so many locations so efficiently that the player was guaranteed to render one of them as a distant ghost, thereby exposing a blind spot in EWD's terrain logic.
+        //  EWD assumed that anytime a location spawns, it is safe to permanently alter the terrain ZDO.
+        //  So this gating here and another one in TerrainOperations.cs
+        if (mode == ZoneSystem.SpawnMode.Full)
+        {
+            HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data); 
+        }
     }
     Random.InitState(seed);
     if (mode == ZoneSystem.SpawnMode.Ghost)
