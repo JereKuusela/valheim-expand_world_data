@@ -12,7 +12,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.63";
+  public const string VERSION = "1.63.5";
 #nullable disable
   public static EWD Instance;
   public static Harmony Harmony;
@@ -52,6 +52,7 @@ public class EWD : BaseUnityPlugin
         Yaml.SetupWatcher(Config);
         DataLoading.SetupWatcher();
         BiomeManager.SetupWatcher();
+        TerritoryManager.SetupWatcher();
         LocationLoading.SetupWatcher();
         VegetationLoading.SetupWatcher();
         WorldManager.SetupWatcher();

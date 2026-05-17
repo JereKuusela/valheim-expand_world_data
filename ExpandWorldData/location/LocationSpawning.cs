@@ -11,29 +11,22 @@ namespace ExpandWorldData;
 
 public class LocationSpawning
 {
-  public static string CurrentLocation = "";
+  public static ZoneSystem.ZoneLocation? CurrentLocation = null;
   public static DataEntry? DataOverride(DataEntry? pkg, string prefab)
   {
-    if (!LocationLoading.LocationObjectData.TryGetValue(CurrentLocation, out var objectData)) return pkg;
-    var data = Spawn.GetData(objectData, prefab);
-    return DataHelper.Merge(data, pkg);
+    return LocationExtra.MergeData(CurrentLocation, pkg, prefab);
   }
   public static DataEntry? DungeonDataOverride(string prefab)
   {
-    if (!LocationLoading.DungeonObjectData.TryGetValue(CurrentLocation, out var objectData)) return null;
-    return Spawn.GetData(objectData, prefab);
+    return LocationExtra.GetData(CurrentLocation, prefab, true);
   }
   public static string PrefabOverride(string prefab)
   {
-    if (!LocationLoading.LocationObjectSwaps.TryGetValue(CurrentLocation, out var objectSwaps)) return prefab;
-    if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
-    return Spawn.RandomizeSwap(swaps);
+    return LocationExtra.GetPrefabOverride(CurrentLocation, prefab);
   }
   public static string DungeonPrefabOverride(string prefab)
   {
-    if (!LocationLoading.DungeonObjectSwaps.TryGetValue(CurrentLocation, out var objectSwaps)) return prefab;
-    if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
-    return Spawn.RandomizeSwap(swaps);
+    return LocationExtra.GetPrefabOverride(CurrentLocation, prefab, true);
   }
   static readonly string DummyObj = "vfx_auto_pickup";
   public static GameObject DummySpawn => UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab(DummyObj), Vector3.zero, Quaternion.identity);
@@ -47,11 +40,12 @@ public class LocationSpawning
 
   public static void CustomObjects(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, Vector3 scale, int seed, List<GameObject> spawnedGhostObjects)
   {
-    if (!LocationLoading.Objects.TryGetValue(location.m_prefab.Name, out var objects)) return;
+    if (!LocationExtra.TryGet(location, out var extra) || extra?.Objects == null) return;
+    var objects = extra.Objects;
     //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefab.Name}");
     foreach (var obj in objects)
     {
-      if (obj.Chance < 1f && Random.value > obj.Chance) continue;
+      if (obj.Chance < 1f && UnityEngine.Random.value > obj.Chance) continue;
       Spawn.BPO(obj, pos, rot, scale, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
     }
   }
@@ -63,8 +57,10 @@ public class LocationZDO
 {
   static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
   {
-    if (!LocationLoading.ZDOData.TryGetValue(location.m_prefab.Name, out var key)) return;
-    var data = DataHelper.Get(key, location.m_prefab.Name);
+    if (!LocationExtra.TryGet(location, out var extra)) return;
+    var key = extra.ZDOData;
+    if (string.IsNullOrEmpty(key)) return;
+    var data = DataHelper.Get(key!, location.m_prefab.Name);
     if (data != null) DataHelper.Init(__instance.m_locationProxyPrefab, pos, rotation, null, data);
   }
 }
@@ -90,8 +86,8 @@ public class LocationObjectDataAndSwap
   {
     if (mode != ZoneSystem.SpawnMode.Client)
     {
-      LocationSpawning.CurrentLocation = location.m_prefab.Name;
-      if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
+      LocationSpawning.CurrentLocation = location;
+      if (LocationExtra.TryGetData(location, out var data))
       {
         Spawn.IgnoreHealth = data.randomDamage == "all";
         pos.y += data.offset ?? data.groundOffset;
@@ -103,12 +99,12 @@ public class LocationObjectDataAndSwap
   }
   static void Customize(ZoneSystem.ZoneLocation location)
   {
-    if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
+    if (LocationExtra.TryGetData(location, out var data))
       WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
   }
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
   {
-    var instantiator = AccessTools.FirstMethod(typeof(Object), info => info.Name == nameof(Object.Instantiate) && info.IsGenericMethodDefinition &&
+    var instantiator = AccessTools.FirstMethod(typeof(UnityEngine.Object), info => info.Name == nameof(UnityEngine.Object.Instantiate) && info.IsGenericMethodDefinition &&
             info.GetParameters().Length == 3 &&
             info.GetParameters()[1].ParameterType == typeof(Vector3) &&
             info.GetParameters()[2].ParameterType == typeof(Quaternion))
@@ -132,7 +128,7 @@ public class LocationObjectDataAndSwap
     if (mode == ZoneSystem.SpawnMode.Client) return;
 
     var isBluePrint = BlueprintManager.Has(location.m_prefab.Name);
-    if (LocationLoading.LocationData.TryGetValue(location.m_prefab.Name, out var data))
+    if (LocationExtra.TryGetData(location, out var data))
     {
       WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
       // Remove the applied offset.
@@ -147,11 +143,10 @@ public class LocationObjectDataAndSwap
             HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data); 
         }
     }
-    Random.InitState(seed);
+    UnityEngine.Random.InitState(seed);
     if (mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.StartGhostInit();
-    var scale = Vector3.one;
-    if (LocationLoading.Scales.TryGetValue(location.m_prefab.Name, out var s)) scale = Helper.RandomValue(s);
+    var scale = LocationExtra.GetScale(location);
     if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.Name, out var bp))
     {
       Spawn.Blueprint(bp, pos, rot, scale, seed, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
@@ -163,9 +158,8 @@ public class LocationObjectDataAndSwap
     if (mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.FinishGhostInit();
     Spawn.IgnoreHealth = false;
-    if (LocationLoading.Commands.TryGetValue(location.m_prefab.Name, out var commands))
-      CommandManager.Run(commands, pos, rot.eulerAngles);
-    LocationSpawning.CurrentLocation = "";
+    LocationExtra.RunCommand(location, pos, rot);
+    LocationSpawning.CurrentLocation = null;
   }
 
   static void HandleTerrain(Vector3 pos, float radius, bool isBlueprint, LocationYaml data)
@@ -259,7 +253,7 @@ public class CreateLocalZones
     {
       var loc = kvp.Value.m_location;
       if (loc == null) continue;
-      if (!LocationLoading.LocationData.TryGetValue(loc.m_prefab.Name, out var data)) continue;
+      if (!LocationExtra.TryGetData(loc, out var data)) continue;
       if (!data.pregenerate) continue;
       // Vanilla returns true if poke is successful (doesn't fully make sense but it is what it is).
       if (__instance.PokeLocalZone(kvp.Key))
@@ -271,5 +265,45 @@ public class CreateLocalZones
 
     LocationsPregenerated = true;
     return result;
+  }
+}
+
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange))]
+public class HaveLocationInRange
+{
+  static bool Prefix(ref bool __result, ZoneSystem __instance, string prefabName, string group, Vector3 p, float radius, bool maxGroup)
+  {
+    __result = InRange(__instance, prefabName, group, p, radius, maxGroup);
+    return false;
+  }
+
+  private static bool InRange(ZoneSystem zs, string prefabName, string group, Vector3 p, float radius, bool maxGroup)
+  {
+    var sourceGroups = LocationExtra.GetGroups(group, maxGroup);
+
+    foreach (var locationInstance in zs.m_locationInstances.Values)
+    {
+      var loc = locationInstance.m_location;
+      var targetGroups = LocationExtra.GetGroups(loc, maxGroup);
+      // Early exit to avoid pointless distance calculation (most locations don't have groups).
+      if (loc.m_prefab.Name == prefabName && targetGroups == null) continue;
+
+      var distance = Vector3.Distance(locationInstance.m_position, p);
+
+      // Same prefab check uses the default radius, as there is no group.
+      if (loc.m_prefab.Name == prefabName && distance < radius)
+        return true;
+
+      if (sourceGroups == null || targetGroups == null) continue;
+
+      foreach (var source in sourceGroups)
+      {
+        if (distance >= source.Item2) continue;
+        if (targetGroups.Any(target => target.Item1 == source.Item1))
+          return true;
+      }
+    }
+    return false;
   }
 }

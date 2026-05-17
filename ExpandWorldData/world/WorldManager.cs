@@ -109,7 +109,7 @@ public class WorldManager
       }
       else
         Log.Info($"Reloading world data ({Data.Count} entries).");
-      BiomeCalculator.Data = [.. Data.Select(s => new WorldEntry(s, "world"))]; ;
+      BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
       BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
       EWD.Instance.InvokeRegenerate();
     }
@@ -122,7 +122,7 @@ public class WorldManager
   public static void Reload()
   {
     Log.Info($"Reloading world data ({Data.Count} entries).");
-    BiomeCalculator.Data = Data.Select(s => new WorldEntry(s, "world")).ToList();
+    BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
     BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
     EWD.Instance.InvokeRegenerate();
   }

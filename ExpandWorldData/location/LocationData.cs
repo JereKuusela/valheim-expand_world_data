@@ -33,10 +33,16 @@ public class LocationYaml
   public bool pregenerate = false;
   [DefaultValue("")]
   public string group = "";
+  [DefaultValue(null)]
+  public string[]? groups = null;
   [DefaultValue("")]
   public string groupMax = "";
+  [DefaultValue(null)]
+  public string[]? groupsMax = null;
   [DefaultValue(0f)]
   public float minDistanceFromSimilar = 0f;
+  [DefaultValue(0f)]
+  public float maxDistanceFromSimilar = 0f;
   [DefaultValue("")]
   public string discoverLabel = "";
   [DefaultValue("")]
@@ -110,8 +116,6 @@ public class LocationYaml
   [DefaultValue(true)]
   public bool scaleUniform = true;
   [DefaultValue(0f)]
-  public float maxDistanceFromSimilar = 0f;
-  [DefaultValue(0f)]
   public float minVegetation = 0f;
   [DefaultValue(1f)]
   public float maxVegetation = 1f;
@@ -123,12 +127,12 @@ public class LocationYaml
   public int surroundCheckLayers = 2;
   [DefaultValue(0f)]
   public float surroundBetterThanAverage = 0f;
-  //LPA keywords
-  [DefaultValue(false)]
-  public bool relaxable = false;
-  [DefaultValue(0.5f)]
-  public float relaxableamount = 0.5f;
+
+  // These are used by Location Placement Accelerator.
   [DefaultValue(false)]
   public bool relaxableunique = false;
-
+  [DefaultValue(false)]
+  public bool relaxable = false;
+  [DefaultValue(0.5)]
+  public float relaxableamount = 0.5f;
 }

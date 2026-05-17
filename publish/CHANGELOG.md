@@ -1,3 +1,6 @@
+- v1.64
+  - TODO
+
 - v1.63
   - Adds new field `pregenerate` to location data, which allows forcing the zone to be generated even when not explored.
   - Fixes vanilla issue of player not cooling down on non-hot biomes (e.g. Ashlands). Now the heat level resets to zero.

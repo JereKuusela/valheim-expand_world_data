@@ -33,6 +33,7 @@ public class InitializeWorld
     WorldInfo.CheckPatches(EWD.Harmony);
     // Only called for server so no need to check.
     BiomeManager.FromFile();
+    TerritoryManager.FromFile();
     WorldManager.FromFile();
   }
 }
@@ -52,6 +53,7 @@ public class InitializeContent
       EnvironmentManager.FromFile();
       BiomeManager.LoadEnvironments();
       BiomeManager.ToFile();
+      TerritoryManager.ToFile();
       WorldManager.ToFile();
 
       // These are here to not have to clear location lists (slightly better compatibility).

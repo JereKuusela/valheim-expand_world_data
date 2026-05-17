@@ -98,6 +98,8 @@ public class VegetationYaml
   public float centerX = 0f;
   [DefaultValue(0f)]
   public float centerY = 0f;
+  [DefaultValue("")]
+  public string drops = "";
 }
 
 public class VegetationExtra
