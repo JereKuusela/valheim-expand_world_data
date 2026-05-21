@@ -91,6 +91,7 @@ public partial class Terrain
     var hm = Heightmap.FindHeightmap(pos);
     if (hm == null) return;
     var compiler = FindCompiler(hm, pos);
+    if (compiler == null) return; //add a null guard for the compiler. Basically if FindCompiler forces Valheim to instantiate a fallback _TerrainCompiler during a ghost cycle, Valheim will skip ZDO creation and return a null reference. 
     TerrainFakeData data = new(hm, compiler);
     action(hm, data);
     data.Save();

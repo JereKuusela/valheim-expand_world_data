@@ -269,22 +269,32 @@ public class DataManager : MonoBehaviour
     var obj = Instantiate(prefab, pos, rot);
     CleanGhostInit(obj);
     return obj;
-  }
-
-  public static void CleanGhostInit(GameObject obj)
-  {
-    if (ZNetView.m_ghostInit) CleanGhostInit(obj.GetComponent<ZNetView>());
-  }
-  public static void CleanGhostInit(ZNetView view)
-  {
-    if (ZNetView.m_ghostInit && view)
-    {
-      view.m_ghost = true;
-      view.GetZDO().Created = false;
-      ZNetScene.instance.m_instances.Remove(view.GetZDO());
     }
-  }
-  public static List<U> ReadData<T, U>(string pattern, Func<T, string, U> converter)
+
+    public static void CleanGhostInit(GameObject obj)
+    {
+        if (ZNetView.m_ghostInit) CleanGhostInit(obj.GetComponent<ZNetView>());
+    }
+
+    // Fix that Ashenius' blueprint within blueprint issue, potentially identifying which matryoshka(? am I spelling this right? Ashenius is sensitive about that) doll spawned without a ZDO.
+    public static void CleanGhostInit(ZNetView view)
+    {
+        if (ZNetView.m_ghostInit && view)
+        {
+            var zdo = view.GetZDO();
+            if (zdo == null)
+            {
+                //I am not sure I should be logging this actually. 
+                //Log.Warning($"Nested blueprint object '{Utils.GetPrefabName(view.gameObject)}' spawned without a ZDO during ghost init. Please check its data/scale overrides in the blueprint yaml.");
+                view.m_ghost = true;
+                return;
+            }
+            view.m_ghost = true;
+            zdo.Created = false;
+            ZNetScene.instance?.m_instances.Remove(zdo);
+        }
+    }
+    public static List<U> ReadData<T, U>(string pattern, Func<T, string, U> converter)
   {
     if (!Directory.Exists(Yaml.BaseDirectory))
       Directory.CreateDirectory(Yaml.BaseDirectory);
