@@ -49,9 +49,6 @@ public class BiomeHeight
   {
     LastX = wx;
     LastY = wy;
-    // TODO: Add patch for minimap generation and modify height while there.
-    //if (BiomeManager.TryGetData(biome, out var data))
-    //              biomeHeight = Configuration.WaterLevel + (biomeHeight - Configuration.WaterLevel) * data.mapColorMultiplier;
     if (__instance.m_world.m_menu) return;
     if (BiomeManager.TryGetColor(__state, out var color))
       mask = color;

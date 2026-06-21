@@ -109,8 +109,6 @@ public class BiomeManager
       musicNight = biome.m_musicNight,
       colorTerrain = DataManager.FromColor(Heightmap.GetBiomeColor(biome.m_biome)),
       colorMap = DataManager.FromColor(Minimap.instance.GetPixelColor(biome.m_biome)),
-      // Reduces the mountains on the map.
-      mapColorMultiplier = biome.m_biome == Heightmap.Biome.AshLands ? 0.5f : 1f,
       lava = biome.m_biome == Heightmap.Biome.AshLands ? "true" : ""
     };
   }

@@ -115,7 +115,10 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - excessFactor (default: `0.5`): How strongly the altitude is reduced if over the maximum or minimum limit. For example 0.5 square roots the excess altitude.
 - paint: Default terrain paint. Format is `dirt,cultivated,paved,vegetation` (from 0.0 to 1.0) or a pre-defined color (cultivated, dirt, grass, grass_dark, patches, paved, paved_dark, paved_dirt, paved_moss)
 - colorTerrain (r,g,b,a): Terrain style. Not fully sure how this works but the color value somehow determines which default biome terrain style to use.
-- mapColorMultiplier (default: `1.0`): Changes how quickly the terrain altitude affects the map color. Increasing the value can be useful for low altitude biomes to show the altitude differences better. Lowering the value can be useful for high altitude biomes to reduce amount of white color (from mountain altitudes). Negative value can be useful for underwater biomes to show the map color (normally all underwater areas get blueish color).
+- mapColorMultiplier (default: `1.0`): Changes how quickly the terrain altitude affects the map color.
+  - Increasing the value can be useful for low altitude biomes to show the altitude differences better.
+  - Lowering the value can be useful for high altitude biomes to reduce amount of white color (from mountain altitudes).
+  - Negative value can be useful for underwater biomes to show the map color (normally all underwater areas get blueish color).
 - colorMap (r,g,b,a): Color in the minimap.
 - colorWaterSurface (r,g,b,a): Custom water surface color. Requires "Custom water color" setting enabled in the config.
 - colorWaterTop (r,g,b,a): Custom water top color. Requires "Custom water color" setting enabled in the config.

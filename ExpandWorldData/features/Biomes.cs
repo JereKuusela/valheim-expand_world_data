@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 namespace ExpandWorldData;
@@ -74,6 +75,22 @@ public class GetMaskColor
   {
     biome = BiomeManager.GetTerrain(biome);
   }
+}
+
+[HarmonyPatch(typeof(Minimap), nameof(Minimap.GenerateWorldMap))]
+public class GenerateWorldMapHeight
+{
+
+  static float ModifyHeight(float height, Heightmap.Biome biome) => Api.GetMinimapHeight(height, biome);
+
+  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) =>
+    new CodeMatcher(instructions).MatchForward(true, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Minimap), nameof(Minimap.GetMaskColor))))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 14))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 13))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ModifyHeight).operand))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Stloc_S, 14))
+    .InstructionEnumeration();
+
 }
 
 [HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.Pregenerate))]

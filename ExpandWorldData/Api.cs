@@ -3,6 +3,12 @@ namespace ExpandWorldData;
 
 public static class Api
 {
+  public static float GetMinimapHeight(float height, Heightmap.Biome biome)
+  {
+    if (!BiomeManager.TryGetData(biome, out var data)) return height;
+    if (height < WorldInfo.WaterLevel) return height;
+    return (height - WorldInfo.WaterLevel) * data.mapColorMultiplier + WorldInfo.WaterLevel;
+  }
   public static void AddBiome(BiomeYaml data)
   {
     BiomeManager.AddBiome(data);

@@ -1,5 +1,5 @@
 - v1.64
-  - TODO
+  - Fixes field `mapColorMultiplier` not working.
 
 - v1.63
   - Adds new field `pregenerate` to location data, which allows forcing the zone to be generated even when not explored.
