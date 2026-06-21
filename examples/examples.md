@@ -19,7 +19,7 @@
 - [Status Effects](./examples_status.md)
 - [Vegetation: Custom health](./vegetation_custom_health.md)
 
-## Spawer Tweaks
+## Spawner Tweaks
 
 Download [Spawner Tweaks](https://valheim.thunderstore.io/package/AzuRe/SpawnerTweaks/) mod. All clients need this mod.
 

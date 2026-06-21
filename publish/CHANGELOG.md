@@ -1,5 +1,8 @@
 - v1.64
+  - Adds new field `groups` to support multiple "min distance" location groups.
+  - Adds new field `groupsMax` to support multiple "max distance" location groups.
   - Fixes field `mapColorMultiplier` not working.
+  - Fixes location data being mapped to location name instead of location entry (this allows more granular control).
 
 - v1.63
   - Adds new field `pregenerate` to location data, which allows forcing the zone to be generated even when not explored.
@@ -14,12 +17,3 @@
 - v1.60
   - Adds third level to data merging (components).
   - Fixes key based environments not working.
-
-- v1.59
-  - Adds new field exitOnly to dungeon room connections.
-  - Adds several warning checks to dungeon generation caused by invalid configs.
-  - Fixes start location being forcefully placed even when disabled.
-  - Fixes dungeon room clones not working.
-  - Fixes dungeon room connection changes not working for non-blueprint rooms.
-  - Fixes custom location icons not working on single player respawn check.
-  - Optimizes dungeon generation (especially with high amounts of rooms).
