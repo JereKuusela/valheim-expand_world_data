@@ -76,6 +76,12 @@ The file `expand_biomes.yaml` sets available biomes and their configuration.
 
 See [Biomes](docs/biomes.md) for more info.
 
+### Territories
+
+The file `expand_territories.yaml` sets available territories and their configuration.
+
+See [Territories](docs/territories.md) for more info.
+
 ### World
 
 The file `expand_world.yaml` sets the biome distribution.

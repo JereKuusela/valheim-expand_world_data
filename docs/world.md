@@ -2,9 +2,10 @@
 
 The file `expand_world.yaml` sets the biome distribution.
 
-Each entry in the file adds a new rule. When determing the biome, the rules are checked one by one from the top until a valid rule is found. This means the order of entries is especially important for this file.
+Each entry in the file adds a new rule. When determining the biome and territory, the rules are checked one by one from the top until a valid rule is found. This means the order of entries is especially important for this file.
 
 - biome: Identifier of the biome if this rule is valid.
+- territory: Identifier of the territory if this rule is valid.
 - maxAltitude (default: `1000` meters): Maximum terrain height relative to the water level.
 - minAltitude (default: `0` meters if maxAltitude is positive, otherwise `-1000` meters): Minimum terrain height relative to the water level.
 - maxDistance (default: `1.0` of world radius): Maximum distance from the world center.

@@ -1,6 +1,7 @@
 - v1.64
   - Adds new field `groups` to support multiple "min distance" location groups.
   - Adds new field `groupsMax` to support multiple "max distance" location groups.
+  - Adds new file for territories, which are similar to biomes but on another layer (experimental).
   - Fixes field `mapColorMultiplier` not working.
   - Fixes location data being mapped to location name instead of location entry (this allows more granular control).
 

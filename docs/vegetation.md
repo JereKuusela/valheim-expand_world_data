@@ -76,3 +76,4 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
 - forbiddenGlobalKey: List of [global keys](https://valheim.fandom.com/wiki/Global_Keys). If any is set, the vegetation is not placed.
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
 - data: ZDO data override. For example to create hidden stashes with Spawner Tweaks mod (`object copy` from World Edit Commands).
+- drops: Custom drops from Expand World Spawns mod.
