@@ -40,7 +40,7 @@ Each entry in the file adds a new rule. When determining the biome and territory
 
 Note: The world edge is always ocean. This is currently hardcoded.
 
-### Amount
+## Amount
 
 Technically the amount is not a percentage but something closer to a normal distribution.
 
@@ -86,3 +86,45 @@ Sectors start at the south and increase towards clock-wise direction. So that:
 - Bottom part is between sectors -0.25 and 0.25 (or 0.75 and 1.25).
 
 Note: Of course any number is valid for sectors. Like from 0.37 to 0.62.
+
+## Examples
+
+Ring-shaped biome band with custom wiggle and deterministic amount pattern:
+
+```yaml
+- biome: Mistlands
+  minDistance: 0.45
+  maxDistance: 0.72
+  amount: 0.55
+  stretch: 1.3
+  wiggleDistance: true
+  wiggleDistanceLength: 28
+  wiggleDistanceWidth: 180
+```
+
+Sector-limited hot sea corridor with a gradual boiling effect:
+
+```yaml
+- biome: Ocean
+  minDistance: 0.3
+  maxDistance: 0.95
+  minSector: 0.58
+  maxSector: 0.74
+  boiling: 1.5
+  wiggleSector: true
+  wiggleSectorLength: 350
+  wiggleSectorWidth: 0.02
+```
+
+Offset-center pocket biome that also applies a territory:
+
+```yaml
+- biome: Plains
+  territory: SpawnRing
+  centerX: -0.18
+  centerY: 0.11
+  minDistance: 0.05
+  maxDistance: 0.16
+  minAltitude: 5
+  maxAltitude: 90
+```

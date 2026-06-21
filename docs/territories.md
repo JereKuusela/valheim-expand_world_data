@@ -26,18 +26,49 @@ Same world rule can have both `biome` and `territory` if you want them to line u
 
 ## Examples
 
-New territory that raises the terrain by 100 meters and has a custom minimap color:
+Terrain shaping:
 
 ```yaml
-- territory: Spawn
-  colorMap: 0.481, 0.125, 0.125
-  colorTerrain: 0, 1, 0, 0
-  altitudeDelta: 100
+- territory: SpawnRing
+  altitudeDelta: 45
+  altitudeMultiplier: 1.15
+  waterDepthMultiplier: 0.8
+  minimumAltitude: -10
+  maximumAltitude: 220
+  excessFactor: 0.35
 ```
 
-Example world rule that applies the territory near the world center:
+Water color override:
 
 ```yaml
-- territory: spawn
-  maxDistance: 0.01
+- territory: SpawnRing
+  colorMap: 0.48, 0.13, 0.13, 1
+  colorWaterSurface: 0.16, 0.25, 0.22, 1
+  colorWaterBottom: 0.03, 0.08, 0.09, 1
+```
+
+Territory status effects only:
+
+```yaml
+- territory: SpawnRing
+  statusEffects:
+  - name: Wet
+    day: true
+    night: true
+  - name: Cold
+    day: false
+    night: true
+```
+
+World rules that apply this territory as an inner ring around the center:
+
+```yaml
+- territory: SpawnRing
+  minDistance: 0.04
+  maxDistance: 0.12
+- territory: SpawnRing
+  minDistance: 0.12
+  maxDistance: 0.2
+  minSector: 0.15
+  maxSector: 0.33
 ```

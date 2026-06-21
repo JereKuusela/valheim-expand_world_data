@@ -109,12 +109,29 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 
 ## Examples
 
-Multiple minimum distance groups:
+Multiple minimum distance groups (location must be away from all of these groups):
 
 ```yaml
 - prefab: Runestone_Greydwarfs
-  # group: Runestones
   groups:
   - Runestones, 250
   - Boo, 100
+```
+
+Placed icon configuration:
+
+```yaml
+- prefab: Dolmen01
+  iconPlaced: Hammer,2,pulse
+```
+
+Terrain clear + level operation:
+
+```yaml
+- prefab: Dolmen01
+  exteriorRadius: 18
+  clearArea: true
+  levelArea: true
+  levelRadius: 8
+  levelBorder: 6
 ```

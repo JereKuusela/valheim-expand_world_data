@@ -13,3 +13,25 @@ The file format is slightly modified from the usual:
 - Center piece (bottom center of the blueprint) can be set to a certain object. This object is never spawned to the world.
   - Infinity Hammer saves this information to .blueprint files.
   - If the center piece is not found, the blueprint is centered automatically and placed 0.05 meters towards the ground.
+
+## Examples
+
+Nested blueprint object with chance and ZDO data (PlanBuild line format):
+
+```txt
+MarketplaceStall;0;6;0;4;0;0;0;1;;1;1;1;infinite_health;0.35
+```
+
+This line means:
+
+- `MarketplaceStall` is another blueprint object placed inside this blueprint.
+- `zdoData` is `infinite_health` (from `data.yaml` or copied raw data).
+- `chance` is `0.35`, so it appears in about 35% of spawns.
+
+Center piece marker (saved by Infinity Hammer):
+
+```txt
+CenterPiece;0;0;0;0;0;0;0;1;;1;1;1;;
+```
+
+If `CenterPiece` is configured as the blueprint center object, the object itself is not spawned, but its position becomes the placement anchor.

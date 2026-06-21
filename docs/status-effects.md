@@ -24,3 +24,30 @@ Each entry has following fields:
   - Note: `damageIgnoreAll` is not affected.
 
 See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
+
+## Examples
+
+Night-only freezing effect until Moder is defeated:
+
+```yaml
+- environment: Snow
+  statusEffects:
+  - name: Freezing
+    forbiddenGlobalKeys:
+    - defeated_dragon
+    day: false
+    night: true
+```
+
+Poison hazard that is disabled for players with a specific progression key:
+
+```yaml
+- biome: Swamp
+  statusEffects:
+  - name: Poison
+    forbiddenPlayerKeys:
+    - poisonproof
+    day: true
+    night: true
+    damage: 18
+```

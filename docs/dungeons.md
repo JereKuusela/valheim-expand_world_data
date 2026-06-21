@@ -44,4 +44,3 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - objectSwap: Changes dungeon objects to other objects.
   - See [Object swaps](object-swaps.md) for details.
   - Note: If a room has object swaps, the dungeon swaps are applied first.
-

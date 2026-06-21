@@ -43,7 +43,7 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - musicEvening: Music override for the evening time.
 - musicNight: Music override for the night time.
 - noBuild (default: `false`): If true, players can't build in this biome.
-- statusEffects: List of status effects that are active in this environment.
+- statusEffects: Array of status effects that are active in this environment.
   - See [Status effects](status-effects.md) for format and more information.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
 - lava (default: `false`): If true, the biome can have lava.
@@ -54,3 +54,25 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 - lavaAmount (default: `1`): Amount of lava in the biome (1 = 100%). Uses Perlin noise.
 - lavaStretch (default: `1`): Multiplies the size of lava areas (average total area stays the same).
 
+## Examples
+
+Conditional environment (only active if none of the players have the `resiststorm` key):
+
+```yaml
+- biome: Mountain
+  - environment: SnowStorm
+  - environment: Snow
+    weight: 5
+    forbiddenPlayerKeys: resiststorm
+```
+
+Water biome with clearer height differences on the map and custom water colors:
+
+```yaml
+- biome: AbyssalShelf
+  name: Abyssal Shelf
+  terrain: Ocean
+  mapColorMultiplier: -0.5
+  colorWaterSurface: 0.08, 0.22, 0.27, 1
+  colorWaterBottom: 0.01, 0.05, 0.07, 1
+```
