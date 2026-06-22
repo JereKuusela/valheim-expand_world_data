@@ -67,8 +67,13 @@ public class LocationZDO
 [HarmonyPatch(typeof(LocationProxy), nameof(LocationProxy.SetLocation))]
 public class FixGhostInit
 {
+  public static readonly int ReferenceHash = "locationreference".GetStableHashCode();
   static void Prefix(LocationProxy __instance, ref string location, ref bool spawnNow)
   {
+    // Original saved so that other mods can reference clones and blueprints properly.
+    var hash = location.GetStableHashCode();
+    __instance.m_nview.GetZDO().Set(ReferenceHash, hash);
+
     location = Parse.Name(location);
     if (ZNetView.m_ghostInit)
     {
@@ -82,7 +87,7 @@ public class FixGhostInit
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.SpawnLocation))]
 public class LocationObjectDataAndSwap
 {
-  static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos, ref int seed)
+  static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos, ref int seed, List<GameObject> spawnedGhostObjects)
   {
     if (mode != ZoneSystem.SpawnMode.Client)
     {
@@ -95,8 +100,33 @@ public class LocationObjectDataAndSwap
       }
     }
     // Blueprints won't have any znetviews to spawn or other logic to handle.
-    return location.m_prefab.IsValid;
+    if (location.m_prefab.IsValid)
+      return true;
+    // But still spawn proxy so that other mods can refer to it.
+    CreateBlueprintProxy(location, pos, mode, spawnedGhostObjects);
+    return false;
   }
+  // Unfortunately bit code duplication but still bit too different to use original method.
+  private static void CreateBlueprintProxy(ZoneSystem.ZoneLocation location, Vector3 pos, ZoneSystem.SpawnMode mode, List<GameObject> spawnedGhostObjects)
+  {
+    if (mode == ZoneSystem.SpawnMode.Client) return;
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      ZNetView.StartGhostInit();
+
+    var go = Object.Instantiate(ZoneSystem.instance.m_locationProxyPrefab, pos, Quaternion.identity);
+    var loc = go.GetComponent<LocationProxy>();
+    var view = loc.m_nview;
+    var hash = location.m_prefab.Name.GetStableHashCode();
+    view.GetZDO().Set(FixGhostInit.ReferenceHash, hash);
+    if (mode == ZoneSystem.SpawnMode.Full)
+      loc.SpawnLocation();
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+    {
+      spawnedGhostObjects.Add(go);
+      ZNetView.FinishGhostInit();
+    }
+  }
+
   static void Customize(ZoneSystem.ZoneLocation location)
   {
     if (LocationExtra.TryGetData(location, out var data))
@@ -135,7 +165,7 @@ public class LocationObjectDataAndSwap
       var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
       HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
     }
-    UnityEngine.Random.InitState(seed);
+    Random.InitState(seed);
     if (mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.StartGhostInit();
     var scale = LocationExtra.GetScale(location);
@@ -279,7 +309,7 @@ public class HaveLocationInRange
       var loc = locationInstance.m_location;
       var targetGroups = LocationExtra.GetGroups(loc, maxGroup);
       // Early exit to avoid pointless distance calculation (most locations don't have groups).
-      if (loc.m_prefab.Name == prefabName && targetGroups == null) continue;
+      if (loc.m_prefab.Name != prefabName && targetGroups == null) continue;
 
       var distance = Vector3.Distance(locationInstance.m_position, p);
 
