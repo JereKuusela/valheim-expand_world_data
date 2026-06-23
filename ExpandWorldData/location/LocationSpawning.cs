@@ -308,6 +308,7 @@ public class HaveLocationInRange
     {
       var loc = locationInstance.m_location;
       var targetGroups = LocationExtra.GetGroups(loc, maxGroup);
+
       // Early exit to avoid pointless distance calculation (most locations don't have groups).
       if (loc.m_prefab.Name != prefabName && targetGroups == null) continue;
 

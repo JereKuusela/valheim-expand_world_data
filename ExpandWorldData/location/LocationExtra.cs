@@ -14,13 +14,13 @@ public class LocationExtra
   public static void AddInfo(ZoneSystem.ZoneLocation loc, LocationYaml data, string fileName)
   {
     var extra = new LocationExtraInfo(data, fileName);
-    ExtraInfo[loc] = extra;
-    ExtraInfoByGroup[loc.m_group] = extra;
     // Groups might update these.
     loc.m_minDistanceFromSimilar = data.minDistanceFromSimilar;
     loc.m_maxDistanceFromSimilar = data.maxDistanceFromSimilar;
     loc.m_group = data.group;
     loc.m_groupMax = data.groupMax;
+    ExtraInfo[loc] = extra;
+    ExtraInfoByGroup[loc.m_group] = extra;
   }
 
   public static void ClearInfo()

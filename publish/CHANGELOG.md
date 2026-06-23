@@ -1,3 +1,6 @@
+- v1.66
+  - Fixes "distance from similar" for location clones.
+
 - v1.65
   - Adds LocationProxy for blueprint locations so that client side mods can interact with them.
   - Fixes "distance from similar" not automatically working for the same location (should be always considered similar, even without group).
@@ -15,6 +18,3 @@
 
 - v1.62
   - Fixes data system not working for components (was case sensitive, now correctly case insensitive).
-
-- v1.61
-  - Fixes error with Expand World Events caused by previous update.
