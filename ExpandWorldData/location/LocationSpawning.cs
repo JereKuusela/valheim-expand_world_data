@@ -323,7 +323,7 @@ public class HaveLocationInRange
             foreach (var source in sourceGroups)
             {
                 /**
-                 * For a single group, use the placing location's own per-entry distance (radius) rather
+                * For a single group, use the placing location's own per-entry distance (the radius) rather
                 * than source.Item2. ExtraInfoByGroup collapses entries that share a group name down to the
                 * last one loaded, so source.Item2 would be that last entry's distance instead of this
                 * location's.So multi-group keeps per-group distances, which are authored on the group itself.
