@@ -302,7 +302,12 @@ public class HaveLocationInRange
 
     private static bool InRange(ZoneSystem zs, string prefabName, string group, Vector3 p, float radius, bool maxGroup)
     {
-        var sourceGroups = LocationExtra.GetGroups(group, maxGroup);
+        // The source (placing) location searches its advertise groups PLUS its search-only anchors, so a satellite can
+        // find a host; the target side below still uses GetGroups (advertise only), which is what keeps anchoring one-way.
+        var sourceGroups = maxGroup ? LocationExtra.GetSearchGroups(group) : LocationExtra.GetGroups(group, maxGroup);
+        // A search-only anchor type must not be satisfied by another instance of itself, so its same-prefab shortcut
+        // below is disabled and only a real advertiser counts. -Nick
+        var searchOnly = maxGroup && LocationExtra.IsSearchOnly(group);
 
         foreach (var locationInstance in zs.m_locationInstances.Values)
         {
@@ -315,7 +320,7 @@ public class HaveLocationInRange
             var distance = Vector3.Distance(locationInstance.m_position, p);
 
             // Same prefab check uses the default radius, as there is no group.
-            if (loc.m_prefab.Name == prefabName && distance < radius)
+            if (!searchOnly && loc.m_prefab.Name == prefabName && distance < radius)
                 return true;
 
             if (sourceGroups == null || targetGroups == null) continue;
@@ -328,7 +333,7 @@ public class HaveLocationInRange
                 * last one loaded, so source.Item2 would be that last entry's distance instead of this
                 * location's.So multi-group keeps per-group distances, which are authored on the group itself.
                 * */
-                var threshold = sourceGroups.Count == 1 ? radius : source.Item2; 
+                var threshold = sourceGroups.Count == 1 ? radius : source.Item2;
                 if (distance >= threshold) continue;
                 if (targetGroups.Any(target => target.Item1 == source.Item1))
                     return true;

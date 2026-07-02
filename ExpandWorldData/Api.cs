@@ -54,4 +54,14 @@ public static class Api
     {
         return LocationExtra.GetGroups(location, maxGroup);
     }
+    /**
+     Read-side accessor for a location's search-only anchor groups, the directed-anchor companion to GetLocationGroups.
+     These are the (group, distance) pairs the location must spawn NEAR without advertising into them, so a consumer
+     (LPA) can build a max-similarity search set that finds hosts while a satellite never becomes one itself. Null when
+     the location declares no anchors. -Nick
+    */
+    public static List<Tuple<string, float>>? GetAnchorGroups(ZoneSystem.ZoneLocation location)
+    {
+        return LocationExtra.GetAnchors(location);
+    }
 }

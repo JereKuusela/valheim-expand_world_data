@@ -54,6 +54,56 @@ public class LocationExtra
         return maxGroup ? extra.GroupsMax : extra.Groups;
     }
 
+    /**
+     Read-side accessor for a location's search-only anchor groups: the (group, distance) pairs it must spawn NEAR
+     without advertising into them. LPA reads this through Api.GetAnchorGroups and unions it with the advertise set
+     (GroupsMax) to build its max-similarity search set. Null for any location that declares no anchors, which collapses
+     the search set back onto the advertise set - i.e. plain symmetric groupMax behaviour. -Nick
+    */
+    public static List<Tuple<string, float>>? GetAnchors(ZoneSystem.ZoneLocation? loc)
+    {
+        if (!TryGet(loc, out var extra))
+            return null;
+        return extra.Anchors;
+    }
+
+    /**
+     Source-side resolution for the max-similarity check: the set a PLACING location searches for, i.e. its advertise
+     groups (GroupsMax) plus its search-only anchors. The target side of the check still uses GetGroups, so an existing
+     instance only ever matches on what it ADVERTISES. That asymmetry is the whole point - a satellite finds a host, but
+     two satellites never find each other. With no anchors this returns GroupsMax unchanged, so a symmetric-groupMax
+     world behaves exactly as before. -Nick
+    */
+    public static List<Tuple<string, float>>? GetSearchGroups(string group)
+    {
+        if (string.IsNullOrEmpty(group)) return null;
+        if (!ExtraInfoByGroup.TryGetValue(group, out var extra)) return null;
+        var max = extra.GroupsMax;
+        var anchors = extra.Anchors;
+        if (anchors == null || anchors.Count == 0) return max;
+        if (max == null || max.Count == 0) return anchors;
+        var combined = new List<Tuple<string, float>>(max);
+        foreach (var a in anchors)
+            if (!combined.Any(g => g.Item1 == a.Item1)) combined.Add(a);
+        return combined;
+    }
+
+    /**
+     True when a location searches anchors but advertises nothing (empty GroupsMax). The max-similarity check has a
+     same-prefab shortcut ("another instance of me is nearby, good enough") which is correct for symmetric groupMax but
+     wrong for a directed satellite: siblings share a prefab, so the shortcut would let them satisfy each other and
+     drift off their hosts. The InRange patch consults this to suppress that shortcut for search-only types and force
+     satisfaction to come from a real advertiser. -Nick
+    */
+    public static bool IsSearchOnly(string group)
+    {
+        if (string.IsNullOrEmpty(group)) return false;
+        if (!ExtraInfoByGroup.TryGetValue(group, out var extra)) return false;
+        var hasAnchors = extra.Anchors != null && extra.Anchors.Count > 0;
+        var hasAdvertise = extra.GroupsMax != null && extra.GroupsMax.Count > 0;
+        return hasAnchors && !hasAdvertise;
+    }
+
     private static DataEntry? ResolveData(LocationExtraInfo extra, string prefab, bool dungeon)
     {
         var objectData = dungeon ? extra.DungeonObjectData : extra.ObjectData;
@@ -150,6 +200,7 @@ public class LocationExtraInfo
     public string? Dungeon;
     public List<Tuple<string, float>>? Groups;
     public List<Tuple<string, float>>? GroupsMax;
+    public List<Tuple<string, float>>? Anchors;
     public Dictionary<string, List<Tuple<float, string>>>? ObjectSwaps;
     public Dictionary<string, List<Tuple<float, string>>>? DungeonObjectSwaps;
     public Dictionary<string, List<Tuple<float, DataEntry?>>>? ObjectData;
@@ -235,19 +286,20 @@ public class LocationExtraInfo
 
         var defaultMax = data.maxDistanceFromSimilar;
         if (defaultMax == 0f)
-            defaultMax = ParseFirstDistance(data.groupsMax) ?? 0f;
+            defaultMax = ParseFirstDistance(data.groupsMax) ?? ParseFirstDistance(data.anchors) ?? 0f;
         if (data.maxDistanceFromSimilar == 0f)
             data.maxDistanceFromSimilar = defaultMax;
 
         var groups = ParseGroups(data.groups, defaultMin) ?? [];
         var groupsMax = ParseGroups(data.groupsMax, defaultMax) ?? [];
+        var anchors = ParseGroups(data.anchors, defaultMax) ?? [];
 
 
 
         AddGroup(groups, data.group, defaultMin);
         AddGroup(groupsMax, data.groupMax, defaultMax);
 
-        if (groups.Count == 0 && groupsMax.Count == 0) return;
+        if (groups.Count == 0 && groupsMax.Count == 0 && anchors.Count == 0) return;
 
         /**
          Only virtualize when there are actually multiple groups. A single group keeps its real name so that
@@ -280,6 +332,22 @@ public class LocationExtraInfo
         {
             data.groupMax = groupsMax[0].Item1;
             GroupsMax = groupsMax;
+        }
+
+        /**
+         Search-only anchors: the location must spawn within range of a host that advertises the anchor group, but it
+         never advertises the group itself (I deliberately do NOT add it to groupsMax), so satellites orbit hosts without
+         seeding each other. maxDistanceFromSimilar is already primed from the first anchor distance above, which is what
+         makes vanilla actually run the max-similarity check. If the location has no real groupMax to be looked up by, I
+         mint a unique virtual handle: both vanilla and my InRange identify the placing location by its m_groupMax string,
+         and a unique handle makes GetSearchGroups resolve to THIS location's anchors instead of colliding on a shared
+         name. It advertises nothing regardless, since GroupsMax stays empty. -Nick
+        */
+        if (anchors.Count > 0)
+        {
+            Anchors = anchors;
+            if (string.IsNullOrEmpty(data.groupMax))
+                data.groupMax = CreateVirtualGroupName();
         }
     }
 
