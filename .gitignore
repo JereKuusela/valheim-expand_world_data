@@ -2,3 +2,5 @@
 Libs
 bin
 obj
+/.vs
+/.gitignore
