@@ -23,17 +23,6 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - prioritized (default: `false`): Generated first with more attempts.
 - centerFirst (default: `false`): Generating is attempted at world center, with gradually moving towards the world edge.
 - unique (default: `false`): When placed, all other unplaced locations are removed. Guaranteed maximum of one instance.
-- group: Single group name for `minDistanceFromSimilar`.
-- groups: Array of group names for `minDistanceFromSimilar`.
-  - Format is `group` or `group,distance`.
-  - If `distance` is not given, `minDistanceFromSimilar` is used.
-- minDistanceFromSimilar (default: `0` meters): Minimum distance between the same location, or locations in the `group` if given.
-- groupMax: Single group name for `maxDistanceFromSimilar`.
-- groupsMax: Array of group names for `maxDistanceFromSimilar`.
-  - Format is `group` or `group,distance`.
-  - If `distance` is not given, `maxDistanceFromSimilar` is used.
-- maxDistanceFromSimilar (default: `0` meters): Maximum distance between the same location, or locations in the `groupMax` if given.
-  - Note: This fails if the location or group doesn't exist. So you need an entry without this check to get started.
 - discoverLabel: Shown text when the location is discovered.
 - iconAlways: Location icon that is always shown. Use `ew_icons` to see what is available.
   - Format is `icon,size,pulse`.
@@ -106,6 +95,69 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - scaleUniform (default: `true`): If disabled, each axis is scaled independently.
 - pregenerate (default: `false`): If true, the zone is automatically generated, even when not explored.
   - This can be useful for Expand World Prefabs mod, if some object in the location needs to be available.
+
+## Location grouping
+
+Location placement can be grouped or spread out. There are two systems for this. EWD system was created because the original system has some limitations and potentially confusing.
+
+EWD system is one way, which means that a location can be "attracted" to another location without the other location being aware of it.
+
+Keep in mind that locations are processed in the order they are defined in the file. This means that if a location relies on another location, the other location must appear first in the file.
+
+- groups: List of groups names for `awayFrom` and `closeTo` checks.
+- awayFrom: Array of requirements. Format is `name,distance`.
+  - Name can be either group or location prefab name.
+  - If any are found, the place is not valid.
+- closeTo: Array of requirements. Format is `name,distance`.
+  - Name can be either group or location prefab name.
+  - If none are found, the place is not valid.
+
+```yaml
+# Must be at least 1000 meters away from each other.
+- prefab: LocationA
+  awayFrom:
+  - LocationA, 1000
+
+# Must be within 100 meters of LocationA.
+- prefab: LocationB
+  closeTo:
+  - LocationA, 100
+
+# Must be within 200 meters of LocationB and at least 3000 meters away from each other.
+- prefab: LocationC
+  closeTo:
+  - LocationB, 200
+  awayFrom:
+  - LocationC, 3000
+```
+
+```yaml
+- prefab: LocationA
+  groups: A, B
+
+- prefab: LocationB
+  groups: B
+  
+- prefab: LocationC
+  groups: B
+
+# Must be at least 2000 meters away from LocationA and at least 1000 meters away from LocationB+C.
+- prefab: LocationD
+  awayFrom:
+  - A, 2000
+  - B, 1000
+```
+
+Original system is two way and implicitly includes the location itself in the group. This means the location will always affect itself.
+
+- group: Group name for `minDistanceFromSimilar`.
+- minDistanceFromSimilar (default: `0` meters): Required minimum distance between the same location, or locations in the `group` if given.
+  - If any are found, the place is not valid.
+- groupMax: Group name for `maxDistanceFromSimilar`.
+- maxDistanceFromSimilar (default: `0` meters): Required maximum distance between the same location, or locations in the `groupMax` if given.
+  - If none are found, the place is not valid. You need an entry without this check to get started.
+
+EWD and original systems share the groups so they can be used together. However it is probably simpler to use only one system.
 
 ## Examples
 

@@ -9,24 +9,32 @@ namespace ExpandWorldData;
 public class LocationExtra
 {
   public static Dictionary<ZoneSystem.ZoneLocation, LocationExtraInfo> ExtraInfo = [];
-  public static Dictionary<string, LocationExtraInfo> ExtraInfoByGroup = [];
+  public static Dictionary<string, List<Tuple<string, float>>> ExtraInfoByVirtualId = [];
 
   public static void AddInfo(ZoneSystem.ZoneLocation loc, LocationYaml data, string fileName)
   {
     var extra = new LocationExtraInfo(data, fileName);
-    // Groups might update these.
+    // Distance rules may update these for compatibility.
     loc.m_minDistanceFromSimilar = data.minDistanceFromSimilar;
     loc.m_maxDistanceFromSimilar = data.maxDistanceFromSimilar;
     loc.m_group = data.group;
     loc.m_groupMax = data.groupMax;
     ExtraInfo[loc] = extra;
-    ExtraInfoByGroup[loc.m_group] = extra;
+    AddVirtualRules(loc.m_group, extra.AwayFrom);
+    AddVirtualRules(loc.m_groupMax, extra.CloseTo);
+  }
+
+  private static void AddVirtualRules(string group, List<Tuple<string, float>>? rules)
+  {
+    if (!IsVirtualGroupId(group)) return;
+    if (rules == null || rules.Count == 0) return;
+    ExtraInfoByVirtualId[group] = rules;
   }
 
   public static void ClearInfo()
   {
     ExtraInfo.Clear();
-    ExtraInfoByGroup.Clear();
+    ExtraInfoByVirtualId.Clear();
   }
 
   public static HashSet<ZoneSystem.ZoneLocation> GetNoBuilds()
@@ -34,18 +42,35 @@ public class LocationExtra
     return ExtraInfo.Where(kvp => !string.IsNullOrEmpty(kvp.Value.Data.noBuild) || !string.IsNullOrEmpty(kvp.Value.Data.noBuildDungeon)).Select(kvp => kvp.Key).ToHashSet();
   }
 
-  public static List<Tuple<string, float>>? GetGroups(ZoneSystem.ZoneLocation? loc, bool maxGroup)
+  public static bool IsVirtualGroupId(string group)
   {
-    if (!TryGet(loc, out var extra))
-      return null;
-    return maxGroup ? extra.GroupsMax : extra.Groups;
+    if (group.Length < 2) return false;
+    if (group[0] != '_') return false;
+    return int.TryParse(group.Substring(1), out _);
   }
 
-  public static List<Tuple<string, float>>? GetGroups(string group, bool maxGroup)
+  public static List<Tuple<string, float>>? GetDistanceRules(string group)
   {
     if (string.IsNullOrEmpty(group)) return null;
-    if (!ExtraInfoByGroup.TryGetValue(group, out var extra)) return null;
-    return maxGroup ? extra.GroupsMax : extra.Groups;
+    if (!ExtraInfoByVirtualId.TryGetValue(group, out var rules)) return null;
+    return rules;
+  }
+
+  public static bool MatchesTarget(ZoneSystem.ZoneLocation? location, string target)
+  {
+    if (location == null) return false;
+    if (location.m_prefab.Name == target) return true;
+    if (!TryGet(location, out var extra)) return false;
+    if (extra.Groups == null) return false;
+    return extra.Groups.Contains(target);
+  }
+  public static bool MatchesTarget(ZoneSystem.ZoneLocation? location, string prefabName, string group)
+  {
+    if (location == null) return false;
+    if (location.m_prefab.Name == prefabName) return true;
+    if (!TryGet(location, out var extra)) return false;
+    if (extra.Groups == null) return false;
+    return extra.Groups.Contains(group);
   }
 
   private static DataEntry? ResolveData(LocationExtraInfo extra, string prefab, bool dungeon)
@@ -136,14 +161,16 @@ public class LocationExtra
   }
 
 }
+
 public class LocationExtraInfo
 {
   private static int VirtualGroupId = 0;
 
   public string? ZDOData;
   public string? Dungeon;
-  public List<Tuple<string, float>>? Groups;
-  public List<Tuple<string, float>>? GroupsMax;
+  public HashSet<string> Groups;
+  public List<Tuple<string, float>>? AwayFrom;
+  public List<Tuple<string, float>>? CloseTo;
   public Dictionary<string, List<Tuple<float, string>>>? ObjectSwaps;
   public Dictionary<string, List<Tuple<float, string>>>? DungeonObjectSwaps;
   public Dictionary<string, List<Tuple<float, DataEntry?>>>? ObjectData;
@@ -156,7 +183,13 @@ public class LocationExtraInfo
   public LocationExtraInfo(LocationYaml data, string fileName)
   {
     Data = data;
-    LoadGroups(data);
+    Groups = ParseMembership(data.groups);
+    if (data.group != "")
+      Groups.Add(data.group);
+    if (data.groupMax != "")
+      Groups.Add(data.groupMax);
+
+    LoadDistanceRules(data, fileName);
     if (data.data != "")
       ZDOData = data.data;
     if (data.dungeon != "")
@@ -176,40 +209,35 @@ public class LocationExtraInfo
       Scale = scale;
   }
 
-  private static float? ParseFirstDistance(string[]? groups)
+  private static List<Tuple<string, float>>? ParseDistanceRules(string[]? rules, string fieldName, string fileName)
   {
-    if (groups == null) return null;
-    foreach (var entry in groups)
-    {
-      var kvp = Parse.Kvp(entry);
-      if (string.IsNullOrEmpty(kvp.Key)) continue;
-      if (string.IsNullOrEmpty(kvp.Value)) continue;
-      return Parse.Float(kvp.Value);
-    }
-    return null;
-  }
-
-  private static List<Tuple<string, float>>? ParseGroups(string[]? groups, float defaultDistance)
-  {
-    if (groups == null) return null;
+    if (rules == null) return null;
     var parsed = new List<Tuple<string, float>>();
-    foreach (var entry in groups)
+    foreach (var entry in rules)
     {
       var kvp = Parse.Kvp(entry);
-      var group = kvp.Key.Trim();
-      if (group == "") continue;
-      var distance = kvp.Value == "" ? defaultDistance : Parse.Float(kvp.Value, defaultDistance);
-      parsed.Add(new(group, distance));
+      var target = kvp.Key.Trim();
+      if (target == "") continue;
+      if (kvp.Value == "")
+      {
+        Log.Warning($"{fileName}: Invalid {fieldName} value '{entry}', expected 'target,distance'.");
+        continue;
+      }
+      if (!Parse.TryFloat(kvp.Value, out var distance))
+      {
+        Log.Warning($"{fileName}: Invalid {fieldName} distance '{kvp.Value}' in value '{entry}'.");
+        continue;
+      }
+      parsed.Add(new(target, distance));
     }
     if (parsed.Count == 0) return null;
     return parsed;
   }
 
-  private static void AddGroup(List<Tuple<string, float>> groups, string group, float distance)
+  private static HashSet<string> ParseMembership(string groups)
   {
-    if (group == "") return;
-    if (groups.Any(g => g.Item1 == group)) return;
-    groups.Add(new(group, distance));
+    if (groups == "") return [];
+    return [.. Parse.Split(groups).Where(group => group != "")];
   }
 
   // Group check uses location prefab name which is not distinct, so group name is used instead for unique identifier.
@@ -219,41 +247,25 @@ public class LocationExtraInfo
     return $"_{VirtualGroupId}";
   }
 
-  private void LoadGroups(LocationYaml data)
+  private void LoadDistanceRules(LocationYaml data, string fileName)
   {
-    var defaultMin = data.minDistanceFromSimilar;
-    if (defaultMin == 0f)
-      defaultMin = ParseFirstDistance(data.groups) ?? 0f;
-    if (data.minDistanceFromSimilar == 0f)
-      data.minDistanceFromSimilar = defaultMin;
 
-    var defaultMax = data.maxDistanceFromSimilar;
-    if (defaultMax == 0f)
-      defaultMax = ParseFirstDistance(data.groupsMax) ?? 0f;
-    if (data.maxDistanceFromSimilar == 0f)
-      data.maxDistanceFromSimilar = defaultMax;
+    var awayFrom = ParseDistanceRules(data.awayFrom, nameof(data.awayFrom), fileName);
+    var closeTo = ParseDistanceRules(data.closeTo, nameof(data.closeTo), fileName);
 
-    var groups = ParseGroups(data.groups, defaultMin) ?? [];
-    var groupsMax = ParseGroups(data.groupsMax, defaultMax) ?? [];
-
-
-
-    AddGroup(groups, data.group, defaultMin);
-    AddGroup(groupsMax, data.groupMax, defaultMax);
-
-    if (groups.Count == 0 && groupsMax.Count == 0) return;
-    // Virtual group is used as identifier so can be shared.
-    var virtualGroup = CreateVirtualGroupName();
-    if (groups.Count > 0)
+    if (awayFrom != null)
     {
-      data.group = virtualGroup;
-      Groups = groups;
+      data.group = CreateVirtualGroupName();
+      // Must be greater than zero to be considered.
+      data.minDistanceFromSimilar = 1f;
+      AwayFrom = awayFrom;
     }
-
-    if (groupsMax.Count > 0)
+    if (closeTo != null)
     {
-      data.groupMax = virtualGroup;
-      GroupsMax = groupsMax;
+      data.groupMax = CreateVirtualGroupName();
+      // Must be greater than zero to be considered.
+      data.maxDistanceFromSimilar = 1f;
+      CloseTo = closeTo;
     }
   }
 

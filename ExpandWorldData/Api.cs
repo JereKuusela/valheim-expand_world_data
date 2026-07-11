@@ -1,4 +1,7 @@
 
+using System;
+using System.Collections.Generic;
+
 namespace ExpandWorldData;
 
 public static class Api
@@ -40,5 +43,24 @@ public static class Api
   public static void ChangeWorld(WorldYaml data, int index)
   {
     WorldManager.AddWorld(data, index);
+  }
+
+  // Returns all groups that the location belongs to.
+  public static HashSet<string> GetLocationGroups(ZoneSystem.ZoneLocation location)
+  {
+    if (!LocationExtra.TryGet(location, out var data)) return [];
+    return data.Groups;
+  }
+  // Returns minimum distance rules for the location, or null when vanilla logic is used.
+  public static List<Tuple<string, float>>? GetLocationAwayFrom(ZoneSystem.ZoneLocation location)
+  {
+    if (!LocationExtra.TryGet(location, out var data)) return null;
+    return data.AwayFrom;
+  }
+  // Returns maximum distance rules for the location, or null when vanilla logic is used.
+  public static List<Tuple<string, float>>? GetLocationCloseTo(ZoneSystem.ZoneLocation location)
+  {
+    if (!LocationExtra.TryGet(location, out var data)) return null;
+    return data.CloseTo;
   }
 }

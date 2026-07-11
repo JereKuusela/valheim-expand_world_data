@@ -5,10 +5,7 @@ using System.IO;
 using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
-using UnityEngine;
-using YamlDotNet.Core;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.Converters;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace Service;

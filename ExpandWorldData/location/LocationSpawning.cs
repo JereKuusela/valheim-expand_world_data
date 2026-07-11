@@ -294,38 +294,67 @@ public class CreateLocalZones
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange))]
 public class HaveLocationInRange
 {
-  static bool Prefix(ref bool __result, ZoneSystem __instance, string prefabName, string group, Vector3 p, float radius, bool maxGroup)
+  static bool Prefix(ref bool __result, ZoneSystem __instance, string prefabName, string group, Vector3 p, float radius)
   {
-    __result = InRange(__instance, prefabName, group, p, radius, maxGroup);
+    var isVirtual = LocationExtra.IsVirtualGroupId(group);
+    if (isVirtual)
+    {
+      var rules = LocationExtra.GetDistanceRules(group);
+      __result = InRange(__instance, p, rules);
+    }
+    else
+    {
+      __result = InRange(__instance, p, prefabName, group, radius);
+    }
     return false;
   }
 
-  private static bool InRange(ZoneSystem zs, string prefabName, string group, Vector3 p, float radius, bool maxGroup)
+  private static List<System.Tuple<string, float>> ParseLegacyRules(string prefabName, string group, float radius)
   {
-    var sourceGroups = LocationExtra.GetGroups(group, maxGroup);
+    List<System.Tuple<string, float>> rules = [new(prefabName, radius)];
+    if (!string.IsNullOrEmpty(group))
+      rules.Add(new(group, radius));
+    return rules;
+  }
+
+  private static bool InRange(ZoneSystem zs, Vector3 p, List<System.Tuple<string, float>>? rules)
+  {
+    if (rules == null || rules.Count == 0) return false;
 
     foreach (var locationInstance in zs.m_locationInstances.Values)
     {
       var loc = locationInstance.m_location;
-      var targetGroups = LocationExtra.GetGroups(loc, maxGroup);
+      if (loc == null)
+        continue;
 
-      // Early exit to avoid pointless distance calculation (most locations don't have groups).
-      if (loc.m_prefab.Name != prefabName && targetGroups == null) continue;
-
-      var distance = Vector3.Distance(locationInstance.m_position, p);
-
-      // Same prefab check uses the default radius, as there is no group.
-      if (loc.m_prefab.Name == prefabName && distance < radius)
-        return true;
-
-      if (sourceGroups == null || targetGroups == null) continue;
-
-      foreach (var source in sourceGroups)
+      foreach (var rule in rules)
       {
-        if (distance >= source.Item2) continue;
-        if (targetGroups.Any(target => target.Item1 == source.Item1))
+        var matches = LocationExtra.MatchesTarget(loc, rule.Item1);
+        if (!matches)
+          continue;
+        var distance = Vector3.Distance(locationInstance.m_position, p);
+        if (distance < rule.Item2)
           return true;
       }
+    }
+    return false;
+  }
+
+
+  private static bool InRange(ZoneSystem zs, Vector3 p, string prefabName, string group, float radius)
+  {
+    foreach (var locationInstance in zs.m_locationInstances.Values)
+    {
+      var loc = locationInstance.m_location;
+      if (loc == null)
+        continue;
+
+      var matches = LocationExtra.MatchesTarget(loc, prefabName, group);
+      if (!matches)
+        continue;
+      var distance = Vector3.Distance(locationInstance.m_position, p);
+      if (distance < radius)
+        return true;
     }
     return false;
   }
