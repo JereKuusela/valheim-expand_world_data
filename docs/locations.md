@@ -98,11 +98,11 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 
 ## Location grouping
 
-Location placement can be grouped or spread out. There are two systems for this. EWD system was created because the original system has some limitations and potentially confusing.
+Location placement can be grouped or spread out. There are two systems for this. EWD system was created because the original system has some limitations and can be confusing.
 
 EWD system is one way, which means that a location can be "attracted" to another location without the other location being aware of it.
 
-Keep in mind that locations are processed in the order they are defined in the file. This means that if a location relies on another location, the other location must appear first in the file.
+Keep in mind that locations are processed in load order. This means that if a location relies on another location, the other location must appear first. If multiple `expand_locations*.yaml` files are used, their relative load order also matters.
 
 - groups: List of groups names for `awayFrom` and `closeTo` checks.
 - awayFrom: Array of requirements. Format is `name,distance`.
@@ -148,7 +148,7 @@ Keep in mind that locations are processed in the order they are defined in the f
   - B, 1000
 ```
 
-Original system is two way and implicitly includes the location itself in the group. This means the location will always affect itself.
+Original system is effectively two way and implicitly includes the location itself in the group. This means the location will always affect itself.
 
 - group: Group name for `minDistanceFromSimilar`.
 - minDistanceFromSimilar (default: `0` meters): Required minimum distance between the same location, or locations in the `group` if given.
@@ -157,18 +157,9 @@ Original system is two way and implicitly includes the location itself in the gr
 - maxDistanceFromSimilar (default: `0` meters): Required maximum distance between the same location, or locations in the `groupMax` if given.
   - If none are found, the place is not valid. You need an entry without this check to get started.
 
-EWD and original systems share the groups so they can be used together. However it is probably simpler to use only one system.
+EWD and original systems share the groups so they can be used together. However only use one system for each entry.
 
 ## Examples
-
-Multiple minimum distance groups (location must be away from all of these groups):
-
-```yaml
-- prefab: Runestone_Greydwarfs
-  groups:
-  - Runestones, 250
-  - Boo, 100
-```
 
 Placed icon configuration:
 
