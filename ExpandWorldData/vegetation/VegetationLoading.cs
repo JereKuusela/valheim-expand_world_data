@@ -31,27 +31,45 @@ public class VegetationLoading
     DefaultKeys.Clear();
     if (Helper.IsServer())
       SetDefaultEntries();
-    Load();
   }
-  public static void Load()
+
+  public static void CreateConfigs()
+  {
+    if (Helper.IsClient()) return;
+    if (!Configuration.DataVegetation) return;
+    if (File.Exists(FilePath)) return;
+    ToFile();
+  }
+
+  public static void ReadConfigs()
+  {
+    if (Helper.IsClient()) return;
+    if (!Configuration.DataVegetation)
+    {
+      Apply(DefaultEntries);
+      return;
+    }
+    if (!File.Exists(FilePath))
+      ToFile(); // Watcher will trigger reload.
+    else
+      Apply(FromFile());
+  }
+
+  public static void CleanUp()
   {
     VegetationSpawning.Extra.Clear();
     VegetationSpawning.Prefabs.Clear();
-    if (Helper.IsClient()) return;
+  }
+
+  private static void Apply(List<ZoneSystem.ZoneVegetation> data)
+  {
+    CleanUp();
     ZoneSystem.instance.m_vegetation = DefaultEntries;
     if (!Configuration.DataVegetation)
     {
       Log.Info($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
       return;
     }
-    if (!File.Exists(FilePath))
-    {
-      ToFile();
-      // Watcher triggers reload.
-      return;
-    }
-
-    var data = FromFile();
     if (data.Count == 0)
     {
       Log.Warning($"Failed to load any vegetation data.");
@@ -296,6 +314,6 @@ public class VegetationLoading
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, Load);
+    Yaml.SetupWatcher(Pattern, ReadConfigs);
   }
 }

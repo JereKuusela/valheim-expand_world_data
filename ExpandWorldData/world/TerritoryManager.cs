@@ -10,6 +10,22 @@ public class TerritoryManager
   public static string FileName = "expand_territories.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_territories*.yaml";
+  private static bool Initialized;
+  private static bool Pending;
+
+  public static void Load()
+  {
+    Initialized = true;
+    if (!Pending) return;
+    Pending = false;
+    Set(Configuration.valueTerritoryData.Value);
+  }
+
+  public static void CleanUp()
+  {
+    Initialized = false;
+    Pending = false;
+  }
 
   private static readonly Dictionary<string, TerritoryYaml> ExtraTerritoryYamls = [];
 
@@ -26,17 +42,16 @@ public class TerritoryManager
   private static readonly Dictionary<string, TerritoryData> Data = [];
   public static bool TryGetData(string territory, out TerritoryData data) => Data.TryGetValue(Normalize(territory), out data);
 
-  public static void ToFile()
+  public static void CreateConfigs()
   {
     if (Helper.IsClient() || !Configuration.DataTerritory) return;
     if (File.Exists(FilePath)) return;
     if (ExtraTerritoryYamls.Count == 0) return;
     var yaml = Yaml.Serializer().Serialize(ExtraTerritoryYamls.Values);
     File.WriteAllText(FilePath, yaml);
-    FromFile();
   }
 
-  public static void FromFile()
+  public static void ReadConfigs()
   {
     if (Helper.IsClient()) return;
     var yaml = Configuration.DataTerritory ? DataManager.Read<TerritoryYaml, TerritoryYaml>(Pattern, From) : "";
@@ -72,6 +87,11 @@ public class TerritoryManager
 
   private static void Set(string yaml)
   {
+    if (!Initialized)
+    {
+      Pending = true;
+      return;
+    }
     Data.Clear();
     if (yaml == "" || !Configuration.DataTerritory) return;
     var rawData = Parse(yaml);
@@ -90,7 +110,7 @@ public class TerritoryManager
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, FromFile);
+    Yaml.SetupWatcher(Pattern, ReadConfigs);
   }
 
   private static string Normalize(string value) => value.Trim().ToLowerInvariant();

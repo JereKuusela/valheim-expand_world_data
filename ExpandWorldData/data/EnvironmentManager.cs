@@ -11,8 +11,35 @@ public class EnvironmentManager
   public static string FileName = "expand_environments.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_environments*.yaml";
+  private static bool Initialized;
+  private static bool Pending;
   private static Dictionary<string, EnvSetup> Originals = [];
   public static Dictionary<string, EnvironmentData> Extra = [];
+
+  public static void Initialize()
+  {
+    var newOriginals = LocationList.m_allLocationLists
+      .Select(list => list.m_environments)
+      .Append(EnvMan.instance.m_environments)
+      .SelectMany(list => list).ToLookup(env => env.m_name, env => env).ToDictionary(kvp => kvp.Key, kvp => kvp.First());
+    // Needs to be set once per world. This can be checked detected by checking location lists.
+    if (newOriginals.Count > 0) Originals = newOriginals;
+  }
+
+  public static void Load()
+  {
+    Initialized = true;
+    if (!Pending) return;
+    Pending = false;
+    Set(Configuration.valueEnvironmentData.Value);
+  }
+
+  public static void CleanUp()
+  {
+    Initialized = false;
+    Pending = false;
+  }
+
   public static EnvSetup FromData(EnvironmentYaml data, string fileName)
   {
     EnvSetup env = new() { m_psystems = [] };
@@ -113,29 +140,35 @@ public class EnvironmentManager
     return data;
   }
 
-  public static void ToFile()
+  public static void CreateConfigs()
   {
     if (Helper.IsClient() || !Configuration.DataEnvironments) return;
     if (File.Exists(FilePath)) return;
     Save(EnvMan.instance.m_environments, false);
   }
-  public static void FromFile()
+
+  public static void ReadConfigs()
   {
     if (Helper.IsClient()) return;
-    SetOriginals();
-    var yaml = Configuration.DataEnvironments ? DataManager.Read<EnvironmentYaml, EnvSetup>(Pattern, FromData) : "";
-    Configuration.valueEnvironmentData.Value = yaml;
-    Set(yaml);
-  }
-
-  private static void SetOriginals()
-  {
-    var newOriginals = LocationList.m_allLocationLists
-      .Select(list => list.m_environments)
-      .Append(EnvMan.instance.m_environments)
-      .SelectMany(list => list).ToLookup(env => env.m_name, env => env).ToDictionary(kvp => kvp.Key, kvp => kvp.First());
-    // Needs to be set once per world. This can be checked detected by checking location lists.
-    if (newOriginals.Count > 0) Originals = newOriginals;
+    if (Configuration.DataEnvironments)
+    {
+      if (File.Exists(FilePath))
+      {
+        var yaml = DataManager.Read<EnvironmentYaml, EnvSetup>(Pattern, FromData);
+        Configuration.valueEnvironmentData.Value = yaml;
+        Set(yaml);
+      }
+      else
+      {
+        // Watcher will trigger reload.
+        CreateConfigs();
+      }
+    }
+    else
+    {
+      Configuration.valueEnvironmentData.Value = "";
+      Set("");
+    }
   }
   public static void FromSetting(string yaml)
   {
@@ -143,7 +176,11 @@ public class EnvironmentManager
   }
   private static void Set(string yaml)
   {
-    SetOriginals();
+    if (!Initialized)
+    {
+      Pending = true;
+      return;
+    }
     Extra.Clear();
     if (yaml == "" || !Configuration.DataEnvironments) return;
     try
@@ -218,6 +255,6 @@ public class EnvironmentManager
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, FromFile);
+    Yaml.SetupWatcher(Pattern, ReadConfigs);
   }
 }

@@ -145,22 +145,41 @@ public class LocationLoading
       DefaultEntries = ZoneSystem.instance.m_locations;
       Locations = Helper.ToDict(DefaultEntries, l => l.m_prefab.Name, l => l);
     }
-    Load();
   }
-  public static void Load()
+
+  public static void CreateConfigs()
+  {
+    if (Helper.IsClient()) return;
+    if (!Configuration.DataLocation) return;
+    if (File.Exists(FilePath)) return;
+    ToFile();
+  }
+
+  public static void ReadConfigs()
+  {
+    if (Helper.IsClient()) return;
+    if (!Configuration.DataLocation)
+    {
+      Apply(DefaultEntries);
+      return;
+    }
+    if (!File.Exists(FilePath))
+      ToFile(); // Watcher will trigger reload.
+    else
+      Apply(FromFile());
+  }
+
+  public static void CleanUp()
   {
     LocationExtra.ClearInfo();
-    if (Helper.IsClient()) return;
+  }
+
+  private static void Apply(List<ZoneSystem.ZoneLocation> data)
+  {
+    CleanUp();
     ZoneSystem.instance.m_locations = DefaultEntries;
     if (Configuration.DataLocation)
     {
-      if (!File.Exists(FilePath))
-      {
-        ToFile();
-        // Watcher triggers reload.
-        return;
-      }
-      var data = FromFile();
       if (data.Count == 0)
       {
         Log.Warning($"Failed to load any location data.");
@@ -299,7 +318,7 @@ public class LocationLoading
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, Load);
+    Yaml.SetupWatcher(Pattern, ReadConfigs);
   }
 }
 

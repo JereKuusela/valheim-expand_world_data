@@ -32,9 +32,9 @@ public class InitializeWorld
   {
     WorldInfo.CheckPatches(EWD.Harmony);
     // Only called for server so no need to check.
-    BiomeManager.FromFile();
-    TerritoryManager.FromFile();
-    WorldManager.FromFile();
+    BiomeManager.ReadConfigs();
+    TerritoryManager.ReadConfigs();
+    WorldManager.ReadConfigs();
   }
 }
 
@@ -45,26 +45,46 @@ public class InitializeContent
   static void Postfix()
   {
     AddEmptyAssetReference();
+    ZoneSystem.instance.m_locations = [.. ZoneSystem.instance.m_locations.Where(loc => loc.m_prefab.IsValid)];
+
+    // 1) Initialize managers that need original data snapshots.
+    EnvironmentManager.Initialize();
+    // Clutter must be here because since SetupLocations adds prefabs to the list.
+    ClutterManager.Initialize();
+    VegetationLoading.Initialize();
+    LocationLoading.Initialize();
+
+    // 2) Create config files on server.
     if (Helper.IsServer())
     {
+      EnvironmentManager.CreateConfigs();
+      BiomeManager.CreateConfigs();
+      TerritoryManager.CreateConfigs();
+      WorldManager.CreateConfigs();
+      ClutterManager.CreateConfigs();
+      VegetationLoading.CreateConfigs();
+      LocationLoading.CreateConfigs();
+
+      // 3) Read configs on server. Managers are still gated by Initialized flag.
       DataLoading.LoadEntries();
-      EnvironmentManager.ToFile();
-
-      EnvironmentManager.FromFile();
-      BiomeManager.LoadEnvironments();
-      BiomeManager.ToFile();
-      TerritoryManager.ToFile();
-      WorldManager.ToFile();
-
-      // These are here to not have to clear location lists (slightly better compatibility).
-      VegetationLoading.Initialize();
+      EnvironmentManager.ReadConfigs();
+      BiomeManager.ReadConfigs();
+      TerritoryManager.ReadConfigs();
+      WorldManager.ReadConfigs();
+      ClutterManager.ReadConfigs();
+      VegetationLoading.ReadConfigs();
+      LocationLoading.ReadConfigs();
 
       // Dungeon and room data is handled elsewhere.
     }
-    // Clutter must be here because since SetupLocations adds prefabs to the list.
-    ClutterManager.Initialize();
-    ZoneSystem.instance.m_locations = ZoneSystem.instance.m_locations.Where(loc => loc.m_prefab.IsValid).ToList();
-    LocationLoading.Initialize();
+
+    // 4) Load for both server and client.
+    EnvironmentManager.Load();
+    BiomeManager.Load();
+    TerritoryManager.Load();
+    WorldManager.Load();
+    NoBuildManager.Load();
+    ClutterManager.Load();
   }
 
   // Blueprints will use empty asset, which must be added to prevent errors.
@@ -96,15 +116,24 @@ public class InitializeContent
   }
 }
 
-[HarmonyPatch(typeof(SpawnSystem), nameof(SpawnSystem.UpdateSpawning))]
-public class Spawn_WaitForConfigSync
+[HarmonyPatch(typeof(ZNet), nameof(ZNet.Shutdown))]
+public class CleanupOnShutdown
 {
-  static bool Prefix() => DataManager.IsReady;
+  static void Postfix()
+  {
+    NoBuildManager.CleanUp();
+    WorldManager.CleanUp();
+    TerritoryManager.CleanUp();
+    BiomeManager.CleanUp();
+    EnvironmentManager.CleanUp();
+    ClutterManager.CleanUp();
+    LocationLoading.CleanUp();
+    VegetationLoading.CleanUp();
+  }
 }
+
 public class DataManager : MonoBehaviour
 {
-  public static bool IsReady => EWD.ConfigSync.IsSourceOfTruth || EWD.ConfigSync.InitialSyncDone;
-
   private static readonly Heightmap.Biome DefaultMax =
     Heightmap.Biome.AshLands | Heightmap.Biome.BlackForest | Heightmap.Biome.DeepNorth |
     Heightmap.Biome.Meadows | Heightmap.Biome.Mistlands | Heightmap.Biome.Mountain |

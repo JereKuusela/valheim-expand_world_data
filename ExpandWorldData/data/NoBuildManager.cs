@@ -17,6 +17,23 @@ public class NoBuildData
 
 public class NoBuildManager
 {
+  private static bool Initialized;
+  private static bool Pending;
+
+  public static void Load()
+  {
+    Initialized = true;
+    if (!Pending) return;
+    Pending = false;
+    Apply(Configuration.valueNoBuildData.Value);
+  }
+
+  public static void CleanUp()
+  {
+    Initialized = false;
+    Pending = false;
+    NoBuild.Clear();
+  }
 
   public static void UpdateData()
   {
@@ -76,8 +93,13 @@ public class NoBuildManager
     var territory = BiomeCalculator.GetTerritory(point.x, point.z);
     return territory != null && territory.noBuild;
   }
-  public static void Load(string yaml)
+  public static void Apply(string yaml)
   {
+    if (!Initialized)
+    {
+      Pending = true;
+      return;
+    }
     if (yaml == "") return;
     try
     {

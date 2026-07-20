@@ -95,13 +95,13 @@ public partial class Configuration
     section = "2. Features";
 
     configDistanceWiggleLength = wrapper.BindFloat(section, "Distance wiggle length", 500f, false);
-    configDistanceWiggleLength.SettingChanged += (s, e) => WorldManager.FromFile();
+    configDistanceWiggleLength.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configDistanceWiggleWidth = wrapper.BindFloat(section, "Distance wiggle width", 0.01f, false);
-    configDistanceWiggleWidth.SettingChanged += (s, e) => WorldManager.FromFile();
+    configDistanceWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configWiggleFrequency = wrapper.BindFloat(section, "Wiggle frequency", 20f, false, "How many wiggles are per each circle.");
-    configWiggleFrequency.SettingChanged += (s, e) => WorldManager.FromFile();
+    configWiggleFrequency.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, false, "How many meters are the wiggles.");
-    configWiggleWidth.SettingChanged += (s, e) => WorldManager.FromFile();
+    configWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configScaleLocationAltitudeRequirement = wrapper.Bind(section, "Scale location altitude requirement", false, false, "If true, location requirements are scaled based on the biome altitude delta and multiplier.");
     configCustomWaterColor = wrapper.Bind(section, "Custom water color", false, false, "If true, custom water color system is enabled.");
 
@@ -116,7 +116,7 @@ public partial class Configuration
     configDataTerritory = wrapper.Bind(section, "Territory data", true, true, "Use territory data");
     configDataTerritory.SettingChanged += (s, e) => TerritoryManager.FromSetting(valueTerritoryData.Value);
     configDataClutter = wrapper.Bind(section, "Clutter data", true, false, "Use clutter data");
-    configDataClutter.SettingChanged += (s, e) => ClutterManager.FromFile();
+    configDataClutter.SettingChanged += (s, e) => ClutterManager.ReadConfigs();
     configDataDungeons = wrapper.Bind(section, "Dungeon data", true, false, "Use dungeon data");
     configDataDungeons.SettingChanged += (s, e) => Dungeon.Loader.Load();
     configDataRooms = wrapper.Bind(section, "Room data", true, false, "Use dungeon room data");
@@ -124,13 +124,13 @@ public partial class Configuration
     configDataWorld = wrapper.Bind(section, "World data", true, true, "Use world data");
     configDataWorld.SettingChanged += (s, e) => WorldManager.FromSetting(valueWorldData.Value);
     configDataLocation = wrapper.Bind(section, "Location data", true, false, "Use location data");
-    configDataLocation.SettingChanged += (s, e) => LocationLoading.Load();
+    configDataLocation.SettingChanged += (s, e) => LocationLoading.ReadConfigs();
     configDataVegetation = wrapper.Bind(section, "Vegetation data", true, false, "Use vegetation data");
-    configDataVegetation.SettingChanged += (s, e) => VegetationLoading.Load();
+    configDataVegetation.SettingChanged += (s, e) => VegetationLoading.ReadConfigs();
     configBlueprintFolder = wrapper.Bind(section, "Blueprint folder", "PlanBuild", false, "Folder relative to the config folder.");
 
     valueNoBuildData = wrapper.AddValue("no_build_data");
-    valueNoBuildData.ValueChanged += () => NoBuildManager.Load(valueNoBuildData.Value);
+    valueNoBuildData.ValueChanged += () => NoBuildManager.Apply(valueNoBuildData.Value);
     valueEnvironmentData = wrapper.AddValue("environment_data");
     valueEnvironmentData.ValueChanged += () => EnvironmentManager.FromSetting(valueEnvironmentData.Value);
     valueBiomeData = wrapper.AddValue("biome_data");

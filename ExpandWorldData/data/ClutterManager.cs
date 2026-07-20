@@ -16,27 +16,32 @@ public class ClutterManager
   private static readonly List<ClutterYaml> ExtraClutterYamls = [];
   private static List<ClutterSystem.Clutter> DefaultEntries = [];
   private static Dictionary<string, GameObject> Prefabs = [];
+  private static bool Initialized;
+  private static bool Pending;
   public static void AddClutter(ClutterYaml yaml)
   {
     ExtraClutterYamls.Add(yaml);
   }
-  private static void ToFile()
+  private static void SaveDefaultFile()
   {
     var data = DefaultEntries.Select(ToData).ToList();
     if (ExtraClutterYamls.Count > 0)
       data.AddRange(ExtraClutterYamls);
     Save(data, false);
   }
+
   public static void Initialize()
   {
     Prefabs = Helper.ToDict(ClutterSystem.instance.m_clutter, item => item.m_prefab.name, item => item.m_prefab);
     DefaultEntries = [.. ClutterSystem.instance.m_clutter];
-    if (Helper.IsServer())
-    {
-      if (!File.Exists(FilePath))
-        ToFile();
-      FromFile();
-    }
+  }
+
+  public static void Load()
+  {
+    Initialized = true;
+    if (!Pending) return;
+    Pending = false;
+    Set(Configuration.valueClutterData.Value);
   }
   public static ClutterSystem.Clutter FromData(ClutterYaml data, string fileName)
   {
@@ -108,15 +113,43 @@ public class ClutterManager
     return data;
   }
 
-  public static void FromFile()
+  public static void CreateConfigs()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataClutter ? DataManager.Read<ClutterYaml, ClutterSystem.Clutter>(Pattern, FromData) : "";
-    Configuration.valueClutterData.Value = yaml;
+    if (!Configuration.DataClutter) return;
+    if (File.Exists(FilePath)) return;
+    SaveDefaultFile();
+  }
+
+  public static void ReadConfigs()
+  {
+    if (Helper.IsClient()) return;
+    if (Configuration.DataClutter)
+    {
+      if (File.Exists(FilePath))
+      {
+        var yaml = DataManager.Read<ClutterYaml, ClutterSystem.Clutter>(Pattern, FromData);
+        Configuration.valueClutterData.Value = yaml;
+      }
+      else
+      {
+        // Watcher will trigger reload.
+        CreateConfigs();
+      }
+    }
+    else
+    {
+      Configuration.valueClutterData.Value = "";
+    }
   }
 
   public static void Set(string yaml)
   {
+    if (!Initialized)
+    {
+      Pending = true;
+      return;
+    }
     if (!TryParseYaml(yaml, out var data)) return;
     ClutterSystem.instance.m_clutter.Clear();
     foreach (var clutter in data)
@@ -194,6 +227,12 @@ public class ClutterManager
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, FromFile);
+    Yaml.SetupWatcher(Pattern, ReadConfigs);
+  }
+
+  public static void CleanUp()
+  {
+    Initialized = false;
+    Pending = false;
   }
 }

@@ -1,3 +1,6 @@
+- v1.67
+  - Fixes data loading issue for heavily modded game clients. Thanks Safwan!
+
 - v1.66
   - Fixes "distance from similar" for location clones.
 
@@ -15,6 +18,3 @@
 - v1.63
   - Adds new field `pregenerate` to location data, which allows forcing the zone to be generated even when not explored.
   - Fixes vanilla issue of player not cooling down on non-hot biomes (e.g. Ashlands). Now the heat level resets to zero.
-
-- v1.62
-  - Fixes data system not working for components (was case sensitive, now correctly case insensitive).

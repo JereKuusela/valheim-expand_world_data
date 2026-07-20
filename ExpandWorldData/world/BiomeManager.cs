@@ -113,7 +113,7 @@ public class BiomeManager
     };
   }
 
-  public static void ToFile()
+  public static void CreateConfigs()
   {
     if (Helper.IsClient() || !Configuration.DataBiome) return;
     if (File.Exists(FilePath)) return;
@@ -123,14 +123,31 @@ public class BiomeManager
     File.WriteAllText(FilePath, yaml);
     // Biomes are important so that other files work, so this guarantees that custom biomes get loaded.
     if (ExtraBiomeYamls.Count > 0)
-      FromFile();
+      ReadConfigs();
   }
-  public static void FromFile()
+
+  public static void ReadConfigs()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataBiome ? DataManager.Read<BiomeYaml, BiomeYaml>(Pattern, From) : "";
-    Configuration.valueBiomeData.Value = yaml;
-    Set(yaml);
+    if (Configuration.DataBiome)
+    {
+      if (File.Exists(FilePath))
+      {
+        var yaml = DataManager.Read<BiomeYaml, BiomeYaml>(Pattern, From);
+        Configuration.valueBiomeData.Value = yaml;
+        Set(yaml);
+      }
+      else
+      {
+        // Watcher will trigger reload.
+        CreateConfigs();
+      }
+    }
+    else
+    {
+      Configuration.valueBiomeData.Value = "";
+      Set("");
+    }
   }
   public static void NamesFromFile()
   {
@@ -185,6 +202,23 @@ public class BiomeManager
     NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLowerInvariant(), kvp => kvp.Key);
   }
   private static List<BiomeEnvSetup> Environments = [];
+  private static bool Initialized;
+  private static bool Pending;
+
+  public static void Load()
+  {
+    Initialized = true;
+    if (!Pending) return;
+    Pending = false;
+    Set(Configuration.valueBiomeData.Value);
+  }
+
+  public static void CleanUp()
+  {
+    Initialized = false;
+    Pending = false;
+  }
+
   private static void Load(string yaml)
   {
     if (yaml == "" || !Configuration.DataBiome) return;
@@ -246,19 +280,17 @@ public class BiomeManager
     });
     BiomeForestMultiplier = rawData.Any(data => data.forestMultiplier != 1f);
     Environments = [.. rawData.Select(d => FromData(d, EnvKeys, "Biomes"))];
-    UsedGlobalKeys = EnvKeys.Values
+    UsedGlobalKeys = [.. EnvKeys.Values
       .SelectMany(data => data.requiredGlobalKeys.Concat(data.forbiddenGlobalKeys))
       .Where(key => key != null && key != "")
-      .Select(NormalizeKey)
-      .ToHashSet();
-    // This tracks if content (environments) have been loaded.
-    if (ZoneSystem.instance.m_locationsByHash.Count > 0)
-      LoadEnvironments();
+      .Select(NormalizeKey)];
+    LoadEnvironments();
     EWD.Instance.InvokeRegenerate();
   }
   public static void LoadEnvironments()
   {
     if (!Configuration.DataBiome || Environments.Count == 0) return;
+
     SetupBiomeEnvs(Environments);
   }
   private static void SetupBiomeEnvs(List<BiomeEnvSetup> data)
@@ -290,6 +322,11 @@ public class BiomeManager
   }
   private static void Set(string yaml)
   {
+    if (!Initialized)
+    {
+      Pending = true;
+      return;
+    }
     Load(yaml);
   }
   public static void SetupWatcher()
@@ -297,7 +334,7 @@ public class BiomeManager
     static void callback()
     {
       if (ZNet.m_instance == null) NamesFromFile();
-      else FromFile();
+      else ReadConfigs();
     }
     Yaml.SetupWatcher(Pattern, callback);
   }
