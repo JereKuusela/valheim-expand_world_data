@@ -1,4 +1,7 @@
 - v1.67
+  - BREAKING CHANGE: Changes `groups` field to just be a list of groups instead of multiple "min distance from similar".
+  - BREAKING CHANGE: Removes `groupsMax` field as obsolete.
+  - Adds new fields `closeTo` and `awayFrom` as a separate system to group up or disperse locations.
   - Fixes data loading issue for heavily modded game clients. Thanks Safwan!
 
 - v1.66
