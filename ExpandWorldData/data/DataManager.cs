@@ -45,7 +45,6 @@ public class InitializeContent
   static void Postfix()
   {
     AddEmptyAssetReference();
-    ZoneSystem.instance.m_locations = [.. ZoneSystem.instance.m_locations.Where(loc => loc.m_prefab.IsValid)];
 
     // 1) Initialize managers that need original data snapshots.
     EnvironmentManager.Initialize();

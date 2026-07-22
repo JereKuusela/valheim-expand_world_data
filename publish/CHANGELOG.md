@@ -1,3 +1,6 @@
+- v1.68
+  - Hotfix: Fixes location and vegetation extra data not working.
+
 - v1.67
   - BREAKING CHANGE: Changes `groups` field to just be a list of groups instead of multiple "min distance from similar".
   - BREAKING CHANGE: Removes `groupsMax` field as obsolete.
@@ -17,7 +20,3 @@
   - Adds new file for territories, which are similar to biomes but on another layer (experimental).
   - Fixes field `mapColorMultiplier` not working.
   - Fixes location data being mapped to location name instead of location entry (this allows more granular control).
-
-- v1.63
-  - Adds new field `pregenerate` to location data, which allows forcing the zone to be generated even when not explored.
-  - Fixes vanilla issue of player not cooling down on non-hot biomes (e.g. Ashlands). Now the heat level resets to zero.

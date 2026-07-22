@@ -43,6 +43,7 @@ public class VegetationLoading
 
   public static void ReadConfigs()
   {
+    CleanUp();
     if (Helper.IsClient()) return;
     if (!Configuration.DataVegetation)
     {
@@ -63,7 +64,6 @@ public class VegetationLoading
 
   private static void Apply(List<ZoneSystem.ZoneVegetation> data)
   {
-    CleanUp();
     ZoneSystem.instance.m_vegetation = DefaultEntries;
     if (!Configuration.DataVegetation)
     {

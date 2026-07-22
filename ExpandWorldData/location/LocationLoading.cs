@@ -138,6 +138,8 @@ public class LocationLoading
   }
   public static void Initialize()
   {
+    ZoneSystem.instance.m_locations = [.. ZoneSystem.instance.m_locations.Where(loc => loc.m_prefab.IsValid)];
+
     DefaultEntries.Clear();
     Locations.Clear();
     if (Helper.IsServer())
@@ -157,6 +159,7 @@ public class LocationLoading
 
   public static void ReadConfigs()
   {
+    CleanUp();
     if (Helper.IsClient()) return;
     if (!Configuration.DataLocation)
     {
@@ -176,7 +179,6 @@ public class LocationLoading
 
   private static void Apply(List<ZoneSystem.ZoneLocation> data)
   {
-    CleanUp();
     ZoneSystem.instance.m_locations = DefaultEntries;
     if (Configuration.DataLocation)
     {
