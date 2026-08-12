@@ -12,6 +12,8 @@ public static class DungeonObjects
   public static Dictionary<string, FakeDungeonGenerator> Generators = [];
   public static string CurrentDungeon = "";
   public static DungeonDB.RoomData? CurrentRoom;
+  public static int RetryCount = 0;
+  public static List<ZDOID> SpawnedObjects = [];
 
 
   public static Dictionary<DungeonDB.RoomData, Dictionary<string, List<Tuple<float, DataEntry?>>>> ObjectData = [];

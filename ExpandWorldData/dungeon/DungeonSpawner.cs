@@ -15,10 +15,18 @@ public class Spawner
   {
     // Some mods cause client side dungeon reloading. In this case, no data is available.
     // Revert to the default behaviour as a fail safe.
-    if (DungeonObjects.CurrentRoom == null) return Object.Instantiate(prefab, pos, rot);
+    if (DungeonObjects.CurrentRoom == null) return TrackerWrapper(Object.Instantiate(prefab, pos, rot));
     BlueprintObject bpo = new(Utils.GetPrefabName(prefab), pos, rot, prefab.transform.localScale, null, 1f);
     var obj = Spawn.BPO(bpo, 0, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
-    return obj ?? LocationSpawning.DummySpawn;
+    return TrackerWrapper(obj ?? LocationSpawning.DummySpawn);
+  }
+
+  static GameObject TrackerWrapper(GameObject obj)
+  {
+    var view = obj.GetComponent<ZNetView>();
+    if (view && view.GetZDO().IsValid())
+      DungeonObjects.SpawnedObjects.Add(view.GetZDO().m_uid);
+    return obj;
   }
 
   static IEnumerable<CodeInstruction> Transpile(IEnumerable<CodeInstruction> instructions)
@@ -66,6 +74,9 @@ public class Spawner
     var dungeonName = LocationExtra.GetDungeonName(LocationSpawning.CurrentLocation, __instance);
     Override(__instance, dungeonName);
     DungeonObjects.CurrentDungeon = dungeonName;
+    DungeonObjects.RetryCount = 0;
+    DungeonObjects.SpawnedObjects.Clear();
+    roomCounts.Clear();
   }
 
   [HarmonyPatch(nameof(DungeonGenerator.GetWeightedRoom)), HarmonyPrefix]
@@ -103,7 +114,9 @@ public class Spawner
   [HarmonyPatch(nameof(DungeonGenerator.PlaceRoom), typeof(DungeonDB.RoomData), typeof(Vector3), typeof(Quaternion), typeof(RoomConnection), typeof(ZoneSystem.SpawnMode)), HarmonyPostfix]
   static void PlaceRoomCustomObjects(DungeonDB.RoomData roomData, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode)
   {
-    if (!Configuration.DataRooms || mode == ZoneSystem.SpawnMode.Client || Helper.IsClient()) return;
+    if (mode == ZoneSystem.SpawnMode.Client || Helper.IsClient()) return;
+    TrackRoomCOunt(roomData);
+    if (!Configuration.DataRooms) return;
     if (DungeonObjects.Objects.TryGetValue(roomData, out var objects))
     {
       int seed = (int)pos.x * 4271 + (int)pos.y * 9187 + (int)pos.z * 2134;
@@ -119,6 +132,20 @@ public class Spawner
     DungeonObjects.CurrentRoom = null;
   }
 
+  static readonly Dictionary<string, int> roomCounts = [];
+  static void TrackRoomCOunt(DungeonDB.RoomData roomData)
+  {
+    if (!roomCounts.TryGetValue(roomData.m_prefab.Name, out var count))
+      count = 0;
+    count += 1;
+    roomCounts[roomData.m_prefab.Name] = count;
+
+    if (!DungeonObjects.Generators.TryGetValue(DungeonObjects.CurrentDungeon, out var gen)) return;
+    if (!gen.m_roomLimits.TryGetValue(roomData.m_prefab.Name, out var limit)) return;
+    if (limit.max <= 0 || count < limit.max) return;
+    DungeonGenerator.m_availableRooms.RemoveAll(room => room.m_prefab.Name == roomData.m_prefab.Name);
+  }
+
 
   [HarmonyPatch(nameof(DungeonGenerator.Generate), typeof(ZoneSystem.SpawnMode)), HarmonyPostfix]
   static void GenerateEnd()
@@ -126,9 +153,39 @@ public class Spawner
     DungeonObjects.CurrentDungeon = "";
   }
   [HarmonyPatch(nameof(DungeonGenerator.GenerateRooms), typeof(ZoneSystem.SpawnMode)), HarmonyPostfix]
-  static void GenerateRooms()
+  static void GenerateRooms(DungeonGenerator __instance, ZoneSystem.SpawnMode mode)
   {
-    Log.Info($"Dungeon generated with {DungeonGenerator.m_placedRooms.Count} rooms.");
+    if (!DungeonObjects.Generators.TryGetValue(DungeonObjects.CurrentDungeon, out var gen)) return;
+    var hasLimits = gen.m_roomLimits.Any(kvp => kvp.Value.min > 0);
+    if (!hasLimits) return;
+    var missingRooms = gen.m_roomLimits.Any(kvp => kvp.Value.min > 0 && (!roomCounts.TryGetValue(kvp.Key, out var count) || count < kvp.Value.min));
+    if (!missingRooms) return;
+    DungeonObjects.RetryCount += 1;
+    if (gen.m_maxRetries <= DungeonObjects.RetryCount)
+    {
+      Log.Warning($"Failed to properly generate dungeon {DungeonObjects.CurrentDungeon} after {DungeonObjects.RetryCount} attempts.");
+      return;
+    }
+    var scene = ZNetScene.instance;
+    var zm = ZDOMan.instance;
+    foreach (var obj in DungeonObjects.SpawnedObjects)
+    {
+      var zdo = ZDOMan.instance.GetZDO(obj);
+      zdo.SetOwnerInternal(ZDOMan.GetSessionID());
+      if (scene.m_instances.TryGetValue(zdo, out var go))
+        scene.Destroy(go.gameObject);
+      else
+        ZDOMan.instance.DestroyZDO(zdo);
+    }
+    DungeonObjects.SpawnedObjects.Clear();
+    __instance.Clear();
+    DungeonGenerator.m_placedRooms.Clear();
+    DungeonGenerator.m_openConnections.Clear();
+    DungeonGenerator.m_doorConnections.Clear();
+    __instance.SetupAvailableRooms();
+    roomCounts.Clear();
+    __instance.GenerateRooms(mode);
+
   }
   [HarmonyPatch(nameof(DungeonGenerator.GetSeed)), HarmonyPrefix]
   static void GetSeed()
@@ -175,7 +232,7 @@ public class Spawner
     var name = Utils.GetPrefabName(__instance.gameObject);
     if (!DungeonObjects.Generators.TryGetValue(name, out var gen)) return;
     if (gen.m_excludedRooms.Count == 0) return;
-    DungeonGenerator.m_availableRooms = DungeonGenerator.m_availableRooms.Where(room => !gen.m_excludedRooms.Contains(room.m_prefab.Name)).ToList();
+    DungeonGenerator.m_availableRooms.RemoveAll(room => gen.m_excludedRooms.Contains(room.m_prefab.Name));
   }
 
   private static readonly List<RoomConnection> endConnections = [];
@@ -205,6 +262,13 @@ public class Spawner
     if (DungeonGenerator.m_openConnections.Count == 0)
     {
       __result = true;
+      return false;
+    }
+    if (!DungeonObjects.Generators.TryGetValue(DungeonObjects.CurrentDungeon, out var gen)) return true;
+    var roomsMissing = gen.m_roomLimits.Any(kvp => kvp.Value.required > 0 && (!roomCounts.TryGetValue(kvp.Key, out var count) || count < kvp.Value.required));
+    if (roomsMissing)
+    {
+      __result = false;
       return false;
     }
     return true;

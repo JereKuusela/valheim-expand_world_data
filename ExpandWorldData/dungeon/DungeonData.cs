@@ -12,6 +12,12 @@ public class DungeonDoorYaml
   public string connectionType = "";
   public float chance = 0f;
 }
+public class DungeonRoomLimit
+{
+  public int min = 0;
+  public int max = 0;
+  public int required = 0;
+}
 public class DungeonYaml
 {
   public string name = "";
@@ -19,10 +25,14 @@ public class DungeonYaml
   public int maxRooms = 1;
   public int minRooms = 1;
   public int minRequiredRooms = 1;
+  [DefaultValue(10)]
+  public int maxRetries = 10;
   [DefaultValue("")]
   public string requiredRooms = "";
   [DefaultValue("")]
   public string excludedRooms = "";
+  [DefaultValue(null)]
+  public Dictionary<string, string>? roomLimits = null;
   [DefaultValue(false)]
   public bool alternative = false;
   [DefaultValue(false)]
@@ -67,8 +77,10 @@ public class FakeDungeonGenerator
   public int m_maxRooms = 1;
   public int m_minRooms = 1;
   public int m_minRequiredRooms = 1;
+  public int m_maxRetries = 10;
   public HashSet<string> m_excludedRooms = [];
   public List<string> m_requiredRooms = [];
+  public Dictionary<string, DungeonRoomLimit> m_roomLimits = [];
   public bool m_alternativeFunctionality = false;
   public List<string> m_themes = [];
   public List<DungeonGenerator.DoorDef> m_doorTypes = [];

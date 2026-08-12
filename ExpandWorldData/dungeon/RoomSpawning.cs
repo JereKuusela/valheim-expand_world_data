@@ -61,7 +61,7 @@ public class RoomSpawning
     foreach (var room in DungeonGenerator.m_placedRooms)
       room.name = Parse.Name(room.name);
     // Blueprints add a dummy room which shouldn't be saved.
-    DungeonGenerator.m_placedRooms = DungeonGenerator.m_placedRooms.Where(r => DungeonDB.instance.GetRoom(r.GetHash()) != null).ToList();
+    DungeonGenerator.m_placedRooms = [.. DungeonGenerator.m_placedRooms.Where(r => DungeonDB.instance.GetRoom(r.GetHash()) != null)];
   }
 
 
