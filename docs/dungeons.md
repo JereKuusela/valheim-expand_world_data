@@ -17,6 +17,14 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - minRooms (default: `1`): Minimum amount of rooms. Only for Dungeon and CampRadial.
 - minRequiredRooms (default: `1`): Minimum amount of rooms in the required list. Only for Dungeon and CampRadial.
 - requiredRooms: List of required rooms. Generator stops after required rooms and minimum amount of rooms are placed. Use command `ew_rooms` to print list of rooms.
+- roomLimits: Per-room limits for dungeon generation.
+  - Format is room name as the key and a list of limits as the value.
+  - Available limits are `min`, `required` and `max`.
+  - min: Dungeon is regenerated if the amount is not reached. Retries are limited by `maxRetries`.
+  - required: Similar to `requiredRooms`. When all required limits are reached, generation can stop early after `minRooms`.
+    - If `minRooms` matches `maxRooms` then this has no effect.
+  - max: Room is removed from available rooms once the amount is reached.
+- maxRetries (default: `10`): Maximum amount of generation retries when minimum room limit requirements are not met.
 - excludedRooms: List of rooms removed from the available rooms.
 - roomWeights (default: `false`): Changes how rooms are randomly selected. Only for Dungeon.
   - If false, every room has the same chance to be selected (`weight` field is ignored).
@@ -44,3 +52,15 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - objectSwap: Changes dungeon objects to other objects.
   - See [Object swaps](object-swaps.md) for details.
   - Note: If a room has object swaps, the dungeon swaps are applied first.
+
+Example room limits:
+
+```yaml
+- name: DG_ForestCrypt
+  algorithm: Dungeon
+  maxRetries: 100
+  roomLimits:
+    forestcrypt_Chasm01: min 3
+    forestcrypt_room_16: max 1
+    forestcrypt_new_BurialChamber01: required 2, max 5
+```
