@@ -117,6 +117,9 @@ public class BiomeManager
   {
     if (Helper.IsClient() || !Configuration.DataBiome) return;
     if (File.Exists(FilePath)) return;
+    // World setup can run before EnvMan exists (fresh install without the yaml file).
+    // Configs get created later at ZoneSystem.Start where EnvMan is guaranteed to exist.
+    if (EnvMan.instance == null) return;
     var biomes = OriginalBiomes.Values.Select(b => EnvMan.instance.m_biomes.Find(ev => ev.m_biome == b)).Where(b => b != null);
     List<BiomeYaml> data = [.. biomes.Select(ToData).ToList(), .. ExtraBiomeYamls.Values];
     var yaml = Yaml.Serializer().Serialize(data);
