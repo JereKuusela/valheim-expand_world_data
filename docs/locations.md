@@ -34,6 +34,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
   - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
   - Putting anything on the third value causes the icon to pulse. This is not supported with meters.
 - randomRotation (default: `false`): Randomly rotates the location (unaffected by world seed).
+- randomCardinal (default: `false`): Randomly rotates the location in cardinal directions (0, 90, 180, 270 degrees).
 - randomSeed (default: `false`): If true, the generation result is always different instead of depending on the location coordinates.
   - This also randomizes the generated dungeon.
   - To enable this for every location, set "Random locations" to true in the main config.
