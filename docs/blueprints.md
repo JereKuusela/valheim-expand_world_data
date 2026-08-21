@@ -21,6 +21,25 @@ The file format has new features:
   - Infinity Hammer saves this information automatically to .blueprint files.
   - If the center piece is not found, the blueprint is centered automatically and placed 0.05 meters towards the ground.
 
+## Terrain snapshots
+
+Blueprint locations support the `#TerrainHeight` and `#TerrainPaint` sections written by Infinity Hammer. Terrain is stored as a final height and paint grid rather than as ordered terrain modifier objects. Empty cells leave the destination terrain unchanged.
+
+The section header contains the grid center in XZY order, its capture yaw and the distance between nodes:
+
+```txt
+#TerrainHeight:centerX,centerZ,centerY;yaw;nodeSpacing
+#TerrainPaint:centerX,centerZ,centerY;yaw;nodeSpacing
+```
+
+Height values are absolute heights relative to the blueprint root. Paint values use `r:g:b:a`. Expand World Data applies both channels on the server when the blueprint is generated as a location, including every terrain zone covered by the grid. Infinity Hammer is not required on the server or clients.
+
+Blueprint scale does not scale terrain grids. Reapplying the same snapshot is idempotent, but regenerating a location intentionally restores the captured final terrain over later terrain edits within non-empty cells. Vanilla terrain compilers clamp height changes to 8 meters from the generated base terrain. Legacy `TerrainModifier` objects are separate from this format and are not replayed as part of the snapshot.
+
+When a snapshot reaches neighboring zones, Expand World Data also loads the saved terrain before locations and vegetation when those zones are generated later. If a neighboring zone was already generated before the snapshot location was placed, its previously generated vegetation is not retroactively repositioned even though the terrain snapshot itself is applied.
+
+Terrain sections are applied only for the top-level blueprint location, not for blueprint objects nested inside another blueprint. If any covered terrain compiler is currently owned by a remote peer, the complete snapshot is skipped instead of partially overwriting terrain. The enclosing location still follows vanilla placement and is not retried automatically, so regenerate it after the remote owner has unloaded the area. Terrain-enabled files are an Infinity Hammer/Expand World Data extension and current PlanBuild versions do not load these snapshot rows directly.
+
 ## Examples
 
 Nested blueprint object with chance and ZDO data (PlanBuild format):
