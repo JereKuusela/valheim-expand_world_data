@@ -42,14 +42,127 @@ public class SnapPoint
     Rot = rot;
   }
 }
+
+public class BlueprintTerrain<T> where T : struct
+{
+  private const int MaxAxis = 2048;
+  private const int MaxCells = 1024 * 1024;
+  private readonly List<T?[]> Rows = [];
+  private int ValueCount;
+
+  public Vector3 CenterPosition;
+  public Quaternion CenterRotation = Quaternion.identity;
+  public float DistanceBetweenNodes = 1f;
+  public int Width { get; private set; }
+  public int Height => Rows.Count;
+  public bool HasValues => ValueCount > 0;
+
+  public void AddRow(T?[] values)
+  {
+    if (values.Length == 0 || values.Length > MaxAxis)
+      throw new FormatException($"Terrain row width must be between 1 and {MaxAxis}.");
+    if (Rows.Count >= MaxAxis || (long)values.Length * (Rows.Count + 1) > MaxCells)
+      throw new FormatException($"Terrain grid can contain at most {MaxCells} cells.");
+    if (Width == 0)
+      Width = values.Length;
+    else if (values.Length != Width)
+      throw new FormatException($"Terrain row width {values.Length} does not match the first row width {Width}.");
+    Rows.Add(values);
+    ValueCount += values.Count(value => value.HasValue);
+  }
+
+  public T? Get(int x, int z)
+  {
+    if (x < 0 || x >= Width || z < 0 || z >= Height) return null;
+    return Rows[z][x];
+  }
+
+  public void MapValues(Func<T, T> map)
+  {
+    foreach (var row in Rows)
+    {
+      for (var i = 0; i < row.Length; ++i)
+      {
+        var value = row[i];
+        if (value.HasValue)
+          row[i] = map(value.Value);
+      }
+    }
+  }
+
+  public bool AllValues(Func<T, bool> predicate)
+  {
+    foreach (var row in Rows)
+    {
+      foreach (var value in row)
+      {
+        if (value.HasValue && !predicate(value.Value)) return false;
+      }
+    }
+    return true;
+  }
+
+  public void Center(Vector3 center, Quaternion rotation)
+  {
+    var referenceRotation = CenterRotation;
+    CenterPosition -= referenceRotation * center;
+    CenterRotation = Yaw(referenceRotation * Quaternion.Inverse(rotation));
+  }
+
+  public float GetRadius()
+  {
+    if (Width == 0 || Height == 0) return 0f;
+    var spacing = Mathf.Max(0.001f, DistanceBetweenNodes);
+    var firstNode = CenterPosition - new Vector3((Width - 1) * spacing * 0.5f, 0f, (Height - 1) * spacing * 0.5f);
+    var radius = 0f;
+    for (var z = 0; z < Height; ++z)
+    {
+      for (var x = 0; x < Width; ++x)
+      {
+        if (!Get(x, z).HasValue) continue;
+        var node = firstNode + new Vector3(x * spacing, 0f, z * spacing);
+        radius = Mathf.Max(radius, Utils.LengthXZ(node));
+      }
+    }
+    return radius;
+  }
+
+  public T? FindNearest(Vector3 nodePosition, Vector3 placementPosition, Quaternion placementRotation)
+  {
+    if (Width == 0 || Height == 0) return null;
+    var relativeRotation = Yaw(placementRotation * Quaternion.Inverse(CenterRotation));
+    var localPosition = Quaternion.Inverse(relativeRotation) * (nodePosition - placementPosition);
+    var spacing = Mathf.Max(0.001f, DistanceBetweenNodes);
+    var firstNode = CenterPosition - new Vector3((Width - 1) * spacing * 0.5f, 0f, (Height - 1) * spacing * 0.5f);
+    var x = Mathf.RoundToInt((localPosition.x - firstNode.x) / spacing);
+    var z = Mathf.RoundToInt((localPosition.z - firstNode.z) / spacing);
+    return Get(x, z);
+  }
+
+  private static Quaternion Yaw(Quaternion rotation)
+  {
+    var forwardX = 2.0 * (rotation.x * rotation.z + rotation.w * rotation.y);
+    var forwardZ = 1.0 - 2.0 * (rotation.x * rotation.x + rotation.y * rotation.y);
+    if (forwardX * forwardX + forwardZ * forwardZ <= 0.0001) return Quaternion.identity;
+    var halfYaw = Math.Atan2(forwardX, forwardZ) * 0.5;
+    return new(0f, (float)Math.Sin(halfYaw), 0f, (float)Math.Cos(halfYaw));
+  }
+}
+
 public class Blueprint
 {
+  // A square with this half-extent can touch at most 8 x 8 terrain zones.
+  // Keeping the parser-side bound aligned with Terrain.ApplyBlueprint avoids
+  // letting blueprint radius calculations reach ZoneSystem with huge values.
+  private const float MaxTerrainApplicationRadius = ZoneSystem.c_ZoneSize * 3.5f;
   public string Name;
   public List<BlueprintObject> Objects = [];
   public string CenterPiece = "piece_bpcenterpoint";
   public float Radius = 0f;
   public List<SnapPoint> SnapPoints = [];
   public Vector3 Size = Vector3.one;
+  public BlueprintTerrain<float>? TerrainHeight;
+  public BlueprintTerrain<Color>? TerrainPaint;
 
   public Blueprint(string name)
   {
@@ -92,7 +205,8 @@ public class Blueprint
   public void Center()
   {
     Bounds bounds = new();
-    var y = float.MaxValue;
+    var hasObjects = Objects.Count > 0;
+    var y = hasObjects ? float.MaxValue : 0f;
     Quaternion rot = Quaternion.identity;
     foreach (var obj in Objects)
     {
@@ -100,9 +214,9 @@ public class Blueprint
       bounds.Encapsulate(obj.Pos);
     }
     // Slightly towards the ground to prevent gaps.
-    y += 0.05f;
-    Size = bounds.size;
-    Vector3 center = new(bounds.center.x, y, bounds.center.z);
+    if (hasObjects) y += 0.05f;
+    Size = hasObjects ? bounds.size : Vector3.zero;
+    Vector3 center = hasObjects ? new(bounds.center.x, y, bounds.center.z) : Vector3.zero;
     foreach (var obj in Objects)
     {
       if (obj.Prefab == CenterPiece)
@@ -117,6 +231,13 @@ public class Blueprint
     Radius = Utils.LengthXZ(bounds.extents);
     foreach (var obj in Objects)
       obj.Pos -= center;
+    if (TerrainHeight != null)
+    {
+      TerrainHeight.MapValues(value => value - center.y);
+      TerrainHeight.Center(center, rot);
+    }
+    if (TerrainPaint != null)
+      TerrainPaint.Center(center, rot);
     if (rot != Quaternion.identity)
     {
       foreach (var obj in Objects)
@@ -125,7 +246,52 @@ public class Blueprint
         obj.Rot = rot * obj.Rot;
       }
     }
+    if (TerrainHeight != null && !IsValidTerrain(TerrainHeight, IsFinite))
+    {
+      Log.Warning($"Blueprint {Name}: Ignoring an invalid or oversized terrain height snapshot.");
+      TerrainHeight = null;
+    }
+    if (TerrainPaint != null && !IsValidTerrain(TerrainPaint, IsFinite))
+    {
+      Log.Warning($"Blueprint {Name}: Ignoring an invalid or oversized terrain paint snapshot.");
+      TerrainPaint = null;
+    }
+    var terrainRadius = Mathf.Max(TerrainHeight?.GetRadius() ?? 0f, TerrainPaint?.GetRadius() ?? 0f);
+    var terrainMargin = Mathf.Max(1f,
+      TerrainHeight?.HasValues == true ? TerrainHeight.DistanceBetweenNodes : 0f,
+      TerrainPaint?.HasValues == true ? TerrainPaint.DistanceBetweenNodes : 0f);
+    if (TerrainHeight?.HasValues == true && TerrainPaint?.HasValues == true &&
+        (!IsFinite(terrainRadius + terrainMargin) || terrainRadius + terrainMargin > MaxTerrainApplicationRadius))
+    {
+      Log.Warning($"Blueprint {Name}: Ignoring terrain snapshots whose combined bounds cover too many zones.");
+      TerrainHeight = null;
+      TerrainPaint = null;
+      terrainRadius = 0f;
+    }
+    Radius = Mathf.Max(Radius, terrainRadius);
   }
+
+  private static bool IsValidTerrain<T>(BlueprintTerrain<T> terrain, Func<T, bool> valueIsFinite) where T : struct
+  {
+    var rotationMagnitude = terrain.CenterRotation.x * terrain.CenterRotation.x +
+      terrain.CenterRotation.y * terrain.CenterRotation.y +
+      terrain.CenterRotation.z * terrain.CenterRotation.z +
+      terrain.CenterRotation.w * terrain.CenterRotation.w;
+    if (!IsFinite(terrain.CenterPosition) || !IsFinite(terrain.CenterRotation) ||
+        !IsFinite(rotationMagnitude) || rotationMagnitude <= 0.0001f ||
+        !IsFinite(terrain.DistanceBetweenNodes) || terrain.DistanceBetweenNodes <= 0f ||
+        !terrain.AllValues(valueIsFinite))
+      return false;
+    var radius = terrain.GetRadius();
+    var applicationRadius = radius + Mathf.Max(1f, terrain.DistanceBetweenNodes);
+    return IsFinite(radius) && radius >= 0f && IsFinite(applicationRadius) &&
+      applicationRadius <= MaxTerrainApplicationRadius;
+  }
+
+  private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+  private static bool IsFinite(Vector3 value) => IsFinite(value.x) && IsFinite(value.y) && IsFinite(value.z);
+  private static bool IsFinite(Quaternion value) => IsFinite(value.x) && IsFinite(value.y) && IsFinite(value.z) && IsFinite(value.w);
+  private static bool IsFinite(Color value) => IsFinite(value.r) && IsFinite(value.g) && IsFinite(value.b) && IsFinite(value.a);
 }
 public class Blueprints
 {
@@ -169,33 +335,162 @@ public class Blueprints
   }
   private static Blueprint? GetPlanBuild(Blueprint bp, string[] rows)
   {
-    var piece = true;
+    var section = PlanBuildSection.Pieces;
     var currentRow = -1;
     try
     {
       foreach (var row in rows)
       {
         currentRow += 1;
-        if (row.StartsWith("#snappoints", StringComparison.OrdinalIgnoreCase))
-          piece = false;
-        else if (row.StartsWith("#pieces", StringComparison.OrdinalIgnoreCase))
-          piece = true;
-        else if (row.StartsWith("#center:", StringComparison.OrdinalIgnoreCase))
-          bp.CenterPiece = row.Split(':')[1];
-        else if (row.StartsWith("#", StringComparison.Ordinal))
+        if (row.StartsWith("#", StringComparison.Ordinal))
+        {
+          section = ReadPlanBuildHeader(bp, row);
           continue;
-        else if (piece)
+        }
+        if (section == PlanBuildSection.Pieces)
           bp.Objects.Add(GetPlanBuildObject(row, bp.Name));
-        else
+        else if (section == PlanBuildSection.SnapPoints)
           bp.SnapPoints.Add(new(GetPlanBuildSnapPoint(row), Quaternion.identity));
+        else if (section == PlanBuildSection.TerrainHeight && bp.TerrainHeight != null)
+          bp.TerrainHeight.AddRow(GetPlanBuildHeightRow(row));
+        else if (section == PlanBuildSection.TerrainPaint && bp.TerrainPaint != null)
+          bp.TerrainPaint.AddRow(GetPlanBuildPaintRow(row));
       }
     }
-    catch
+    catch (Exception e)
     {
-      Log.Error($"Failed to load blueprint {bp.Name} at row {currentRow}: {rows[currentRow]}.");
+      Log.Error($"Failed to load blueprint {bp.Name} at row {currentRow}: {rows[currentRow]}. {e.Message}");
       return null;
     }
     return bp;
+  }
+
+  private enum PlanBuildSection
+  {
+    Ignore,
+    SnapPoints,
+    Pieces,
+    TerrainHeight,
+    TerrainPaint
+  }
+
+  private static PlanBuildSection ReadPlanBuildHeader(Blueprint bp, string row)
+  {
+    var separator = row.IndexOf(':');
+    var name = (separator < 0 ? row : row.Substring(0, separator)).Trim();
+    if (name.Equals("#snappoints", StringComparison.OrdinalIgnoreCase))
+      return PlanBuildSection.SnapPoints;
+    if (name.Equals("#pieces", StringComparison.OrdinalIgnoreCase))
+      return PlanBuildSection.Pieces;
+    if (name.Equals("#center", StringComparison.OrdinalIgnoreCase))
+    {
+      if (separator < 0) throw new FormatException("#Center requires a prefab name.");
+      bp.CenterPiece = row.Substring(separator + 1);
+      return PlanBuildSection.Ignore;
+    }
+    if (name.Equals("#terrainheight", StringComparison.OrdinalIgnoreCase))
+    {
+      try
+      {
+        bp.TerrainHeight = GetPlanBuildTerrain<float>(row, separator);
+        return PlanBuildSection.TerrainHeight;
+      }
+      catch (FormatException)
+      {
+        return PlanBuildSection.Ignore;
+      }
+      catch (OverflowException)
+      {
+        return PlanBuildSection.Ignore;
+      }
+    }
+    if (name.Equals("#terrainpaint", StringComparison.OrdinalIgnoreCase))
+    {
+      try
+      {
+        bp.TerrainPaint = GetPlanBuildTerrain<Color>(row, separator);
+        return PlanBuildSection.TerrainPaint;
+      }
+      catch (FormatException)
+      {
+        return PlanBuildSection.Ignore;
+      }
+      catch (OverflowException)
+      {
+        return PlanBuildSection.Ignore;
+      }
+    }
+    // Unknown sections must not inherit the previous parser state. This keeps
+    // future PlanBuild extensions from being interpreted as pieces.
+    return PlanBuildSection.Ignore;
+  }
+
+  private static BlueprintTerrain<T> GetPlanBuildTerrain<T>(string row, int separator) where T : struct
+  {
+    if (separator < 0) throw new FormatException("Terrain section requires center, rotation and node spacing.");
+    var split = row.Substring(separator + 1).Split(';');
+    if (split.Length < 3) throw new FormatException("Terrain section requires center, rotation and node spacing.");
+    var center = split[0].Split(',');
+    if (center.Length != 3) throw new FormatException("Terrain center requires X, Z and Y coordinates.");
+    var centerX = RequiredInvariantFloat(center, 0);
+    var centerZ = RequiredInvariantFloat(center, 1);
+    var centerY = RequiredInvariantFloat(center, 2);
+    var yaw = RequiredInvariantFloat(split, 1);
+    var spacing = RequiredInvariantFloat(split, 2);
+    if (!IsFinite(centerX) || !IsFinite(centerY) || !IsFinite(centerZ) || !IsFinite(yaw))
+      throw new FormatException("Terrain center and rotation must contain finite numbers.");
+    if (!IsFinite(spacing) || spacing <= 0f)
+      throw new FormatException("Terrain node spacing must be a finite positive number.");
+    return new()
+    {
+      CenterPosition = new(centerX, centerY, centerZ),
+      CenterRotation = PlanBuildYaw(yaw),
+      DistanceBetweenNodes = spacing
+    };
+  }
+
+  private static Quaternion PlanBuildYaw(float degrees)
+  {
+    var radians = degrees * Math.PI / 180.0 * 0.5;
+    return new(0f, (float)Math.Sin(radians), 0f, (float)Math.Cos(radians));
+  }
+
+  private static float?[] GetPlanBuildHeightRow(string row)
+  {
+    if (row.IndexOf(',') > -1) row = row.Replace(',', '.');
+    var split = row.Split(';');
+    var values = new float?[split.Length];
+    for (var i = 0; i < split.Length; ++i)
+    {
+      if (!string.IsNullOrEmpty(split[i]))
+      {
+        var value = InvariantFloat(split, i);
+        if (!IsFinite(value)) throw new FormatException("Terrain height values must be finite numbers.");
+        values[i] = value;
+      }
+    }
+    return values;
+  }
+
+  private static Color?[] GetPlanBuildPaintRow(string row)
+  {
+    if (row.IndexOf(',') > -1) row = row.Replace(',', '.');
+    var split = row.Split(';');
+    var values = new Color?[split.Length];
+    for (var i = 0; i < split.Length; ++i)
+    {
+      if (string.IsNullOrEmpty(split[i])) continue;
+      var color = split[i].Split(':');
+      if (color.Length < 3) throw new FormatException($"Terrain paint value '{split[i]}' requires r:g:b[:a].");
+      var r = RequiredInvariantFloat(color, 0);
+      var g = RequiredInvariantFloat(color, 1);
+      var b = RequiredInvariantFloat(color, 2);
+      var a = color.Length > 3 ? RequiredInvariantFloat(color, 3) : 1f;
+      if (!IsFinite(r) || !IsFinite(g) || !IsFinite(b) || !IsFinite(a))
+        throw new FormatException("Terrain paint values must be finite numbers.");
+      values[i] = new(r, g, b, a);
+    }
+    return values;
   }
   private static BlueprintObject GetPlanBuildObject(string row, string fileName)
   {
@@ -254,4 +549,11 @@ public class Blueprints
     if (string.IsNullOrEmpty(s)) return defaultValue;
     return float.Parse(s, NumberStyles.Any, NumberFormatInfo.InvariantInfo);
   }
+  private static float RequiredInvariantFloat(string[] row, int index)
+  {
+    if (index >= row.Length || string.IsNullOrWhiteSpace(row[index]))
+      throw new FormatException("A required terrain number is missing.");
+    return float.Parse(row[index], NumberStyles.Any, NumberFormatInfo.InvariantInfo);
+  }
+  private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 }
