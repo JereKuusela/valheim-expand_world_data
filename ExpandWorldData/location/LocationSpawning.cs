@@ -51,6 +51,14 @@ public class LocationSpawning
 
 
 }
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceLocations))]
+public class PrepareTerrainBeforeZoneContents
+{
+  static void Prefix(Heightmap hmap, ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
+  {
+    Terrain.PrepareZoneTerrain(hmap, mode, spawnedObjects);
+  }
+}
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.CreateLocationProxy))]
 public class LocationZDO
 {
@@ -166,20 +174,31 @@ public class LocationObjectDataAndSwap
     if (mode == ZoneSystem.SpawnMode.Client) return;
 
     var isBluePrint = BlueprintManager.Has(location.m_prefab.Name);
+    Blueprint? blueprint = null;
+    if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.Name, out var loadedBlueprint))
+      blueprint = loadedBlueprint;
+    // Paint-only snapshots still need the existing implicit blueprint level.
+    // Only captured height data replaces that default terrain operation.
+    var hasTerrainHeight = blueprint?.TerrainHeight?.HasValues == true;
+    var useDefaultBlueprintLeveling = isBluePrint && !hasTerrainHeight;
     if (LocationExtra.TryGetData(location, out var data))
     {
       WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
       // Remove the applied offset.
       var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
-      HandleTerrain(surface, location.m_exteriorRadius, isBluePrint, data);
+      HandleTerrain(surface, location.m_exteriorRadius, useDefaultBlueprintLeveling, data);
     }
+    if (blueprint != null)
+      Terrain.ApplyBlueprint(blueprint, pos, rot, mode, spawnedGhostObjects);
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      Terrain.FinalizeGhostTerrain(pos, spawnedGhostObjects, location.m_prefab.Name);
     Random.InitState(seed);
     if (mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.StartGhostInit();
     var scale = LocationExtra.GetScale(location);
-    if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.Name, out var bp))
+    if (blueprint != null)
     {
-      Spawn.Blueprint(bp, pos, rot, scale, seed, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
+      Spawn.Blueprint(blueprint, pos, rot, scale, seed, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
     }
     LocationSpawning.CustomObjects(location, pos, rot, scale, seed, spawnedGhostObjects);
 
