@@ -117,6 +117,7 @@ public class DataLoading
   {
     if (DefaultValueGroups.Count == 0)
     {
+      if (!ZNetScene.instance) return;
       foreach (var prefab in ZNetScene.instance.m_namedPrefabs.Values)
       {
         if (!prefab) continue;
@@ -126,6 +127,8 @@ public class DataLoading
         prefab.GetComponentsInChildren(ZNetView.m_tempComponents);
         foreach (var component in ZNetView.m_tempComponents)
         {
+          // Some mods leave destroyed or missing components behind.
+          if (!component) continue;
           var componentName = component.GetType().Name.ToLowerInvariant();
           var hash = componentName.GetStableHashCode();
           if (!DefaultValueGroups.ContainsKey(hash))
@@ -140,8 +143,8 @@ public class DataLoading
         }
       }
       // Some key codes are hardcoded for legacy reasons.
-      DefaultValueGroups[CreatureHash] = DefaultValueGroups[HumanoidHash];
-      DefaultValueGroups[StructureHash] = DefaultValueGroups[WearNTearHash];
+      DefaultValueGroups[CreatureHash] = DefaultValueGroups.TryGetValue(HumanoidHash, out var humanoidGroup) ? humanoidGroup : [];
+      DefaultValueGroups[StructureHash] = DefaultValueGroups.TryGetValue(WearNTearHash, out var wearntearGroup) ? wearntearGroup : [];
     }
   }
   private static void ResolveValues(List<string> values)
