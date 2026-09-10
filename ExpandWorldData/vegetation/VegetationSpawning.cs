@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
@@ -23,6 +24,24 @@ public class VegetationSpawning
   {
     CurrentVegetation = veg;
     return veg;
+  }
+
+  internal static bool ShouldHonorAlternateBiomeVegetationBlock(string? altBiomeParent) =>
+    !string.IsNullOrWhiteSpace(altBiomeParent);
+
+  // A complete generated alt-biome file is authoritative. Its owned rows are
+  // allowed, while ordinary parent rows are skipped to avoid spawning the
+  // inherited vegetation twice. Configurations without those files keep the
+  // earlier additive behavior.
+  private static bool HasBlockingAlternateBiome(IEnumerable<AltBiome> altBiomes, System.Func<AltBiome, bool> isBlocked)
+  {
+    if (ShouldHonorAlternateBiomeVegetationBlock(CurrentVegetation.AltBiomeParent))
+    {
+      if (VegetationLoading.UsesCompleteAltBiome(CurrentVegetation.AltBiomeParent))
+        return VegetationComposition.HasBlockingCompleteOwnerRow(CurrentVegetation, altBiomes, isBlocked);
+      return altBiomes.Any(isBlocked);
+    }
+    return altBiomes.Any(altBiome => VegetationLoading.UsesCompleteAltBiome(altBiome.m_name));
   }
 
   private static DataEntry? DataOverride(DataEntry? data, string prefab)
@@ -66,11 +85,11 @@ public class VegetationSpawning
     if (Extra.TryGetValue(CurrentVegetation, out var extra) && extra.scale != null)
       scale = Helper.RandomValue(extra.scale);
     view.SetLocalScale(scale);
-    // Two fields are used for scale, so clean up the other one.
-    // This is needed because the initial spawn can set the different scale field.
-    var isUniform = Mathf.Approximately(scale.x, scale.y) && Mathf.Approximately(scale.x, scale.z);
-    if (isUniform) view.GetZDO().RemoveVec3(ZDOVars.s_scaleHash);
-    else view.GetZDO().RemoveFloat(ZDOVars.s_scaleScalarHash);
+    // Deep North synchronizes vegetation scale through the vector field even
+    // when every axis is equal. Keep that canonical representation so a
+    // uniform custom scale survives ZDO save/load instead of reverting to 1.
+    view.GetZDO().Set(ZDOVars.s_scaleHash, scale);
+    view.GetZDO().RemoveFloat(ZDOVars.s_scaleScalarHash);
   }
   public static bool InsideClearArea(List<ZoneSystem.ClearArea> areas, Vector3 point)
   {
@@ -95,9 +114,19 @@ public class VegetationSpawning
             info.GetParameters()[1].ParameterType == typeof(Vector3) &&
             info.GetParameters()[2].ParameterType == typeof(Quaternion))
       .MakeGenericMethod(typeof(GameObject));
+    var anyAltBiome = AccessTools.GetDeclaredMethods(typeof(Enumerable))
+      .Single(info => info.Name == nameof(Enumerable.Any) && info.GetParameters().Length == 2)
+      .MakeGenericMethod(typeof(AltBiome));
     return new CodeMatcher(instructions)
       .MatchForward(false, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ZoneSystem.ZoneVegetation), nameof(ZoneSystem.ZoneVegetation.m_enable))))
       .Insert(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(SetVeg).operand))
+      // The owner-match Any branches on false. The following name-block Any
+      // branches on true, which identifies the exact predicate to narrow.
+      .MatchForward(false,
+        new CodeMatch(OpCodes.Call, anyAltBiome),
+        new CodeMatch(instruction => instruction.opcode == OpCodes.Brtrue || instruction.opcode == OpCodes.Brtrue_S))
+      .ThrowIfInvalid("Unable to find the alternate-biome vegetation block check.")
+      .Set(OpCodes.Call, AccessTools.Method(typeof(VegetationSpawning), nameof(HasBlockingAlternateBiome)))
       .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
       .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, 5))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(Instantiate).operand)

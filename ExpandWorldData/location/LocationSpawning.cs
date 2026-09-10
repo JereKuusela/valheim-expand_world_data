@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using Service;
@@ -274,17 +275,42 @@ public class ScaleLocationHeightRequirement
   }
 
   [HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> TranspileMoveNext(IEnumerable<CodeInstruction> instructions) =>
-      new CodeMatcher(instructions)
-        .MatchForward(useEnd: false, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_minAltitude))))
-        .Advance(1)
-        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 9))
-        .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ScaleHeight).operand))
-        .MatchForward(true, new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_maxAltitude))))
-        .Advance(1)
-        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 9))
-        .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ScaleHeight).operand))
-        .InstructionEnumeration();
+  static IEnumerable<CodeInstruction> TranspileMoveNext(IEnumerable<CodeInstruction> instructions)
+  {
+    var codes = instructions.ToList();
+    var getBiome = AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), [typeof(Vector3)]);
+    var biomeCall = codes.FindIndex(instruction => instruction.Calls(getBiome));
+    if (biomeCall < 0) throw new System.InvalidOperationException("Biome call not found.");
+    var storeBiome = codes.Skip(biomeCall + 1).Take(4).FirstOrDefault(IsStoreLocal);
+    if (storeBiome == null) throw new System.InvalidOperationException("Biome local not found.");
+    var scaleHeight = Transpilers.EmitDelegate(ScaleHeight).operand;
+    InsertAfter(codes, biomeCall, nameof(ZoneSystem.ZoneLocation.m_minAltitude), storeBiome, scaleHeight);
+    InsertAfter(codes, biomeCall, nameof(ZoneSystem.ZoneLocation.m_maxAltitude), storeBiome, scaleHeight);
+    return codes;
+  }
+
+  static void InsertAfter(List<CodeInstruction> codes, int start, string fieldName, CodeInstruction storeBiome, object scaleHeight)
+  {
+    var field = AccessTools.Field(typeof(ZoneSystem.ZoneLocation), fieldName);
+    var index = codes.FindIndex(start, instruction => instruction.LoadsField(field));
+    if (index < 0) throw new System.InvalidOperationException($"{fieldName} load not found.");
+    codes.Insert(index + 1, LoadForStore(storeBiome));
+    codes.Insert(index + 2, new CodeInstruction(OpCodes.Call, scaleHeight));
+  }
+
+  static bool IsStoreLocal(CodeInstruction instruction) =>
+    instruction.opcode == OpCodes.Stloc || instruction.opcode == OpCodes.Stloc_S ||
+    instruction.opcode == OpCodes.Stloc_0 || instruction.opcode == OpCodes.Stloc_1 ||
+    instruction.opcode == OpCodes.Stloc_2 || instruction.opcode == OpCodes.Stloc_3;
+
+  static CodeInstruction LoadForStore(CodeInstruction instruction)
+  {
+    if (instruction.opcode == OpCodes.Stloc_0) return new(OpCodes.Ldloc_0);
+    if (instruction.opcode == OpCodes.Stloc_1) return new(OpCodes.Ldloc_1);
+    if (instruction.opcode == OpCodes.Stloc_2) return new(OpCodes.Ldloc_2);
+    if (instruction.opcode == OpCodes.Stloc_3) return new(OpCodes.Ldloc_3);
+    return new(instruction.opcode == OpCodes.Stloc_S ? OpCodes.Ldloc_S : OpCodes.Ldloc, instruction.operand);
+  }
 
 }
 
@@ -318,30 +344,17 @@ public class CreateLocalZones
 }
 
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange))]
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange), typeof(SoftReferenceableAssets.AssetID), typeof(string), typeof(Vector3), typeof(float), typeof(bool))]
 public class HaveLocationInRange
 {
-  static bool Prefix(ref bool __result, ZoneSystem __instance, string prefabName, string group, Vector3 p, float radius)
+  static bool Prefix(ref bool __result, ZoneSystem __instance, SoftReferenceableAssets.AssetID assetID, string group, Vector3 p, float radius)
   {
     var isVirtual = LocationExtra.IsVirtualGroupId(group);
-    if (isVirtual)
-    {
-      var rules = LocationExtra.GetDistanceRules(group);
-      __result = InRange(__instance, p, rules);
-    }
-    else
-    {
-      __result = InRange(__instance, p, prefabName, group, radius);
-    }
-    return false;
-  }
+    if (!isVirtual) return true;
 
-  private static List<System.Tuple<string, float>> ParseLegacyRules(string prefabName, string group, float radius)
-  {
-    List<System.Tuple<string, float>> rules = [new(prefabName, radius)];
-    if (!string.IsNullOrEmpty(group))
-      rules.Add(new(group, radius));
-    return rules;
+    var rules = LocationExtra.GetDistanceRules(group);
+    __result = InRange(__instance, p, rules);
+    return false;
   }
 
   private static bool InRange(ZoneSystem zs, Vector3 p, List<System.Tuple<string, float>>? rules)
@@ -363,25 +376,6 @@ public class HaveLocationInRange
         if (distance < rule.Item2)
           return true;
       }
-    }
-    return false;
-  }
-
-
-  private static bool InRange(ZoneSystem zs, Vector3 p, string prefabName, string group, float radius)
-  {
-    foreach (var locationInstance in zs.m_locationInstances.Values)
-    {
-      var loc = locationInstance.m_location;
-      if (loc == null)
-        continue;
-
-      var matches = LocationExtra.MatchesTarget(loc, prefabName, group);
-      if (!matches)
-        continue;
-      var distance = Vector3.Distance(locationInstance.m_position, p);
-      if (distance < radius)
-        return true;
     }
     return false;
   }

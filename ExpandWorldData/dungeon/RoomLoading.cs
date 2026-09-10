@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using ExpandWorldData.Dungeon;
@@ -59,13 +60,57 @@ public class RoomLoading
     {"CaveHildir", Room.Theme.CaveHildir},
     {"PlainsFortHildir", Room.Theme.PlainsFortHildir},
     {"AshlandRuins", Room.Theme.AshlandRuins},
-    {"FortressRuins", Room.Theme.FortressRuins}
+    {"FortressRuins", Room.Theme.FortressRuins},
+    {"Hole", Room.Theme.Hole},
+    {"NorthVillage", Room.Theme.NorthVillage},
+    {"MorkHalla", Room.Theme.MorkHalla}
   };
 
   // For extra custom room themes.
   public static Dictionary<string, Room.Theme> NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
   public static Dictionary<Room.Theme, string> ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-  public static bool TryGetTheme(string name, out Room.Theme theme) => NameToTheme.TryGetValue(name.ToLowerInvariant(), out theme);
+  public static bool TryGetTheme(string name, out Room.Theme theme)
+  {
+    var token = name.Trim();
+    if (NameToTheme.TryGetValue(token.ToLowerInvariant(), out theme)) return true;
+    if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+    {
+      theme = (Room.Theme)value;
+      return true;
+    }
+    theme = Room.Theme.None;
+    return false;
+  }
+
+  private static void RegisterThemes(IEnumerable<string> themes)
+  {
+    var names = themes.SelectMany(theme => DataManager.ToList(theme)).Select(name => name.Trim())
+      .Where(name => name != "").Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    foreach (var name in names.Where(name => int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)))
+      RegisterTheme(name);
+    foreach (var name in names.Where(name => !int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)).OrderBy(name => name))
+      RegisterTheme(name);
+  }
+
+  private static void RegisterTheme(string name)
+  {
+    var key = name.ToLowerInvariant();
+    if (NameToTheme.ContainsKey(key)) return;
+    if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+    {
+      NameToTheme[key] = (Room.Theme)value;
+      if (value > 0 && (value & (value - 1)) == 0 && !ThemeToName.ContainsKey((Room.Theme)value))
+        ThemeToName[(Room.Theme)value] = name;
+      return;
+    }
+    var used = NameToTheme.Values.Select(theme => (int)theme).ToHashSet();
+    long next = 1;
+    while (next <= int.MaxValue && used.Any(value => (value & next) != 0)) next *= 2;
+    if (next > int.MaxValue) throw new InvalidOperationException("No free room theme bits remain.");
+    var theme = (Room.Theme)(int)next;
+    NameToTheme[key] = theme;
+    ThemeToName[theme] = name;
+  }
 
   public static void Load()
   {
@@ -194,13 +239,6 @@ public class RoomLoading
     var roomData = CreateRoomData(data.name, snapPieces);
     RoomSpawning.Data[roomData] = data;
     var room = roomData.RoomInPrefab;
-    var missingThemes = DataManager.ToList(data.theme).Where(s => !NameToTheme.ContainsKey(s.ToLowerInvariant())).ToArray();
-    foreach (var theme in missingThemes)
-    {
-      var nextValue = (Room.Theme)(2 * (int)NameToTheme.Values.Max());
-      NameToTheme[theme.ToLowerInvariant()] = nextValue;
-      ThemeToName[nextValue] = theme;
-    }
     room.m_theme = DataManager.ToEnum<Room.Theme>(data.theme);
     room.m_entrance = data.entrance;
     room.m_endCap = data.endCap;
@@ -261,7 +299,15 @@ public class RoomLoading
   {
     try
     {
-      return DataManager.ReadData<RoomYaml, DungeonDB.RoomData>(Pattern, FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
+      var entries = Directory.GetFiles(Yaml.BaseDirectory, Pattern, SearchOption.AllDirectories).Reverse()
+        .SelectMany(name =>
+        {
+          var fileName = Path.GetFileNameWithoutExtension(name);
+          return Yaml.Deserialize<RoomYaml>(File.ReadAllText(name), fileName).Select(data => (data, fileName));
+        }).ToList();
+      RegisterThemes(entries.Select(entry => entry.data.theme));
+      return entries.Select(entry => FromData(entry.data, entry.fileName))
+        .Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
     }
     catch (Exception e)
     {

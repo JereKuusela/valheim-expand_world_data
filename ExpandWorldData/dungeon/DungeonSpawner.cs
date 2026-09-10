@@ -202,6 +202,7 @@ public class Spawner
   public static void Override(DungeonGenerator dg, string name)
   {
     if (!DungeonObjects.Generators.TryGetValue(name, out var data)) return;
+    var originalDoorTypes = dg.m_doorTypes;
     //ExpandWorldData.Log.Debug($"Overriding with dungeon {name}.");
     dg.name = name;
     dg.m_algorithm = data.m_algorithm;
@@ -210,7 +211,7 @@ public class Spawner
     dg.m_campRadiusMax = data.m_campRadiusMax;
     dg.m_campRadiusMin = data.m_campRadiusMin;
     dg.m_doorChance = data.m_doorChance;
-    dg.m_doorTypes = data.m_doorTypes;
+    dg.m_doorTypes = ResolveDoorTypes(data, originalDoorTypes);
     dg.m_maxRooms = data.m_maxRooms;
     dg.m_minRooms = data.m_minRooms;
     dg.m_maxTilt = data.m_maxTilt;
@@ -224,6 +225,31 @@ public class Spawner
     dg.m_perimeterSections = data.m_perimeterSections;
     dg.m_perimeterBuffer = data.m_perimeterBuffer;
     dg.m_useCustomInteriorTransform = data.m_useCustomInteriorTransform;
+  }
+
+  private static List<DungeonGenerator.DoorDef> ResolveDoorTypes(FakeDungeonGenerator data, List<DungeonGenerator.DoorDef> originalDoorTypes)
+  {
+    List<DungeonGenerator.DoorDef> doorTypes = [];
+    for (var i = 0; i < data.m_doorTypes.Count; i++)
+    {
+      var door = data.m_doorTypes[i];
+      var prefab = door.m_prefab;
+      if (!door.m_prefab && i < data.m_doorPrefabNames.Count)
+      {
+        var prefabName = data.m_doorPrefabNames[i];
+        var original = originalDoorTypes.FirstOrDefault(value => value.m_prefab && Utils.GetPrefabName(value.m_prefab) == prefabName);
+        if (original != null)
+          prefab = original.m_prefab;
+      }
+      if (prefab)
+        doorTypes.Add(new()
+        {
+          m_chance = door.m_chance,
+          m_connectionType = door.m_connectionType,
+          m_prefab = prefab
+        });
+    }
+    return doorTypes;
   }
   [HarmonyPatch(nameof(DungeonGenerator.SetupAvailableRooms)), HarmonyPostfix]
   public static void SetupAvailableRooms(DungeonGenerator __instance)

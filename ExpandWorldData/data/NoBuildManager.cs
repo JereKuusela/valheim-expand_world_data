@@ -63,7 +63,7 @@ public class NoBuildManager
     }).Where(x => x.radius != 0f || x.dungeon != 0f).ToList();
     Configuration.valueNoBuildData.Value = Yaml.Serializer().Serialize(data);
   }
-  private static Dictionary<Vector2i, NoBuildData> NoBuild = [];
+  private static Dictionary<Vector2s, NoBuildData> NoBuild = [];
   public static bool IsInsideNoBuildZone(Vector3 point)
   {
     var zone = ZoneSystem.GetZone(point);

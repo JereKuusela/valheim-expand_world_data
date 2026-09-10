@@ -1,6 +1,34 @@
 ﻿# Vegetation
 
-The file `expand_vegetations.yaml` sets the generated objects. This is a server side feature, clients don't have access to this data.
+The file `expand_vegetation.yaml` sets the generated objects. This is a server side feature, clients don't have access to this data.
+
+Ordinary biome vegetation is written to `expand_vegetation.yaml`. Each
+registered alternate biome receives a complete file under `AltBiomes`, for example
+`AltBiomes/expand_vegetation_SmalltreeMeadows.yaml`.
+
+When an existing `expand_vegetation.yaml` is upgraded, EWD creates any missing
+alternate-biome files from the configured ordinary rows rather than reverting
+their inherited sections to vanilla values. Existing alternate-biome files are
+not regenerated. Automatic data migration can still append missing native entries.
+
+An alternate-biome file contains both the vegetation inherited from its parent
+biome and the vegetation added by the alternate biome. Edit it as one complete
+biome. EWD suppresses the ordinary parent rows inside that alternate biome so
+the inherited copies do not spawn twice. Vegetation blocked by Deep North is
+included in a disabled section, so it stays visible and can be enabled directly.
+
+Existing configurations without the `AltBiomes` files keep the legacy additive
+behavior until EWD creates the missing complete files. If legacy named-alt rows
+remain in another `expand_vegetation*.yaml` file afterward, the matching
+complete file is authoritative and the legacy copies are ignored. This permits
+a staged migration without duplicate vegetation.
+
+When multiple complete alternate biomes overlap, identical inherited
+definitions are evaluated once. The first matching owner in the native active
+alternate-biome order supplies that shared definition, while definitions that
+are unique to another active owner remain additive. Another active alternate biome can still block a prefab by name.
+
+Custom scale is preserved when zones unload and reload, including uniform scale.
 
 Changes only apply to unexplored areas. Upgrade World mod can be used to reset areas.
 
@@ -19,6 +47,13 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
 - chanceToUseGroundTilt (default: `0.0`): Chance to set rotation based on terrain angle (from 0.0 to 1.0).
 - biome: List of possible biomes.
 - biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome, 4 = unused from Valheim data).
+- altBiome: Optional alternate biome parent used by the vegetation.
+  - An explicit empty string (`altBiome: ""`) creates ordinary base-biome vegetation.
+  - If omitted, an unambiguous native owner is inherited for backwards compatibility. If the native prefab has both base and alternate-biome rows, the base row is selected.
+  - Automatic migration distinguishes rows by both prefab and alternate-biome owner, so a base row and an alternate row using the same prefab are preserved separately.
+  - In a complete generated alternate-biome file, every row must have that owner. Rows with another owner are ignored.
+  - Ordinary parent rows are skipped inside a complete alternate biome because its file already contains the inherited copies.
+  - Configurations without complete files keep the earlier additive behavior: ordinary parent vegetation remains eligible and owner-specific rows are added to it.
 - blockCheck (default: `true`): If enabled, clear ground is required.
 - minAltitude (default: `0` meters): Minimum terrain altitude.
 - maxAltitude (default: `1000` meters): Maximum terrain altitude.

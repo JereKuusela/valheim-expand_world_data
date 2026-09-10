@@ -13,6 +13,7 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - randomSeed (default: `false`): If true, the generation result is always different instead of depending on the dungeon coordinates.
 - themes: List of available room sets separated by ",".
   - For example `SunkenCrypt,ForestCrypt` would use both sets.
+  - Deep North themes include `Hole`, `NorthVillage` and `MorkHalla`.
 - maxRooms (default: `1`): Maximum amount of rooms. Only for Dungeon and CampRadial.
 - minRooms (default: `1`): Minimum amount of rooms. Only for Dungeon and CampRadial.
 - minRequiredRooms (default: `1`): Minimum amount of rooms in the required list. Only for Dungeon and CampRadial.
@@ -32,6 +33,7 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - doorChance (default: `0`): Chance for a door to be placed. Only for Dungeon.
 - doorTypes: List of possible doors. Each door has the same chance of being selected.
   - prefab: Identifier of the door object.
+    - If the prefab is not registered, a matching door from the original dungeon generator is used. Unresolved doors are skipped.
   - connectionType: Type of the door connection.
   - chance (default: `0`): Chance to be spawned if this door is selected. IF zero, the general `doorChance` is used instead.
 - maxTilt (default: `90` degrees): Maximum terrain angle. Only for CampGrid and CampRadial.

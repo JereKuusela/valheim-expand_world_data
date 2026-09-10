@@ -279,10 +279,9 @@ public class ObjectParameters(string prefab, string arg, ZDO zdo) : Parameters(p
   private void LoadInventory()
   {
     if (inventory != null) return;
-    var currentItems = zdo.GetString(ZDOVars.s_items);
-    if (currentItems == "") return;
-    inventory = new("", null, 4, 2);
-    inventory.Load(new ZPackage(currentItems));
+    var loaded = new Inventory("", null, 9999, 9999);
+    if (!InventoryStorage.TryLoad(zdo, loaded)) return;
+    inventory = loaded;
   }
 
   private Vector3 GetPos(string value)

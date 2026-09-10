@@ -220,25 +220,22 @@ public class ItemValue(ItemData data)
   public static Inventory CreateInventory(ZDO zdo, int width = 100000, int height = 10000)
   {
     // Load only loads up to the inventory size, so the size must be large enough.
-    var inv = new Inventory("", null, width, height);
-    var str = zdo.GetString(ZDOVars.s_items);
-    if (str != "")
-    {
-      ZPackage pkg = new(str);
-      inv.Load(pkg);
-    }
-    return inv;
+    return InventoryStorage.Create(zdo, width, height);
   }
 
-  public static string LoadItems(Parameters pars, List<ItemValue> items, Vector2i size, int amount)
+  public static string LoadItems(Parameters pars, List<ItemValue> items, Vector2i size, int amount) =>
+    System.Convert.ToBase64String(LoadItemBytes(pars, items, size, amount));
+
+  internal static byte[] LoadItemBytes(Parameters pars, List<ItemValue> items, Vector2i size, int amount)
   {
     ZPackage pkg = new();
-    pkg.Write(106);
+    pkg.Write(InventoryStorage.FormatVersion);
     items = Generate(pars, items, size, amount);
-    pkg.Write(items.Count);
+    items = items.Where(item => item.CanWrite()).ToList();
+    pkg.Write((ushort)items.Count);
     foreach (var item in items)
       item.Write(pars, pkg);
-    return pkg.GetBase64();
+    return pkg.GetArray();
   }
   public static List<ItemValue> Generate(Parameters pars, List<ItemValue> data, Vector2i size, int amount)
   {
@@ -332,38 +329,30 @@ public class ItemValue(ItemData data)
   }
   public bool RollChance() => Chance >= 1f || Random.value <= Chance;
   public bool Roll(Parameters pars) => RollChance() && RollPrefab(pars);
+  private bool CanWrite()
+  {
+    var prefab = ObjectDB.instance.GetItemPrefab(RolledPrefab);
+    return prefab != null && prefab.TryGetComponent(out ItemDrop _);
+  }
   public void Write(Parameters pars, ZPackage pkg)
   {
     var prefab = ObjectDB.instance.GetItemPrefab(RolledPrefab);
-    pkg.Write(prefab?.name ?? "");
-    var quality = Quality?.Get(pars) ?? 1;
-    var durability = Durability?.Get(pars);
-    if (!durability.HasValue)
-    {
-      if (prefab != null && prefab.TryGetComponent(out ItemDrop drop))
-        durability = drop.m_itemData.GetMaxDurability(quality);
-      else
-        durability = 100f;
-    };
-    pkg.Write(RolledStack);
-    pkg.Write(durability.Value);
-    pkg.Write(RolledPosition);
-    pkg.Write(Equipped?.GetBool(pars) ?? false);
-    pkg.Write(quality);
-    pkg.Write(Variant?.Get(pars) ?? 0);
-    pkg.Write(CrafterID?.Get(pars) ?? 0L);
-    pkg.Write(CrafterName?.Get(pars) ?? "");
-    pkg.Write(CustomData?.Count ?? 0);
+    if (prefab == null || !prefab.TryGetComponent(out ItemDrop drop)) return;
+    var itemData = drop.m_itemData.Clone();
+    itemData.m_dropPrefab = prefab;
+    itemData.m_stack = RolledStack;
+    itemData.m_quality = Quality?.Get(pars) ?? 1;
+    itemData.m_variant = Variant?.Get(pars) ?? 0;
+    itemData.m_crafterID = CrafterID?.Get(pars) ?? 0L;
+    itemData.m_crafterName = CrafterName?.Get(pars) ?? "";
+    itemData.m_worldLevel = WorldLevel?.Get(pars) ?? 0;
+    itemData.m_durability = Durability?.Get(pars) ?? itemData.GetMaxDurability(itemData.m_quality);
+    itemData.m_equipped = Equipped?.GetBool(pars) ?? false;
+    itemData.m_pickedUp = PickedUp?.GetBool(pars) ?? false;
+    itemData.m_gridPos = RolledPosition;
     if (CustomData != null)
-    {
-      foreach (var kvp in CustomData)
-      {
-        pkg.Write(kvp.Key);
-        pkg.Write(kvp.Value.Get(pars));
-      }
-    }
-    pkg.Write(WorldLevel?.Get(pars) ?? 0);
-    pkg.Write(PickedUp?.GetBool(pars) ?? false);
+      itemData.m_customData = CustomData.ToDictionary(x => x.Key, x => x.Value.Get(pars) ?? "");
+    itemData.Save(pkg);
   }
 
   public void AddTo(Parameters pars, Inventory inv)

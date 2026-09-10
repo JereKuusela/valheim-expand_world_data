@@ -27,12 +27,16 @@ public partial class Loader
     dg.m_campRadiusMax = data.campRadiusMax;
     dg.m_campRadiusMin = data.campRadiusMin;
     dg.m_doorChance = data.doorChance;
-    dg.m_doorTypes = data.doorTypes.Select(type => new DungeonGenerator.DoorDef()
+    foreach (var type in data.doorTypes)
     {
-      m_chance = type.chance,
-      m_connectionType = type.connectionType,
-      m_prefab = DataManager.ToPrefab(type.prefab, fileName)
-    }).ToList();
+      dg.m_doorTypes.Add(new DungeonGenerator.DoorDef()
+      {
+        m_chance = type.chance,
+        m_connectionType = type.connectionType,
+        m_prefab = DataManager.ToPrefab(type.prefab, fileName)
+      });
+      dg.m_doorPrefabNames.Add(type.prefab);
+    }
     dg.m_maxRooms = data.maxRooms;
     dg.m_minRooms = data.minRooms;
     dg.m_maxRetries = data.maxRetries;

@@ -18,7 +18,7 @@ public class GuaranteeLocations
     {
       Log.Info($"Forcefully placing {location.m_prefab.Name} location at the center.");
       var locationRadius = Mathf.Max(location.m_exteriorRadius, location.m_interiorRadius);
-      Vector3 randomPointInZone = ZoneSystem.GetRandomPointInZone(new Vector2i(0, 0), locationRadius);
+      Vector3 randomPointInZone = ZoneSystem.GetRandomPointInZone(Vector2s.zero, locationRadius);
       zs.RegisterLocation(location, randomPointInZone, false);
     }
   }
@@ -40,7 +40,7 @@ public class PlaceZoneCtrl
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceVegetation))]
 public class ClearAreasFromAdjacentZones
 {
-  static void Prefix(ZoneSystem __instance, Vector2i zoneID, List<ZoneSystem.ClearArea> clearAreas)
+  static void Prefix(ZoneSystem __instance, Vector2s zoneID, List<ZoneSystem.ClearArea> clearAreas)
   {
     for (var i = zoneID.x - 1; i <= zoneID.x + 1; ++i)
     {
@@ -62,10 +62,10 @@ public class ClearAreasFromAdjacentZones
   }
 }
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GetRandomPointInZone), typeof(Vector2i), typeof(float))]
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GetRandomPointInZone), typeof(Vector2s), typeof(float))]
 public class FixGetRandomPointInZone
 {
-  static Vector3 Postfix(Vector3 result, Vector2i zone, float locationRadius)
+  static Vector3 Postfix(Vector3 result, Vector2s zone, float locationRadius)
   {
     // If fits inside the zone, vanilla code works.
     if (locationRadius < 32f) return result;

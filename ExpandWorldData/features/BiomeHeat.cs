@@ -100,6 +100,7 @@ public class BiomeHeat
     var wg = WorldGenerator.instance;
     if (wg == null || wg.m_world.m_menu) return true;
     if (!Configuration.DataWorld) return true;
+    if (WorldManager.UseNativeGeneration) return true;
     var boiling = BiomeCalculator.GetBoiling(wg, x, y);
     __result = boiling > 0f;
     return false;
