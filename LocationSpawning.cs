@@ -1,0 +1,382 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
+using HarmonyLib;
+using Service;
+using UnityEngine;
+using Data;
+using System.Diagnostics;
+
+namespace ExpandWorldData;
+
+public class LocationSpawning
+{
+  public static ZoneSystem.ZoneLocation? CurrentLocation = null;
+  public static DataEntry? DataOverride(DataEntry? pkg, string prefab)
+  {
+    return LocationExtra.MergeData(CurrentLocation, pkg, prefab);
+  }
+  public static DataEntry? DungeonDataOverride(string prefab)
+  {
+    return LocationExtra.GetData(CurrentLocation, prefab, true);
+  }
+  public static string PrefabOverride(string prefab)
+  {
+    return LocationExtra.GetPrefabOverride(CurrentLocation, prefab);
+  }
+  public static string DungeonPrefabOverride(string prefab)
+  {
+    return LocationExtra.GetPrefabOverride(CurrentLocation, prefab, true);
+  }
+  static readonly string DummyObj = "vfx_auto_pickup";
+  public static GameObject DummySpawn => UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab(DummyObj), Vector3.zero, Quaternion.identity);
+  public static GameObject Object(GameObject prefab, Vector3 pos, Quaternion rot, int seed, List<GameObject> spawnedGhostObjects)
+  {
+    BlueprintObject bpo = new(Utils.GetPrefabName(prefab), pos, rot, prefab.transform.localScale, null, 1f);
+    var obj = Spawn.BPO(bpo, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
+    return obj ?? DummySpawn;
+  }
+
+
+  public static void CustomObjects(ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rot, Vector3 scale, int seed, List<GameObject> spawnedGhostObjects)
+  {
+    if (!LocationExtra.TryGet(location, out var extra) || extra?.Objects == null) return;
+    var objects = extra.Objects;
+    //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefab.Name}");
+    foreach (var obj in objects)
+    {
+      if (obj.Chance < 1f && UnityEngine.Random.value > obj.Chance) continue;
+      Spawn.BPO(obj, pos, rot, scale, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
+    }
+  }
+
+
+}
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceLocations))]
+public class PrepareTerrainBeforeZoneContents
+{
+  static void Prefix(Heightmap hmap, ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
+  {
+    Terrain.PrepareZoneTerrain(hmap, mode, spawnedObjects);
+  }
+}
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.CreateLocationProxy))]
+public class LocationZDO
+{
+  static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
+  {
+    if (!LocationExtra.TryGet(location, out var extra)) return;
+    var key = extra.ZDOData;
+    if (string.IsNullOrEmpty(key)) return;
+    var data = DataHelper.Get(key!, location.m_prefab.Name);
+    if (data != null) DataHelper.Init(__instance.m_locationProxyPrefab, pos, rotation, null, data);
+  }
+}
+[HarmonyPatch(typeof(LocationProxy), nameof(LocationProxy.SetLocation))]
+public class FixGhostInit
+{
+  public static readonly int ReferenceHash = "locationreference".GetStableHashCode();
+  static void Prefix(LocationProxy __instance, ref string location, ref bool spawnNow)
+  {
+    // Original saved so that other mods can reference clones and blueprints properly.
+    var hash = location.GetStableHashCode();
+    __instance.m_nview.GetZDO().Set(ReferenceHash, hash);
+
+    location = Parse.Name(location);
+    if (ZNetView.m_ghostInit)
+    {
+      spawnNow = false;
+      DataManager.CleanGhostInit(__instance.m_nview);
+    }
+  }
+}
+
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.SpawnLocation))]
+public class LocationObjectDataAndSwap
+{
+  static bool Prefix(ZoneSystem.ZoneLocation location, ZoneSystem.SpawnMode mode, ref Vector3 pos, ref int seed, List<GameObject> spawnedGhostObjects, ref Quaternion rot)
+  {
+    if (mode != ZoneSystem.SpawnMode.Client)
+    {
+      LocationSpawning.CurrentLocation = location;
+      if (LocationExtra.TryGetData(location, out var data))
+      {
+        Spawn.IgnoreHealth = data.randomDamage == "all";
+        pos.y += data.offset ?? data.groundOffset;
+        if (Configuration.RandomLocations || data.randomSeed) seed = System.DateTime.Now.Ticks.GetHashCode();
+
+        if (data.randomCardinal)
+        {
+          Random.State previousState = Random.state;
+          Random.InitState(seed);
+          int directionMultiplier = Random.Range(0, 4);
+          rot = Quaternion.Euler(0f, directionMultiplier * 90f, 0f);
+          Random.state = previousState;
+        }
+      }
+    }
+    // Blueprints won't have any znetviews to spawn or other logic to handle.
+    if (location.m_prefab.IsValid)
+      return true;
+    // But still spawn proxy so that other mods can refer to it.
+    CreateBlueprintProxy(location, pos, mode, spawnedGhostObjects);
+    return false;
+  }
+  // Unfortunately bit code duplication but still bit too different to use original method.
+  private static void CreateBlueprintProxy(ZoneSystem.ZoneLocation location, Vector3 pos, ZoneSystem.SpawnMode mode, List<GameObject> spawnedGhostObjects)
+  {
+    if (mode == ZoneSystem.SpawnMode.Client) return;
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      ZNetView.StartGhostInit();
+
+    var go = Object.Instantiate(ZoneSystem.instance.m_locationProxyPrefab, pos, Quaternion.identity);
+    var loc = go.GetComponent<LocationProxy>();
+    var view = loc.m_nview;
+    var hash = location.m_prefab.Name.GetStableHashCode();
+    view.GetZDO().Set(FixGhostInit.ReferenceHash, hash);
+    if (mode == ZoneSystem.SpawnMode.Full)
+      loc.SpawnLocation();
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+    {
+      spawnedGhostObjects.Add(go);
+      ZNetView.FinishGhostInit();
+    }
+  }
+
+  static void Customize(ZoneSystem.ZoneLocation location)
+  {
+    if (LocationExtra.TryGetData(location, out var data))
+      WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
+  }
+  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+  {
+    var instantiator = AccessTools.FirstMethod(typeof(Object), info => info.Name == nameof(Object.Instantiate) && info.IsGenericMethodDefinition &&
+            info.GetParameters().Length == 3 &&
+            info.GetParameters()[1].ParameterType == typeof(Vector3) &&
+            info.GetParameters()[2].ParameterType == typeof(Quaternion))
+      .MakeGenericMethod(typeof(GameObject));
+    return new CodeMatcher(instructions)
+      .MatchForward(true, new CodeMatch(OpCodes.Stsfld, AccessTools.Field(typeof(WearNTear), nameof(WearNTear.m_randomInitialDamage))))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_1))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(Customize).operand))
+      .MatchForward(false, new CodeMatch(OpCodes.Call, instantiator))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_2))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, 6))
+      .Set(OpCodes.Call, Transpilers.EmitDelegate(LocationSpawning.Object).operand)
+      .InstructionEnumeration();
+  }
+
+
+  static void Postfix(ZoneSystem.ZoneLocation location, int seed, Vector3 pos, Quaternion rot, ZoneSystem.SpawnMode mode, List<GameObject> spawnedGhostObjects)
+  {
+    // Previously client mode cleared CurrentLocation which caused issued on single player.
+    // If the player teleports to the location, location placement would also run the client spawning.
+    if (mode == ZoneSystem.SpawnMode.Client) return;
+
+    var isBluePrint = BlueprintManager.Has(location.m_prefab.Name);
+    Blueprint? blueprint = null;
+    if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.Name, out var loadedBlueprint))
+      blueprint = loadedBlueprint;
+    // Paint-only snapshots still need the existing implicit blueprint level.
+    // Only captured height data replaces that default terrain operation.
+    var hasTerrainHeight = blueprint?.TerrainHeight?.HasValues == true;
+    var useDefaultBlueprintLeveling = isBluePrint && !hasTerrainHeight;
+    if (LocationExtra.TryGetData(location, out var data))
+    {
+      WearNTear.m_randomInitialDamage = data.randomDamage == "true" || data.randomDamage == "all";
+      // Remove the applied offset.
+      var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
+      HandleTerrain(surface, location.m_exteriorRadius, useDefaultBlueprintLeveling, data);
+    }
+    if (blueprint != null)
+      Terrain.ApplyBlueprint(blueprint, pos, rot, mode, spawnedGhostObjects);
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      Terrain.FinalizeGhostTerrain(pos, spawnedGhostObjects, location.m_prefab.Name);
+    Random.InitState(seed);
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      ZNetView.StartGhostInit();
+    var scale = LocationExtra.GetScale(location);
+    if (blueprint != null)
+    {
+      Spawn.Blueprint(blueprint, pos, rot, scale, seed, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
+    }
+    LocationSpawning.CustomObjects(location, pos, rot, scale, seed, spawnedGhostObjects);
+
+    WearNTear.m_randomInitialDamage = false;
+    SnapToGround.SnappAll();
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      ZNetView.FinishGhostInit();
+    Spawn.IgnoreHealth = false;
+    LocationExtra.RunCommand(location, pos, rot);
+    LocationSpawning.CurrentLocation = null;
+  }
+
+  static void HandleTerrain(Vector3 pos, float radius, bool isBlueprint, LocationYaml data)
+  {
+    var level = false;
+    if (data.levelArea == "") level = isBlueprint;
+    else if (data.levelArea == "false") level = false;
+    else level = true;
+    if (!level && data.paint == "") return;
+
+    Terrain.ChangeTerrain(pos, (hm, terrain) =>
+    {
+      if (level)
+      {
+        var levelRadius = data.levelRadius;
+        var levelBorder = data.levelBorder;
+        if (levelRadius == 0f && levelBorder == 0f)
+        {
+          var multiplier = Parse.Float(data.levelArea, 0.5f);
+          levelRadius = multiplier * radius;
+          levelBorder = (1 - multiplier) * radius;
+        }
+        Terrain.Level(hm, terrain, pos, levelRadius, levelBorder);
+      }
+      if (data.paint != "")
+      {
+        var paintRadius = data.paintRadius ?? radius;
+        var paintBorder = data.paintBorder ?? 5f;
+        Terrain.Paint(hm, terrain, pos, data.paint, paintRadius, paintBorder);
+      }
+    });
+  }
+  [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PokeCanSpawnLocation))]
+  public class PokeCanSpawnLocation
+  {
+    static bool Prefix(ZoneSystem.ZoneLocation location, ref bool __result)
+    {
+      if (BlueprintManager.Has(location.m_prefab.Name))
+      {
+        __result = true;
+        return false;
+      }
+      return true;
+    }
+  }
+}
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocationsTimeSliced), typeof(ZoneSystem.ZoneLocation), typeof(Stopwatch), typeof(ZPackage))]
+[HarmonyPatch(MethodType.Enumerator)]
+public class ScaleLocationHeightRequirement
+{
+  static float ScaleHeight(float height, Heightmap.Biome biome)
+  {
+    if (!Configuration.ScaleLocationAltitudeRequirement) return height;
+    if (!BiomeManager.TryGetData(biome, out var data))
+      return height;
+
+    height *= data.altitudeMultiplier;
+    height += data.altitudeDelta;
+    if (height < 0f)
+      height *= data.waterDepthMultiplier;
+    return height;
+  }
+
+  [HarmonyTranspiler]
+  static IEnumerable<CodeInstruction> TranspileMoveNext(IEnumerable<CodeInstruction> instructions)
+  {
+    var codes = instructions.ToList();
+    var getBiome = AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), [typeof(Vector3)]);
+    var biomeCall = codes.FindIndex(instruction => instruction.Calls(getBiome));
+    if (biomeCall < 0) throw new System.InvalidOperationException("Biome call not found.");
+    var storeBiome = codes.Skip(biomeCall + 1).Take(4).FirstOrDefault(IsStoreLocal);
+    if (storeBiome == null) throw new System.InvalidOperationException("Biome local not found.");
+    var scaleHeight = Transpilers.EmitDelegate(ScaleHeight).operand;
+    InsertAfter(codes, biomeCall, nameof(ZoneSystem.ZoneLocation.m_minAltitude), storeBiome, scaleHeight);
+    InsertAfter(codes, biomeCall, nameof(ZoneSystem.ZoneLocation.m_maxAltitude), storeBiome, scaleHeight);
+    return codes;
+  }
+
+  static void InsertAfter(List<CodeInstruction> codes, int start, string fieldName, CodeInstruction storeBiome, object scaleHeight)
+  {
+    var field = AccessTools.Field(typeof(ZoneSystem.ZoneLocation), fieldName);
+    var index = codes.FindIndex(start, instruction => instruction.LoadsField(field));
+    if (index < 0) throw new System.InvalidOperationException($"{fieldName} load not found.");
+    codes.Insert(index + 1, LoadForStore(storeBiome));
+    codes.Insert(index + 2, new CodeInstruction(OpCodes.Call, scaleHeight));
+  }
+
+  static bool IsStoreLocal(CodeInstruction instruction) =>
+    instruction.opcode == OpCodes.Stloc || instruction.opcode == OpCodes.Stloc_S ||
+    instruction.opcode == OpCodes.Stloc_0 || instruction.opcode == OpCodes.Stloc_1 ||
+    instruction.opcode == OpCodes.Stloc_2 || instruction.opcode == OpCodes.Stloc_3;
+
+  static CodeInstruction LoadForStore(CodeInstruction instruction)
+  {
+    if (instruction.opcode == OpCodes.Stloc_0) return new(OpCodes.Ldloc_0);
+    if (instruction.opcode == OpCodes.Stloc_1) return new(OpCodes.Ldloc_1);
+    if (instruction.opcode == OpCodes.Stloc_2) return new(OpCodes.Ldloc_2);
+    if (instruction.opcode == OpCodes.Stloc_3) return new(OpCodes.Ldloc_3);
+    return new(instruction.opcode == OpCodes.Stloc_S ? OpCodes.Ldloc_S : OpCodes.Ldloc, instruction.operand);
+  }
+
+}
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.CreateLocalZones))]
+public class CreateLocalZones
+{
+  public static bool LocationsPregenerated = false;
+  static bool Postfix(bool result, ZoneSystem __instance)
+  {
+    // If vanilla zone generated, wait until next attempt.
+    if (result) return result;
+    if (LocationsPregenerated) return result;
+
+    foreach (var kvp in __instance.m_locationInstances)
+    {
+      var loc = kvp.Value.m_location;
+      if (loc == null) continue;
+      if (!LocationExtra.TryGetData(loc, out var data)) continue;
+      if (!data.pregenerate) continue;
+      // Vanilla returns true if poke is successful (doesn't fully make sense but it is what it is).
+      if (__instance.PokeLocalZone(kvp.Key))
+        return true;
+      // Poke can return false when generation is not done yet, so have to manually check this.
+      if (!__instance.IsZoneGenerated(kvp.Key))
+        return false;
+    }
+
+    LocationsPregenerated = true;
+    return result;
+  }
+}
+
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange), typeof(SoftReferenceableAssets.AssetID), typeof(string), typeof(Vector3), typeof(float), typeof(bool))]
+public class HaveLocationInRange
+{
+  static bool Prefix(ref bool __result, ZoneSystem __instance, SoftReferenceableAssets.AssetID assetID, string group, Vector3 p, float radius)
+  {
+    var isVirtual = LocationExtra.IsVirtualGroupId(group);
+    if (!isVirtual) return true;
+
+    var rules = LocationExtra.GetDistanceRules(group);
+    __result = InRange(__instance, p, rules);
+    return false;
+  }
+
+  private static bool InRange(ZoneSystem zs, Vector3 p, List<System.Tuple<string, float>>? rules)
+  {
+    if (rules == null || rules.Count == 0) return false;
+
+    foreach (var locationInstance in zs.m_locationInstances.Values)
+    {
+      var loc = locationInstance.m_location;
+      if (loc == null)
+        continue;
+
+      foreach (var rule in rules)
+      {
+        var matches = LocationExtra.MatchesTarget(loc, rule.Item1);
+        if (!matches)
+          continue;
+        var distance = Vector3.Distance(locationInstance.m_position, p);
+        if (distance < rule.Item2)
+          return true;
+      }
+    }
+    return false;
+  }
+}

@@ -1,0 +1,192 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Service;
+
+namespace ExpandWorldData;
+
+public class WorldManager
+{
+  public static string FileName = "expand_world.yaml";
+  public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
+  public static string Pattern = "expand_world*.yaml";
+  private static bool Initialized;
+  private static bool Pending;
+  public static bool UseNativeGeneration { get; private set; }
+
+  public static void Load()
+  {
+    Initialized = true;
+    if (!Pending) return;
+    Pending = false;
+    Set(Configuration.valueWorldData.Value);
+  }
+
+  public static void CleanUp()
+  {
+    Initialized = false;
+    Pending = false;
+    UseNativeGeneration = false;
+  }
+
+  public static List<WorldYaml> DefaultData = [
+      new() {
+        biome = "ashlands",
+        centerY = 0.4f,
+        minDistance = 1.2f,
+        maxDistance = 1.6f,
+        boiling = "true"
+      },
+      new() {
+        biome = "ocean",
+        maxAltitude = -26f
+      },
+      new() {
+        biome = "mountain",
+        minAltitude = 50f,
+      },
+      new() {
+        biome = "deepnorth",
+        centerY = -0.4f,
+        minDistance = 1.2f,
+        maxDistance = 1.6f
+      },
+      new() {
+        biome = "swamp",
+        wiggleDistance = false,
+        minDistance = 0.2f,
+        maxDistance = 0.6f,
+        minAltitude = -20f,
+        maxAltitude = 20f,
+        amount = 0.4f,
+      },
+      new() {
+        biome = "mistlands",
+        minDistance = 0.6f,
+        amount = 0.6f,
+      },
+      new() {
+        biome = "plains",
+        minDistance = 0.3f,
+        maxDistance = 0.8f,
+        amount = 0.6f,
+      },
+      new() {
+        biome = "blackforest",
+        minDistance = 0.06f,
+        maxDistance = 0.6f,
+        amount = 0.6f,
+      },
+      new() {
+        biome = "blackforest",
+        minDistance = 0.5f,
+      },
+      new() {
+        biome = "meadows",
+      },
+    ];
+  private static readonly string NativeDefaultYaml = Yaml.Serializer().Serialize(DefaultData);
+  public static List<WorldEntry> DefaultEntries = DefaultData.Select(s => new WorldEntry(s, "default world")).ToList();
+  public static void AddWorld(WorldYaml data, int index)
+  {
+    UseNativeGeneration = false;
+    DefaultData.Insert(index, data);
+    DefaultEntries.Insert(index, new WorldEntry(data, ""));
+  }
+  public static List<WorldYaml> Data = DefaultData;
+
+  public static WorldYaml ToData(WorldYaml biome) => biome;
+
+  public static void CreateConfigs()
+  {
+    if (Helper.IsClient() || !Configuration.DataWorld) return;
+    if (File.Exists(FilePath)) return;
+    var yaml = Yaml.Serializer().Serialize(DefaultData);
+    File.WriteAllText(FilePath, yaml);
+  }
+  public static void ReadConfigs()
+  {
+    if (Helper.IsClient()) return;
+    if (Configuration.DataWorld)
+    {
+      if (File.Exists(FilePath))
+      {
+        var yaml = DataManager.Read<WorldYaml, WorldEntry>(Pattern, (d, f) => new WorldEntry(d, f));
+        Configuration.valueWorldData.Value = yaml;
+        Set(yaml);
+      }
+      else
+      {
+        // Watcher will trigger reload.
+        CreateConfigs();
+      }
+    }
+    else
+    {
+      Configuration.valueWorldData.Value = "";
+      Set("");
+    }
+  }
+  public static void FromSetting(string yaml)
+  {
+    if (Helper.IsClient()) Set(yaml);
+  }
+  private static void Set(string yaml)
+  {
+    if (!Initialized)
+    {
+      Pending = true;
+      return;
+    }
+    if (yaml == "" || !Configuration.DataWorld) return;
+    try
+    {
+      Data = Yaml.Deserialize<WorldYaml>(yaml, "World");
+      if (Data.Count == 0)
+      {
+        Log.Warning($"Failed to load any world data.");
+        Log.Info($"Reloading default world data ({Data.Count} entries).");
+        Data = DefaultData;
+      }
+      else
+        Log.Info($"Reloading world data ({Data.Count} entries).");
+      SetNativeGeneration();
+      BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
+      BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
+      EWD.Instance.InvokeRegenerate();
+    }
+    catch (Exception e)
+    {
+      UseNativeGeneration = false;
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
+    }
+  }
+  public static void Reload()
+  {
+    Log.Info($"Reloading world data ({Data.Count} entries).");
+    SetNativeGeneration();
+    BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
+    BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
+    EWD.Instance.InvokeRegenerate();
+  }
+
+  private static void SetNativeGeneration()
+  {
+    UseNativeGeneration = !Configuration.LegacyGeneration &&
+      Configuration.WiggleFrequency == 20f &&
+      Configuration.WiggleWidth == 100f &&
+      WorldInfo.Radius == 10000f &&
+      WorldInfo.TotalRadius == 10500f &&
+      WorldInfo.Stretch == 1f &&
+      WorldInfo.BiomeStretch == 1f &&
+      Yaml.Serializer().Serialize(Data) == NativeDefaultYaml;
+    if (UseNativeGeneration)
+      Log.Info("World data matches the defaults. Using native biome generation.");
+  }
+  public static void SetupWatcher()
+  {
+    Yaml.SetupWatcher(Pattern, ReadConfigs);
+  }
+}
