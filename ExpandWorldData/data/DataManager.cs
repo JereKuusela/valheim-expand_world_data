@@ -128,6 +128,7 @@ public class CleanupOnShutdown
     ClutterManager.CleanUp();
     LocationLoading.CleanUp();
     VegetationLoading.CleanUp();
+    VegetationLoading.ClearReload();
   }
 }
 

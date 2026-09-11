@@ -13,6 +13,7 @@ public class WorldManager
   public static string Pattern = "expand_world*.yaml";
   private static bool Initialized;
   private static bool Pending;
+  public static bool UseNativeGeneration { get; private set; }
 
   public static void Load()
   {
@@ -26,6 +27,7 @@ public class WorldManager
   {
     Initialized = false;
     Pending = false;
+    UseNativeGeneration = false;
   }
 
   public static List<WorldYaml> DefaultData = [
@@ -84,9 +86,11 @@ public class WorldManager
         biome = "meadows",
       },
     ];
+  private static readonly string NativeDefaultYaml = Yaml.Serializer().Serialize(DefaultData);
   public static List<WorldEntry> DefaultEntries = DefaultData.Select(s => new WorldEntry(s, "default world")).ToList();
   public static void AddWorld(WorldYaml data, int index)
   {
+    UseNativeGeneration = false;
     DefaultData.Insert(index, data);
     DefaultEntries.Insert(index, new WorldEntry(data, ""));
   }
@@ -147,12 +151,14 @@ public class WorldManager
       }
       else
         Log.Info($"Reloading world data ({Data.Count} entries).");
+      SetNativeGeneration();
       BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
       BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
       EWD.Instance.InvokeRegenerate();
     }
     catch (Exception e)
     {
+      UseNativeGeneration = false;
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
@@ -160,9 +166,24 @@ public class WorldManager
   public static void Reload()
   {
     Log.Info($"Reloading world data ({Data.Count} entries).");
+    SetNativeGeneration();
     BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
     BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
     EWD.Instance.InvokeRegenerate();
+  }
+
+  private static void SetNativeGeneration()
+  {
+    UseNativeGeneration = !Configuration.LegacyGeneration &&
+      Configuration.WiggleFrequency == 20f &&
+      Configuration.WiggleWidth == 100f &&
+      WorldInfo.Radius == 10000f &&
+      WorldInfo.TotalRadius == 10500f &&
+      WorldInfo.Stretch == 1f &&
+      WorldInfo.BiomeStretch == 1f &&
+      Yaml.Serializer().Serialize(Data) == NativeDefaultYaml;
+    if (UseNativeGeneration)
+      Log.Info("World data matches the defaults. Using native biome generation.");
   }
   public static void SetupWatcher()
   {

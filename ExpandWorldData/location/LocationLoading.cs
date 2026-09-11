@@ -21,12 +21,19 @@ public class LocationLoading
   }
   public static ZoneSystem.ZoneLocation FromData(LocationYaml data, string fileName)
   {
+    var altBiome = data.altBiome;
+    if (altBiome == null)
+    {
+      var native = DefaultEntries.FirstOrDefault(entry => entry.m_prefab.Name == data.prefab);
+      altBiome = native?.m_altBiomeParent;
+    }
     var loc = new ZoneSystem.ZoneLocation
     {
       m_prefabName = data.prefab,
 
       m_enable = data.enabled,
       m_biome = DataManager.ToBiomes(data.biome, fileName),
+      m_altBiomeParent = string.IsNullOrWhiteSpace(altBiome) ? null! : altBiome,
       m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName),
       m_quantity = data.quantity,
       m_prioritized = data.prioritized,
@@ -77,6 +84,7 @@ public class LocationLoading
     data.prefab = loc.m_prefab.Name;
     data.enabled = loc.m_enable;
     data.biome = DataManager.FromBiomes(loc.m_biome);
+    data.altBiome = loc.m_altBiomeParent ?? "";
     data.biomeArea = DataManager.FromBiomeAreas(loc.m_biomeArea);
     data.quantity = loc.m_quantity;
     data.prioritized = loc.m_prioritized;
@@ -211,17 +219,20 @@ public class LocationLoading
   private static void UpdateHashes()
   {
     var zs = ZoneSystem.instance;
-    zs.m_locationsByHash = Helper.ToDict(zs.m_locations, loc => loc.m_prefab.Name.GetStableHashCode(), loc => loc);
+    var locations = Helper.ToDict(zs.m_locations, loc => loc.m_prefab.Name.GetStableHashCode(), loc => loc);
+    zs.m_locationsByHash.Clear();
+    foreach (var location in locations)
+      zs.m_locationsByHash[location.Key] = location.Value;
     //ExpandWorldData.Log.Debug($"Loaded {zs.m_locationsByHash.Count} zone hashes.");
   }
   private static void UpdateInstances()
   {
-    var zs = ZoneSystem.m_instance;
+    var zs = ZoneSystem.instance;
     var instances = zs.m_locationInstances;
     foreach (var zone in instances.Keys.ToArray())
     {
       var value = instances[zone];
-      var location = zs.GetLocation(value.m_location.m_prefab.Name);
+      var location = zs.m_locations.FirstOrDefault(location => location.m_prefab.Name == value.m_location.m_prefab.Name);
       // Jewelcrafting has dynamic locations that don't exist in the location list.
       if (location == null) continue;
       value.m_location = location;
@@ -330,14 +341,16 @@ public static class ZoneSystemPatches
 {
   [HarmonyPatch(nameof(ZoneSystem.GetLocationIcon))]
   [HarmonyPrefix]
-  static bool GetLocationIcon(ZoneSystem __instance, string name, ref Vector3 pos, ref bool __result)
+  static bool GetLocationIcon(ZoneSystem __instance, string name, ref Vector3 pos, ref bool __result, Dictionary<Vector3, string> ___tempIconList)
   {
     if (!ZNet.instance.IsServer())
       return true;
     // Server should also use GetLocationIcons so that single player matches the dedicated server behavior.
-    __instance.tempIconList.Clear();
-    __instance.GetLocationIcons(__instance.tempIconList);
-    foreach (var kvp in __instance.tempIconList)
+    // Harmony injects the private vanilla cache. Directly referencing this field works against publicized
+    // compile-time assemblies but throws FieldAccessException against the unpublicized runtime assembly.
+    ___tempIconList.Clear();
+    __instance.GetLocationIcons(___tempIconList);
+    foreach (var kvp in ___tempIconList)
     {
       if (kvp.Value != name)
         continue;

@@ -11,12 +11,14 @@ public class WorldAngle
 {
   static bool Prefix(float wx, float wy, ref float __result)
   {
+    if (!Configuration.DataWorld || WorldManager.UseNativeGeneration)
+      return true;
     __result = Mathf.Sin(Mathf.Atan2(wx, wy) * Configuration.WiggleFrequency);
     return false;
   }
 }
 
-[HarmonyPatch(typeof(Minimap), nameof(Minimap.GetPixelColor))]
+[HarmonyPatch(typeof(Minimap), nameof(Minimap.GetPixelColor), typeof(Heightmap.Biome))]
 public class GetMapColor
 {
   static bool Prefix(Heightmap.Biome biome, ref Color __result)
@@ -80,16 +82,38 @@ public class GetMaskColor
 [HarmonyPatch(typeof(Minimap), nameof(Minimap.GenerateWorldMap))]
 public class GenerateWorldMapHeight
 {
-
   static float ModifyHeight(float height, Heightmap.Biome biome) => Api.GetMinimapHeight(height, biome);
 
-  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) =>
-    new CodeMatcher(instructions).MatchForward(true, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Minimap), nameof(Minimap.GetMaskColor))))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 14))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 13))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ModifyHeight).operand))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Stloc_S, 14))
-    .InstructionEnumeration();
+  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+  {
+    var codes = instructions.ToList();
+    var getBiome = AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), [typeof(float), typeof(float), typeof(float), typeof(bool)]);
+    var biomeCall = codes.FindIndex(instruction => instruction.Calls(getBiome));
+    if (biomeCall < 0) throw new System.InvalidOperationException("Map biome call not found.");
+    var storeBiome = codes.Skip(biomeCall + 1).Take(4).FirstOrDefault(IsStoreLocal);
+    if (storeBiome == null) throw new System.InvalidOperationException("Map biome local not found.");
+    var getHeight = AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight),
+      [typeof(Heightmap.Biome), typeof(float), typeof(float), typeof(Color).MakeByRefType(), typeof(bool), typeof(bool)]);
+    var heightCall = codes.FindIndex(biomeCall + 1, instruction => instruction.Calls(getHeight));
+    if (heightCall < 0) throw new System.InvalidOperationException("Map height call not found.");
+    codes.Insert(heightCall + 1, LoadForStore(storeBiome));
+    codes.Insert(heightCall + 2, new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ModifyHeight).operand));
+    return codes;
+  }
+
+  static bool IsStoreLocal(CodeInstruction instruction) =>
+    instruction.opcode == OpCodes.Stloc || instruction.opcode == OpCodes.Stloc_S ||
+    instruction.opcode == OpCodes.Stloc_0 || instruction.opcode == OpCodes.Stloc_1 ||
+    instruction.opcode == OpCodes.Stloc_2 || instruction.opcode == OpCodes.Stloc_3;
+
+  static CodeInstruction LoadForStore(CodeInstruction instruction)
+  {
+    if (instruction.opcode == OpCodes.Stloc_0) return new(OpCodes.Ldloc_0);
+    if (instruction.opcode == OpCodes.Stloc_1) return new(OpCodes.Ldloc_1);
+    if (instruction.opcode == OpCodes.Stloc_2) return new(OpCodes.Ldloc_2);
+    if (instruction.opcode == OpCodes.Stloc_3) return new(OpCodes.Ldloc_3);
+    return new(instruction.opcode == OpCodes.Stloc_S ? OpCodes.Ldloc_S : OpCodes.Ldloc, instruction.operand);
+  }
 
 }
 
@@ -99,6 +123,7 @@ public class SetBiomeOffsets
   [HarmonyPriority(Priority.VeryHigh)]
   static void Prefix(WorldGenerator __instance)
   {
+    if (!Configuration.DataWorld || WorldManager.UseNativeGeneration) return;
     if (BiomeCalculator.Offsets.Count > 0) return;
     BiomeCalculator.Offsets[Heightmap.Biome.Swamp] = __instance.m_offset0;
     BiomeCalculator.Offsets[Heightmap.Biome.Plains] = __instance.m_offset1;
@@ -119,6 +144,7 @@ public class GetBiomeWG
   {
     if (__instance.m_world.m_menu) return true;
     if (!Configuration.DataWorld) return true;
+    if (WorldManager.UseNativeGeneration) return true;
     if (waterAlwaysOcean && __instance.GetHeight(wx, wy) <= oceanLevel)
     {
       __result = Heightmap.Biome.Ocean;
@@ -140,6 +166,7 @@ public class GetAshlandsOceanGradient
     var wg = WorldGenerator.instance;
     if (wg.m_world.m_menu) return true;
     if (!Configuration.DataWorld) return true;
+    if (WorldManager.UseNativeGeneration) return true;
     __result = BiomeCalculator.GetBoiling(wg, x, y);
     return false;
   }

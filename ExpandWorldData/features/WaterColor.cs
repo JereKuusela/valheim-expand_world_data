@@ -2,13 +2,13 @@ using HarmonyLib;
 using UnityEngine;
 namespace ExpandWorldData;
 
-[HarmonyPatch(typeof(Player), nameof(Player.AddKnownBiome))]
+[HarmonyPatch(typeof(Player), nameof(Player.AddKnownBiome), typeof(BiomeSector))]
 public class StartColorTransition
 {
-  public static void Postfix(Heightmap.Biome biome)
+  public static void Postfix(BiomeSector biome)
   {
     if (Configuration.CustomWaterColor)
-      WaterColor.StartTransition(biome);
+      WaterColor.StartTransition(biome.Biome);
   }
 }
 

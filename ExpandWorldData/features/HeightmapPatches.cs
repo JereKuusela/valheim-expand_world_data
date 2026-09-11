@@ -13,13 +13,14 @@ public class HeightmapPatches
   {
     var center = __instance.transform.position;
     var territory = BiomeCalculator.GetTerritory(center.x - 32f, center.z - 32f);
-    var c0 = territory?.colorMap ?? Heightmap.GetBiomeColor(__instance.m_cornerBiomes[0]);
+    var cornerBiomes = __instance.m_cornerBiomes;
+    var c0 = territory?.colorMap ?? Heightmap.GetBiomeColor(cornerBiomes[0]);
     territory = BiomeCalculator.GetTerritory(center.x + 32f, center.z - 32f);
-    var c1 = territory?.colorMap ?? Heightmap.GetBiomeColor(__instance.m_cornerBiomes[1]);
+    var c1 = territory?.colorMap ?? Heightmap.GetBiomeColor(cornerBiomes[1]);
     territory = BiomeCalculator.GetTerritory(center.x - 32f, center.z + 32f);
-    var c2 = territory?.colorMap ?? Heightmap.GetBiomeColor(__instance.m_cornerBiomes[2]);
+    var c2 = territory?.colorMap ?? Heightmap.GetBiomeColor(cornerBiomes[2]);
     territory = BiomeCalculator.GetTerritory(center.x + 32f, center.z + 32f);
-    var c3 = territory?.colorMap ?? Heightmap.GetBiomeColor(__instance.m_cornerBiomes[3]);
+    var c3 = territory?.colorMap ?? Heightmap.GetBiomeColor(cornerBiomes[3]);
     if (c0 == c1 && c0 == c2 && c0 == c3)
       cornerColors[__instance] = [c0];
     else

@@ -14,6 +14,10 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - enabled (default: `true`): Quick way to disable this entry.
 - biome: List of possible biomes.
 - biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome).
+- altBiome: Optional alternate biome parent used by the location.
+  - Use the exact alternate biome name to restrict placement. The `biome` limits still apply.
+  - An explicit empty string (`altBiome: ""`) removes the alternate-biome restriction.
+  - If omitted, the native owner is inherited when the exact prefab name matches a native location. Set it explicitly on clones.
 - dungeon: Overrides the default dungeon generator with a custom one from `expand_dungeons.yaml`.
 - quantity: Maximum amount. Actual amount is determined if enough suitable positions are found. The base .cfg has a setting to multiply these.
 - minDistance (default: `0.0` of world radius): Minimum distance from the world center.

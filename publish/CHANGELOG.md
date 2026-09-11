@@ -1,3 +1,8 @@
+- v1.70.1 (Deep North prototype)
+  - Preserves explicit disabled and zero settings when exporting default YAML.
+  - Batches vegetation file notifications and ignores notifications for already-loaded generated files.
+  - Loads newly generated vegetation synchronously even with automatic reload disabled.
+
 - v1.70
   - Adds experimental support for blueprint terrain data (only as main object). Thanks sighsorry!
   - Fixes error when trying to scan prefabs with invalid components (for example from other mods).

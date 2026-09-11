@@ -155,7 +155,7 @@ public class DebugCommands
       collider.transform.rotation = room.transform.rotation;
 
       ZNetScene.instance.m_tempCurrentObjects.Clear();
-      ZDOMan.instance.FindSectorObjects(zone, 1, 0, ZNetScene.instance.m_tempCurrentObjects);
+      ZDOMan.instance.FindSectorObjects(zone, new SimulationDistance(1, 0), ZNetScene.instance.m_tempCurrentObjects);
       var prefab = name.GetStableHashCode();
       var inside = ZNetScene.instance.m_tempCurrentObjects
         .Where(zdo => zdo.GetPrefab() == prefab)
@@ -203,7 +203,7 @@ public class DebugCommands
       var zone = ZoneSystem.GetZone(loc.transform.position);
 
       ZNetScene.instance.m_tempCurrentObjects.Clear();
-      ZDOMan.instance.FindSectorObjects(zone, 1, 0, ZNetScene.instance.m_tempCurrentObjects);
+      ZDOMan.instance.FindSectorObjects(zone, new SimulationDistance(1, 0), ZNetScene.instance.m_tempCurrentObjects);
       var prefab = name.GetStableHashCode();
       var inside = ZNetScene.instance.m_tempCurrentObjects
         .Where(zdo => zdo.GetPrefab() == prefab)
@@ -261,4 +261,3 @@ public class DebugCommands
     return "";
   }
 }
-

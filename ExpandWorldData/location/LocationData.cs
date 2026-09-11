@@ -4,11 +4,14 @@ namespace ExpandWorldData;
 public class LocationYaml
 {
   public string prefab = "";
+  [DefaultValue(true)]
   public bool enabled = true;
   [DefaultValue("")]
   public string dungeon = "";
   [DefaultValue("")]
   public string biome = "";
+  [DefaultValue(null)]
+  public string? altBiome = null;
   [DefaultValue("")]
   public string biomeArea = "";
   public int quantity = 0;

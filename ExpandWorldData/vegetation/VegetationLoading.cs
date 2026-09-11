@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Data;
 using Service;
 using UnityEngine;
@@ -14,8 +16,11 @@ public class VegetationLoading
   private static readonly string FileName = "expand_vegetation.yaml";
   private static readonly string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   private static readonly string Pattern = "expand_vegetation*.yaml";
+  private static readonly string AltBiomeDirectory = Path.Combine(Yaml.BaseDirectory, "AltBiomes");
   public static readonly int HashDrop = "ews_drops".GetStableHashCode();
   private static readonly List<VegetationYaml> ExtraVegetationYamls = [];
+  private static readonly HashSet<string> CompleteAltBiomes = new(StringComparer.Ordinal);
+  private static readonly FileReloadBatch ReloadBatch = new(ReadConfigs, GetFileSnapshot);
 
   public static void AddVegetation(VegetationYaml yaml)
   {
@@ -27,6 +32,7 @@ public class VegetationLoading
   private static List<ZoneSystem.ZoneVegetation> DefaultEntries = [];
   public static void Initialize()
   {
+    ReloadBatch.Clear();
     DefaultEntries.Clear();
     DefaultKeys.Clear();
     if (Helper.IsServer())
@@ -37,30 +43,41 @@ public class VegetationLoading
   {
     if (Helper.IsClient()) return;
     if (!Configuration.DataVegetation) return;
-    if (File.Exists(FilePath)) return;
-    ToFile();
+    if (!File.Exists(FilePath))
+    {
+      ToFile();
+      return;
+    }
+    SaveAltBiomes(ReadLegacyConfigs());
   }
 
   public static void ReadConfigs()
   {
-    CleanUp();
     if (Helper.IsClient()) return;
+    CreateConfigs();
+    var snapshot = GetFileSnapshot();
+    CleanUp();
     if (!Configuration.DataVegetation)
     {
       Apply(DefaultEntries);
+      ReloadBatch.MarkLoaded(snapshot);
       return;
     }
-    if (!File.Exists(FilePath))
-      ToFile(); // Watcher will trigger reload.
-    else
-      Apply(FromFile());
+    Apply(FromFile());
+    // Snapshot before Apply: migration writes must still trigger a follow-up.
+    ReloadBatch.MarkLoaded(snapshot);
   }
 
   public static void CleanUp()
   {
     VegetationSpawning.Extra.Clear();
     VegetationSpawning.Prefabs.Clear();
+    CompleteAltBiomes.Clear();
+    VegetationComposition.CleanUp();
   }
+
+  internal static bool UsesCompleteAltBiome(string? name) =>
+    name != null && CompleteAltBiomes.Contains(name);
 
   private static void Apply(List<ZoneSystem.ZoneVegetation> data)
   {
@@ -83,30 +100,167 @@ public class VegetationLoading
     }
     Log.Info($"Reloading vegetation data ({data.Count} entries).");
     ZoneSystem.instance.m_vegetation = data;
+    VegetationComposition.Rebuild(data);
     IdManager.SendVegetationIds();
 
   }
   private static void ToFile()
   {
-    var data = DefaultEntries.Select(ToData).ToList();
-    if (ExtraVegetationYamls.Count > 0)
-      data.AddRange(ExtraVegetationYamls);
-    Save(data, false);
+    var data = DefaultEntries
+      .Where(entry => NormalizeAltBiome(entry.m_altBiomeParent) == null)
+      .Select(ToData).ToList();
+    data.AddRange(ExtraVegetationYamls.Where(entry => NormalizeAltBiome(entry.altBiome) == null));
+    Save(data);
+    SaveAltBiomes();
   }
   ///<summary>Loads all yaml files returning the deserialized vegetation entries.</summary>
   private static List<ZoneSystem.ZoneVegetation> FromFile()
   {
     try
     {
-      return DataManager.ReadData<VegetationYaml, ZoneSystem.ZoneVegetation>(Pattern, FromData)
-        .Where(veg => veg.m_prefab).ToList();
+      RefreshCompleteAltBiomes();
+      List<ZoneSystem.ZoneVegetation> result = [];
+      foreach (var path in GetVegetationFiles().Reverse())
+      {
+        var fileName = Path.GetFileNameWithoutExtension(path);
+        var hasCompleteOwner = TryGetCompleteOwner(path, out var completeOwner);
+        foreach (var entry in Yaml.Deserialize<VegetationYaml>(File.ReadAllText(path), fileName))
+        {
+          var owner = ResolveAltBiome(entry);
+          if (hasCompleteOwner && owner != completeOwner)
+          {
+            Log.Warning($"{fileName}: Vegetation {entry.prefab} belongs to '{owner ?? "base vegetation"}' instead of '{completeOwner}' and was ignored.");
+            continue;
+          }
+          // A complete file is authoritative for its owner. Ignoring owner
+          // rows elsewhere prevents legacy and complete formats from stacking.
+          if (!hasCompleteOwner && UsesCompleteAltBiome(owner))
+            continue;
+          var vegetation = FromData(entry, fileName);
+          if (vegetation.m_prefab)
+            result.Add(vegetation);
+        }
+      }
+      return result;
     }
     catch (Exception e)
     {
+      CompleteAltBiomes.Clear();
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
     return [];
+  }
+
+  private static void SaveAltBiomes(List<VegetationYaml>? configuredEntries = null)
+  {
+    Directory.CreateDirectory(AltBiomeDirectory);
+    foreach (var altBiome in AltBiomeList.m_altBiomes
+      .Where(alt => !string.IsNullOrWhiteSpace(alt.m_name))
+      .GroupBy(alt => alt.m_name, StringComparer.Ordinal)
+      .Select(group => group.First()))
+    {
+      var path = GetAltBiomePath(altBiome.m_name);
+      if (File.Exists(path)) continue;
+      var inherited = configuredEntries == null
+        ? DefaultEntries
+          .Where(entry => NormalizeAltBiome(entry.m_altBiomeParent) == null)
+          .Where(entry => (entry.m_biome & altBiome.m_biome) != 0)
+          .Select(ToData).ToList()
+        : configuredEntries
+          .Where(entry => NormalizeAltBiome(entry.altBiome) == null)
+          .Where(entry => (DataManager.ToBiomes(entry.biome, FileName) & altBiome.m_biome) != 0)
+          .Select(Clone).ToList();
+      foreach (var entry in inherited)
+        entry.altBiome = altBiome.m_name;
+
+      var additions = configuredEntries?
+        .Where(entry => NormalizeAltBiome(entry.altBiome) == altBiome.m_name)
+        .Select(Clone).ToList() ?? [];
+      var configuredPrefabs = additions
+        .SelectMany(entry => DataManager.ToList(entry.prefab))
+        .ToHashSet(StringComparer.Ordinal);
+      additions.AddRange(DefaultEntries
+        .Where(entry => NormalizeAltBiome(entry.m_altBiomeParent) == altBiome.m_name)
+        .Where(entry => !configuredPrefabs.Contains(entry.m_prefab.name))
+        .Select(ToData));
+      additions.AddRange(ExtraVegetationYamls
+        .Where(entry => NormalizeAltBiome(entry.altBiome) == altBiome.m_name));
+
+      var blocked = inherited.Concat(additions)
+        .Where(entry => altBiome.m_blockVegetationNames.Contains(entry.prefab))
+        .ToList();
+      inherited = inherited.Except(blocked).ToList();
+      additions = additions.Except(blocked).ToList();
+      foreach (var entry in blocked)
+        entry.enabled = false;
+
+      var parent = DataManager.FromBiomes(altBiome.m_biome);
+      var yaml = $"# Complete vegetation for the {altBiome.m_name} alternate biome.\n" +
+        $"# Parent biome: {parent}. Edit this file as one complete biome.\n" +
+        "# Disable an entry with enabled: false instead of removing it.\n\n" +
+        $"# Inherited from {parent}\n" + SerializeSection(inherited) + "\n" +
+        $"# Added by {altBiome.m_name}\n" + SerializeSection(additions) + "\n" +
+        $"# Disabled by {altBiome.m_name}\n" + SerializeSection(blocked);
+      File.WriteAllText(path, yaml);
+    }
+  }
+
+  private static string SerializeSection(List<VegetationYaml> data) =>
+    data.Count == 0 ? "# None\n" : Yaml.Serializer().Serialize(data);
+
+  private static VegetationYaml Clone(VegetationYaml entry) =>
+    Yaml.Deserializer().Deserialize<VegetationYaml>(Yaml.Serializer().Serialize(entry));
+
+  private static List<VegetationYaml> ReadLegacyConfigs()
+  {
+    List<VegetationYaml> result = [];
+    foreach (var path in GetVegetationFiles().Where(path => !TryGetCompleteOwner(path, out _)).Reverse())
+    {
+      var fileName = Path.GetFileNameWithoutExtension(path);
+      result.AddRange(Yaml.Deserialize<VegetationYaml>(File.ReadAllText(path), fileName));
+    }
+    return result;
+  }
+
+  private static IEnumerable<string> GetVegetationFiles()
+  {
+    if (!Directory.Exists(Yaml.BaseDirectory))
+      Directory.CreateDirectory(Yaml.BaseDirectory);
+    return Directory.GetFiles(Yaml.BaseDirectory, Pattern, SearchOption.AllDirectories);
+  }
+
+  private static bool TryGetCompleteOwner(string path, out string owner)
+  {
+    var fullPath = Path.GetFullPath(path);
+    foreach (var altBiome in AltBiomeList.m_altBiomes)
+    {
+      if (string.IsNullOrWhiteSpace(altBiome.m_name)) continue;
+      if (!string.Equals(fullPath, Path.GetFullPath(GetAltBiomePath(altBiome.m_name)), StringComparison.OrdinalIgnoreCase)) continue;
+      owner = altBiome.m_name;
+      return true;
+    }
+    owner = "";
+    return false;
+  }
+
+  private static void RefreshCompleteAltBiomes()
+  {
+    CompleteAltBiomes.Clear();
+    foreach (var altBiome in AltBiomeList.m_altBiomes)
+      if (!string.IsNullOrWhiteSpace(altBiome.m_name) && File.Exists(GetAltBiomePath(altBiome.m_name)))
+        CompleteAltBiomes.Add(altBiome.m_name);
+  }
+
+  private static string GetAltBiomePath(string name) =>
+    Path.Combine(AltBiomeDirectory, $"expand_vegetation_{GetFileToken(name)}.yaml");
+
+  private static string GetFileToken(string name)
+  {
+    var token = string.Concat(name.Select(character =>
+      char.IsLetterOrDigit(character) || character == '-' ? character : '_')).Trim('_');
+    while (token.Contains("__")) token = token.Replace("__", "_");
+    return token == "" ? "UnnamedAltBiome" : token;
   }
   ///<summary>Cleans up default vegetation data and stores it to track missing entries.</summary>
   private static void SetDefaultEntries()
@@ -116,10 +270,21 @@ public class VegetationLoading
       .Where(veg => ZNetScene.instance.m_namedPrefabs.ContainsKey(veg.m_prefab.name.GetStableHashCode()))
       .Where(veg => veg.m_enable && veg.m_max > 0f).ToList();
     DefaultEntries = ZoneSystem.instance.m_vegetation;
-    DefaultKeys = Helper.ToSet(DefaultEntries, veg => veg.m_prefab.name);
+    DefaultKeys = Helper.ToSet(DefaultEntries, GetMigrationKey);
   }
   // Used to optimize missing entries check (to avoid n^2 loop).
+  // The alternate biome owner is part of the identity because Deep North can
+  // register both base and alternate-biome rows for the same prefab.
   private static HashSet<string> DefaultKeys = [];
+
+  private static string GetMigrationKey(ZoneSystem.ZoneVegetation vegetation) =>
+    GetMigrationKey(vegetation.m_prefab.name, vegetation.m_altBiomeParent);
+
+  private static string GetMigrationKey(string prefab, string? altBiome) =>
+    prefab + "\0" + (NormalizeAltBiome(altBiome) ?? "");
+
+  private static string? NormalizeAltBiome(string? altBiome) =>
+    string.IsNullOrWhiteSpace(altBiome) ? null : altBiome;
 
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>
   // Note: This is needed people add new content mods and then complain that Expand World doesn't spawn them.
@@ -129,18 +294,41 @@ public class VegetationLoading
     // Some mods override prefabs so the m_prefab.name is not reliable.
     foreach (var entry in entries)
     {
-      missingKeys.Remove(entry.m_name);
+      missingKeys.Remove(GetMigrationKey(entry.m_name, entry.m_altBiomeParent));
       if (VegetationSpawning.Prefabs.TryGetValue(entry, out var prefabs))
-        missingKeys.RemoveWhere(key => prefabs.Any(prefab => prefab.name == key));
+        foreach (var prefab in prefabs)
+          missingKeys.Remove(GetMigrationKey(prefab.name, entry.m_altBiomeParent));
     }
     if (missingKeys.Count == 0) return false;
     // But don't use m_name because it can be anything for original items.
-    var missing = DefaultEntries.Where(veg => missingKeys.Contains(veg.m_prefab.name)).Select(ToData).ToList();
-    Log.Warning($"Adding {missing.Count} missing vegetation to the expand_vegetation.yaml file.");
-    Save(missing, true);
+    var missing = DefaultEntries.Where(veg => missingKeys.Contains(GetMigrationKey(veg))).Select(ToData).ToList();
+    Log.Warning($"Adding {missing.Count} missing vegetation to the vegetation configuration.");
+    foreach (var item in missing)
+      Log.Warning($"{AssetTracker.GetModFromPrefab(item.prefab)}: {item.prefab}");
+    SaveMissing(missing);
     return true;
   }
-  private static void Save(List<VegetationYaml> data, bool log)
+
+  private static void SaveMissing(List<VegetationYaml> data)
+  {
+    var regular = data
+      .Where(entry => !UsesCompleteAltBiome(NormalizeAltBiome(entry.altBiome)))
+      .ToList();
+    if (regular.Count > 0)
+      Save(regular);
+
+    foreach (var group in data
+      .Where(entry => UsesCompleteAltBiome(NormalizeAltBiome(entry.altBiome)))
+      .GroupBy(entry => NormalizeAltBiome(entry.altBiome)!))
+    {
+      var path = GetAltBiomePath(group.Key);
+      var yaml = File.ReadAllText(path);
+      if (!yaml.EndsWith("\n")) yaml += "\n";
+      yaml += Yaml.Serializer().Serialize(group.ToList());
+      File.WriteAllText(path, yaml);
+    }
+  }
+  private static void Save(List<VegetationYaml> data)
   {
     Dictionary<string, List<VegetationYaml>> perFile = [];
     foreach (var item in data)
@@ -151,8 +339,6 @@ public class VegetationLoading
         perFile[file] = [];
       perFile[file].Add(item);
 
-      if (log)
-        Log.Warning($"{mod}: {item.prefab}");
     }
     foreach (var kvp in perFile)
     {
@@ -170,6 +356,7 @@ public class VegetationLoading
       data.minDistance = WorldEntry.ConvertDist(data.minDistance);
     if (data.maxDistance > 0f)
       data.maxDistance = WorldEntry.ConvertDist(data.maxDistance);
+    var altBiome = ResolveAltBiome(data);
     ZoneSystem.ZoneVegetation veg = new()
     {
       m_name = data.prefab,
@@ -182,6 +369,7 @@ public class VegetationLoading
       m_randTilt = data.randTilt,
       m_chanceToUseGroundTilt = data.chanceToUseGroundTilt,
       m_biome = DataManager.ToBiomes(data.biome, fileName),
+      m_altBiomeParent = string.IsNullOrWhiteSpace(altBiome) ? null! : altBiome,
       m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName),
       m_blockCheck = data.blockCheck,
       m_minAltitude = data.minAltitude,
@@ -190,6 +378,10 @@ public class VegetationLoading
       m_maxOceanDepth = data.maxOceanDepth,
       m_minVegetation = data.minVegetation,
       m_maxVegetation = data.maxVegetation,
+      m_surroundCheckVegetation = data.surroundCheckVegetation,
+      m_surroundCheckDistance = data.surroundCheckDistance,
+      m_surroundCheckLayers = data.surroundCheckLayers,
+      m_surroundBetterThanAverage = data.surroundBetterThanAverage,
       m_minTilt = data.minTilt,
       m_maxTilt = data.maxTilt,
       m_terrainDeltaRadius = data.terrainDeltaRadius,
@@ -266,6 +458,38 @@ public class VegetationLoading
       VegetationSpawning.Extra.Add(veg, extra);
     return veg;
   }
+
+  private static string? ResolveAltBiome(VegetationYaml data)
+  {
+    // Explicit blank means base-biome vegetation. This is distinct from a
+    // legacy omitted field, which can still inherit an unambiguous native owner.
+    if (data.altBiome != null)
+      return NormalizeAltBiome(data.altBiome);
+
+    var prefabNames = DataManager.ToList(data.prefab);
+    if (prefabNames.Count != 1)
+      return null;
+
+    var nativeOwners = DefaultEntries
+      .Where(entry => entry.m_prefab && entry.m_prefab.name == prefabNames[0])
+      .Select(entry => NormalizeAltBiome(entry.m_altBiomeParent))
+      .Distinct()
+      .ToList();
+
+    if (nativeOwners.Count == 1)
+      return nativeOwners[0];
+
+    // When both base and alternate rows exist, an omitted field must resolve
+    // to the base row. Picking the first native row made ordinary vegetation
+    // dependent on registration order and could empty the base biome.
+    if (nativeOwners.Any(owner => owner == null))
+      return null;
+
+    if (nativeOwners.Count > 1)
+      Log.Warning($"Vegetation {data.prefab} has multiple alternate biome owners. Add altBiome explicitly to select one.");
+
+    return null;
+  }
   public static VegetationYaml ToData(ZoneSystem.ZoneVegetation veg)
   {
     VegetationYaml data = new()
@@ -280,6 +504,7 @@ public class VegetationLoading
       randTilt = veg.m_randTilt,
       chanceToUseGroundTilt = veg.m_chanceToUseGroundTilt,
       biome = DataManager.FromBiomes(veg.m_biome),
+      altBiome = veg.m_altBiomeParent ?? "",
       biomeArea = DataManager.FromBiomeAreas(veg.m_biomeArea),
       blockCheck = veg.m_blockCheck,
       minAltitude = veg.m_minAltitude,
@@ -312,8 +537,38 @@ public class VegetationLoading
     return data;
   }
 
+  // The watcher runs on BepInEx's main-thread synchronizer. File bursts are
+  // applied once after a quiet period; notifications for already-loaded defaults
+  // are ignored by content, without suppressing later user edits.
+  public static void UpdateReload(float deltaTime)
+  {
+    if (!ZNet.instance || !ZoneSystem.instance || Helper.IsClient()) return;
+    try
+    {
+      ReloadBatch.Update(deltaTime);
+    }
+    catch (IOException error)
+    {
+      Log.Warning($"Unable to read vegetation files: {error.Message}");
+    }
+  }
+
+  public static void ClearReload() => ReloadBatch.Clear();
+
+  private static string GetFileSnapshot()
+  {
+    using var hash = SHA256.Create();
+    var files = new StringBuilder();
+    foreach (var path in GetVegetationFiles().OrderBy(path => path, StringComparer.Ordinal))
+    {
+      files.Append(path).Append('\0');
+      files.Append(Convert.ToBase64String(hash.ComputeHash(File.ReadAllBytes(path)))).Append('\n');
+    }
+    return files.ToString();
+  }
+
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, ReadConfigs);
+    Yaml.SetupWatcher(Pattern, ReloadBatch.Notify);
   }
 }

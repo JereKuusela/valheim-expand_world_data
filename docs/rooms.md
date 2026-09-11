@@ -8,6 +8,8 @@ New rooms can be created from [blueprints](blueprints.md) or cloning an existing
 
 - name: Name of the room prefab.
 - theme: Determines in which dungeons this room can appear. Custom values can be used.
+  - Deep North themes include `Hole`, `NorthVillage` and `MorkHalla`.
+  - Numeric values are supported. Custom names receive unused theme bits so they do not overlap native or configured numeric themes.
 - enabled (default `true`): Quick way to disable this room.
 - entrance (default `false`): If true, this room is used only as the first room.
   - At least one entrance room is required. If multiple exist, one is randomly selected (`weight` field is never used).

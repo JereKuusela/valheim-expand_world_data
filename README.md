@@ -11,6 +11,7 @@ Install on all clients and on the server (modding [guide](https://youtu.be/L9ljm
 - Add new biomes.
 - Change biome distribution.
 - Change data like locations, vegetation and weather.
+- Configure locations and vegetation for alternate biomes.
 - Config sync to ensure all clients use the same settings.
 - Change events with [Expand World Events](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Events/).
 - Change factions with [Expand World Factions](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Factions/).
@@ -88,6 +89,8 @@ The file `expand_world.yaml` sets the biome distribution.
 
 Each entry in the file adds a new rule. When determing the biome, the rules are checked one by one from the top until a valid rule is found. This means the order of entries is especially important for this file.
 
+With the default world rules and generation settings, native biome generation is used. Custom rules use the configured distribution.
+
 See [World](docs/world.md) for more info.
 
 ### Environments
@@ -112,6 +115,8 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 
 See the [wiki](https://valheim.fandom.com/wiki/Points_of_Interest_(POI)) for more info.
 
+Use `altBiome` to restrict a location to a named alternate biome.
+
 See [Locations](docs/locations.md) for more info.
 
 ### Dungeons
@@ -124,13 +129,15 @@ See [Dungeons](docs/dungeons.md) for more info.
 
 ### Rooms
 
-Dungeon room configuration is documented in [Rooms](docs/rooms.md).
+Dungeon room configuration is documented in [Rooms](docs/rooms.md). Deep North adds the room themes `Hole`, `NorthVillage` and `MorkHalla`.
 
 ### Vegetation
 
-The file `expand_vegetations.yaml` sets the generated objects. This is a server side feature, clients don't have access to this data.
+The file `expand_vegetation.yaml` sets the generated objects. This is a server side feature, clients don't have access to this data.
 
 Changes only apply to unexplored areas. Upgrade World mod can be used to reset areas.
+
+Alternate biomes have complete vegetation files under `AltBiomes`. Each file contains its parent vegetation and alternate-biome additions. Existing files are kept.
 
 See [Vegetation](docs/vegetation.md) for more info.
 

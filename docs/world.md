@@ -2,6 +2,12 @@
 
 The file `expand_world.yaml` sets the biome distribution.
 
+The default rules use native biome generation when Legacy generation is disabled, Wiggle frequency is `20`, Wiggle width is `100`, world radius is `10000`, total radius is `10500`, and both world and biome stretch are `1`. Changing those settings or the world rules uses EWD generation.
+
+Cached biome sectors are checked against the loaded world data. A sampled mismatch causes the sector cache to be rebuilt.
+
+If an alternate biome cannot meet its minimum count because too few sectors match its size and height limits, those limits are relaxed during placement. Other eligibility checks still apply, so placement is not guaranteed. The original limits are restored afterward.
+
 Each entry in the file adds a new rule. When determining the biome and territory, the rules are checked one by one from the top until a valid rule is found. This means the order of entries is especially important for this file.
 
 - biome: Identifier of the biome if this rule is valid.

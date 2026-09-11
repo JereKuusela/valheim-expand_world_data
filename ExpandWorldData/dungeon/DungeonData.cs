@@ -22,8 +22,11 @@ public class DungeonYaml
 {
   public string name = "";
   public string algorithm = "";
+  [DefaultValue(1)]
   public int maxRooms = 1;
+  [DefaultValue(1)]
   public int minRooms = 1;
+  [DefaultValue(1)]
   public int minRequiredRooms = 1;
   [DefaultValue(10)]
   public int maxRetries = 10;
@@ -84,6 +87,7 @@ public class FakeDungeonGenerator
   public bool m_alternativeFunctionality = false;
   public List<string> m_themes = [];
   public List<DungeonGenerator.DoorDef> m_doorTypes = [];
+  public List<string> m_doorPrefabNames = [];
   public float m_doorChance;
   public float m_maxTilt;
   public float m_tileWidth;

@@ -522,9 +522,10 @@ public class DataEntry
   {
     if (Items?.Count > 0)
     {
-      var encoded = ItemValue.LoadItems(pars, Items, GetContainerSize(), ItemAmount?.Get(pars) ?? 0);
-      Strings ??= [];
-      Strings[ZDOVars.s_items] = DataValue.Simple(encoded);
+      var encoded = ItemValue.LoadItemBytes(pars, Items, GetContainerSize(), ItemAmount?.Get(pars) ?? 0);
+      Strings?.Remove(ZDOVars.s_items);
+      ByteArrays ??= [];
+      ByteArrays[ZDOVars.s_items] = encoded;
     }
   }
 
@@ -536,9 +537,7 @@ public class DataEntry
     var items = GenerateItems(parameters, size);
     foreach (var item in items)
       item.AddTo(parameters, inv);
-    ZPackage pkg = new();
-    inv.Save(pkg);
-    zdo.Set(ZDOVars.s_items, pkg.GetBase64());
+    InventoryStorage.Save(zdo, inv);
   }
   public void RemoveItems(Parameters parameters, ZDO zdo)
   {
@@ -549,9 +548,7 @@ public class DataEntry
     var items = GenerateItems(parameters, new(10000, 10000));
     foreach (var item in items)
       item.RemoveFrom(parameters, inv);
-    ZPackage pkg = new();
-    inv.Save(pkg);
-    zdo.Set(ZDOVars.s_items, pkg.GetBase64());
+    InventoryStorage.Save(zdo, inv);
   }
   public List<ItemValue> GenerateItems(Parameters pars, Vector2i size)
   {
@@ -660,6 +657,8 @@ public class DataEntry
     }
     if (ByteArrays?.Count > 0)
     {
+      if (ByteArrays.ContainsKey(ZDOVars.s_items))
+        InventoryStorage.RemoveLegacy(zdo);
       ZDOHelper.Init(ZDOExtraData.s_byteArrays, id);
       foreach (var pair in ByteArrays)
         ZDOExtraData.s_byteArrays[id].SetValue(pair.Key, pair.Value);
@@ -676,10 +675,7 @@ public class DataEntry
     {
       var pos = Position.Get(pars);
       if (pos.HasValue)
-      {
-        zdo.m_position = pos.Value;
-        zdo.SetSector(ZoneSystem.GetZone(pos.Value));
-      }
+        zdo.SetPosition(pos.Value);
     }
     if (Rotation != null)
     {

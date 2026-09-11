@@ -9,8 +9,11 @@ namespace ExpandWorldData;
 public class VegetationYaml
 {
   public string prefab = "";
+  [DefaultValue(true)]
   public bool enabled = true;
+  [DefaultValue(1f)]
   public float min = 1f;
+  [DefaultValue(1f)]
   public float max = 1f;
   [DefaultValue(false)]
   public bool forcePlacement = false;
@@ -27,6 +30,9 @@ public class VegetationYaml
 
   [DefaultValue("")]
   public string biome = "";
+
+  [DefaultValue(null)]
+  public string? altBiome = null;
 
   [DefaultValue("")]
   public string biomeArea = "";
