@@ -25,7 +25,7 @@ public class StatusManager
     DamageTimer += dt;
     var weather = EnvMan.instance.GetCurrentEnvironment()?.m_name ?? "";
     var day = EnvMan.IsDay();
-    var biome = EnvMan.instance.GetBiome();
+    var biome = __instance.GetCurrentBiome();
     var territory = BiomeCalculator.GetTerritory(__instance.transform.position.x, __instance.transform.position.z);
     RemoveBiomeEffects(__instance, day, biome, territory);
     RemoveWeatherEffects(__instance, day, weather);

@@ -44,7 +44,7 @@ public class RoomLoading
     Save(data, false);
   }
 
-  // Hard coded to not go through the enum patch..
+  // Hard coded to not go through the enum patch.
   private static readonly Dictionary<string, Room.Theme> DefaultNameToTheme = new() {
     {"Crypt", Room.Theme.Crypt},
     {"SunkenCrypt", Room.Theme.SunkenCrypt},
@@ -59,11 +59,22 @@ public class RoomLoading
     {"CaveHildir", Room.Theme.CaveHildir},
     {"PlainsFortHildir", Room.Theme.PlainsFortHildir},
     {"AshlandRuins", Room.Theme.AshlandRuins},
-    {"FortressRuins", Room.Theme.FortressRuins}
+    {"FortressRuins", Room.Theme.FortressRuins},
+    {"Hole", Room.Theme.Hole},
+    {"NorthVillage", Room.Theme.NorthVillage},
+    {"MorkHalla", Room.Theme.MorkHalla}
   };
 
   // For extra custom room themes.
-  public static Dictionary<string, Room.Theme> NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
+  private static Dictionary<string, Room.Theme> CreateNameToTheme()
+  {
+    var themes = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
+    foreach (var theme in themes.Values.Distinct())
+      themes[((int)theme).ToString()] = theme;
+    return themes;
+  }
+
+  public static Dictionary<string, Room.Theme> NameToTheme = CreateNameToTheme();
   public static Dictionary<Room.Theme, string> ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
   public static bool TryGetTheme(string name, out Room.Theme theme) => NameToTheme.TryGetValue(name.ToLowerInvariant(), out theme);
 
@@ -76,7 +87,7 @@ public class RoomLoading
     DungeonObjects.ObjectData.Clear();
     CreatedObjects.ForEach(UnityEngine.Object.Destroy);
     CreatedObjects.Clear();
-    NameToTheme = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
+    NameToTheme = CreateNameToTheme();
     ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     if (Helper.IsClient()) return;
     if (!Configuration.DataRooms)
@@ -195,11 +206,17 @@ public class RoomLoading
     RoomSpawning.Data[roomData] = data;
     var room = roomData.RoomInPrefab;
     var missingThemes = DataManager.ToList(data.theme).Where(s => !NameToTheme.ContainsKey(s.ToLowerInvariant())).ToArray();
+    var maxValue = NameToTheme.Values.Max(value => (int)value);
+    // Note: Parsing of numeric values not supported, would be quite complex with multiple files.
     foreach (var theme in missingThemes)
     {
-      var nextValue = (Room.Theme)(2 * (int)NameToTheme.Values.Max());
-      NameToTheme[theme.ToLowerInvariant()] = nextValue;
-      ThemeToName[nextValue] = theme;
+      if (NameToTheme.ContainsValue((Room.Theme)int.MinValue))
+        throw new InvalidOperationException($"Cannot create room theme '{theme}': the maximum theme value has been reached.");
+      maxValue *= 2;
+      var maxTheme = (Room.Theme)maxValue;
+      NameToTheme[theme.ToLowerInvariant()] = maxTheme;
+      NameToTheme[maxValue.ToString()] = maxTheme;
+      ThemeToName[maxTheme] = theme;
     }
     room.m_theme = DataManager.ToEnum<Room.Theme>(data.theme);
     room.m_entrance = data.entrance;

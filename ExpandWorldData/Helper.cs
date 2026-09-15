@@ -10,6 +10,15 @@ namespace ExpandWorldData;
 
 public static class Helper
 {
+
+  public static List<ZDO>? GetZDOs(Vector2s zone)
+  {
+    var zman = ZDOMan.instance;
+    zman.m_visitedSectorIndices.Clear();
+    var list = new List<ZDO>();
+    zman.FindObjects(zone, list, zman.m_visitedSectorIndices);
+    return list;
+  }
   public static GameObject? SafeLoad(DungeonDB.RoomData room)
   {
     try

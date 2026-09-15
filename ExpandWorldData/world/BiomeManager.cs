@@ -342,27 +342,6 @@ public class BiomeManager
     Yaml.SetupWatcher(Pattern, callback);
   }
 
-  // These must be stored in static fields to avoid garbage collection.
-  static readonly float[] biomeWeights = new float[33];
-  static readonly Heightmap.Biome[] indexToBiome = biomeWeights.Select((_, i) => (Heightmap.Biome)(i < 2 ? i : 2 << (i - 2))).ToArray();
-  // dotnet caches/inlines access to static readonly fields.
-  // So the readonly arrays must be resized in advance.
-  public static void SetupBiomeArrays()
-  {
-#pragma warning disable CS8500
-    unsafe
-    {
-      fixed (void* ptr = &Heightmap.s_indexToBiome)
-        *(object*)ptr = indexToBiome;
-      fixed (void* ptr = &Heightmap.s_tempBiomeWeights)
-        *(object*)ptr = biomeWeights;
-    }
-#pragma warning restore CS8500
-    // Dictionary can be updated in the place.
-    for (int i = 0; i < indexToBiome.Length; ++i)
-      Heightmap.s_biomeToIndex[indexToBiome[i]] = i;
-  }
-
   public static bool CheckKeys(EnvEntry env) => !EnvKeys.TryGetValue(env, out var keys) || keys.CheckKeys();
   private static string NormalizeKey(string key) => key.Trim().ToLowerInvariant();
   public static bool UsesGlobalKey(string key)

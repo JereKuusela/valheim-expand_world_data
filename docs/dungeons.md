@@ -13,6 +13,8 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - randomSeed (default: `false`): If true, the generation result is always different instead of depending on the dungeon coordinates.
 - themes: List of available room sets separated by ",".
   - For example `SunkenCrypt,ForestCrypt` would use both sets.
+  - Internal numeric values are supported too.
+  - First custom theme has internal number 262144, with next one doubling each time.
 - maxRooms (default: `1`): Maximum amount of rooms. Only for Dungeon and CampRadial.
 - minRooms (default: `1`): Minimum amount of rooms. Only for Dungeon and CampRadial.
 - minRequiredRooms (default: `1`): Minimum amount of rooms in the required list. Only for Dungeon and CampRadial.

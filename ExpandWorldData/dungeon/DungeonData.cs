@@ -74,9 +74,13 @@ public class FakeDungeonGenerator
   public string name = "";
   public DungeonGenerator.Algorithm m_algorithm = DungeonGenerator.Algorithm.Dungeon;
   public Vector3 m_zoneSize = new(64f, 64f, 64f);
+  [DefaultValue(1)]
   public int m_maxRooms = 1;
+  [DefaultValue(1)]
   public int m_minRooms = 1;
+  [DefaultValue(1)]
   public int m_minRequiredRooms = 1;
+  [DefaultValue(10)]
   public int m_maxRetries = 10;
   public HashSet<string> m_excludedRooms = [];
   public List<string> m_requiredRooms = [];

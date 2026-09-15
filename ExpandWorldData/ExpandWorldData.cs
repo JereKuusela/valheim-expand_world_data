@@ -37,7 +37,6 @@ public class EWD : BaseUnityPlugin
     Instance = this;
     Log.Init(Logger);
     Yaml.Init();
-    BiomeManager.SetupBiomeArrays();
     ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, InvokeRegenerate);
     Configuration.Init(wrapper);
     Harmony = new(GUID);

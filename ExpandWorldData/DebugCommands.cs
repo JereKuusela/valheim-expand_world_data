@@ -154,10 +154,9 @@ public class DebugCommands
       collider.transform.position = room.transform.position;
       collider.transform.rotation = room.transform.rotation;
 
-      ZNetScene.instance.m_tempCurrentObjects.Clear();
-      ZDOMan.instance.FindSectorObjects(zone, 1, 0, ZNetScene.instance.m_tempCurrentObjects);
+      var objects = Helper.GetZDOs(zone);
       var prefab = name.GetStableHashCode();
-      var inside = ZNetScene.instance.m_tempCurrentObjects
+      var inside = objects
         .Where(zdo => zdo.GetPrefab() == prefab)
         .Where(zdo => Contains(collider, zdo.GetPosition()))
         .OrderBy(zdo => Utils.DistanceXZ(zdo.GetPosition(), room.transform.position))
@@ -202,10 +201,9 @@ public class DebugCommands
       }
       var zone = ZoneSystem.GetZone(loc.transform.position);
 
-      ZNetScene.instance.m_tempCurrentObjects.Clear();
-      ZDOMan.instance.FindSectorObjects(zone, 1, 0, ZNetScene.instance.m_tempCurrentObjects);
+      var objects = Helper.GetZDOs(zone);
       var prefab = name.GetStableHashCode();
-      var inside = ZNetScene.instance.m_tempCurrentObjects
+      var inside = objects
         .Where(zdo => zdo.GetPrefab() == prefab)
         .Where(zdo => Utils.DistanceXZ(zdo.GetPosition(), loc.transform.position) < distance)
         .OrderBy(zdo => Utils.DistanceXZ(zdo.GetPosition(), loc.transform.position))

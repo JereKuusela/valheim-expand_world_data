@@ -6,6 +6,7 @@ public class ClutterYaml
   public string prefab = "";
   [DefaultValue(true)]
   public bool enabled = true;
+  [DefaultValue(80)]
   public int amount = 80;
   [DefaultValue("")]
   public string biome = "";

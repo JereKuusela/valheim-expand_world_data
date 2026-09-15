@@ -211,12 +211,13 @@ public class LocationLoading
   private static void UpdateHashes()
   {
     var zs = ZoneSystem.instance;
-    zs.m_locationsByHash = Helper.ToDict(zs.m_locations, loc => loc.m_prefab.Name.GetStableHashCode(), loc => loc);
-    //ExpandWorldData.Log.Debug($"Loaded {zs.m_locationsByHash.Count} zone hashes.");
+    zs.m_locationsByHash.Clear();
+    foreach (var loc in zs.m_locations)
+      zs.m_locationsByHash[loc.m_prefab.Name.GetStableHashCode()] = loc;
   }
   private static void UpdateInstances()
   {
-    var zs = ZoneSystem.m_instance;
+    var zs = ZoneSystem.instance;
     var instances = zs.m_locationInstances;
     foreach (var zone in instances.Keys.ToArray())
     {

@@ -676,10 +676,7 @@ public class DataEntry
     {
       var pos = Position.Get(pars);
       if (pos.HasValue)
-      {
-        zdo.m_position = pos.Value;
-        zdo.SetSector(ZoneSystem.GetZone(pos.Value));
-      }
+        zdo.SetPosition(pos.Value);
     }
     if (Rotation != null)
     {
