@@ -141,9 +141,6 @@ public class Parameters(string prefab, string arg, Vector3 pos)
 }
 public class ObjectParameters(string prefab, string arg, ZDO zdo) : Parameters(prefab, arg, zdo.m_position)
 {
-  private Inventory? inventory;
-
-
   protected override string? GetParameter(string key)
   {
     var value = base.GetParameter(key);
@@ -266,23 +263,12 @@ public class ObjectParameters(string prefab, string arg, ZDO zdo) : Parameters(p
 
   private int GetAmountOfItems(string prefab)
   {
-    LoadInventory();
-    if (inventory == null) return 0;
     int count = 0;
-    foreach (var item in inventory.m_inventory)
+    foreach (var item in ItemDataHelper.Load(zdo))
     {
-      if ((item.m_dropPrefab?.name ?? item.m_shared.m_name) == prefab) count += item.m_stack;
+      if (item.PrefabName == prefab) count += item.Stack;
     }
     return count;
-  }
-
-  private void LoadInventory()
-  {
-    if (inventory != null) return;
-    var currentItems = zdo.GetString(ZDOVars.s_items);
-    if (currentItems == "") return;
-    inventory = new("", null, 4, 2);
-    inventory.Load(new ZPackage(currentItems));
   }
 
   private Vector3 GetPos(string value)

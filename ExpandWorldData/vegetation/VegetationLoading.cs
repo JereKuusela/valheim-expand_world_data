@@ -76,6 +76,11 @@ public class VegetationLoading
       Log.Info($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
       return;
     }
+    if (Configuration.DataMigration && AltBiomeMigration.MigrateVegetation(data, DefaultEntries, Pattern))
+    {
+      // Watcher triggers reload.
+      return;
+    }
     if (Configuration.DataMigration && AddMissingEntries(data))
     {
       // Watcher triggers reload.
@@ -183,6 +188,7 @@ public class VegetationLoading
       m_chanceToUseGroundTilt = data.chanceToUseGroundTilt,
       m_biome = DataManager.ToBiomes(data.biome, fileName),
       m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName),
+      m_altBiomeParent = string.IsNullOrWhiteSpace(data.altBiome) ? null : data.altBiome,
       m_blockCheck = data.blockCheck,
       m_minAltitude = data.minAltitude,
       m_maxAltitude = data.maxAltitude,
@@ -281,6 +287,7 @@ public class VegetationLoading
       chanceToUseGroundTilt = veg.m_chanceToUseGroundTilt,
       biome = DataManager.FromBiomes(veg.m_biome),
       biomeArea = DataManager.FromBiomeAreas(veg.m_biomeArea),
+      altBiome = veg.m_altBiomeParent ?? "",
       blockCheck = veg.m_blockCheck,
       minAltitude = veg.m_minAltitude,
       maxAltitude = veg.m_maxAltitude,

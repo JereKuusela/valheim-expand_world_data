@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using YamlDotNet.Serialization;
 namespace ExpandWorldData;
 
 public class ClutterYaml
@@ -6,7 +7,8 @@ public class ClutterYaml
   public string prefab = "";
   [DefaultValue(true)]
   public bool enabled = true;
-  [DefaultValue(80)]
+
+  [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
   public int amount = 80;
   [DefaultValue("")]
   public string biome = "";

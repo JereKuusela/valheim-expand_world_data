@@ -518,14 +518,127 @@ public class DataEntry
     return (T)(object)value;
   }
 
-  public void RollItems(Parameters pars)
+  // Turns parametrized values into a plain snapshot ready to write to a ZDO.
+  public ResolvedDataEntry Resolve(Parameters pars)
   {
+    ResolvedDataEntry resolved = new();
+    if (Floats != null)
+      foreach (var pair in Floats)
+      {
+        var value = pair.Value.Get(pars);
+        if (value.HasValue)
+        {
+          resolved.Floats ??= [];
+          resolved.Floats[pair.Key] = value.Value;
+        }
+      }
+    if (Vecs != null)
+      foreach (var pair in Vecs)
+      {
+        var value = pair.Value.Get(pars);
+        if (value.HasValue)
+        {
+          resolved.Vecs ??= [];
+          resolved.Vecs[pair.Key] = value.Value;
+        }
+      }
+    if (Quats != null)
+      foreach (var pair in Quats)
+      {
+        var value = pair.Value.Get(pars);
+        if (value.HasValue)
+        {
+          resolved.Quats ??= [];
+          resolved.Quats[pair.Key] = value.Value;
+        }
+      }
+    if (Ints != null)
+      foreach (var pair in Ints)
+      {
+        var value = pair.Value.Get(pars);
+        if (value.HasValue)
+        {
+          resolved.Ints ??= [];
+          resolved.Ints[pair.Key] = value.Value;
+        }
+      }
+    // Hashes and Bools both end up in ZDOExtraData.s_ints, so they share the resolved Ints dict.
+    if (Hashes != null)
+      foreach (var pair in Hashes)
+      {
+        var value = pair.Value.Get(pars);
+        if (value.HasValue)
+        {
+          resolved.Ints ??= [];
+          resolved.Ints[pair.Key] = value.Value;
+        }
+      }
+    if (Bools != null)
+      foreach (var pair in Bools)
+      {
+        var value = pair.Value.GetInt(pars);
+        if (value.HasValue)
+        {
+          resolved.Ints ??= [];
+          resolved.Ints[pair.Key] = value.Value;
+        }
+      }
+    if (Longs != null)
+      foreach (var pair in Longs)
+      {
+        var value = pair.Value.Get(pars);
+        if (value.HasValue)
+        {
+          resolved.Longs ??= [];
+          resolved.Longs[pair.Key] = value.Value;
+        }
+      }
+    if (Strings != null)
+      foreach (var pair in Strings)
+      {
+        var value = pair.Value.Get(pars);
+        if (value != null)
+        {
+          resolved.Strings ??= [];
+          resolved.Strings[pair.Key] = value;
+        }
+      }
+    if (ByteArrays != null)
+      resolved.ByteArrays = new(ByteArrays);
+    // Computed here instead of via the old mutating RollItems, so a shared/cached DataEntry isn't altered.
     if (Items?.Count > 0)
     {
       var encoded = ItemValue.LoadItems(pars, Items, GetContainerSize(), ItemAmount?.Get(pars) ?? 0);
-      Strings ??= [];
-      Strings[ZDOVars.s_items] = DataValue.Simple(encoded);
+      resolved.Strings ??= [];
+      resolved.Strings[ZDOVars.s_items] = encoded;
     }
+    if (Persistent != null)
+      resolved.Persistent = Persistent.GetBool(pars);
+    if (Distant != null)
+      resolved.Distant = Distant.GetBool(pars);
+    if (Priority.HasValue)
+      resolved.Priority = Priority.Value;
+    if (Position != null)
+      resolved.Position = Position.Get(pars);
+    if (Rotation != null)
+      resolved.Rotation = Rotation.Get(pars);
+    resolved.ConnectionHash = ConnectionHash;
+    if (ConnectionType.HasValue)
+      resolved.ConnectionType = ConnectionType.Value;
+    if (OriginalId != null)
+    {
+      var originalId = OriginalId.Get(pars);
+      if (originalId.HasValue)
+        resolved.OriginalId = originalId.Value;
+    }
+    if (TargetConnectionId != null)
+    {
+      var targetId = TargetConnectionId.Get(pars);
+      if (targetId.HasValue)
+        resolved.TargetConnectionId = targetId.Value;
+    }
+    ItemDataHelper.ConvertAll(resolved);
+    return resolved;
   }
 
   public void AddItems(Parameters parameters, ZDO zdo)
@@ -569,193 +682,5 @@ public class DataEntry
       return 438569 + hash;
     }
     return key.GetStableHashCode();
-  }
-
-  public void Write(Parameters pars, ZDO zdo)
-  {
-    var id = zdo.m_uid;
-    RollItems(pars);
-    if (Floats?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_floats, id);
-      foreach (var pair in Floats)
-      {
-        var value = pair.Value.Get(pars);
-        if (value.HasValue)
-          ZDOExtraData.s_floats[id].SetValue(pair.Key, value.Value);
-      }
-    }
-    if (Vecs?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_vec3, id);
-      foreach (var pair in Vecs)
-      {
-        var value = pair.Value.Get(pars);
-        if (value.HasValue)
-          ZDOExtraData.s_vec3[id].SetValue(pair.Key, value.Value);
-
-      }
-    }
-    if (Quats?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_quats, id);
-      foreach (var pair in Quats)
-      {
-        var value = pair.Value.Get(pars);
-        if (value.HasValue)
-          ZDOExtraData.s_quats[id].SetValue(pair.Key, value.Value);
-      }
-    }
-    if (Ints?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_ints, id);
-      foreach (var pair in Ints)
-      {
-        var value = pair.Value.Get(pars);
-        if (value.HasValue)
-          ZDOExtraData.s_ints[id].SetValue(pair.Key, value.Value);
-      }
-    }
-    if (Hashes?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_ints, id);
-      foreach (var pair in Hashes)
-      {
-        var value = pair.Value.Get(pars);
-        if (value.HasValue)
-          ZDOExtraData.s_ints[id].SetValue(pair.Key, value.Value);
-      }
-    }
-    if (Bools?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_ints, id);
-      foreach (var pair in Bools)
-      {
-        var value = pair.Value.GetInt(pars);
-        if (value.HasValue)
-          ZDOExtraData.s_ints[id].SetValue(pair.Key, value.Value);
-      }
-    }
-    if (Longs?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_longs, id);
-      foreach (var pair in Longs)
-      {
-        var value = pair.Value.Get(pars);
-        if (value.HasValue)
-          ZDOExtraData.s_longs[id].SetValue(pair.Key, value.Value);
-
-      }
-    }
-    if (Strings?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_strings, id);
-      foreach (var pair in Strings)
-      {
-        var value = pair.Value.Get(pars);
-        if (value != null)
-          ZDOExtraData.s_strings[id].SetValue(pair.Key, value);
-
-      }
-    }
-    if (ByteArrays?.Count > 0)
-    {
-      ZDOHelper.Init(ZDOExtraData.s_byteArrays, id);
-      foreach (var pair in ByteArrays)
-        ZDOExtraData.s_byteArrays[id].SetValue(pair.Key, pair.Value);
-    }
-    if (Persistent != null)
-      zdo.Persistent = Persistent.GetBool(pars) ?? zdo.Persistent;
-    if (Distant != null)
-      zdo.Distant = Distant.GetBool(pars) ?? zdo.Distant;
-    if (Priority != null)
-      zdo.Type = Priority.Value;
-    HandleConnection(zdo, pars);
-    HandleHashConnection(zdo);
-    if (Position != null)
-    {
-      var pos = Position.Get(pars);
-      if (pos.HasValue)
-        zdo.SetPosition(pos.Value);
-    }
-    if (Rotation != null)
-    {
-      var rot = Rotation.Get(pars);
-      if (rot.HasValue)
-        zdo.m_rotation = rot.Value.eulerAngles;
-    }
-  }
-
-  private void HandleConnection(ZDO ownZdo, Parameters pars)
-  {
-    if (OriginalId == null) return;
-    if (ConnectionType == null) return;
-    var ownId = ownZdo.m_uid;
-    if (TargetConnectionId != null)
-    {
-      var targetId = TargetConnectionId.Get(pars);
-      if (targetId == null) return;
-      // If target is known, the setup is easy.
-      var otherZdo = ZDOMan.instance.GetZDO(targetId.Value);
-      if (otherZdo == null) return;
-
-      ownZdo.SetConnection(ConnectionType.Value, targetId.Value);
-      // Portal is two way.
-      if (ConnectionType == ZDOExtraData.ConnectionType.Portal)
-        otherZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, ownId);
-
-    }
-    else
-    {
-      // Otherwise all zdos must be scanned.
-      var originalId = OriginalId.Get(pars);
-      if (originalId == null) return;
-      var other = ZDOExtraData.s_connections.FirstOrDefault(kvp => kvp.Value.m_target == originalId.Value);
-      if (other.Value == null) return;
-      var otherZdo = ZDOMan.instance.GetZDO(other.Key);
-      if (otherZdo == null) return;
-      // Connection is always one way here, otherwise TargetConnectionId would be set.
-      otherZdo.SetConnection(other.Value.m_type, ownId);
-    }
-  }
-  private void HandleHashConnection(ZDO ownZdo)
-  {
-    if (ConnectionHash == 0) return;
-    if (ConnectionType == null || ConnectionType == ZDOExtraData.ConnectionType.None) return;
-    var ownId = ownZdo.m_uid;
-
-    // Hash data is regenerated on world save.
-    // But in this case, it's manually set, so might be needed later.
-    ZDOExtraData.SetConnectionData(ownId, ConnectionType.Value, ConnectionHash);
-
-    // While actual connection can be one way, hash is always two way.
-    // One of the hashes always has the target type.
-    var otherType = ConnectionType ^ ZDOExtraData.ConnectionType.Target;
-    var isOtherTarget = (ConnectionType & ZDOExtraData.ConnectionType.Target) == 0;
-    var zdos = ZDOExtraData.GetAllConnectionZDOIDs(otherType.Value);
-    var otherId = zdos.FirstOrDefault(z => ZDOExtraData.GetConnectionHashData(z, ConnectionType.Value)?.m_hash == ConnectionHash);
-    if (otherId == ZDOID.None) return;
-    var otherZdo = ZDOMan.instance.GetZDO(otherId);
-    if (otherZdo == null) return;
-    if ((ConnectionType & ZDOExtraData.ConnectionType.Spawned) > 0)
-    {
-      // Spawn is one way.
-      var connZDO = isOtherTarget ? ownZdo : otherZdo;
-      var targetId = isOtherTarget ? otherId : ownId;
-      connZDO.SetConnection(ZDOExtraData.ConnectionType.Spawned, targetId);
-    }
-    if ((ConnectionType & ZDOExtraData.ConnectionType.SyncTransform) > 0)
-    {
-      // Sync is one way.
-      var connZDO = isOtherTarget ? ownZdo : otherZdo;
-      var targetId = isOtherTarget ? otherId : ownId;
-      connZDO.SetConnection(ZDOExtraData.ConnectionType.SyncTransform, targetId);
-    }
-    if ((ConnectionType & ZDOExtraData.ConnectionType.Portal) > 0)
-    {
-      // Portal is two way.
-      otherZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, ownId);
-      ownZdo.SetConnection(ZDOExtraData.ConnectionType.Portal, otherId);
-    }
   }
 }

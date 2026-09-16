@@ -18,7 +18,7 @@ public class GuaranteeLocations
     {
       Log.Info($"Forcefully placing {location.m_prefab.Name} location at the center.");
       var locationRadius = Mathf.Max(location.m_exteriorRadius, location.m_interiorRadius);
-      Vector3 randomPointInZone = ZoneSystem.GetRandomPointInZone(new(0, 0), locationRadius);
+      Vector3 randomPointInZone = ZoneSystem.GetRandomPointInZone(Vector2s.zero, locationRadius);
       zs.RegisterLocation(location, randomPointInZone, false);
     }
   }

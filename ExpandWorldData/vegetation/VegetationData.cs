@@ -3,14 +3,21 @@ using System.ComponentModel;
 using Service;
 using Data;
 using UnityEngine;
+using YamlDotNet.Serialization;
 
 namespace ExpandWorldData;
 
 public class VegetationYaml
 {
   public string prefab = "";
+
+  [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
   public bool enabled = true;
+
+  [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
   public float min = 1f;
+
+  [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
   public float max = 1f;
   [DefaultValue(false)]
   public bool forcePlacement = false;
@@ -30,6 +37,8 @@ public class VegetationYaml
 
   [DefaultValue("")]
   public string biomeArea = "";
+  [DefaultValue("")]
+  public string altBiome = "";
   [DefaultValue(true)]
   public bool blockCheck = true;
   [DefaultValue(0f)]

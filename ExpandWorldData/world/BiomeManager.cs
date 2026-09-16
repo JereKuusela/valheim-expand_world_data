@@ -372,15 +372,15 @@ public class BiomeManager
 public class GenerateWorldMap
 {
 
-  static float GetBiomeHeight(Heightmap.Biome biome, float wx, float wy, out Color mask, bool preGeneration = false)
+  static float GetBiomeHeight(Heightmap.Biome biome, float wx, float wy, out Color mask, bool preGeneration = false, bool riverPreDN = true)
   {
-    var height = WorldGenerator.instance.GetBiomeHeight(biome, wx, wy, out mask, preGeneration);
+    var height = WorldGenerator.instance.GetBiomeHeight(biome, wx, wy, out mask, preGeneration, riverPreDN);
     return height;
   }
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
   {
     return new CodeMatcher(instructions)
-      .MatchForward(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Field(typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight))))
+      .MatchForward(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight))))
       .Set(OpCodes.Call, Transpilers.EmitDelegate(GetBiomeHeight).operand)
       .InstructionEnumeration();
   }
@@ -461,5 +461,56 @@ public class GlobalKeyRemove
     if (!BiomeManager.UsesGlobalKey(keyStr))
       return;
     EnvMan.instance.m_environmentPeriod = 0;
+  }
+}
+
+// Replaces hardcode vanilla implementation with a more flexible one.
+[HarmonyPatch(typeof(AltBiomeWorldData), nameof(AltBiomeWorldData.RandomBiomeFromBiomes))]
+public class RandomBiomeFromBiomes
+{
+  static bool Prefix(Heightmap.Biome biome, ref Heightmap.Biome __result)
+  {
+    var flags = (uint)biome;
+    if (flags == 0 || (flags & (flags - 1)) == 0)
+    {
+      __result = biome;
+      return false;
+    }
+
+    var count = 0;
+    for (var remaining = flags; remaining != 0; remaining &= remaining - 1)
+      count++;
+
+    var selected = UnityEngine.Random.Range(0, count);
+    for (var remaining = flags; ; remaining &= remaining - 1)
+    {
+      var flag = remaining & (0u - remaining);
+      if (selected-- == 0)
+      {
+        __result = (Heightmap.Biome)flag;
+        return false;
+      }
+    }
+  }
+}
+
+[HarmonyPatch(typeof(AltBiomeWorldData), nameof(AltBiomeWorldData.GetRandomPointByBiome))]
+public class GetRandomPointByBiome
+{
+  public static HashSet<Heightmap.Biome> Warned = [];
+  static bool Prefix(AltBiomeWorldData __instance, Heightmap.Biome biome, ref BiomePointCoordinate __result)
+  {
+    if (biome == Heightmap.Biome.None)
+      return false;
+    if (!__instance.Biomes.TryGetValue(biome, out var biomeData) || biomeData.AllPoints.Count == 0)
+    {
+      if (!Warned.Contains(biome))
+      {
+        Log.Warning($"Biome {biome} doesn't exist in the map!");
+        Warned.Add(biome);
+      }
+      return false;
+    }
+    return true;
   }
 }

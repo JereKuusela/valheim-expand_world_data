@@ -278,11 +278,11 @@ public class ScaleLocationHeightRequirement
       new CodeMatcher(instructions)
         .MatchForward(useEnd: false, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_minAltitude))))
         .Advance(1)
-        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 9))
+        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 11))
         .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ScaleHeight).operand))
-        .MatchForward(true, new CodeMatch(OpCodes.Stfld, AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_maxAltitude))))
+        .MatchForward(useEnd: false, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_maxAltitude))))
         .Advance(1)
-        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 9))
+        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 11))
         .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ScaleHeight).operand))
         .InstructionEnumeration();
 
@@ -317,11 +317,11 @@ public class CreateLocalZones
   }
 }
 
-
+// TODO: Could look into optimizing like how vanilla now works.
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange))]
 public class HaveLocationInRange
 {
-  static bool Prefix(ref bool __result, ZoneSystem __instance, string prefabName, string group, Vector3 p, float radius)
+  static bool Prefix(ref bool __result, ZoneSystem __instance, SoftReferenceableAssets.AssetID assetID, string group, Vector3 p, float radius)
   {
     var isVirtual = LocationExtra.IsVirtualGroupId(group);
     if (isVirtual)
@@ -331,7 +331,7 @@ public class HaveLocationInRange
     }
     else
     {
-      __result = InRange(__instance, p, prefabName, group, radius);
+      __result = InRange(__instance, p, assetID, group, radius);
     }
     return false;
   }
@@ -368,7 +368,7 @@ public class HaveLocationInRange
   }
 
 
-  private static bool InRange(ZoneSystem zs, Vector3 p, string prefabName, string group, float radius)
+  private static bool InRange(ZoneSystem zs, Vector3 p, SoftReferenceableAssets.AssetID assetID, string group, float radius)
   {
     foreach (var locationInstance in zs.m_locationInstances.Values)
     {
@@ -376,7 +376,7 @@ public class HaveLocationInRange
       if (loc == null)
         continue;
 
-      var matches = LocationExtra.MatchesTarget(loc, prefabName, group);
+      var matches = LocationExtra.MatchesTarget(loc, assetID, group);
       if (!matches)
         continue;
       var distance = Vector3.Distance(locationInstance.m_position, p);

@@ -169,4 +169,48 @@ public class Yaml
     if (!File.Exists(file)) return [];
     return Deserialize<T>(File.ReadAllText(file), file);
   }
+
+  ///<summary>Inserts a missing field into existing list entries in matching yaml files, preserving comments/formatting. Returns true if any file was changed.</summary>
+  public static bool InsertMissingField(string pattern, string keyField, string targetField, Dictionary<string, string> valuesByKey)
+  {
+    if (!System.IO.Directory.Exists(BaseDirectory)) return false;
+    var changedAny = false;
+    var targetPrefix = $"{targetField}:";
+    foreach (var file in System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories))
+    {
+      var lines = File.ReadAllLines(file).ToList();
+      var changed = false;
+      for (var i = 0; i < lines.Count; i++)
+      {
+        var trimmed = lines[i].TrimStart();
+        if (!trimmed.StartsWith("-")) continue;
+        var separator = trimmed.IndexOf(':');
+        if (separator < 0 || !trimmed.Substring(1, separator - 1).Trim().Equals(keyField, StringComparison.Ordinal)) continue;
+        var indent = lines[i].Length - trimmed.Length;
+        var value = trimmed.Substring(separator + 1).Trim();
+        var commentIndex = value.IndexOf('#');
+        if (commentIndex >= 0) value = value.Substring(0, commentIndex).Trim();
+        value = value.Trim('"', '\'');
+        if (!valuesByKey.TryGetValue(value, out var newValue) || newValue == "") continue;
+        // Find the block extent (until the next top-level list item or EOF) to check for an existing field and insertion point.
+        var end = i + 1;
+        var hasField = false;
+        while (end < lines.Count)
+        {
+          var lineTrimmed = lines[end].TrimStart();
+          var lineIndent = lines[end].Length - lineTrimmed.Length;
+          if (lineTrimmed.StartsWith("- ") && lineIndent <= indent) break;
+          if (lineTrimmed.StartsWith(targetPrefix)) { hasField = true; break; }
+          end++;
+        }
+        if (hasField) continue;
+        lines.Insert(i + 1, $"{new string(' ', indent + 2)}{targetField}: {newValue}");
+        changed = true;
+      }
+      if (!changed) continue;
+      File.WriteAllLines(file, lines);
+      changedAny = true;
+    }
+    return changedAny;
+  }
 }

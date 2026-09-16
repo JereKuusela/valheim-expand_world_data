@@ -28,6 +28,7 @@ public class LocationLoading
       m_enable = data.enabled,
       m_biome = DataManager.ToBiomes(data.biome, fileName),
       m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName),
+      m_altBiomeParent = string.IsNullOrWhiteSpace(data.altBiome) ? null : data.altBiome,
       m_quantity = data.quantity,
       m_prioritized = data.prioritized,
       m_centerFirst = data.centerFirst,
@@ -78,6 +79,7 @@ public class LocationLoading
     data.enabled = loc.m_enable;
     data.biome = DataManager.FromBiomes(loc.m_biome);
     data.biomeArea = DataManager.FromBiomeAreas(loc.m_biomeArea);
+    data.altBiome = loc.m_altBiomeParent ?? "";
     data.quantity = loc.m_quantity;
     data.prioritized = loc.m_prioritized;
     data.centerFirst = loc.m_centerFirst;
@@ -189,6 +191,11 @@ public class LocationLoading
       }
       else
       {
+        if (Configuration.DataMigration && AltBiomeMigration.MigrateLocations(data, DefaultEntries, Pattern))
+        {
+          // Watcher triggers reload.
+          return;
+        }
         if (Configuration.DataMigration && AddMissingEntries(data))
         {
           // Watcher triggers reload.
@@ -222,7 +229,7 @@ public class LocationLoading
     foreach (var zone in instances.Keys.ToArray())
     {
       var value = instances[zone];
-      var location = zs.GetLocation(value.m_location.m_prefab.Name);
+      var location = zs.m_locations.FirstOrDefault(location => location.m_prefab.Name == value.m_location.m_prefab.Name);
       // Jewelcrafting has dynamic locations that don't exist in the location list.
       if (location == null) continue;
       value.m_location = location;
@@ -273,8 +280,7 @@ public class LocationLoading
   {
     try
     {
-      return DataManager.ReadData<LocationYaml, ZoneSystem.ZoneLocation>(Pattern, FromData)
-        .Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name)).ToList();
+      return [.. DataManager.ReadData<LocationYaml, ZoneSystem.ZoneLocation>(Pattern, FromData).Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name))];
     }
     catch (Exception e)
     {

@@ -162,6 +162,7 @@ public class WorldManager
     Log.Info($"Reloading world data ({Data.Count} entries).");
     BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
     BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
+    GetRandomPointByBiome.Warned.Clear();
     EWD.Instance.InvokeRegenerate();
   }
   public static void SetupWatcher()

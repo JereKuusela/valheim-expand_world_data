@@ -32,7 +32,7 @@ public partial class Loader
       m_chance = type.chance,
       m_connectionType = type.connectionType,
       m_prefab = DataManager.ToPrefab(type.prefab, fileName)
-    })];
+    }).Where(door => door.m_prefab)];
     dg.m_maxRooms = data.maxRooms;
     dg.m_minRooms = data.minRooms;
     dg.m_maxRetries = data.maxRetries;

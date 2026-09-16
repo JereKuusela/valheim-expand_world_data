@@ -69,7 +69,7 @@ public class RoomLoading
   private static Dictionary<string, Room.Theme> CreateNameToTheme()
   {
     var themes = DefaultNameToTheme.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
-    foreach (var theme in themes.Values.Distinct())
+    foreach (var theme in themes.Values.Distinct().ToArray())
       themes[((int)theme).ToString()] = theme;
     return themes;
   }

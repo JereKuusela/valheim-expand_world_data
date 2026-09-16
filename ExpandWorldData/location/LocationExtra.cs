@@ -64,10 +64,10 @@ public class LocationExtra
     if (extra.Groups == null) return false;
     return extra.Groups.Contains(target);
   }
-  public static bool MatchesTarget(ZoneSystem.ZoneLocation? location, string prefabName, string group)
+  public static bool MatchesTarget(ZoneSystem.ZoneLocation? location, SoftReferenceableAssets.AssetID assetID, string group)
   {
     if (location == null) return false;
-    if (location.m_prefab.Name == prefabName) return true;
+    if (location.m_prefab.m_assetID == assetID) return true;
     if (!TryGet(location, out var extra)) return false;
     if (extra.Groups == null) return false;
     return extra.Groups.Contains(group);

@@ -17,7 +17,7 @@ public class WorldAngle
 }
 
 [HarmonyPatch(typeof(Minimap), nameof(Minimap.GetPixelColor))]
-public class GetMapColor
+public class GetPixelColor
 {
   static bool Prefix(Heightmap.Biome biome, ref Color __result)
   {
@@ -85,10 +85,10 @@ public class GenerateWorldMapHeight
 
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) =>
     new CodeMatcher(instructions).MatchForward(true, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Minimap), nameof(Minimap.GetMaskColor))))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 14))
     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 13))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 12))
     .InsertAndAdvance(new CodeInstruction(OpCodes.Call, Transpilers.EmitDelegate(ModifyHeight).operand))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Stloc_S, 14))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Stloc_S, 13))
     .InstructionEnumeration();
 
 }

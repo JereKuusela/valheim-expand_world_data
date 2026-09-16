@@ -1,9 +1,11 @@
 using System.ComponentModel;
+using YamlDotNet.Serialization;
 namespace ExpandWorldData;
 
 public class LocationYaml
 {
   public string prefab = "";
+  [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
   public bool enabled = true;
   [DefaultValue("")]
   public string dungeon = "";
@@ -11,6 +13,9 @@ public class LocationYaml
   public string biome = "";
   [DefaultValue("")]
   public string biomeArea = "";
+  [DefaultValue("")]
+  public string altBiome = "";
+  [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
   public int quantity = 0;
   [DefaultValue(0f)]
   public float minDistance = 0f;

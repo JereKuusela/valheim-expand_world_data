@@ -267,6 +267,9 @@ public class DataManager : MonoBehaviour
   {
     if (ZNetScene.instance.m_namedPrefabs.TryGetValue(str.GetStableHashCode(), out var obj))
       return obj;
+    // Game is missing these at least now.
+    else if (str == "hole_destructableDoor" || str == "hole_destructableDoor1" || str == "hole_destructableDoor2")
+      return null;
     else
       Log.Warning($"{fileName}: Prefab {str} not found!");
     return null;

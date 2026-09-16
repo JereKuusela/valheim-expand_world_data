@@ -1,6 +1,5 @@
 - v1.71
   - Fixes for the new game update. Thanks JPValheim!
-  - Note: Alternative biomes are not supported yet.
 
 - v1.70
   - Adds experimental support for blueprint terrain data (only as main object). Thanks sighsorry!
