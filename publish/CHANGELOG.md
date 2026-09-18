@@ -1,3 +1,6 @@
+- v1.72
+  - Fixes edits not clearing biome cache.
+
 - v1.71
   - Fixes for the new game update. Thanks JPValheim!
 
@@ -18,6 +21,3 @@
   - BREAKING CHANGE: Removes `groupsMax` field as obsolete.
   - Adds new fields `closeTo` and `awayFrom` as a separate system to group up or disperse locations.
   - Fixes data loading issue for heavily modded game clients. Thanks Safwan!
-
-- v1.66
-  - Fixes "distance from similar" for location clones.
