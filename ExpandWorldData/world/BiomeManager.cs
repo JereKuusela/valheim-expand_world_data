@@ -514,3 +514,56 @@ public class GetRandomPointByBiome
     return true;
   }
 }
+
+
+[HarmonyPatch(typeof(BiomeHelpers), nameof(BiomeHelpers.ToBiomeIndex))]
+public class ToBiomeIndex
+{
+  private static readonly Dictionary<Heightmap.Biome, Heightmap.BiomeIndex> BiomeToIndex = CreateBiomeToIndex();
+  internal static readonly Dictionary<Heightmap.BiomeIndex, Heightmap.Biome> IndexToBiome = BiomeToIndex
+    .ToDictionary(pair => pair.Value, pair => pair.Key);
+
+  private static Dictionary<Heightmap.Biome, Heightmap.BiomeIndex> CreateBiomeToIndex()
+  {
+    Dictionary<Heightmap.Biome, Heightmap.BiomeIndex> result = [];
+    for (var bit = 0; bit < 32; bit++)
+    {
+      var index = bit switch
+      {
+        8 => 10,
+        9 => 8,
+        10 => 9,
+        _ => bit
+      };
+      result[(Heightmap.Biome)(1u << bit)] = (Heightmap.BiomeIndex)index;
+    }
+    return result;
+  }
+
+  static bool Prefix(Heightmap.Biome b, ref Heightmap.BiomeIndex __result)
+  {
+    if (b == Heightmap.Biome.None)
+    {
+      __result = Heightmap.BiomeIndex.None;
+      return false;
+    }
+    if (BiomeToIndex.TryGetValue(b, out var index))
+      __result = index;
+    else
+      __result = Heightmap.BiomeIndex.None;
+    return false;
+  }
+}
+
+[HarmonyPatch(typeof(BiomeHelpers), nameof(BiomeHelpers.ToBiome))]
+public class ToBiome
+{
+  static bool Prefix(Heightmap.BiomeIndex index, ref Heightmap.Biome __result)
+  {
+    if (ToBiomeIndex.IndexToBiome.TryGetValue(index, out var biome))
+      __result = biome;
+    else
+      __result = Heightmap.Biome.None;
+    return false;
+  }
+}

@@ -1,3 +1,6 @@
+- v1.73
+  - Fixes custom biomes throwing errors.
+
 - v1.72
   - Fixes edits not clearing biome cache.
 
@@ -15,9 +18,3 @@
 
 - v1.68
   - Hotfix: Fixes location and vegetation extra data not working.
-
-- v1.67
-  - BREAKING CHANGE: Changes `groups` field to just be a list of groups instead of multiple "min distance from similar".
-  - BREAKING CHANGE: Removes `groupsMax` field as obsolete.
-  - Adds new fields `closeTo` and `awayFrom` as a separate system to group up or disperse locations.
-  - Fixes data loading issue for heavily modded game clients. Thanks Safwan!
