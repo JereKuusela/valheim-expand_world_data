@@ -1,11 +1,20 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace ExpandWorldData;
 
 public static class Api
 {
+  public static RandomEvent? GetCurrentRandomEvent(Vector3 position)
+  {
+    if (Configuration.DataEvents && Configuration.MultipleEvents)
+      return ExpandWorld.Event.MultipleEvents.Events.OrderBy(entry => Utils.DistanceXZ(entry.Event.m_pos, position)).FirstOrDefault()?.Event;
+    return RandEventSystem.instance?.GetCurrentRandomEvent();
+  }
+
   public static float GetMinimapHeight(float height, Heightmap.Biome biome)
   {
     if (!BiomeManager.TryGetData(biome, out var data)) return height;

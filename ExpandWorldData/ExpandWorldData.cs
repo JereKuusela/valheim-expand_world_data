@@ -1,5 +1,6 @@
 ﻿using System;
 using BepInEx;
+using BepInEx.Bootstrap;
 using Data;
 using HarmonyLib;
 using Service;
@@ -39,6 +40,7 @@ public class EWD : BaseUnityPlugin
     Yaml.Init();
     ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, InvokeRegenerate);
     Configuration.Init(wrapper);
+    LegacyEventsConfiguration.Migrate(Config);
     Harmony = new(GUID);
     Harmony.PatchAll();
     try
@@ -59,6 +61,11 @@ public class EWD : BaseUnityPlugin
         Dungeon.Loader.SetupWatcher();
         RoomLoading.SetupWatcher();
         BlueprintManager.SetupBlueprintWatcher();
+        // Looks weird here? Should be dynamic, no?
+        if (Configuration.DataSpawns)
+          ExpandWorld.Spawn.Manager.SetupWatcher();
+        if (Configuration.DataEvents)
+          ExpandWorld.Event.Manager.SetupWatcher();
       }
     }
     catch (Exception e)
@@ -68,6 +75,20 @@ public class EWD : BaseUnityPlugin
   }
   public void Start()
   {
+    if (Chainloader.PluginInfos.ContainsKey("expand_world_events") && !Configuration.DataEvents)
+    {
+      Configuration.configDataEvents.Value = true;
+      if (Configuration.DataReload) ExpandWorld.Event.Manager.SetupWatcher();
+    }
+    if (Chainloader.PluginInfos.ContainsKey("expand_world_spawns"))
+    {
+      if (!Configuration.DataSpawns)
+      {
+        Configuration.configDataSpawns.Value = true;
+        if (Configuration.DataReload) ExpandWorld.Spawn.Manager.SetupWatcher();
+      }
+      Configuration.configDataDrops.Value = true;
+    }
     BiomeManager.NamesFromFile();
     new DebugCommands();
   }

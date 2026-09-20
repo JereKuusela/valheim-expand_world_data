@@ -19,6 +19,22 @@ public partial class Configuration
   public static bool RegenerateMap => configRegenerateMap.Value;
   public static ConfigEntry<bool> configCustomWaterColor;
   public static bool CustomWaterColor => configCustomWaterColor.Value;
+  public static ConfigEntry<bool> configDataEvents;
+  public static bool DataEvents => configDataEvents.Value;
+  public static ConfigEntry<bool> configDataSpawns;
+  public static bool DataSpawns => configDataSpawns.Value;
+  public static ConfigEntry<bool> configDataDrops;
+  public static bool DataDrops => configDataDrops.Value;
+  public static ConfigEntry<bool> configMultipleEvents;
+  public static bool MultipleEvents => configMultipleEvents.Value;
+  public static ConfigEntry<bool> configCheckPerPlayer;
+  public static bool CheckPerPlayer => configCheckPerPlayer.Value;
+  public static ConfigEntry<string> configEventMinimumDistance;
+  public static float EventMinimumDistance => ConfigWrapper.Floats[configEventMinimumDistance];
+  public static ConfigEntry<string> configEventChance;
+  public static float EventChance => ConfigWrapper.Floats[configEventChance];
+  public static ConfigEntry<string> configEventInterval;
+  public static float EventInterval => ConfigWrapper.Floats[configEventInterval];
 
   public static ConfigEntry<bool> configZoneSpawners;
   public static bool ZoneSpawners => configZoneSpawners.Value;
@@ -54,6 +70,8 @@ public partial class Configuration
   public static CustomSyncedValue<string> valueClutterData;
   public static CustomSyncedValue<string> valueEnvironmentData;
   public static CustomSyncedValue<string> valueNoBuildData;
+  public static CustomSyncedValue<string> valueSpawnData;
+  public static CustomSyncedValue<string> valueEventData;
   public static ConfigEntry<bool> configDataEnvironments;
   public static bool DataEnvironments => configDataEnvironments.Value;
   public static ConfigEntry<bool> configDataVegetation;
@@ -93,6 +111,16 @@ public partial class Configuration
     configRandomLocations = wrapper.Bind(section, "Random locations", false, false, "If true, all locations have a random generation instead of depending on the location coordinates.");
 
     section = "2. Features";
+    configDataEvents = wrapper.Bind(section, "Event data", false, false, "Use event data.");
+    configDataEvents.SettingChanged += (s, e) => ExpandWorld.Event.Manager.Toggle();
+    configDataSpawns = wrapper.Bind(section, "Spawn data", false, false, "Use spawn data.");
+    configDataSpawns.SettingChanged += (s, e) => ExpandWorld.Spawn.Manager.Toggle();
+    configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.");
+    configMultipleEvents = wrapper.Bind(section, "Multiple events", false, false, "If enabled, multiple events can be active at the same time.");
+    configCheckPerPlayer = wrapper.Bind(section, "Check per player", false, false, "If enabled, the event check is done separately for each player.");
+    configEventMinimumDistance = wrapper.BindFloat(section, "Minimum distance between events", 100f, false, "The minimum distance between events.");
+    configEventChance = wrapper.BindFloat(section, "Random event chance", 20f, false, "The chance to try starting a random event.");
+    configEventInterval = wrapper.BindFloat(section, "Random event interval", 46f, false, "How often the random events are checked (minutes).");
 
     configDistanceWiggleLength = wrapper.BindFloat(section, "Distance wiggle length", 500f, false);
     configDistanceWiggleLength.SettingChanged += (s, e) => WorldManager.ReadConfigs();
@@ -141,6 +169,10 @@ public partial class Configuration
     valueClutterData.ValueChanged += () => ClutterManager.Set(valueClutterData.Value);
     valueWorldData = wrapper.AddValue("world_data");
     valueWorldData.ValueChanged += () => WorldManager.FromSetting(valueWorldData.Value);
+    valueSpawnData = wrapper.AddValue("spawn_data");
+    valueSpawnData.ValueChanged += () => ExpandWorld.Spawn.Manager.FromSetting(valueSpawnData.Value);
+    valueEventData = wrapper.AddValue("event_data");
+    valueEventData.ValueChanged += () => ExpandWorld.Event.Manager.FromSetting(valueEventData.Value);
 
     section = "4. Poles";
     configRestrictAshlands = wrapper.Bind(section, "Restrict Ashlands position", true, true, "If true, restricts Ashlands biome position.");
