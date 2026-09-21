@@ -15,6 +15,7 @@ public class EnvironmentManager
   private static bool Pending;
   private static Dictionary<string, EnvSetup> Originals = [];
   public static Dictionary<string, EnvironmentData> Extra = [];
+  public static bool HasStatusEffects => Extra.Values.Any(data => data.statusEffects.Count > 0);
 
   public static void Initialize()
   {

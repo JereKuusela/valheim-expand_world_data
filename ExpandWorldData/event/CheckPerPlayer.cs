@@ -1,16 +1,14 @@
 using System.Collections.Generic;
 using ExpandWorldData;
-using HarmonyLib;
 using UnityEngine;
 
 namespace ExpandWorld.Event;
 
-[HarmonyPatch(typeof(RandEventSystem), nameof(RandEventSystem.UpdateRandomEvent))]
 public class CheckPerPlayer
 {
-  static void Prefix(RandEventSystem __instance, float dt)
+  internal static void UpdateEvents(RandEventSystem __instance, float dt)
   {
-    if (!Configuration.DataEvents || Helper.IsClient() || !Configuration.CheckPerPlayer || Game.m_eventRate == 0f) return;
+    if (Helper.IsClient() || Game.m_eventRate == 0f) return;
     if (RandEventSystem.s_randomEventNeedsRefresh) RandEventSystem.RefreshPlayerEventData();
     CheckGlobalEvent(__instance, dt);
     CheckStandaloneEvents(__instance, dt);

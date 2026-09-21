@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using ExpandWorldData;
-using HarmonyLib;
 using UnityEngine;
 
 namespace ExpandWorld.Event;
@@ -12,15 +11,13 @@ public class MultiEvent(RandomEvent ev, int count)
   public int Count = count;
 }
 
-[HarmonyPatch(typeof(RandEventSystem))]
 public class MultipleEvents
 {
   public static readonly List<MultiEvent> Events = [];
 
-  [HarmonyPatch(nameof(RandEventSystem.FixedUpdate)), HarmonyPrefix]
-  static bool FixedUpdate(RandEventSystem __instance)
+  internal static bool UpdateEvents(RandEventSystem __instance)
   {
-    if (!Configuration.DataEvents || Helper.IsClient() || !Configuration.MultipleEvents) return true;
+    if (Helper.IsClient()) return true;
     var delta = Time.fixedDeltaTime;
     __instance.UpdateForcedEvents(delta);
     __instance.UpdateRandomEvent(delta);
@@ -39,10 +36,9 @@ public class MultipleEvents
     return false;
   }
 
-  [HarmonyPatch(nameof(RandEventSystem.SetRandomEvent)), HarmonyPrefix]
-  static bool SetRandomEvent(RandEventSystem __instance, RandomEvent ev, Vector3 pos)
+  internal static bool SetEvent(RandEventSystem __instance, RandomEvent ev, Vector3 pos)
   {
-    if (!Configuration.DataEvents || Helper.IsClient() || !Configuration.MultipleEvents) return true;
+    if (Helper.IsClient()) return true;
     if (ev == null)
     {
       var toStop = Events.ToList();
@@ -61,10 +57,9 @@ public class MultipleEvents
     return false;
   }
 
-  [HarmonyPatch(nameof(RandEventSystem.SendCurrentRandomEvent)), HarmonyPrefix]
-  static bool SendCurrentRandomEvent()
+  internal static bool SendEvent()
   {
-    if (!Configuration.DataEvents || Helper.IsClient() || !Configuration.MultipleEvents || Events.Count == 0) return true;
+    if (Helper.IsClient() || Events.Count == 0) return true;
     if (Events.Count == 1)
     {
       var randomEvent = Events[0].Event;

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ExpandWorldData;
-using HarmonyLib;
 using Service;
 
 namespace ExpandWorld.Spawn;
@@ -12,6 +11,7 @@ public class Manager
 {
   public static readonly string FilePath = Path.Combine(Yaml.Directory, "expand_spawns.yaml");
   public const string Pattern = "expand_spawns*.yaml";
+  public static List<SpawnSystem.SpawnData>? Override;
 
   public static bool IsValid(SpawnSystem.SpawnData spawn) => spawn.m_prefab;
 
@@ -41,130 +41,104 @@ public class Manager
 
   public static void FromSetting(string yaml)
   {
-    if (!Configuration.DataSpawns || HandleSpawnData.Override == null || !Helper.IsClient()) return;
+    if (!Configuration.DataSpawns || !Helper.IsClient()) return;
     Set(yaml);
   }
 
   public static void Set(string yaml)
   {
-    HandleSpawnData.Override = null;
-    Loader.Data.Clear();
-    Loader.Objects.Clear();
-    if (!Configuration.DataSpawns || yaml == "")
+    if (Override != null)
     {
-      HandleSpawnData.RestoreAll();
-      return;
+      foreach (var spawn in Override)
+      {
+        Loader.Data.Remove(spawn);
+        Loader.Objects.Remove(spawn);
+      }
     }
+    Override = null;
     try
     {
+      if (!Configuration.DataSpawns || yaml == "")
+        return;
       var data = Yaml.Deserialize<Data>(yaml, "Spawns").Select(entry => Loader.FromData(entry, "Spawns")).Where(IsValid).ToList();
       if (data.Count == 0)
       {
-        Log.Warning("Failed to load any spawn data.");
-        HandleSpawnData.RestoreAll();
+        Log.Warning("Failed to load any spawn data. No changes done.");
         return;
       }
       Log.Info($"Reloading spawn data ({data.Count} entries).");
-      HandleSpawnData.Override = data;
-      SpawnSystem.m_instances.ForEach(HandleSpawnData.Set);
+      Override = data;
+      SpawnSystem.m_instances.ForEach(ApplySpawnData);
     }
     catch (Exception e)
     {
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
+    finally { ExpandWorldData.Patcher.Update(EWD.Harmony); }
   }
 
   public static void Toggle()
   {
     if (Configuration.DataSpawns)
     {
+      ExpandWorldData.Patcher.Update(EWD.Harmony);
       if (Helper.IsServer()) ReadConfig();
       else FromSetting(Configuration.valueSpawnData.Value);
     }
     else
-      Set("");
+    {
+      Log.Warning("Disabling spawn data requires a restart to restore the original spawn lists.");
+      ExpandWorldData.Patcher.Update(EWD.Harmony);
+    }
   }
 
-  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfig);
-}
-
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.Start)), HarmonyPriority(Priority.VeryLow)]
-public class InitializeSpawnContent
-{
-  static void Postfix()
+  internal static void InitializeData()
   {
-    if (!Configuration.DataSpawns) return;
-    HandleSpawnData.Override = null;
-    if (Helper.IsServer()) Manager.ReadConfig();
+    Override = null;
+    if (Helper.IsServer()) ReadConfig();
   }
-}
 
-[HarmonyPatch(typeof(SpawnSystem), nameof(SpawnSystem.Awake))]
-public class HandleSpawnData
-{
-  public static List<SpawnSystem.SpawnData>? Override;
-  private static readonly Dictionary<SpawnSystem, List<SpawnSystemList>> Originals = [];
-
-  static void Postfix(SpawnSystem __instance)
+  internal static void InitializeSpawnSystem(SpawnSystem __instance)
   {
-    Originals[__instance] = [.. __instance.m_spawnLists];
-    if (!Configuration.DataSpawns) return;
     if (Override == null)
     {
-      if (Helper.IsClient() && Configuration.valueSpawnData.Value != "") Manager.Set(Configuration.valueSpawnData.Value);
-      if (Helper.IsServer()) Manager.CreateConfig();
+      if (Helper.IsClient() && Configuration.valueSpawnData.Value != "") Set(Configuration.valueSpawnData.Value);
+      if (Helper.IsServer()) CreateConfig();
     }
-    Set(__instance);
+    ApplySpawnData(__instance);
   }
 
-  public static void Set(SpawnSystem system)
+  public static void ApplySpawnData(SpawnSystem system)
   {
     if (Override == null) return;
     while (system.m_spawnLists.Count > 1) system.m_spawnLists.RemoveAt(system.m_spawnLists.Count - 1);
     system.m_spawnLists[0].m_spawners = Override;
   }
 
-  public static void RestoreAll()
-  {
-    foreach (var pair in Originals)
-      pair.Key.m_spawnLists = [.. pair.Value];
-  }
+  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfig);
 }
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.RPC_SetGlobalKey))]
-public class SpawnGlobalKeyMutation
+public class GlobalKeys
 {
-  static void Prefix(ZoneSystem __instance, ref string name)
+  internal static void Mutate(ZoneSystem __instance, ref string name)
   {
-    if (!Configuration.DataSpawns) return;
     var key = ZoneSystem.GetKeyValue(name.ToLower(), out var value, out _);
     if (value.StartsWith("--", StringComparison.OrdinalIgnoreCase) && int.TryParse(value.Substring(2), out var decrease))
       name = __instance.GetGlobalKey(key, out var previous) && int.TryParse(previous, out var previousValue) ? $"{key} {previousValue - decrease}" : $"{key} -{decrease}";
     else if (value.StartsWith("++", StringComparison.OrdinalIgnoreCase) && int.TryParse(value.Substring(2), out var increase))
       name = __instance.GetGlobalKey(key, out var previous) && int.TryParse(previous, out var previousValue) ? $"{key} {previousValue + increase}" : $"{key} {increase}";
   }
-}
-
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GetGlobalKey), typeof(string))]
-public class SpawnGlobalKeyCheck
-{
-  static bool Prefix(ZoneSystem __instance, string name, ref bool __result)
+  internal static bool CheckRequirement(ZoneSystem __instance, string name, ref bool __result)
   {
-    if (!Configuration.DataSpawns) return true;
     var split = name.Trim().Split(' ');
     if (split.Length < 2 || !int.TryParse(split[1], out var requiredValue)) return true;
     __result = __instance.m_globalKeysValues.TryGetValue(split[0].ToLower(), out var rawValue) && int.TryParse(rawValue, out var value) && value >= requiredValue;
     return false;
   }
-}
-
-[HarmonyPatch(typeof(SpawnSystem), nameof(SpawnSystem.Spawn))]
-public class ConsumeSpawnGlobalKey
-{
-  static void Postfix(SpawnSystem.SpawnData critter)
+  internal static void Consume(SpawnSystem.SpawnData critter)
   {
-    if (!Configuration.DataSpawns || string.IsNullOrEmpty(critter.m_requiredGlobalKey)) return;
+    if (string.IsNullOrEmpty(critter.m_requiredGlobalKey)) return;
     var split = critter.m_requiredGlobalKey.Trim().Split(' ');
     if (split.Length > 1 && int.TryParse(split[1], out var amount)) ZoneSystem.instance.SetGlobalKey($"{split[0]} --{amount}");
   }

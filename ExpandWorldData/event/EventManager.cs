@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ExpandWorldData;
-using HarmonyLib;
 using Service;
 
 namespace ExpandWorld.Event;
@@ -36,10 +35,15 @@ public class Manager
 
   private static void Set(string yaml)
   {
-    if (RandEventSystem.instance == null) return;
+    if (RandEventSystem.instance == null) { ExpandWorldData.Patcher.Update(EWD.Harmony); return; }
     if (Originals.Count == 0) Originals = [.. RandEventSystem.instance.m_events];
+    if (string.IsNullOrEmpty(yaml))
+    {
+      Log.Warning("Failed to load any event data. No changes done.");
+      return;
+    }
+    RemoveSpawnMetadata(RandEventSystem.instance.m_events);
     Loader.ExtraData.Clear();
-    if (!Configuration.DataEvents || string.IsNullOrEmpty(yaml)) { Restore(); return; }
     try
     {
       var data = Yaml.Deserialize<Data>(yaml, "Events").Select(entry => Loader.FromData(entry, "Events")).ToList();
@@ -49,6 +53,16 @@ public class Manager
       RandEventSystem.instance.m_events = data;
     }
     catch (Exception e) { Log.Error(e.Message); Log.Error(e.StackTrace); }
+    finally { ExpandWorldData.Patcher.Update(EWD.Harmony); }
+  }
+
+  private static void RemoveSpawnMetadata(IEnumerable<RandomEvent> events)
+  {
+    foreach (var spawn in events.SelectMany(entry => entry.m_spawn))
+    {
+      Spawn.Loader.Data.Remove(spawn);
+      Spawn.Loader.Objects.Remove(spawn);
+    }
   }
 
   private static bool AddMissingEntries(List<RandomEvent> entries)
@@ -64,59 +78,46 @@ public class Manager
 
   public static void Toggle()
   {
-    EventTiming.Setup(RandEventSystem.instance);
-    if (Configuration.DataEvents) { if (Helper.IsServer()) ReadConfig(); else FromSetting(Configuration.valueEventData.Value); }
-    else Restore();
+    if (Configuration.DataEvents)
+    {
+      ExpandWorldData.Patcher.Update(EWD.Harmony);
+      ApplyTiming(RandEventSystem.instance);
+      if (Helper.IsServer())
+      {
+        CreateConfig();
+        ReadConfig();
+      }
+      else FromSetting(Configuration.valueEventData.Value);
+    }
+    else
+    {
+      Log.Warning("Disabling event data requires a restart to restore the original event data and timing.");
+      ExpandWorldData.Patcher.Update(EWD.Harmony);
+    }
   }
 
-  private static void Restore()
+  internal static void DelayClientLoad() => LoadDelayed = true;
+
+  internal static void InitializeServerData()
   {
-    Loader.ExtraData.Clear();
-    if (RandEventSystem.instance != null && Originals.Count > 0) RandEventSystem.instance.m_events = [.. Originals];
+    if (!Helper.IsServer()) return;
+    CreateConfig();
+    ReadConfig();
+  }
+
+  internal static void InitializeClientData()
+  {
+    if (!LoadDelayed) return;
+    LoadDelayed = false;
+    FromSetting(Configuration.valueEventData.Value);
+  }
+
+  internal static void ApplyTiming(RandEventSystem system)
+  {
+    if (!system) return;
+    system.m_eventChance = Configuration.EventChance;
+    system.m_eventIntervalMin = Configuration.EventInterval;
   }
 
   public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfig);
-}
-
-[HarmonyPatch(typeof(ZNet), nameof(ZNet.Awake))]
-public class DelayEventContentLoad { static void Prefix() { if (Configuration.DataEvents) Manager.LoadDelayed = true; } }
-
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.Start)), HarmonyPriority(Priority.Last)]
-public class InitializeEventContent
-{
-  static void Postfix()
-  {
-    if (!Configuration.DataEvents || !Helper.IsServer()) return;
-    Manager.CreateConfig();
-    Manager.ReadConfig();
-  }
-}
-
-[HarmonyPatch(typeof(SpawnSystem), nameof(SpawnSystem.Awake))]
-public class InitializeClientEventContent
-{
-  static void Postfix()
-  {
-    if (!Configuration.DataEvents || !Manager.LoadDelayed) return;
-    Manager.LoadDelayed = false;
-    Manager.FromSetting(Configuration.valueEventData.Value);
-  }
-}
-
-[HarmonyPatch(typeof(RandEventSystem), nameof(RandEventSystem.Awake))]
-public class EventTiming
-{
-  private static float OriginalChance;
-  private static float OriginalInterval;
-  private static bool Initialized;
-
-  public static void Setup(RandEventSystem system)
-  {
-    if (!system) return;
-    if (!Initialized) { OriginalChance = system.m_eventChance; OriginalInterval = system.m_eventIntervalMin; Initialized = true; }
-    system.m_eventChance = Configuration.DataEvents ? Configuration.EventChance : OriginalChance;
-    system.m_eventIntervalMin = Configuration.DataEvents ? Configuration.EventInterval : OriginalInterval;
-  }
-
-  static void Postfix(RandEventSystem __instance) => Setup(__instance);
 }

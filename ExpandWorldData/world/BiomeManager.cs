@@ -79,6 +79,7 @@ public class BiomeManager
   private static readonly Dictionary<Heightmap.Biome, BiomeData> BiomeData = [];
   public static bool TryGetColor(Heightmap.Biome biome, out Color color) => BiomeToColor.TryGetValue(biome, out color);
   public static bool TryGetData(Heightmap.Biome biome, out BiomeData data) => BiomeData.TryGetValue(biome, out data);
+  public static bool HasStatusEffects => BiomeData.Values.Any(data => data.statusEffects.Count > 0);
   public static bool TryGetBiome(string name, out Heightmap.Biome biome) => NameToBiome.TryGetValue(name.ToLowerInvariant(), out biome);
   public static Heightmap.Biome GetBiome(string name) => NameToBiome.TryGetValue(name.ToLowerInvariant(), out var biome) ? biome : Heightmap.Biome.None;
   public static bool TryGetDisplayName(Heightmap.Biome biome, out string name) => BiomeToDisplayName.TryGetValue(biome, out name);

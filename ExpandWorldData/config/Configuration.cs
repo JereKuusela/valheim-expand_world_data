@@ -117,7 +117,9 @@ public partial class Configuration
     configDataSpawns.SettingChanged += (s, e) => ExpandWorld.Spawn.Manager.Toggle();
     configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.");
     configMultipleEvents = wrapper.Bind(section, "Multiple events", false, false, "If enabled, multiple events can be active at the same time.");
+    configMultipleEvents.SettingChanged += (s, e) => Patcher.Update(EWD.Harmony);
     configCheckPerPlayer = wrapper.Bind(section, "Check per player", false, false, "If enabled, the event check is done separately for each player.");
+    configCheckPerPlayer.SettingChanged += (s, e) => Patcher.Update(EWD.Harmony);
     configEventMinimumDistance = wrapper.BindFloat(section, "Minimum distance between events", 100f, false, "The minimum distance between events.");
     configEventChance = wrapper.BindFloat(section, "Random event chance", 20f, false, "The chance to try starting a random event.");
     configEventInterval = wrapper.BindFloat(section, "Random event interval", 46f, false, "How often the random events are checked (minutes).");
@@ -132,6 +134,7 @@ public partial class Configuration
     configWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configScaleLocationAltitudeRequirement = wrapper.Bind(section, "Scale location altitude requirement", false, false, "If true, location requirements are scaled based on the biome altitude delta and multiplier.");
     configCustomWaterColor = wrapper.Bind(section, "Custom water color", false, false, "If true, custom water color system is enabled.");
+    configCustomWaterColor.SettingChanged += (s, e) => Patcher.Update(EWD.Harmony);
 
     section = "3. Data";
     configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.");
@@ -154,7 +157,11 @@ public partial class Configuration
     configDataLocation = wrapper.Bind(section, "Location data", true, false, "Use location data");
     configDataLocation.SettingChanged += (s, e) => LocationLoading.ReadConfigs();
     configDataVegetation = wrapper.Bind(section, "Vegetation data", true, false, "Use vegetation data");
-    configDataVegetation.SettingChanged += (s, e) => VegetationLoading.ReadConfigs();
+    configDataVegetation.SettingChanged += (s, e) =>
+    {
+      VegetationLoading.ReadConfigs();
+      Patcher.Update(EWD.Harmony);
+    };
     configBlueprintFolder = wrapper.Bind(section, "Blueprint folder", "PlanBuild", false, "Folder relative to the config folder.");
 
     valueNoBuildData = wrapper.AddValue("no_build_data");

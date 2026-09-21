@@ -67,13 +67,9 @@ public class Loader
     customInterval = random.m_standaloneInterval,
     spawnerDelay = random.m_spawnerDelay,
   };
-}
 
-[HarmonyPatch(typeof(RandEventSystem), nameof(RandEventSystem.SetRandomEvent)), HarmonyPriority(Priority.First)]
-public class MultipleConfigurationsPerEvent
-{
-  static void Prefix(RandEventSystem __instance, ref RandomEvent ev)
+  internal static void ResolveEventConfiguration(RandEventSystem __instance, ref RandomEvent ev)
   {
-    if (Configuration.DataEvents) ev = __instance.GetEvent(ev?.m_name);
+    ev = __instance.GetEvent(ev?.m_name);
   }
 }

@@ -1,25 +1,5 @@
-using HarmonyLib;
 using UnityEngine;
 namespace ExpandWorldData;
-
-[HarmonyPatch(typeof(Player), nameof(Player.AddKnownBiome))]
-public class StartColorTransition
-{
-  public static void Postfix(BiomeSector biome)
-  {
-    if (Configuration.CustomWaterColor)
-      WaterColor.StartTransition(biome.Biome);
-  }
-}
-
-[HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
-public class ResetColorTransition
-{
-  public static void Postfix()
-  {
-    WaterColor.StopTransition();
-  }
-}
 
 public class WaterColor
 {
@@ -33,6 +13,9 @@ public class WaterColor
   public static Color TargetTopColor;
   public static Color TargetBottomColor;
   public static Color TargetShallowColor;
+
+  internal static void StartBiomeTransition(BiomeSector biome) => StartTransition(biome.Biome);
+  internal static void ResetTransition() => StopTransition();
 
   public static void Transition(float time)
   {

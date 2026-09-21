@@ -64,6 +64,7 @@ public class NoBuildManager
     Configuration.valueNoBuildData.Value = Yaml.Serializer().Serialize(data);
   }
   private static Dictionary<Vector2s, NoBuildData> NoBuild = [];
+  public static bool HasData => NoBuild.Count > 0;
   public static bool IsInsideNoBuildZone(Vector3 point)
   {
     var zone = ZoneSystem.GetZone(point);
@@ -100,7 +101,8 @@ public class NoBuildManager
       Pending = true;
       return;
     }
-    if (yaml == "") return;
+    NoBuild.Clear();
+    if (yaml == "") { Patcher.Update(EWD.Harmony); return; }
     try
     {
       var data = Yaml.Deserialize<NoBuildData>(yaml, "No build");
@@ -112,25 +114,18 @@ public class NoBuildManager
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
+    finally { Patcher.Update(EWD.Harmony); }
   }
-}
 
-[HarmonyPatch(typeof(Location), nameof(Location.IsInsideNoBuildLocation))]
-public class IsInsideNoBuildLocation
-{
-
-  static bool Postfix(bool result, Vector3 point)
+  internal static bool CheckAdditionalZones(bool result, Vector3 point)
   {
     return result ||
            NoBuildManager.IsInsideNoBuildZone(point) ||
            NoBuildManager.IsInsideNoBuildTerritory(point) ||
            NoBuildManager.IsInsideNoBuildBiome(point);
   }
-}
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.Load))]
-public class ZoneSystemLoad
-{
-  static void Postfix()
+
+  internal static void SynchronizeLocationData()
   {
     if (Helper.IsClient()) return;
     NoBuildManager.UpdateData();

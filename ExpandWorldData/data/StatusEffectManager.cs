@@ -1,16 +1,15 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using HarmonyLib;
 using Service;
 using UnityEngine;
 
 namespace ExpandWorldData;
 
 
-[HarmonyPatch(typeof(Player), nameof(Player.UpdateEnvStatusEffects))]
 public class StatusManager
 {
+  private static readonly HashSet<int> AppliedEffects = [];
   private static float DamageTimer = 0f;
   private static readonly float TickRate = 1f;
 
@@ -19,7 +18,7 @@ public class StatusManager
   private static Heightmap.Biome PreviousBiome = Heightmap.Biome.None;
   private static TerritoryData? PreviousTerritory = null;
 
-  static void Postfix(Player __instance, float dt)
+  internal static void UpdateStatusEffects(Player __instance, float dt)
   {
     if (__instance != Player.m_localPlayer) return;
     DamageTimer += dt;
@@ -125,6 +124,7 @@ public class StatusManager
     if (es.reset)
     {
       seman.AddStatusEffect(es.hash, es.reset, 0, 0);
+      AppliedEffects.Add(es.hash);
       return;
     }
     var se = ObjectDB.instance.GetStatusEffect(es.hash);
@@ -144,6 +144,7 @@ public class StatusManager
         if (!exists) damage *= TickRate * se.m_ttl;
         Log.Debug($"Adding {damage} spirit damage to {se.name}");
         seman.AddStatusEffect(es.hash, false, 0, 0);
+        AppliedEffects.Add(es.hash);
         var spirit = (SE_Burning)seman.GetStatusEffect(es.hash);
         spirit.AddSpiritDamage(damage);
       }
@@ -155,6 +156,7 @@ public class StatusManager
         if (!exists) damage *= TickRate * se.m_ttl;
         Log.Debug($"Adding {damage} fire damage to {se.name}");
         seman.AddStatusEffect(es.hash, false, 0, 0);
+        AppliedEffects.Add(es.hash);
         var burning = (SE_Burning)seman.GetStatusEffect(es.hash);
         burning.AddFireDamage(damage);
       }
@@ -168,17 +170,39 @@ public class StatusManager
       Log.Debug($"Adding {damage} poison damage to {se.name}");
 
       seman.AddStatusEffect(es.hash, false, 0, 0);
+      AppliedEffects.Add(es.hash);
       var poison = (SE_Poison)seman.GetStatusEffect(es.hash);
       poison.AddDamage(damage);
     }
     else
     {
       seman.AddStatusEffect(es.hash, false, 0, 0);
+      AppliedEffects.Add(es.hash);
       var effect = seman.GetStatusEffect(es.hash);
       effect.m_time = effect.m_ttl - es.duration;
       if (effect is SE_Shield shield)
         shield.m_absorbDamage = es.damage;
     }
+  }
+
+  public static void CleanUp()
+  {
+    var player = Player.m_localPlayer;
+    if (player)
+    {
+      var seman = player.GetSEMan();
+      foreach (var hash in AppliedEffects)
+      {
+        var effect = seman.GetStatusEffect(hash);
+        if (effect != null && effect.m_ttl <= 0f) seman.RemoveStatusEffect(hash);
+      }
+    }
+    AppliedEffects.Clear();
+    DamageTimer = 0f;
+    PreviousWeather = "";
+    PreviousDay = false;
+    PreviousBiome = Heightmap.Biome.None;
+    PreviousTerritory = null;
   }
 
   private static float CalculateDamage(SEMan seman, Status es, HitData.DamageType damageType)

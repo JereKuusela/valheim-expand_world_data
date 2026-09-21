@@ -7,12 +7,11 @@ using UnityEngine;
 
 namespace ExpandWorld.Event;
 
-[HarmonyPatch(typeof(RandEventSystem), nameof(RandEventSystem.InValidBiome))]
 public class ExtraChecks
 {
-  static bool Postfix(bool result, RandomEvent ev, Vector3 point)
+  internal static bool ValidateEventRequirements(bool result, RandomEvent ev, Vector3 point)
   {
-    if (!Configuration.DataEvents || !result || !Loader.ExtraData.TryGetValue(ev, out var data)) return result;
+    if (!result || !Loader.ExtraData.TryGetValue(ev, out var data)) return result;
     return EnvCheck(point, data.RequiredEnvironments) && PlayerCheck(point, data.PlayerLimit, data.PlayerDistance) && EventCheck(point, data.EventLimit);
   }
 
@@ -41,14 +40,10 @@ public class ExtraChecks
     var count = MultipleEvents.Events.Where(entry => Utils.DistanceXZ(position, entry.Event.m_pos) <= Configuration.EventMinimumDistance).Sum(entry => entry.Count);
     return limit.Min <= count && count <= limit.Max;
   }
-}
 
-[HarmonyPatch(typeof(RandEventSystem), nameof(RandEventSystem.CheckBase))]
-public class CheckBase
-{
-  static bool Prefix(RandomEvent ev, RandEventSystem.PlayerEventData player, ref bool __result)
+  internal static bool ValidateBaseValue(RandomEvent ev, RandEventSystem.PlayerEventData player, ref bool __result)
   {
-    if (!Configuration.DataEvents || !Loader.ExtraData.TryGetValue(ev, out var data)) return true;
+    if (!Loader.ExtraData.TryGetValue(ev, out var data)) return true;
     __result = player.baseValue >= data.MinBaseValue && player.baseValue <= data.MaxBaseValue;
     return false;
   }

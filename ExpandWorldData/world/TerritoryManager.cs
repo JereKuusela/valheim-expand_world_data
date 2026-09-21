@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Service;
 
 namespace ExpandWorldData;
@@ -41,6 +42,8 @@ public class TerritoryManager
 
   private static readonly Dictionary<string, TerritoryData> Data = [];
   public static bool TryGetData(string territory, out TerritoryData data) => Data.TryGetValue(Normalize(territory), out data);
+  public static bool HasNoBuild => Data.Values.Any(data => data.noBuild);
+  public static bool HasStatusEffects => Data.Values.Any(data => data.statusEffects.Count > 0);
 
   public static void CreateConfigs()
   {

@@ -113,18 +113,14 @@ public class Loader
     minDistance = spawn.m_minDistanceFromCenter,
     maxDistance = spawn.m_maxDistanceFromCenter,
   };
-}
 
-[HarmonyPatch(typeof(SpawnSystem), nameof(SpawnSystem.Spawn))]
-public class SpawnZDO
-{
-  static void Prefix(SpawnSystem.SpawnData critter, Vector3 spawnPoint)
+  internal static void ApplyData(SpawnSystem.SpawnData critter, Vector3 spawnPoint)
   {
     if (Loader.Data.TryGetValue(critter, out var data))
       DataHelper.Init(critter.m_prefab, spawnPoint, Quaternion.identity, null, data);
   }
 
-  static void Postfix(SpawnSystem.SpawnData critter, Vector3 spawnPoint)
+  internal static void SpawnObjects(SpawnSystem.SpawnData critter, Vector3 spawnPoint)
   {
     if (!Loader.Objects.TryGetValue(critter, out var objects)) return;
     foreach (var obj in objects)

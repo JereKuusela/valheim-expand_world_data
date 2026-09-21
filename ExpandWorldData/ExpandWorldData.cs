@@ -42,7 +42,7 @@ public class EWD : BaseUnityPlugin
     Configuration.Init(wrapper);
     LegacyEventsConfiguration.Migrate(Config);
     Harmony = new(GUID);
-    Harmony.PatchAll();
+    Patcher.Initialize(Harmony);
     try
     {
       if (!System.IO.Directory.Exists(Yaml.BaseDirectory))
