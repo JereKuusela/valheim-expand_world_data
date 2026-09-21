@@ -48,6 +48,7 @@ public class InitializeContent
 
     // 1) Initialize managers that need original data snapshots.
     EnvironmentManager.Initialize();
+    AltBiomeLoading.Initialize();
     // Clutter must be here because since SetupLocations adds prefabs to the list.
     ClutterManager.Initialize();
     VegetationLoading.Initialize();
@@ -57,6 +58,7 @@ public class InitializeContent
     if (Helper.IsServer())
     {
       EnvironmentManager.CreateConfigs();
+      AltBiomeLoading.CreateConfigs();
       BiomeManager.CreateConfigs();
       TerritoryManager.CreateConfigs();
       WorldManager.CreateConfigs();
@@ -67,6 +69,7 @@ public class InitializeContent
       // 3) Read configs on server. Managers are still gated by Initialized flag.
       DataLoading.LoadEntries();
       EnvironmentManager.ReadConfigs();
+      AltBiomeLoading.ReadConfigs();
       BiomeManager.ReadConfigs();
       TerritoryManager.ReadConfigs();
       WorldManager.ReadConfigs();
@@ -228,6 +231,7 @@ public class DataManager : MonoBehaviour
   public static Heightmap.Biome ToBiomes(string biomeStr, string fileName)
   {
     Heightmap.Biome result = 0;
+    if (string.Equals(biomeStr, "None", StringComparison.OrdinalIgnoreCase)) return result;
     if (biomeStr == "")
     {
       foreach (var biome in BiomeManager.BiomeToDisplayName.Keys)

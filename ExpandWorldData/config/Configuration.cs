@@ -71,11 +71,14 @@ public partial class Configuration
   public static CustomSyncedValue<string> valueEnvironmentData;
   public static CustomSyncedValue<string> valueNoBuildData;
   public static CustomSyncedValue<string> valueSpawnData;
+  public static CustomSyncedValue<string> valueAltBiomeData;
   public static CustomSyncedValue<string> valueEventData;
   public static ConfigEntry<bool> configDataEnvironments;
   public static bool DataEnvironments => configDataEnvironments.Value;
   public static ConfigEntry<bool> configDataVegetation;
   public static bool DataVegetation => configDataVegetation.Value;
+  public static ConfigEntry<bool> configDataAltBiomes;
+  public static bool DataAltBiomes => configDataAltBiomes.Value;
   public static ConfigEntry<bool> configDataClutter;
   public static bool DataClutter => configDataClutter.Value;
   public static ConfigEntry<bool> configDataDungeons;
@@ -162,6 +165,8 @@ public partial class Configuration
       VegetationLoading.ReadConfigs();
       Patcher.Update(EWD.Harmony);
     };
+    configDataAltBiomes = wrapper.Bind(section, "Alt biome data", true, false, "Use alternative biome data");
+    configDataAltBiomes.SettingChanged += (s, e) => AltBiomeLoading.Toggle();
     configBlueprintFolder = wrapper.Bind(section, "Blueprint folder", "PlanBuild", false, "Folder relative to the config folder.");
 
     valueNoBuildData = wrapper.AddValue("no_build_data");
@@ -178,6 +183,8 @@ public partial class Configuration
     valueWorldData.ValueChanged += () => WorldManager.FromSetting(valueWorldData.Value);
     valueSpawnData = wrapper.AddValue("spawn_data");
     valueSpawnData.ValueChanged += () => ExpandWorld.Spawn.Manager.FromSetting(valueSpawnData.Value);
+    valueAltBiomeData = wrapper.AddValue("altbiome_data");
+    valueAltBiomeData.ValueChanged += () => AltBiomeLoading.FromSetting(valueAltBiomeData.Value);
     valueEventData = wrapper.AddValue("event_data");
     valueEventData.ValueChanged += () => ExpandWorld.Event.Manager.FromSetting(valueEventData.Value);
 

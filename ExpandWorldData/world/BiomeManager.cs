@@ -559,9 +559,9 @@ public class ToBiomeIndex
 [HarmonyPatch(typeof(BiomeHelpers), nameof(BiomeHelpers.ToBiome))]
 public class ToBiome
 {
-  static bool Prefix(Heightmap.BiomeIndex index, ref Heightmap.Biome __result)
+  static bool Prefix(Heightmap.BiomeIndex b, ref Heightmap.Biome __result)
   {
-    if (ToBiomeIndex.IndexToBiome.TryGetValue(index, out var biome))
+    if (ToBiomeIndex.IndexToBiome.TryGetValue(b, out var biome))
       __result = biome;
     else
       __result = Heightmap.Biome.None;
