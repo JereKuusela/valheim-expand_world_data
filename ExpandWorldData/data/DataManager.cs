@@ -69,13 +69,13 @@ public class InitializeContent
       // 3) Read configs on server. Managers are still gated by Initialized flag.
       DataLoading.LoadEntries();
       EnvironmentManager.ReadConfigs();
-      AltBiomeLoading.ReadConfigs();
       BiomeManager.ReadConfigs();
       TerritoryManager.ReadConfigs();
       WorldManager.ReadConfigs();
       ClutterManager.ReadConfigs();
       VegetationLoading.ReadConfigs();
       LocationLoading.ReadConfigs();
+      AltBiomeLoading.ReadConfigs();
 
       // Dungeon and room data is handled elsewhere.
     }

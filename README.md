@@ -9,13 +9,15 @@ Install on all clients and on the server (modding [guide](https://youtu.be/L9ljm
 ## Features
 
 - Add new biomes.
+- Change alternative biome modifiers.
 - Change biome distribution.
 - Change data like locations, vegetation and weather.
+- Change events.
+- Change spawns.
+- Change drops.
 - Config sync to ensure all clients use the same settings.
-- Change events with [Expand World Events](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Events/).
 - Change factions with [Expand World Factions](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Factions/).
 - Change prefabs with [Expand World Prefabs](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Prefabs/).
-- Change spawns with [Expand World Spawns](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Spawns/).
 
 For example you can create entirely flat worlds with only Meadows for building. Or group up colder biomes up north while more warmer biomes end up in the other side. Or just have a world with terrain shapes no one has ever seen before.
 
@@ -76,6 +78,12 @@ The file `expand_biomes.yaml` sets available biomes and their configuration.
 
 See [Biomes](docs/biomes.md) for more info.
 
+### Alternative biomes
+
+The file `expand_altbiomes.yaml` sets alternative biome modifiers, such as extra spawns, vegetation, locations and environments for parts of existing biomes.
+
+See [Alternative biomes](docs/alt-biomes.md) for more info.
+
 ### Territories
 
 The file `expand_territories.yaml` sets available territories and their configuration.
@@ -110,7 +118,7 @@ The file `expand_locations.yaml` sets the available locations and their placemen
 
 Locations are pregenerated at world generation. You must use `genloc` command to redistribute them on unexplored areas after making any changes. For already explored areas, you need to use Upgrade World mod.
 
-See the [wiki](https://valheim.fandom.com/wiki/Points_of_Interest_(POI)) for more info.
+See the [wiki](https://valheim.wiki/Point_of_Interest) for more info.
 
 See [Locations](docs/locations.md) for more info.
 
@@ -133,6 +141,30 @@ The file `expand_vegetations.yaml` sets the generated objects. This is a server 
 Changes only apply to unexplored areas. Upgrade World mod can be used to reset areas.
 
 See [Vegetation](docs/vegetation.md) for more info.
+
+### Spawns
+
+The file `expand_spawns.yaml` sets the creatures and objects that spawn in the world. This is a client side feature.
+
+Control spawns with the `Spawn data` config setting. Spawns are disabled by default unless the legacy Expand World Spawns mod is detected.
+
+See [Spawns](docs/spawns.md) for more info.
+
+### Events
+
+The file `expand_events.yaml` sets special encounters that occur in the world. This is a client side feature.
+
+Control events with the `Event data` config setting. Events are disabled by default unless the legacy Expand World Events mod is detected.
+
+See [Events](docs/events.md) for more info.
+
+### Drops
+
+The file `expand_drops.yaml` sets custom item drops for creatures and objects. This is a client side feature.
+
+Control drops with the `Drop data` config setting. Drops are disabled by default unless the legacy Expand World Spawns mod is detected.
+
+See [Drops](docs/drops.md) for more info.
 
 ### Custom objects
 

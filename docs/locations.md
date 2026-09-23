@@ -6,7 +6,7 @@ Note: Missing locations are automatically added to the file. To disable, set `en
 
 Note: Each zone (64m x 64m) can only have one size.
 
-See the [wiki](https://valheim.fandom.com/wiki/Points_of_Interest_(POI)) for more info.
+See the [wiki](https://valheim.wiki/Point_of_Interest) for more info.
 
 Locations are pregenerated at world generation. You must use `genloc` command to redistribute them on unexplored areas after making any changes. For already explored areas, you need to use Upgrade World mod.
 

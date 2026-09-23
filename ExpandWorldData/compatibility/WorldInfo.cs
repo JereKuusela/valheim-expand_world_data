@@ -33,6 +33,10 @@ public class WorldInfo
   {
     if (WorldGenerator.instance == null) return;
     Log.Info("Regenerating the world.");
+    WorldGenerator.s_cachedBiomeAreas.Clear();
+    WorldGenerator.s_cachedBiomes.Clear();
+    foreach (var altBiome in AltBiomeList.m_altBiomes)
+      altBiome.Sectors.Clear();
     CheckPatches(harmony);
     WorldGenerator.instance.Pregenerate();
     AltBiomeWorldData.VerifyBiomeData(WorldGenerator.instance.m_world);

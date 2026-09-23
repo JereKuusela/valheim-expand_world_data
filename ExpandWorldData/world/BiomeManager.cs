@@ -527,14 +527,15 @@ public class ToBiomeIndex
   private static Dictionary<Heightmap.Biome, Heightmap.BiomeIndex> CreateBiomeToIndex()
   {
     Dictionary<Heightmap.Biome, Heightmap.BiomeIndex> result = [];
+    result[Heightmap.Biome.None] = Heightmap.BiomeIndex.None;
     for (var bit = 0; bit < 32; bit++)
     {
       var index = bit switch
       {
-        8 => 10,
-        9 => 8,
-        10 => 9,
-        _ => bit
+        7 => 10,
+        8 => 8,
+        9 => 9,
+        _ => bit + 1
       };
       result[(Heightmap.Biome)(1u << bit)] = (Heightmap.BiomeIndex)index;
     }
@@ -543,15 +544,10 @@ public class ToBiomeIndex
 
   static bool Prefix(Heightmap.Biome b, ref Heightmap.BiomeIndex __result)
   {
-    if (b == Heightmap.Biome.None)
-    {
-      __result = Heightmap.BiomeIndex.None;
-      return false;
-    }
     if (BiomeToIndex.TryGetValue(b, out var index))
       __result = index;
     else
-      __result = Heightmap.BiomeIndex.None;
+      Log.Warning($"Biome {b} does not have a corresponding index.");
     return false;
   }
 }
@@ -564,7 +560,7 @@ public class ToBiome
     if (ToBiomeIndex.IndexToBiome.TryGetValue(b, out var biome))
       __result = biome;
     else
-      __result = Heightmap.Biome.None;
+      Log.Warning($"Biome index {b} does not have a corresponding biome.");
     return false;
   }
 }

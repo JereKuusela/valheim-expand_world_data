@@ -37,11 +37,8 @@ public static class AltBiomeLoading
       Log.Warning("Failed to load any alt biome data. No changes done.");
       return;
     }
-    Active = data;
-    AltBiomeList.m_altBiomes.Clear();
-    AltBiomeList.m_altBiomes.AddRange(Active);
+    Apply(data, true);
     Configuration.valueAltBiomeData.Value = Yaml.Serializer().Serialize(data.Select(item => ToData(item)).ToList());
-    Log.Info($"Reloading alt biome data ({data.Count} entries).");
   }
 
   public static void FromSetting(string yaml)
@@ -55,10 +52,7 @@ public static class AltBiomeLoading
         Log.Warning("Failed to load synchronized alt biome data. No changes done.");
         return;
       }
-      Active = data;
-      AltBiomeList.m_altBiomes.Clear();
-      AltBiomeList.m_altBiomes.AddRange(Active);
-      Log.Info($"Reloading synchronized alt biome data ({data.Count} entries).");
+      Apply(data, true);
     }
     catch (Exception e)
     {
@@ -75,8 +69,17 @@ public static class AltBiomeLoading
       else FromSetting(Configuration.valueAltBiomeData.Value);
     }
     else
-      AltBiomeList.m_altBiomes.Clear();
-    AltBiomeList.m_altBiomes.AddRange(Original);
+      Apply(Original, true);
+  }
+
+  private static void Apply(List<AltBiome> data, bool regenerate)
+  {
+    Active = data;
+    AltBiomeList.m_altBiomes.Clear();
+    AltBiomeList.m_altBiomes.AddRange(Active);
+    Log.Info($"Reloading alt biome data ({data.Count} entries).");
+    if (regenerate)
+      EWD.Instance.InvokeRegenerate();
   }
 
   public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfigs);
@@ -109,6 +112,10 @@ public static class AltBiomeLoading
       m_maxEdgeSize = data.maxEdgeSize,
       m_minAvgHeight = data.minAvgHeight,
       m_maxAvgHeight = data.maxAvgHeight,
+      m_belowWorldX = data.belowWorldX,
+      m_aboveWorldX = data.aboveWorldX,
+      m_belowWorldY = data.belowWorldY,
+      m_aboveWorldY = data.aboveWorldY,
       m_terrainTextureOverride = DataManager.ToBiomes(data.terrainTextureOverride, fileName)
     };
     if (data.addEnvironments != null)
@@ -148,6 +155,10 @@ public static class AltBiomeLoading
     maxEdgeSize = alt.m_maxEdgeSize,
     minAvgHeight = alt.m_minAvgHeight,
     maxAvgHeight = alt.m_maxAvgHeight,
+    belowWorldX = alt.m_belowWorldX,
+    aboveWorldX = alt.m_aboveWorldX,
+    belowWorldY = alt.m_belowWorldY,
+    aboveWorldY = alt.m_aboveWorldY,
     terrainTextureOverride = DataManager.FromBiomes(alt.m_terrainTextureOverride),
     addEnvironments = alt.m_addEnvironments.Count > 0 ? [.. alt.m_addEnvironments.Select(BiomeManager.ToData)] : null,
     spawn = alt.m_spawn.Count > 0 ? [.. alt.m_spawn.Select(Loader.ToData)] : null,

@@ -8,7 +8,6 @@ public class AltBiomeYaml
 {
   public string name = "";
   [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
-  public int amount = 80;
   public bool enabled = true;
   [DefaultValue("")]
   public string biome = "";
@@ -42,26 +41,34 @@ public class AltBiomeYaml
   public string[]? blockLocationNames;
   [DefaultValue("None")]
   public string terrainTextureOverride = "None";
-  [DefaultValue(1000f)]
-  public float minDistanceFromCenter = 1000f;
-  [DefaultValue(1)]
-  public int minAmountSpawned = 1;
-  [DefaultValue(10)]
-  public int maxAmountSpawned = 10;
-  [DefaultValue(0.1f)]
-  public float chance = 0.1f;
+  [DefaultValue(0f)]
+  public float minDistanceFromCenter = 0f;
+  [DefaultValue(0)]
+  public int minAmountSpawned = 0;
+  [DefaultValue(0)]
+  public int maxAmountSpawned = 0;
+  [DefaultValue(0f)]
+  public float chance = 0f;
   [DefaultValue("None")]
   public string requireNeighbor = "None";
   [DefaultValue("None")]
   public string notNeighbor = "None";
   [DefaultValue(null)]
   public string[]? incompatibleAltBiomes;
-  [DefaultValue(50)]
-  public int minEdgeSize = 50;
-  [DefaultValue(1500)]
-  public int maxEdgeSize = 1500;
-  [DefaultValue(30f)]
-  public float minAvgHeight = 30f;
-  [DefaultValue(10000f)]
-  public float maxAvgHeight = 10000f;
+  [DefaultValue(0)]
+  public int minEdgeSize = 0;
+  [DefaultValue(0)]
+  public int maxEdgeSize = 0;
+  [DefaultValue(0f)]
+  public float minAvgHeight = 0f;
+  [DefaultValue(0f)]
+  public float maxAvgHeight = 0f;
+  [DefaultValue(0f)]
+  public float belowWorldX = 0f;
+  [DefaultValue(0f)]
+  public float aboveWorldX = 0f;
+  [DefaultValue(0f)]
+  public float belowWorldY = 0f;
+  [DefaultValue(0f)]
+  public float aboveWorldY = 0f;
 }

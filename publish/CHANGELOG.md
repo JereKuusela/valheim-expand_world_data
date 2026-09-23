@@ -1,4 +1,7 @@
 - v1.73
+  - Now includes Expand World Spawns and Expand World Events (automatic migration).
+  - Adds support for configuring alternative biomes.
+  - Fixes world generation being messed up.
   - Fixes custom biomes throwing errors.
 
 - v1.72
@@ -15,6 +18,3 @@
   - Adds new field `randomCardinal` to allow random rotation of locations in cardinal directions (0, 90, 180, 270 degrees). Thanks Kurios.ZeuS!
   - Adds new field `roomLimits` and `maxREtries` to fine tune room amounts in dungeons.
   - Fixes error during start up if biome yaml file didn't exist. Thanks Atlansdaddy!
-
-- v1.68
-  - Hotfix: Fixes location and vegetation extra data not working.
