@@ -32,6 +32,10 @@ public class DebugCommands
     {
       WorldInfo.RegenerateMap();
     }, true);
+    new Terminal.ConsoleCommand("ew_drops", "Forces drop reference file creation.", (args) =>
+    {
+      ExpandWorld.Drops.ReferenceFileGenerator.Save();
+    }, true);
     new Terminal.ConsoleCommand("ew_biomes", "[precision] - Counts biomes by sampling points with a given precision (meters).", args =>
     {
       var precision = 100f;

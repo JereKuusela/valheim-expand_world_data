@@ -73,6 +73,7 @@ public partial class Configuration
   public static CustomSyncedValue<string> valueSpawnData;
   public static CustomSyncedValue<string> valueAltBiomeData;
   public static CustomSyncedValue<string> valueEventData;
+  public static CustomSyncedValue<string> valueDropData;
   public static ConfigEntry<bool> configDataEnvironments;
   public static bool DataEnvironments => configDataEnvironments.Value;
   public static ConfigEntry<bool> configDataVegetation;
@@ -141,50 +142,43 @@ public partial class Configuration
     configCustomWaterColor.SettingChanged += (s, e) => Patcher.Update(EWD.Harmony);
 
     section = "3. Data";
-    configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.");
-    configSplitDataPerMod = wrapper.Bind(section, "Split data per mod", true, false, "If true, created data is saved to multiple files. If false, all data is saved in one file.");
-    configDataMigration = wrapper.Bind(section, "Automatic data migration", true, false, "Automatically add missing location, rooms and vegetation entries.");
-    configDataEnvironments = wrapper.Bind(section, "Environment data", true, false, "Use environment data");
-    configDataEnvironments.SettingChanged += (s, e) => EnvironmentManager.FromSetting(valueEnvironmentData.Value);
-    configDataBiome = wrapper.Bind(section, "Biome data", true, true, "Use biome data");
-    configDataBiome.SettingChanged += (s, e) =>
-    {
-      BiomeManager.FromSetting(valueBiomeData.Value);
-      Patcher.Update(EWD.Harmony);
-    };
-    configDataTerritory = wrapper.Bind(section, "Territory data", true, true, "Use territory data");
-    configDataTerritory.SettingChanged += (s, e) => TerritoryManager.FromSetting(valueTerritoryData.Value);
-    configDataClutter = wrapper.Bind(section, "Clutter data", true, false, "Use clutter data");
+    configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.", synchronizedSetting: false);
+    configSplitDataPerMod = wrapper.Bind(section, "Split data per mod", true, false, "If true, created data is saved to multiple files. If false, all data is saved in one file.", synchronizedSetting: false);
+    configDataMigration = wrapper.Bind(section, "Automatic data migration", true, false, "Automatically add missing location, rooms and vegetation entries.", synchronizedSetting: false);
+    configDataEnvironments = wrapper.Bind(section, "Environment data", true, false, "Use environment data", synchronizedSetting: false);
+    configDataEnvironments.SettingChanged += (s, e) => EnvironmentManager.Toggle();
+    configDataBiome = wrapper.Bind(section, "Biome data", true, true, "Use biome data", synchronizedSetting: false);
+    configDataBiome.SettingChanged += (s, e) => BiomeManager.Toggle();
+    configDataTerritory = wrapper.Bind(section, "Territory data", true, true, "Use territory data", synchronizedSetting: false);
+    configDataTerritory.SettingChanged += (s, e) => TerritoryManager.Toggle();
+    configDataClutter = wrapper.Bind(section, "Clutter data", true, false, "Use clutter data", synchronizedSetting: false);
     configDataClutter.SettingChanged += (s, e) => ClutterManager.ReadConfigs();
-    configDataDungeons = wrapper.Bind(section, "Dungeon data", true, false, "Use dungeon data");
+    configDataDungeons = wrapper.Bind(section, "Dungeon data", true, false, "Use dungeon data", synchronizedSetting: false);
     configDataDungeons.SettingChanged += (s, e) => Dungeon.Loader.Load();
-    configDataRooms = wrapper.Bind(section, "Room data", true, false, "Use dungeon room data");
+    configDataRooms = wrapper.Bind(section, "Room data", true, false, "Use dungeon room data", synchronizedSetting: false);
     configDataRooms.SettingChanged += (s, e) => RoomLoading.Load();
-    configDataWorld = wrapper.Bind(section, "World data", true, true, "Use world data");
-    configDataWorld.SettingChanged += (s, e) =>
-    {
-      WorldManager.FromSetting(valueWorldData.Value);
-      Patcher.Update(EWD.Harmony);
-    };
-    configDataLocation = wrapper.Bind(section, "Location data", true, false, "Use location data");
+    configDataWorld = wrapper.Bind(section, "World data", true, true, "Use world data", synchronizedSetting: false);
+    configDataWorld.SettingChanged += (s, e) => WorldManager.Toggle();
+    configDataLocation = wrapper.Bind(section, "Location data", true, false, "Use location data", synchronizedSetting: false);
     configDataLocation.SettingChanged += (s, e) => LocationLoading.ReadConfigs();
-    configDataVegetation = wrapper.Bind(section, "Vegetation data", true, false, "Use vegetation data");
+    configDataVegetation = wrapper.Bind(section, "Vegetation data", true, false, "Use vegetation data", synchronizedSetting: false);
     configDataVegetation.SettingChanged += (s, e) =>
     {
       VegetationLoading.ReadConfigs();
       Patcher.Update(EWD.Harmony);
     };
-    configDataAltBiomes = wrapper.Bind(section, "Alt biome data", true, false, "Use alternative biome data");
+    configDataAltBiomes = wrapper.Bind(section, "Alt biome data", true, false, "Use alternative biome data", synchronizedSetting: false);
     configDataAltBiomes.SettingChanged += (s, e) => AltBiomeLoading.Toggle();
-    configDataEvents = wrapper.Bind(section, "Event data", false, false, "Use event data.");
+    configDataEvents = wrapper.Bind(section, "Event data", false, false, "Use event data.", synchronizedSetting: false);
     configDataEvents.SettingChanged += (s, e) => ExpandWorld.Event.Manager.Toggle();
-    configDataSpawns = wrapper.Bind(section, "Spawn data", false, false, "Use spawn data.");
+    configDataSpawns = wrapper.Bind(section, "Spawn data", false, false, "Use spawn data.", synchronizedSetting: false);
     configDataSpawns.SettingChanged += (s, e) => ExpandWorld.Spawn.Manager.Toggle();
-    configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.");
+    configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.", synchronizedSetting: false);
+    configDataDrops.SettingChanged += (s, e) => ExpandWorld.Drops.Loader.Toggle();
     configBlueprintFolder = wrapper.Bind(section, "Blueprint folder", "PlanBuild", false, "Folder relative to the config folder.");
 
     valueNoBuildData = wrapper.AddValue("no_build_data");
-    valueNoBuildData.ValueChanged += () => NoBuildManager.Apply(valueNoBuildData.Value);
+    valueNoBuildData.ValueChanged += () => ClientDataFlow.Apply(valueNoBuildData.Value, true, NoBuildManager.Apply, applyOnServer: true);
     valueEnvironmentData = wrapper.AddValue("environment_data");
     valueEnvironmentData.ValueChanged += () => EnvironmentManager.FromSetting(valueEnvironmentData.Value);
     valueBiomeData = wrapper.AddValue("biome_data");
@@ -192,7 +186,7 @@ public partial class Configuration
     valueTerritoryData = wrapper.AddValue("territory_data");
     valueTerritoryData.ValueChanged += () => TerritoryManager.FromSetting(valueTerritoryData.Value);
     valueClutterData = wrapper.AddValue("clutter_data");
-    valueClutterData.ValueChanged += () => ClutterManager.Set(valueClutterData.Value);
+    valueClutterData.ValueChanged += () => ClientDataFlow.Apply(valueClutterData.Value, true, ClutterManager.Set, applyOnServer: true);
     valueWorldData = wrapper.AddValue("world_data");
     valueWorldData.ValueChanged += () => WorldManager.FromSetting(valueWorldData.Value);
     valueSpawnData = wrapper.AddValue("spawn_data");
@@ -201,6 +195,8 @@ public partial class Configuration
     valueAltBiomeData.ValueChanged += () => AltBiomeLoading.FromSetting(valueAltBiomeData.Value);
     valueEventData = wrapper.AddValue("event_data");
     valueEventData.ValueChanged += () => ExpandWorld.Event.Manager.FromSetting(valueEventData.Value);
+    valueDropData = wrapper.AddValue("drop_data");
+    valueDropData.ValueChanged += () => ExpandWorld.Drops.Loader.FromSetting(valueDropData.Value);
 
     section = "4. Poles";
     configRestrictAshlands = wrapper.Bind(section, "Restrict Ashlands position", true, true, "If true, restricts Ashlands biome position.");

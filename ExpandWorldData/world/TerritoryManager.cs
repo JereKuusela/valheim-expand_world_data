@@ -58,7 +58,12 @@ public class TerritoryManager
   public static void ReadConfigs()
   {
     if (Helper.IsClient()) return;
-    var yaml = Configuration.DataTerritory ? DataManager.Read<TerritoryYaml, TerritoryYaml>(Pattern, From) : "";
+    var yaml = "";
+    if (Configuration.DataTerritory)
+    {
+      yaml = DataManager.Read<TerritoryYaml, TerritoryYaml>(Pattern, From, out var hasFiles, out var hasData);
+      if (hasFiles && !hasData) return;
+    }
     Configuration.valueTerritoryData.Value = yaml;
     Set(yaml);
   }
@@ -67,7 +72,12 @@ public class TerritoryManager
 
   public static void FromSetting(string yaml)
   {
-    if (Helper.IsClient()) Set(yaml);
+    ClientDataFlow.Apply(yaml, true, Set);
+  }
+  public static void Toggle()
+  {
+    if (Helper.IsServer()) ReadConfigs();
+    else FromSetting(Configuration.valueTerritoryData.Value);
   }
 
   private static List<TerritoryYaml> Parse(string yaml)

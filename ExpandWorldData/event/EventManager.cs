@@ -23,14 +23,15 @@ public class Manager
   public static void ReadConfig()
   {
     if (!Configuration.DataEvents || Helper.IsClient()) return;
-    Set(DataManager.Read<Data, RandomEvent>(Pattern, Loader.FromData));
+    var yaml = DataManager.Read<Data, RandomEvent>(Pattern, Loader.FromData, out var hasFiles, out var hasData);
+    if (hasFiles && !hasData) return;
+    Set(yaml);
     Configuration.valueEventData.Value = Yaml.Serializer().Serialize(RandEventSystem.instance.m_events.Select(Loader.ToData).ToList());
   }
 
   public static void FromSetting(string yaml)
   {
-    if (!Configuration.DataEvents || LoadDelayed || !Helper.IsClient()) return;
-    Set(yaml);
+    ClientDataFlow.Apply(yaml, Configuration.DataEvents, Set, ready: !LoadDelayed);
   }
 
   private static void Set(string yaml)

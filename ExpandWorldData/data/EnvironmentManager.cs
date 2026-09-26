@@ -155,7 +155,8 @@ public class EnvironmentManager
     {
       if (File.Exists(FilePath))
       {
-        var yaml = DataManager.Read<EnvironmentYaml, EnvSetup>(Pattern, FromData);
+        var yaml = DataManager.Read<EnvironmentYaml, EnvSetup>(Pattern, FromData, out var hasFiles, out var hasData);
+        if (hasFiles && !hasData) return;
         Configuration.valueEnvironmentData.Value = yaml;
         Set(yaml);
       }
@@ -171,9 +172,14 @@ public class EnvironmentManager
       Set("");
     }
   }
+  public static void Toggle()
+  {
+    if (Helper.IsServer()) ReadConfigs();
+    else FromSetting(Configuration.valueEnvironmentData.Value);
+  }
   public static void FromSetting(string yaml)
   {
-    if (Helper.IsClient()) Set(yaml);
+    ClientDataFlow.Apply(yaml, true, Set);
   }
   private static void Set(string yaml)
   {
@@ -183,9 +189,9 @@ public class EnvironmentManager
       return;
     }
     Extra.Clear();
-    if (yaml == "" || !Configuration.DataEnvironments) return;
     try
     {
+      if (yaml == "" || !Configuration.DataEnvironments) return;
       var data = Yaml.Deserialize<EnvironmentYaml>(yaml, "Environments")
         .Select(d => FromData(d, "Environments")).ToList();
       if (data.Count == 0)
@@ -215,6 +221,7 @@ public class EnvironmentManager
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
+    finally { Patcher.Update(EWD.Harmony); }
   }
 
   private static bool AddMissingEntries(List<EnvSetup> entries)

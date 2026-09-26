@@ -229,10 +229,11 @@ public class VegetationLoading
       extra.data = DataHelper.Get(data.data, fileName);
     if (data.drops != "")
     {
-      DataEntry entry = new()
+      DataEntry dropsEntry = new()
       {
         Hashes = new Dictionary<int, IHashValue> { { HashDrop, DataValue.Hash(data.drops) } }
       };
+      extra.data = DataHelper.Merge(extra.data, dropsEntry);
     }
 
 

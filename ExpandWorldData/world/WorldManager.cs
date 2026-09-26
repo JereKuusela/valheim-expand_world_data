@@ -108,7 +108,8 @@ public class WorldManager
     {
       if (File.Exists(FilePath))
       {
-        var yaml = DataManager.Read<WorldYaml, WorldEntry>(Pattern, (d, f) => new WorldEntry(d, f));
+        var yaml = DataManager.Read<WorldYaml, WorldEntry>(Pattern, (d, f) => new WorldEntry(d, f), out var hasFiles, out var hasData);
+        if (hasFiles && !hasData) return;
         Configuration.valueWorldData.Value = yaml;
         Set(yaml);
       }
@@ -126,7 +127,12 @@ public class WorldManager
   }
   public static void FromSetting(string yaml)
   {
-    if (Helper.IsClient()) Set(yaml);
+    ClientDataFlow.Apply(yaml, true, Set);
+  }
+  public static void Toggle()
+  {
+    if (Helper.IsServer()) ReadConfigs();
+    else FromSetting(Configuration.valueWorldData.Value);
   }
   private static void Set(string yaml)
   {
@@ -135,9 +141,9 @@ public class WorldManager
       Pending = true;
       return;
     }
-    if (yaml == "" || !Configuration.DataWorld) return;
     try
     {
+      if (yaml == "" || !Configuration.DataWorld) return;
       Data = Yaml.Deserialize<WorldYaml>(yaml, "World");
       if (Data.Count == 0)
       {
@@ -156,6 +162,7 @@ public class WorldManager
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
+    finally { Patcher.Update(EWD.Harmony); }
   }
   public static void Reload()
   {

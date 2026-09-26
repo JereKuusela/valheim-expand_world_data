@@ -4,7 +4,7 @@ Drop tables define what items are dropped when creatures or objects are destroye
 
 ## Configuration
 
-The file `expand_drops.yaml` is created automatically when loading a world. The reference file `expand_drops_reference.yaml` is also generated automatically with examples of all droppable objects. Enable or disable drops from the config using the `Drop data` setting.
+The file `expand_drops.yaml` is created automatically when loading a world. The reference file `ref_expand_drops.yaml` is also generated automatically with examples of all droppable objects. Enable or disable drops from the config using the `Drop data` setting.
 
 Custom drops can be attached to most objects that drop or contain items by setting the `drops` field in [Spawns](spawns.md) or by directly setting the `ews_drops` data.
 

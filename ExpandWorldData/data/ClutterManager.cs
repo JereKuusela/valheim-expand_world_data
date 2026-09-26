@@ -128,7 +128,8 @@ public class ClutterManager
     {
       if (File.Exists(FilePath))
       {
-        var yaml = DataManager.Read<ClutterYaml, ClutterSystem.Clutter>(Pattern, FromData);
+        var yaml = DataManager.Read<ClutterYaml, ClutterSystem.Clutter>(Pattern, FromData, out var hasFiles, out var hasData);
+        if (hasFiles && !hasData) return;
         Configuration.valueClutterData.Value = yaml;
       }
       else

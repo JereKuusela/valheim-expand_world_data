@@ -67,6 +67,8 @@ public class EWD : BaseUnityPlugin
           ExpandWorld.Spawn.Manager.SetupWatcher();
         if (Configuration.DataEvents)
           ExpandWorld.Event.Manager.SetupWatcher();
+        if (Configuration.DataDrops)
+          ExpandWorld.Drops.Loader.SetupWatcher();
       }
     }
     catch (Exception e)
@@ -89,6 +91,7 @@ public class EWD : BaseUnityPlugin
         if (Configuration.DataReload) ExpandWorld.Spawn.Manager.SetupWatcher();
       }
       Configuration.configDataDrops.Value = true;
+      if (Configuration.DataReload) ExpandWorld.Drops.Loader.SetupWatcher();
     }
     BiomeManager.NamesFromFile();
     new DebugCommands();

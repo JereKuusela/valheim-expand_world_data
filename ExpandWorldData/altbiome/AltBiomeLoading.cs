@@ -43,7 +43,12 @@ public static class AltBiomeLoading
 
   public static void FromSetting(string yaml)
   {
-    if (!Configuration.DataAltBiomes || !Helper.IsClient() || string.IsNullOrWhiteSpace(yaml)) return;
+    ClientDataFlow.Apply(yaml, Configuration.DataAltBiomes, LoadSetting);
+  }
+
+  private static void LoadSetting(string yaml)
+  {
+    if (string.IsNullOrWhiteSpace(yaml)) return;
     try
     {
       var data = Yaml.Deserialize<AltBiomeYaml>(yaml, "AltBiomes").Select(item => FromData(item)).ToList();

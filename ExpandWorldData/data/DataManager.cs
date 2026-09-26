@@ -331,18 +331,23 @@ public class DataManager : MonoBehaviour
 
     return data;
   }
-  public static string Read<T, U>(string pattern, Func<T, string, U> converter)
+  public static string Read<T, U>(string pattern, Func<T, string, U> converter, out bool hasFiles, out bool hasData)
   {
     if (!Directory.Exists(Yaml.BaseDirectory))
       Directory.CreateDirectory(Yaml.BaseDirectory);
-    var data = Directory.GetFiles(Yaml.BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().Select(name =>
+    var files = Directory.GetFiles(Yaml.BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().ToList();
+    hasFiles = files.Count > 0;
+    hasData = false;
+    List<string> data = [];
+    foreach (var name in files)
     {
       var fileName = Path.GetFileNameWithoutExtension(name);
       var yaml = File.ReadAllText(name);
       // Clients need data in a single string, so file specific verification must be done here.
-      var ok = Yaml.Deserialize<T>(File.ReadAllText(name), fileName).Select(d => converter(d, fileName)).Count() > 0;
-      return ok ? yaml : "";
-    });
-    return string.Join("\n", data) ?? "";
+      if (Yaml.Deserialize<T>(yaml, fileName).Select(d => converter(d, fileName)).Count() == 0) continue;
+      hasData = true;
+      data.Add(yaml);
+    }
+    return string.Join("\n", data);
   }
 }

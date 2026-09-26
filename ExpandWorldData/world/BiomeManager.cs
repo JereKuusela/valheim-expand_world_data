@@ -141,7 +141,8 @@ public class BiomeManager
     {
       if (File.Exists(FilePath))
       {
-        var yaml = DataManager.Read<BiomeYaml, BiomeYaml>(Pattern, From);
+        var yaml = DataManager.Read<BiomeYaml, BiomeYaml>(Pattern, From, out var hasFiles, out var hasData);
+        if (hasFiles && !hasData) return;
         Configuration.valueBiomeData.Value = yaml;
         Set(yaml);
       }
@@ -165,7 +166,12 @@ public class BiomeManager
   private static BiomeYaml From(BiomeYaml data, string file) => data;
   public static void FromSetting(string yaml)
   {
-    if (Helper.IsClient()) Set(yaml);
+    ClientDataFlow.Apply(yaml, true, Set);
+  }
+  public static void Toggle()
+  {
+    if (Helper.IsServer()) ReadConfigs();
+    else FromSetting(Configuration.valueBiomeData.Value);
   }
   public static bool BiomeForestMultiplier = false;
 

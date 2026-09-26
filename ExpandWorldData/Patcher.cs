@@ -4,6 +4,15 @@ namespace ExpandWorldData;
 
 public static class Patcher
 {
+  public static bool DataEnvironments;
+  public static bool DataBiome;
+  public static bool DataTerritory;
+  public static bool DataWorld;
+  public static bool DataClutter;
+  public static bool DataAltBiomes;
+  public static bool DataEvents;
+  public static bool DataSpawns;
+
   public static void Initialize(Harmony harmony)
   {
     // Game only reserves 10 slots but alt biomes can use up to 32 biome indices.
@@ -26,6 +35,7 @@ public static class Patcher
     if (harmony == null) return;
     ExpandWorld.Event.Patcher.Patch(harmony);
     ExpandWorld.Spawn.Patcher.Patch(harmony);
+    ExpandWorld.Drops.Patcher.Patch(harmony);
     Features.Patcher.Patch(harmony);
     World.Patcher.Patch(harmony);
     Vegetation.Patcher.Patch(harmony);

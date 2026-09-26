@@ -34,15 +34,15 @@ public class Manager
   public static void ReadConfig()
   {
     if (!Configuration.DataSpawns || Helper.IsClient()) return;
-    var yaml = DataManager.Read<Data, SpawnSystem.SpawnData>(Pattern, Loader.FromData);
+    var yaml = DataManager.Read<Data, SpawnSystem.SpawnData>(Pattern, Loader.FromData, out var hasFiles, out var hasData);
+    if (hasFiles && !hasData) return;
     Configuration.valueSpawnData.Value = yaml;
     Set(yaml);
   }
 
   public static void FromSetting(string yaml)
   {
-    if (!Configuration.DataSpawns || !Helper.IsClient()) return;
-    Set(yaml);
+    ClientDataFlow.Apply(yaml, Configuration.DataSpawns, Set);
   }
 
   public static void Set(string yaml)
