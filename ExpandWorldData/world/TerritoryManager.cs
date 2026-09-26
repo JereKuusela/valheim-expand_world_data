@@ -41,6 +41,7 @@ public class TerritoryManager
   }
 
   private static readonly Dictionary<string, TerritoryData> Data = [];
+  public static bool HasData => Data.Count > 0;
   public static bool TryGetData(string territory, out TerritoryData data) => Data.TryGetValue(Normalize(territory), out data);
   public static bool HasNoBuild => Data.Values.Any(data => data.noBuild);
   public static bool HasStatusEffects => Data.Values.Any(data => data.statusEffects.Count > 0);
@@ -96,19 +97,23 @@ public class TerritoryManager
       return;
     }
     Data.Clear();
-    if (yaml == "" || !Configuration.DataTerritory) return;
-    var rawData = Parse(yaml);
-    if (rawData.Count > 0)
-      Log.Info($"Reloading territory data ({rawData.Count} entries).");
-
-    foreach (var item in rawData)
+    if (yaml != "" && Configuration.DataTerritory)
     {
-      var name = Normalize(item.territory);
-      if (name == "") continue;
-      var data = new TerritoryData(item);
-      if (data.IsValid())
-        Data[name] = data;
+      var rawData = Parse(yaml);
+      if (rawData.Count > 0)
+        Log.Info($"Reloading territory data ({rawData.Count} entries).");
+
+      foreach (var item in rawData)
+      {
+        var name = Normalize(item.territory);
+        if (name == "") continue;
+        var data = new TerritoryData(item);
+        if (data.IsValid())
+          Data[name] = data;
+      }
     }
+    Patcher.Update(EWD.Harmony);
+    EWD.Instance.InvokeRegenerate();
   }
 
   public static void SetupWatcher()

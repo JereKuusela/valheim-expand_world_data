@@ -120,14 +120,20 @@ public class NoBuildManager
   internal static bool CheckAdditionalZones(bool result, Vector3 point)
   {
     return result ||
-           NoBuildManager.IsInsideNoBuildZone(point) ||
-           NoBuildManager.IsInsideNoBuildTerritory(point) ||
-           NoBuildManager.IsInsideNoBuildBiome(point);
+           IsInsideNoBuildZone(point) ||
+           IsInsideNoBuildTerritory(point) ||
+           IsInsideNoBuildBiome(point);
   }
 
   internal static void SynchronizeLocationData()
   {
     if (Helper.IsClient()) return;
-    NoBuildManager.UpdateData();
+    UpdateData();
   }
+}
+
+[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.Load))]
+public class SynchronizeNoBuildData
+{
+  static void Postfix() => NoBuildManager.SynchronizeLocationData();
 }

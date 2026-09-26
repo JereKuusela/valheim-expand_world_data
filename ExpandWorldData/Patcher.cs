@@ -27,6 +27,7 @@ public static class Patcher
     ExpandWorld.Event.Patcher.Patch(harmony);
     ExpandWorld.Spawn.Patcher.Patch(harmony);
     Features.Patcher.Patch(harmony);
+    World.Patcher.Patch(harmony);
     Vegetation.Patcher.Patch(harmony);
     DataPatcher.Patch(harmony);
   }

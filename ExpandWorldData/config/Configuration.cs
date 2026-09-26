@@ -110,7 +110,9 @@ public partial class Configuration
     configRegenerateMap = wrapper.Bind(section, "Regenerate map", true, false, "If true, the world map is regenerated automatically on data changes.");
     configServerOnly = wrapper.Bind(section, "Server only", false, false, "If true, enables server side only mode and clients can't have the mod installed.");
     configLegacyGeneration = wrapper.Bind(section, "Legacy generation", false, true, "Old Expand World had a bug that cause incorrect generation near biome borders. Set this true for older worlds.");
+    configLegacyGeneration.SettingChanged += (s, e) => Patcher.Update(EWD.Harmony);
     configZoneSpawners = wrapper.Bind(section, "Zone spawners", true, false, "If disabled, zone spawners are not generated.");
+    configZoneSpawners.SettingChanged += (s, e) => Patcher.Update(EWD.Harmony);
     configRandomLocations = wrapper.Bind(section, "Random locations", false, false, "If true, all locations have a random generation instead of depending on the location coordinates.");
 
     section = "2. Features";
@@ -127,7 +129,11 @@ public partial class Configuration
     configDistanceWiggleWidth = wrapper.BindFloat(section, "Distance wiggle width", 0.01f, false);
     configDistanceWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configWiggleFrequency = wrapper.BindFloat(section, "Wiggle frequency", 20f, false, "How many wiggles are per each circle.");
-    configWiggleFrequency.SettingChanged += (s, e) => WorldManager.ReadConfigs();
+    configWiggleFrequency.SettingChanged += (s, e) =>
+    {
+      WorldManager.ReadConfigs();
+      Patcher.Update(EWD.Harmony);
+    };
     configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, false, "How many meters are the wiggles.");
     configWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configScaleLocationAltitudeRequirement = wrapper.Bind(section, "Scale location altitude requirement", false, false, "If true, location requirements are scaled based on the biome altitude delta and multiplier.");
@@ -141,7 +147,11 @@ public partial class Configuration
     configDataEnvironments = wrapper.Bind(section, "Environment data", true, false, "Use environment data");
     configDataEnvironments.SettingChanged += (s, e) => EnvironmentManager.FromSetting(valueEnvironmentData.Value);
     configDataBiome = wrapper.Bind(section, "Biome data", true, true, "Use biome data");
-    configDataBiome.SettingChanged += (s, e) => BiomeManager.FromSetting(valueBiomeData.Value);
+    configDataBiome.SettingChanged += (s, e) =>
+    {
+      BiomeManager.FromSetting(valueBiomeData.Value);
+      Patcher.Update(EWD.Harmony);
+    };
     configDataTerritory = wrapper.Bind(section, "Territory data", true, true, "Use territory data");
     configDataTerritory.SettingChanged += (s, e) => TerritoryManager.FromSetting(valueTerritoryData.Value);
     configDataClutter = wrapper.Bind(section, "Clutter data", true, false, "Use clutter data");
@@ -151,7 +161,11 @@ public partial class Configuration
     configDataRooms = wrapper.Bind(section, "Room data", true, false, "Use dungeon room data");
     configDataRooms.SettingChanged += (s, e) => RoomLoading.Load();
     configDataWorld = wrapper.Bind(section, "World data", true, true, "Use world data");
-    configDataWorld.SettingChanged += (s, e) => WorldManager.FromSetting(valueWorldData.Value);
+    configDataWorld.SettingChanged += (s, e) =>
+    {
+      WorldManager.FromSetting(valueWorldData.Value);
+      Patcher.Update(EWD.Harmony);
+    };
     configDataLocation = wrapper.Bind(section, "Location data", true, false, "Use location data");
     configDataLocation.SettingChanged += (s, e) => LocationLoading.ReadConfigs();
     configDataVegetation = wrapper.Bind(section, "Vegetation data", true, false, "Use vegetation data");

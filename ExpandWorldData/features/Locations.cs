@@ -31,10 +31,9 @@ public class GuaranteeLocations
   }
 }
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceZoneCtrl))]
 public class PlaceZoneCtrl
 {
-  static bool Prefix() => Configuration.ZoneSpawners;
+  internal static bool SkipZoneControlPlacement() => false;
 }
 
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceVegetation))]

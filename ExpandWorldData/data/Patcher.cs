@@ -6,14 +6,8 @@ public static class DataPatcher
 {
   public static void Patch(Harmony harmony)
   {
-    PatchProducer(harmony);
     PatchNoBuild(harmony, NoBuildManager.HasData || BiomeManager.NoBuildBiomes != 0 || TerritoryManager.HasNoBuild);
     PatchStatusEffects(harmony, BiomeManager.HasStatusEffects || TerritoryManager.HasStatusEffects || EnvironmentManager.HasStatusEffects);
-  }
-
-  private static void PatchProducer(Harmony harmony)
-  {
-    Patches.Apply(harmony, true, typeof(ZoneSystem), nameof(ZoneSystem.Load), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData), HarmonyPatchType.Postfix);
   }
 
   private static void PatchNoBuild(Harmony harmony, bool shouldPatch)

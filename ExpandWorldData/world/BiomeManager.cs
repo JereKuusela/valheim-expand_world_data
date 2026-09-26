@@ -18,12 +18,14 @@ public class BiomeManager
   public static Dictionary<string, EnvironmentData> Extra = [];
 
   public static Dictionary<EnvEntry, EnvEntryKeys> EnvKeys = [];
+  public static bool HasEnvironmentRules => EnvKeys.Count > 0;
 
   public static Heightmap.Biome LavaBiomes = Heightmap.Biome.AshLands;
   // Minor optimization to skip terrain color based calculations.
   public static Heightmap.Biome FullLavaBiomes = Heightmap.Biome.AshLands;
   public static Heightmap.Biome NoBuildBiomes = 0;
   private static HashSet<string> UsedGlobalKeys = [];
+  public static bool HasGlobalKeyRules => UsedGlobalKeys.Count > 0;
 
   public static EnvEntry FromData(BiomeEnvironment data, Dictionary<EnvEntry, EnvEntryKeys> keys)
   {
@@ -79,6 +81,8 @@ public class BiomeManager
   private static readonly Dictionary<Heightmap.Biome, BiomeData> BiomeData = [];
   public static bool TryGetColor(Heightmap.Biome biome, out Color color) => BiomeToColor.TryGetValue(biome, out color);
   public static bool TryGetData(Heightmap.Biome biome, out BiomeData data) => BiomeData.TryGetValue(biome, out data);
+  public static bool HasNatureOverrides => BiomeToNature.Any(pair => pair.Key != pair.Value);
+  public static bool HasCustomBiomes => NameToBiome.Count > OriginalBiomes.Count;
   public static bool HasStatusEffects => BiomeData.Values.Any(data => data.statusEffects.Count > 0);
   public static bool TryGetBiome(string name, out Heightmap.Biome biome) => NameToBiome.TryGetValue(name.ToLowerInvariant(), out biome);
   public static Heightmap.Biome GetBiome(string name) => NameToBiome.TryGetValue(name.ToLowerInvariant(), out var biome) ? biome : Heightmap.Biome.None;
@@ -332,6 +336,7 @@ public class BiomeManager
       return;
     }
     Load(yaml);
+    Patcher.Update(EWD.Harmony);
   }
   public static void SetupWatcher()
   {
@@ -386,7 +391,6 @@ public class GenerateWorldMap
       .InstructionEnumeration();
   }
 }
-[HarmonyPatch(typeof(Minimap), nameof(Minimap.UpdateBiome))]
 public class UpdateBiome
 {
   // Last biome gets negative number that can't be translated.
@@ -398,12 +402,12 @@ public class UpdateBiome
     if (territory == null || territory.name == "") return text;
     return $"{text} ({territory.name})";
   }
-  static void Prefix()
+  internal static void PrepareTerritoryNameDisplay()
   {
     OriginalChars = Localization.instance.m_endChars;
     Localization.instance.m_endChars = EmptyChars;
   }
-  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+  internal static IEnumerable<CodeInstruction> AppendTerritoryNameToDisplay(IEnumerable<CodeInstruction> instructions)
   {
     return new CodeMatcher(instructions)
       .MatchForward(false, new CodeMatch(OpCodes.Stloc_2))
@@ -413,28 +417,24 @@ public class UpdateBiome
       )
       .InstructionEnumeration();
   }
-  static void Postfix()
+  internal static void RestoreTerritoryNameDisplay()
   {
     Localization.instance.m_endChars = OriginalChars;
   }
 }
 
-[HarmonyPatch(typeof(EnvMan), nameof(EnvMan.GetAvailableEnvironments))]
 public class GetAvailableEnvironments
 {
-  static List<EnvEntry> Postfix(List<EnvEntry> result)
+  internal static List<EnvEntry> FilterEnvironmentRules(List<EnvEntry> result)
   {
     if (result == null) return null!;
-    if (BiomeManager.EnvKeys.Count == 0) return result;
     return [.. result.Where(BiomeManager.CheckKeys)];
   }
 }
 
-
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.RPC_GlobalKeys))]
 public class RPC_GlobalKeys
 {
-  static void Prefix(List<string> keys)
+  internal static void ResetEnvironmentPeriod(List<string> keys)
   {
     if (!BiomeManager.HasRelevantGlobalKeyChanges(ZoneSystem.instance.m_globalKeys, keys))
       return;
@@ -442,20 +442,18 @@ public class RPC_GlobalKeys
   }
 }
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GlobalKeyAdd))]
 public class GlobalKeyAdd
 {
-  static void Postfix(string keyStr)
+  internal static void ResetEnvironmentPeriod(string keyStr)
   {
     if (!BiomeManager.UsesGlobalKey(keyStr))
       return;
     EnvMan.instance.m_environmentPeriod = 0;
   }
 }
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GlobalKeyRemove))]
 public class GlobalKeyRemove
 {
-  static void Postfix(string keyStr, bool __result)
+  internal static void ResetEnvironmentPeriod(string keyStr, bool __result)
   {
     // Nothing removed, nothing to do.
     if (!__result) return;

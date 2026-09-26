@@ -6,10 +6,9 @@ using UnityEngine;
 namespace ExpandWorldData;
 
 
-[HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.WorldAngle))]
 public class WorldAngle
 {
-  static bool Prefix(float wx, float wy, ref float __result)
+  internal static bool CalculateAngle(float wx, float wy, ref float __result)
   {
     __result = Mathf.Sin(Mathf.Atan2(wx, wy) * Configuration.WiggleFrequency);
     return false;
@@ -36,11 +35,10 @@ public class GetPixelColor
   }
 }
 
-[HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetBiome))]
 public class GetBiomeHM
 {
   public static bool Nature = false;
-  static Heightmap.Biome Postfix(Heightmap.Biome biome)
+  internal static Heightmap.Biome ApplyNatureBiome(Heightmap.Biome biome)
   {
     if (Nature) return BiomeManager.GetNature(biome);
     return biome;
@@ -48,11 +46,10 @@ public class GetBiomeHM
 }
 
 
-[HarmonyPatch(typeof(Heightmap), nameof(Heightmap.FindBiome))]
 public class HeightmapFindBiome
 {
   public static bool Nature = false;
-  static Heightmap.Biome Postfix(Heightmap.Biome biome)
+  internal static Heightmap.Biome ApplyNatureBiome(Heightmap.Biome biome)
   {
     if (Nature) return BiomeManager.GetNature(biome);
     return biome;
@@ -112,34 +109,39 @@ public class SetBiomeOffsets
     BiomeCalculator.Offsets[Heightmap.Biome.Ocean] = Random.Range(-10000, 10000);
   }
 }
-[HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(float), typeof(float), typeof(float), typeof(bool))]
 public class GetBiomeWG
 {
-  static bool Prefix(WorldGenerator __instance, float wx, float wy, float oceanLevel, bool waterAlwaysOcean, ref Heightmap.Biome __result)
+  internal static bool CalculateBiome(WorldGenerator __instance, float wx, float wy, float oceanLevel, bool waterAlwaysOcean, ref Heightmap.Biome __result)
   {
     if (__instance.m_world.m_menu) return true;
-    if (!Configuration.DataWorld) return true;
     if (waterAlwaysOcean && __instance.GetHeight(wx, wy) <= oceanLevel)
     {
       __result = Heightmap.Biome.Ocean;
       return false;
     }
-    if (Configuration.LegacyGeneration)
-      __result = BiomeCalculator.GetLegacy(__instance, wx, wy);
-    else
-      __result = BiomeCalculator.Get(__instance, wx, wy);
+    __result = BiomeCalculator.Get(__instance, wx, wy);
+    return false;
+  }
+
+  internal static bool CalculateLegacyBiome(WorldGenerator __instance, float wx, float wy, float oceanLevel, bool waterAlwaysOcean, ref Heightmap.Biome __result)
+  {
+    if (__instance.m_world.m_menu) return true;
+    if (waterAlwaysOcean && __instance.GetHeight(wx, wy) <= oceanLevel)
+    {
+      __result = Heightmap.Biome.Ocean;
+      return false;
+    }
+    __result = BiomeCalculator.GetLegacy(__instance, wx, wy);
     return false;
   }
 }
 
-[HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsOceanGradient), typeof(float), typeof(float))]
 public class GetAshlandsOceanGradient
 {
-  static bool Prefix(float x, float y, ref float __result)
+  internal static bool CalculateGradient(float x, float y, ref float __result)
   {
     var wg = WorldGenerator.instance;
     if (wg.m_world.m_menu) return true;
-    if (!Configuration.DataWorld) return true;
     __result = BiomeCalculator.GetBoiling(wg, x, y);
     return false;
   }
