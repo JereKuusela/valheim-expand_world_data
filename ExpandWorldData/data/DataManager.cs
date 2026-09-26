@@ -30,7 +30,7 @@ public class InitializeWorld
   // Saving is done later because that requires environments.
   static void Postfix()
   {
-    WorldInfo.CheckPatches(EWD.Harmony);
+    Patcher.Update(EWD.Harmony);
     // Only called for server so no need to check.
     BiomeManager.ReadConfigs();
     TerritoryManager.ReadConfigs();

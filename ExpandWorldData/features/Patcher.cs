@@ -4,23 +4,20 @@ namespace ExpandWorldData.Features;
 
 public static class Patcher
 {
-  private static bool WaterColorPatched;
-
   public static void Patch(Harmony harmony)
   {
-    var shouldPatch = Configuration.CustomWaterColor;
-    if (shouldPatch == WaterColorPatched) return;
-    if (!shouldPatch) WaterColor.StopTransition();
-    SetPatch(harmony, shouldPatch, typeof(Player), nameof(Player.AddKnownBiome), typeof(WaterColor), nameof(WaterColor.StartBiomeTransition));
-    SetPatch(harmony, shouldPatch, typeof(Player), nameof(Player.OnSpawned), typeof(WaterColor), nameof(WaterColor.ResetTransition));
-    WaterColorPatched = shouldPatch;
+    GetAshlandsHeight.Patch(harmony, Configuration.AshlandsWidthRestriction, Configuration.AshlandsLengthRestriction);
+    CreateAshlandsGap.Patch(harmony, !Configuration.AshlandsGap);
+    CreateDeepNorthGap.Patch(harmony, !Configuration.DeepNorthGap);
+    PatchWaterColor(harmony);
   }
 
-  private static void SetPatch(Harmony harmony, bool shouldPatch, System.Type originalType, string originalName, System.Type patchType, string patchName)
+  private static void PatchWaterColor(Harmony harmony)
   {
-    var original = AccessTools.Method(originalType, originalName);
-    var patch = AccessTools.Method(patchType, patchName);
-    if (shouldPatch) harmony.Patch(original, postfix: new HarmonyMethod(patch));
-    else harmony.Unpatch(original, patch);
+    var shouldPatch = Configuration.CustomWaterColor;
+    var callback = nameof(WaterColor.StartBiomeTransition);
+    if (!shouldPatch && Patches.IsRegistered(typeof(WaterColor), callback)) WaterColor.StopTransition();
+    Patches.Apply(harmony, shouldPatch, typeof(Player), nameof(Player.AddKnownBiome), typeof(WaterColor), nameof(WaterColor.StartBiomeTransition), HarmonyPatchType.Postfix);
+    Patches.Apply(harmony, shouldPatch, typeof(Player), nameof(Player.OnSpawned), typeof(WaterColor), nameof(WaterColor.ResetTransition), HarmonyPatchType.Postfix);
   }
 }

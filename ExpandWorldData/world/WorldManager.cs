@@ -41,14 +41,14 @@ public class WorldManager
         maxAltitude = -26f
       },
       new() {
-        biome = "mountain",
-        minAltitude = 50f,
-      },
-      new() {
         biome = "deepnorth",
         centerY = -0.4f,
         minDistance = 1.2f,
         maxDistance = 1.6f
+      },
+      new() {
+        biome = "mountain",
+        minAltitude = 50f,
       },
       new() {
         biome = "swamp",
@@ -84,7 +84,7 @@ public class WorldManager
         biome = "meadows",
       },
     ];
-  public static List<WorldEntry> DefaultEntries = DefaultData.Select(s => new WorldEntry(s, "default world")).ToList();
+  public static List<WorldEntry> DefaultEntries = [.. DefaultData.Select(s => new WorldEntry(s, "default world"))];
   public static void AddWorld(WorldYaml data, int index)
   {
     DefaultData.Insert(index, data);

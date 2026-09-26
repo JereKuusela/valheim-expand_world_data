@@ -4,10 +4,6 @@ namespace ExpandWorldData;
 
 public static class DataPatcher
 {
-  private static bool ProducerPatched;
-  private static bool NoBuildPatched;
-  private static bool StatusEffectsPatched;
-
   public static void Patch(Harmony harmony)
   {
     PatchProducer(harmony);
@@ -17,31 +13,19 @@ public static class DataPatcher
 
   private static void PatchProducer(Harmony harmony)
   {
-    if (ProducerPatched) return;
-    SetPatch(harmony, true, typeof(ZoneSystem), nameof(ZoneSystem.Load), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData));
-    ProducerPatched = true;
+    Patches.Apply(harmony, true, typeof(ZoneSystem), nameof(ZoneSystem.Load), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData), HarmonyPatchType.Postfix);
   }
 
   private static void PatchNoBuild(Harmony harmony, bool shouldPatch)
   {
-    if (shouldPatch == NoBuildPatched) return;
-    SetPatch(harmony, shouldPatch, typeof(Location), nameof(Location.IsInsideNoBuildLocation), typeof(NoBuildManager), nameof(NoBuildManager.CheckAdditionalZones));
-    NoBuildPatched = shouldPatch;
+    Patches.Apply(harmony, shouldPatch, typeof(Location), nameof(Location.IsInsideNoBuildLocation), typeof(NoBuildManager), nameof(NoBuildManager.CheckAdditionalZones), HarmonyPatchType.Postfix);
   }
 
   private static void PatchStatusEffects(Harmony harmony, bool shouldPatch)
   {
-    if (shouldPatch == StatusEffectsPatched) return;
-    if (!shouldPatch) StatusManager.CleanUp();
-    SetPatch(harmony, shouldPatch, typeof(Player), nameof(Player.UpdateEnvStatusEffects), typeof(StatusManager), nameof(StatusManager.UpdateStatusEffects));
-    StatusEffectsPatched = shouldPatch;
+    var callback = nameof(StatusManager.UpdateStatusEffects);
+    if (!shouldPatch && Patches.IsRegistered(typeof(StatusManager), callback)) StatusManager.CleanUp();
+    Patches.Apply(harmony, shouldPatch, typeof(Player), nameof(Player.UpdateEnvStatusEffects), typeof(StatusManager), nameof(StatusManager.UpdateStatusEffects), HarmonyPatchType.Postfix);
   }
 
-  private static void SetPatch(Harmony harmony, bool shouldPatch, System.Type originalType, string originalName, System.Type patchType, string patchName)
-  {
-    var original = AccessTools.Method(originalType, originalName);
-    var patch = AccessTools.Method(patchType, patchName);
-    if (shouldPatch) harmony.Patch(original, postfix: new HarmonyMethod(patch));
-    else harmony.Unpatch(original, patch);
-  }
 }

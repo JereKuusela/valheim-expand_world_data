@@ -37,7 +37,7 @@ public class WorldInfo
     WorldGenerator.s_cachedBiomes.Clear();
     foreach (var altBiome in AltBiomeList.m_altBiomes)
       altBiome.Sectors.Clear();
-    CheckPatches(harmony);
+    Patcher.Update(harmony);
     WorldGenerator.instance.Pregenerate();
     AltBiomeWorldData.VerifyBiomeData(WorldGenerator.instance.m_world);
     foreach (var heightmap in Object.FindObjectsByType<Heightmap>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
@@ -53,12 +53,6 @@ public class WorldInfo
   {
     if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
       Minimap.instance?.GenerateWorldMap();
-  }
-  public static void CheckPatches(Harmony harmony)
-  {
-    GetAshlandsHeight.Patch(harmony, Configuration.AshlandsWidthRestriction, Configuration.AshlandsLengthRestriction);
-    CreateAshlandsGap.Patch(harmony, !Configuration.AshlandsGap);
-    CreateDeepNorthGap.Patch(harmony, !Configuration.DeepNorthGap);
   }
 }
 

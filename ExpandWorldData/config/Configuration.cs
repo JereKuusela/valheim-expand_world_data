@@ -114,11 +114,6 @@ public partial class Configuration
     configRandomLocations = wrapper.Bind(section, "Random locations", false, false, "If true, all locations have a random generation instead of depending on the location coordinates.");
 
     section = "2. Features";
-    configDataEvents = wrapper.Bind(section, "Event data", false, false, "Use event data.");
-    configDataEvents.SettingChanged += (s, e) => ExpandWorld.Event.Manager.Toggle();
-    configDataSpawns = wrapper.Bind(section, "Spawn data", false, false, "Use spawn data.");
-    configDataSpawns.SettingChanged += (s, e) => ExpandWorld.Spawn.Manager.Toggle();
-    configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.");
     configMultipleEvents = wrapper.Bind(section, "Multiple events", false, false, "If enabled, multiple events can be active at the same time.");
     configMultipleEvents.SettingChanged += (s, e) => Patcher.Update(EWD.Harmony);
     configCheckPerPlayer = wrapper.Bind(section, "Check per player", false, false, "If enabled, the event check is done separately for each player.");
@@ -167,6 +162,11 @@ public partial class Configuration
     };
     configDataAltBiomes = wrapper.Bind(section, "Alt biome data", true, false, "Use alternative biome data");
     configDataAltBiomes.SettingChanged += (s, e) => AltBiomeLoading.Toggle();
+    configDataEvents = wrapper.Bind(section, "Event data", false, false, "Use event data.");
+    configDataEvents.SettingChanged += (s, e) => ExpandWorld.Event.Manager.Toggle();
+    configDataSpawns = wrapper.Bind(section, "Spawn data", false, false, "Use spawn data.");
+    configDataSpawns.SettingChanged += (s, e) => ExpandWorld.Spawn.Manager.Toggle();
+    configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.");
     configBlueprintFolder = wrapper.Bind(section, "Blueprint folder", "PlanBuild", false, "Folder relative to the config folder.");
 
     valueNoBuildData = wrapper.AddValue("no_build_data");
