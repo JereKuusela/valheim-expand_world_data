@@ -33,8 +33,7 @@ Night-only freezing effect until Moder is defeated:
 - environment: Snow
   statusEffects:
   - name: Freezing
-    forbiddenGlobalKeys:
-    - defeated_dragon
+    forbiddenGlobalKeys: defeated_dragon
     day: false
     night: true
 ```
@@ -45,8 +44,7 @@ Poison hazard that is disabled for players with a specific progression key:
 - biome: Swamp
   statusEffects:
   - name: Poison
-    forbiddenPlayerKeys:
-    - poisonproof
+    forbiddenPlayerKeys: poisonproof, poisonproof_new
     day: true
     night: true
     damage: 18
