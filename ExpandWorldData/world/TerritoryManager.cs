@@ -19,7 +19,7 @@ public class TerritoryManager
     Initialized = true;
     if (!Pending) return;
     Pending = false;
-    Set(Configuration.valueTerritoryData.Value);
+    FromSetting(Configuration.valueTerritoryData.Value);
   }
 
   public static void CleanUp()
@@ -58,72 +58,47 @@ public class TerritoryManager
   public static void ReadConfigs()
   {
     if (Helper.IsClient()) return;
-    var yaml = "";
     if (Configuration.DataTerritory)
     {
-      yaml = DataManager.Read<TerritoryYaml, TerritoryYaml>(Pattern, From, out var hasFiles, out var hasData);
-      if (hasFiles && !hasData) return;
+      var files = DataManager.Read(Pattern);
+      if (files == null || !Set(files)) return;
+      Configuration.valueTerritoryData.Value = string.Join("\n", files.Values);
     }
-    Configuration.valueTerritoryData.Value = yaml;
-    Set(yaml);
+    else if (Set([]))
+      Configuration.valueTerritoryData.Value = "";
   }
 
   private static TerritoryYaml From(TerritoryYaml data, string file) => data;
 
   public static void FromSetting(string yaml)
   {
-    ClientDataFlow.Apply(yaml, true, Set);
-  }
-  public static void Toggle()
-  {
-    if (Helper.IsServer()) ReadConfigs();
-    else FromSetting(Configuration.valueTerritoryData.Value);
+    if (!Helper.IsClient()) return;
+    if (!Initialized) { Pending = true; return; }
+    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
   }
 
-  private static List<TerritoryYaml> Parse(string yaml)
+  private static bool Set(Dictionary<string, string> files)
   {
-    List<TerritoryYaml> rawData = [];
-    if (Configuration.DataTerritory)
+    if (!Yaml.TryDeserialize<TerritoryYaml>(files, out var rawData)) return false;
+    Dictionary<string, TerritoryData> data = [];
+    if (rawData.Count > 0)
     {
-      try
-      {
-        rawData = Yaml.Deserialize<TerritoryYaml>(yaml, "Territories");
-      }
-      catch (Exception e)
-      {
-        Log.Warning("Failed to load any territory data.");
-        Log.Error(e.Message);
-        Log.Error(e.StackTrace);
-      }
-    }
-    return rawData;
-  }
-
-  private static void Set(string yaml)
-  {
-    if (!Initialized)
-    {
-      Pending = true;
-      return;
-    }
-    Data.Clear();
-    if (yaml != "" && Configuration.DataTerritory)
-    {
-      var rawData = Parse(yaml);
-      if (rawData.Count > 0)
-        Log.Info($"Reloading territory data ({rawData.Count} entries).");
+      Log.Info($"Reloading territory data ({rawData.Count} entries).");
 
       foreach (var item in rawData)
       {
         var name = Normalize(item.territory);
         if (name == "") continue;
-        var data = new TerritoryData(item);
-        if (data.IsValid())
-          Data[name] = data;
+        var entry = new TerritoryData(item);
+        if (entry.IsValid())
+          data[name] = entry;
       }
     }
-    Patcher.Update(EWD.Harmony);
+    Data.Clear();
+    foreach (var entry in data) Data[entry.Key] = entry.Value;
+    World.Patcher.SetTerritoryEnabled(Data.Count > 0);
     EWD.Instance.InvokeRegenerate();
+    return true;
   }
 
   public static void SetupWatcher()

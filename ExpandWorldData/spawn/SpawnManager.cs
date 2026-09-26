@@ -31,22 +31,42 @@ public class Manager
     Configuration.valueSpawnData.Value = Save();
   }
 
-  public static void ReadConfig()
+  public static void ReadConfigs()
   {
-    if (!Configuration.DataSpawns || Helper.IsClient()) return;
-    var yaml = DataManager.Read<Data, SpawnSystem.SpawnData>(Pattern, Loader.FromData, out var hasFiles, out var hasData);
-    if (hasFiles && !hasData) return;
-    Configuration.valueSpawnData.Value = yaml;
-    Set(yaml);
+    if (Helper.IsClient()) return;
+    if (!Configuration.DataSpawns)
+    {
+      if (Set([]))
+        Configuration.valueSpawnData.Value = "";
+      return;
+    }
+    var files = DataManager.Read(Pattern);
+    if (files == null || !Set(files)) return;
+    Configuration.valueSpawnData.Value = string.Join("\n", files.Values);
   }
 
   public static void FromSetting(string yaml)
   {
-    ClientDataFlow.Apply(yaml, Configuration.DataSpawns, Set);
+    if (Helper.IsClient()) Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
   }
 
-  public static void Set(string yaml)
+  public static bool Set(Dictionary<string, string> files)
   {
+    List<SpawnSystem.SpawnData> data = [];
+    try
+    {
+      foreach (var file in files)
+      {
+        if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return false;
+        data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)).Where(IsValid));
+      }
+    }
+    catch (Exception e)
+    {
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
+      return false;
+    }
     if (Override != null)
     {
       foreach (var spawn in Override)
@@ -56,54 +76,32 @@ public class Manager
       }
     }
     Override = null;
-    try
+    if (files.Count == 0)
     {
-      if (!Configuration.DataSpawns || yaml == "")
-        return;
-      var data = Yaml.Deserialize<Data>(yaml, "Spawns").Select(entry => Loader.FromData(entry, "Spawns")).Where(IsValid).ToList();
-      if (data.Count == 0)
-      {
-        Log.Warning("Failed to load any spawn data. No changes done.");
-        return;
-      }
-      Log.Info($"Reloading spawn data ({data.Count} entries).");
-      Override = data;
-      SpawnSystem.m_instances.ForEach(ApplySpawnData);
+      Patcher.SetEnabled(false);
+      EWD.Instance.InvokeRegenerate();
+      return true;
     }
-    catch (Exception e)
-    {
-      Log.Error(e.Message);
-      Log.Error(e.StackTrace);
-    }
-    finally { ExpandWorldData.Patcher.Update(EWD.Harmony); }
-  }
-
-  public static void Toggle()
-  {
-    if (Configuration.DataSpawns)
-    {
-      ExpandWorldData.Patcher.Update(EWD.Harmony);
-      if (Helper.IsServer()) ReadConfig();
-      else FromSetting(Configuration.valueSpawnData.Value);
-    }
-    else
-    {
-      Log.Warning("Disabling spawn data requires a restart to restore the original spawn lists.");
-      ExpandWorldData.Patcher.Update(EWD.Harmony);
-    }
+    if (data.Count == 0) return false;
+    Log.Info($"Reloading spawn data ({data.Count} entries).");
+    Override = data;
+    Patcher.SetEnabled(true);
+    SpawnSystem.m_instances.ForEach(ApplySpawnData);
+    EWD.Instance.InvokeRegenerate();
+    return true;
   }
 
   internal static void InitializeData()
   {
     Override = null;
-    if (Helper.IsServer()) ReadConfig();
+    if (Helper.IsServer()) ReadConfigs();
   }
 
   internal static void InitializeSpawnSystem(SpawnSystem __instance)
   {
     if (Override == null)
     {
-      if (Helper.IsClient() && Configuration.valueSpawnData.Value != "") Set(Configuration.valueSpawnData.Value);
+      if (Helper.IsClient() && Configuration.valueSpawnData.Value != "") FromSetting(Configuration.valueSpawnData.Value);
       if (Helper.IsServer()) CreateConfig();
     }
     ApplySpawnData(__instance);
@@ -116,7 +114,7 @@ public class Manager
     system.m_spawnLists[0].m_spawners = Override;
   }
 
-  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfig);
+  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfigs);
 }
 
 public class GlobalKeys

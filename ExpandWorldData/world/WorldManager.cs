@@ -19,7 +19,7 @@ public class WorldManager
     Initialized = true;
     if (!Pending) return;
     Pending = false;
-    Set(Configuration.valueWorldData.Value);
+    FromSetting(Configuration.valueWorldData.Value);
   }
 
   public static void CleanUp()
@@ -108,10 +108,9 @@ public class WorldManager
     {
       if (File.Exists(FilePath))
       {
-        var yaml = DataManager.Read<WorldYaml, WorldEntry>(Pattern, (d, f) => new WorldEntry(d, f), out var hasFiles, out var hasData);
-        if (hasFiles && !hasData) return;
-        Configuration.valueWorldData.Value = yaml;
-        Set(yaml);
+        var files = DataManager.Read(Pattern);
+        if (files == null || !Set(files)) return;
+        Configuration.valueWorldData.Value = string.Join("\n", files.Values);
       }
       else
       {
@@ -121,48 +120,59 @@ public class WorldManager
     }
     else
     {
-      Configuration.valueWorldData.Value = "";
-      Set("");
+      if (Set([]))
+        Configuration.valueWorldData.Value = "";
     }
   }
   public static void FromSetting(string yaml)
   {
-    ClientDataFlow.Apply(yaml, true, Set);
-  }
-  public static void Toggle()
-  {
-    if (Helper.IsServer()) ReadConfigs();
-    else FromSetting(Configuration.valueWorldData.Value);
-  }
-  private static void Set(string yaml)
-  {
+    if (!Helper.IsClient()) return;
     if (!Initialized)
     {
       Pending = true;
       return;
     }
+    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
+  }
+  private static bool Set(Dictionary<string, string> files)
+  {
     try
     {
-      if (yaml == "" || !Configuration.DataWorld) return;
-      Data = Yaml.Deserialize<WorldYaml>(yaml, "World");
-      if (Data.Count == 0)
+      if (files.Count == 0)
+      {
+        Features.Patcher.SetWorldEnabled(false);
+        EWD.Instance.InvokeRegenerate();
+        return true;
+      }
+      List<WorldYaml> data = [];
+      foreach (var file in files)
+      {
+        if (!Yaml.TryDeserialize<WorldYaml>(file.Value, file.Key, out var parsed))
+          return false;
+        data.AddRange(parsed);
+      }
+      if (data.Count == 0)
       {
         Log.Warning($"Failed to load any world data.");
-        Log.Info($"Reloading default world data ({Data.Count} entries).");
-        Data = DefaultData;
+        Log.Info($"Reloading default world data ({data.Count} entries).");
+        data = DefaultData;
       }
       else
-        Log.Info($"Reloading world data ({Data.Count} entries).");
-      BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
-      BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
+        Log.Info($"Reloading world data ({data.Count} entries).");
+      var entries = data.Select(s => new WorldEntry(s, "world")).ToList();
+      BiomeCalculator.SetData(entries);
+      BiomeCalculator.CheckAngles = data.Any(x => x.minSector != 0f || x.maxSector != 1f);
+      Data = data;
+      Features.Patcher.SetWorldEnabled(data.Count > 0);
       EWD.Instance.InvokeRegenerate();
+      return true;
     }
     catch (Exception e)
     {
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
+      return false;
     }
-    finally { Patcher.Update(EWD.Harmony); }
   }
   public static void Reload()
   {

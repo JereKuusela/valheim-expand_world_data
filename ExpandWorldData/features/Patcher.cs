@@ -5,6 +5,11 @@ namespace ExpandWorldData.Features;
 public static class Patcher
 {
   private const float DefaultWiggleFrequency = 20f;
+  public static bool WorldEnabled { get; private set; }
+  public static bool BiomeEnabled { get; private set; }
+
+  public static void SetWorldEnabled(bool enabled) => WorldEnabled = enabled;
+  public static void SetBiomeEnabled(bool enabled) => BiomeEnabled = enabled;
 
   public static void Patch(Harmony harmony)
   {
@@ -14,9 +19,9 @@ public static class Patcher
     Patches.Apply(harmony, !Configuration.ZoneSpawners, typeof(ZoneSystem), nameof(ZoneSystem.PlaceZoneCtrl), typeof(PlaceZoneCtrl), nameof(PlaceZoneCtrl.SkipZoneControlPlacement), HarmonyPatchType.Prefix);
     Patches.Apply(harmony, false, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateBiome), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
     Patches.Apply(harmony, false, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateLegacyBiome), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
-    Patches.Apply(harmony, Configuration.DataWorld && !Configuration.LegacyGeneration, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateBiome), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
-    Patches.Apply(harmony, Configuration.DataWorld && Configuration.LegacyGeneration, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateLegacyBiome), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
-    Patches.Apply(harmony, Configuration.DataWorld, typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsOceanGradient), typeof(GetAshlandsOceanGradient), nameof(GetAshlandsOceanGradient.CalculateGradient), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float)]);
+    Patches.Apply(harmony, WorldEnabled && !Configuration.LegacyGeneration, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateBiome), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
+    Patches.Apply(harmony, WorldEnabled && Configuration.LegacyGeneration, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateLegacyBiome), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
+    Patches.Apply(harmony, WorldEnabled, typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsOceanGradient), typeof(GetAshlandsOceanGradient), nameof(GetAshlandsOceanGradient.CalculateGradient), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float)]);
     Patches.Apply(harmony, Configuration.WiggleFrequency != DefaultWiggleFrequency, typeof(WorldGenerator), nameof(WorldGenerator.WorldAngle), typeof(WorldAngle), nameof(WorldAngle.CalculateAngle), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float)]);
     PatchNature(harmony);
     PatchWaterColor(harmony);
@@ -24,7 +29,7 @@ public static class Patcher
 
   private static void PatchNature(Harmony harmony)
   {
-    var shouldPatch = Configuration.DataBiome && BiomeManager.HasNatureOverrides;
+    var shouldPatch = BiomeEnabled && BiomeManager.HasNatureOverrides;
     Patches.Apply(harmony, shouldPatch, typeof(Beehive), nameof(Beehive.CheckBiome), typeof(BeehiveCheckBiome), nameof(BeehiveCheckBiome.BeginNatureBiomeCheck), HarmonyPatchType.Prefix);
     Patches.Apply(harmony, shouldPatch, typeof(Beehive), nameof(Beehive.CheckBiome), typeof(BeehiveCheckBiome), nameof(BeehiveCheckBiome.EndNatureBiomeCheck), HarmonyPatchType.Finalizer);
     Patches.Apply(harmony, shouldPatch, typeof(Player), nameof(Player.UpdatePlacementGhost), typeof(PlayerUpdatePlacementGhost), nameof(PlayerUpdatePlacementGhost.BeginNatureBiomeCheck), HarmonyPatchType.Prefix);

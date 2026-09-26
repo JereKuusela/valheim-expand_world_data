@@ -141,10 +141,9 @@ public class BiomeManager
     {
       if (File.Exists(FilePath))
       {
-        var yaml = DataManager.Read<BiomeYaml, BiomeYaml>(Pattern, From, out var hasFiles, out var hasData);
-        if (hasFiles && !hasData) return;
-        Configuration.valueBiomeData.Value = yaml;
-        Set(yaml);
+        var files = DataManager.Read(Pattern);
+        if (files == null || !Set(files)) return;
+        Configuration.valueBiomeData.Value = string.Join("\n", files.Values);
       }
       else
       {
@@ -154,8 +153,8 @@ public class BiomeManager
     }
     else
     {
-      Configuration.valueBiomeData.Value = "";
-      Set("");
+      if (Set([]))
+        Configuration.valueBiomeData.Value = "";
     }
   }
   public static void NamesFromFile()
@@ -166,32 +165,25 @@ public class BiomeManager
   private static BiomeYaml From(BiomeYaml data, string file) => data;
   public static void FromSetting(string yaml)
   {
-    ClientDataFlow.Apply(yaml, true, Set);
-  }
-  public static void Toggle()
-  {
-    if (Helper.IsServer()) ReadConfigs();
-    else FromSetting(Configuration.valueBiomeData.Value);
+    if (!Helper.IsClient()) return;
+    if (!Initialized) { Pending = true; return; }
+    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
   }
   public static bool BiomeForestMultiplier = false;
 
   private static List<BiomeYaml> Parse(string yaml)
   {
-    List<BiomeYaml> rawData = [];
-    if (Configuration.DataBiome)
+    try
     {
-      try
-      {
-        rawData = Yaml.Deserialize<BiomeYaml>(yaml, "Biomes");
-      }
-      catch (Exception e)
-      {
-        Log.Warning($"Failed to load any biome data.");
-        Log.Error(e.Message);
-        Log.Error(e.StackTrace);
-      }
+      return Yaml.Deserialize<BiomeYaml>(yaml, "Biomes");
     }
-    return rawData;
+    catch (Exception e)
+    {
+      Log.Warning("Failed to load any biome data.");
+      Log.Error(e.Message);
+      Log.Error(e.StackTrace);
+      return [];
+    }
   }
   public static void SetNames(Dictionary<Heightmap.Biome, string> names)
   {
@@ -224,7 +216,7 @@ public class BiomeManager
     Initialized = true;
     if (!Pending) return;
     Pending = false;
-    Set(Configuration.valueBiomeData.Value);
+    FromSetting(Configuration.valueBiomeData.Value);
   }
 
   public static void CleanUp()
@@ -233,10 +225,14 @@ public class BiomeManager
     Pending = false;
   }
 
-  private static void Load(string yaml)
+  private static void Load(List<BiomeYaml> rawData)
   {
-    if (yaml == "" || !Configuration.DataBiome) return;
-    var rawData = Parse(yaml);
+    if (rawData.Count == 0)
+    {
+      Features.Patcher.SetBiomeEnabled(false);
+      return;
+    }
+    Features.Patcher.SetBiomeEnabled(rawData.Count > 0);
     if (rawData.Count > 0)
       Log.Info($"Reloading biome data ({rawData.Count} entries).");
     EnvKeys.Clear();
@@ -299,11 +295,10 @@ public class BiomeManager
       .Where(key => key != null && key != "")
       .Select(NormalizeKey)];
     LoadEnvironments();
-    EWD.Instance.InvokeRegenerate();
   }
   public static void LoadEnvironments()
   {
-    if (!Configuration.DataBiome || Environments.Count == 0) return;
+    if (Environments.Count == 0) return;
 
     SetupBiomeEnvs(Environments);
   }
@@ -334,15 +329,12 @@ public class BiomeManager
       return (Heightmap.Biome)0x80;
     return (Heightmap.Biome)(2 * number);
   }
-  private static void Set(string yaml)
+  private static bool Set(Dictionary<string, string> files)
   {
-    if (!Initialized)
-    {
-      Pending = true;
-      return;
-    }
-    Load(yaml);
-    Patcher.Update(EWD.Harmony);
+    if (!Yaml.TryDeserialize<BiomeYaml>(files, out var data)) return false;
+    Load(data);
+    EWD.Instance.InvokeRegenerate();
+    return true;
   }
   public static void SetupWatcher()
   {

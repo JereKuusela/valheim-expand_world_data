@@ -96,13 +96,13 @@ public class NoBuildManager
   }
   public static void Apply(string yaml)
   {
-    if (!Initialized)
+    if (Helper.IsClient() && !Initialized)
     {
       Pending = true;
       return;
     }
     NoBuild.Clear();
-    if (yaml == "") { Patcher.Update(EWD.Harmony); return; }
+    if (yaml == "") { EWD.Instance.InvokeRegenerate(); return; }
     try
     {
       var data = Yaml.Deserialize<NoBuildData>(yaml, "No build");
@@ -114,7 +114,7 @@ public class NoBuildManager
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
-    finally { Patcher.Update(EWD.Harmony); }
+    finally { EWD.Instance.InvokeRegenerate(); }
   }
 
   internal static bool CheckAdditionalZones(bool result, Vector3 point)

@@ -32,7 +32,7 @@ public class EnvironmentManager
     Initialized = true;
     if (!Pending) return;
     Pending = false;
-    Set(Configuration.valueEnvironmentData.Value);
+    FromSetting(Configuration.valueEnvironmentData.Value);
   }
 
   public static void CleanUp()
@@ -155,10 +155,9 @@ public class EnvironmentManager
     {
       if (File.Exists(FilePath))
       {
-        var yaml = DataManager.Read<EnvironmentYaml, EnvSetup>(Pattern, FromData, out var hasFiles, out var hasData);
-        if (hasFiles && !hasData) return;
-        Configuration.valueEnvironmentData.Value = yaml;
-        Set(yaml);
+        var files = DataManager.Read(Pattern);
+        if (files == null || !Set(files)) return;
+        Configuration.valueEnvironmentData.Value = string.Join("\n", files.Values);
       }
       else
       {
@@ -168,41 +167,45 @@ public class EnvironmentManager
     }
     else
     {
-      Configuration.valueEnvironmentData.Value = "";
-      Set("");
+      if (Set([]))
+        Configuration.valueEnvironmentData.Value = "";
     }
-  }
-  public static void Toggle()
-  {
-    if (Helper.IsServer()) ReadConfigs();
-    else FromSetting(Configuration.valueEnvironmentData.Value);
   }
   public static void FromSetting(string yaml)
   {
-    ClientDataFlow.Apply(yaml, true, Set);
+    if (!Helper.IsClient()) return;
+    if (!Initialized) { Pending = true; return; }
+    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
   }
-  private static void Set(string yaml)
+  private static bool Set(Dictionary<string, string> files)
   {
-    if (!Initialized)
-    {
-      Pending = true;
-      return;
-    }
-    Extra.Clear();
+    var previousExtra = Extra;
+    Extra = [];
     try
     {
-      if (yaml == "" || !Configuration.DataEnvironments) return;
-      var data = Yaml.Deserialize<EnvironmentYaml>(yaml, "Environments")
-        .Select(d => FromData(d, "Environments")).ToList();
+      if (files.Count == 0)
+      {
+        Extra.Clear();
+        EWD.Instance.InvokeRegenerate();
+        return true;
+      }
+      List<EnvSetup> data = [];
+      foreach (var file in files)
+      {
+        if (!Yaml.TryDeserialize<EnvironmentYaml>(file.Value, file.Key, out var parsed)) return false;
+        data.AddRange(parsed.Select(d => FromData(d, file.Key)));
+      }
       if (data.Count == 0)
       {
         Log.Warning($"Failed to load any environment data.");
-        return;
+        Extra = previousExtra;
+        return false;
       }
       if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
       {
         // Watcher triggers reload.
-        return;
+        Extra = previousExtra;
+        return false;
       }
       Log.Info($"Reloading environment data ({data.Count} entries).");
       foreach (var list in LocationList.m_allLocationLists)
@@ -215,13 +218,16 @@ public class EnvironmentManager
       em.m_firstEnv = true;
       foreach (var biome in em.m_biomes)
         em.InitializeBiomeEnvSetup(biome);
+      EWD.Instance.InvokeRegenerate();
+      return true;
     }
     catch (Exception e)
     {
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
+      Extra = previousExtra;
+      return false;
     }
-    finally { Patcher.Update(EWD.Harmony); }
   }
 
   private static bool AddMissingEntries(List<EnvSetup> entries)

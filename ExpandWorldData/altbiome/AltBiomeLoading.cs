@@ -30,52 +30,54 @@ public static class AltBiomeLoading
 
   public static void ReadConfigs()
   {
-    if (Helper.IsClient() || !Configuration.DataAltBiomes) return;
-    var data = DataManager.ReadData<AltBiomeYaml, AltBiome>(Pattern, FromData);
-    if (data.Count == 0)
+    if (Helper.IsClient()) return;
+    if (!Configuration.DataAltBiomes)
     {
-      Log.Warning("Failed to load any alt biome data. No changes done.");
+      if (Set([]))
+        Configuration.valueAltBiomeData.Value = "";
       return;
     }
-    Apply(data, true);
-    Configuration.valueAltBiomeData.Value = Yaml.Serializer().Serialize(data.Select(item => ToData(item)).ToList());
+    var files = DataManager.Read(Pattern);
+    if (files == null || !Set(files)) return;
+    Configuration.valueAltBiomeData.Value = string.Join("\n", files.Values);
   }
 
   public static void FromSetting(string yaml)
   {
-    ClientDataFlow.Apply(yaml, Configuration.DataAltBiomes, LoadSetting);
+    if (Helper.IsClient()) Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
   }
 
-  private static void LoadSetting(string yaml)
+  private static bool Set(Dictionary<string, string> files)
   {
-    if (string.IsNullOrWhiteSpace(yaml)) return;
+    if (files.Count == 0)
+    {
+      Apply(Original, true);
+      return true;
+    }
     try
     {
-      var data = Yaml.Deserialize<AltBiomeYaml>(yaml, "AltBiomes").Select(item => FromData(item)).ToList();
+      List<AltBiome> data = [];
+      foreach (var file in files)
+      {
+        if (!Yaml.TryDeserialize<AltBiomeYaml>(file.Value, file.Key, out var parsed)) return false;
+        data.AddRange(parsed.Select(item => FromData(item, file.Key)));
+      }
       if (data.Count == 0)
       {
-        Log.Warning("Failed to load synchronized alt biome data. No changes done.");
-        return;
+        Log.Warning("Failed to load any alt biome data. No changes done.");
+        return false;
       }
       Apply(data, true);
+      return true;
     }
     catch (Exception e)
     {
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
+      return false;
     }
   }
 
-  public static void Toggle()
-  {
-    if (Configuration.DataAltBiomes)
-    {
-      if (Helper.IsServer()) ReadConfigs();
-      else FromSetting(Configuration.valueAltBiomeData.Value);
-    }
-    else
-      Apply(Original, true);
-  }
 
   private static void Apply(List<AltBiome> data, bool regenerate)
   {

@@ -41,7 +41,7 @@ public class ClutterManager
     Initialized = true;
     if (!Pending) return;
     Pending = false;
-    Set(Configuration.valueClutterData.Value);
+    FromSetting(Configuration.valueClutterData.Value);
   }
   public static ClutterSystem.Clutter FromData(ClutterYaml data, string fileName)
   {
@@ -128,9 +128,9 @@ public class ClutterManager
     {
       if (File.Exists(FilePath))
       {
-        var yaml = DataManager.Read<ClutterYaml, ClutterSystem.Clutter>(Pattern, FromData, out var hasFiles, out var hasData);
-        if (hasFiles && !hasData) return;
-        Configuration.valueClutterData.Value = yaml;
+        var files = DataManager.Read(Pattern);
+        if (files == null || !Set(files)) return;
+        Configuration.valueClutterData.Value = string.Join("\n", files.Values);
       }
       else
       {
@@ -144,22 +144,29 @@ public class ClutterManager
     }
   }
 
-  public static void Set(string yaml)
+  public static void FromSetting(string yaml)
   {
+    if (!Helper.IsClient()) return;
     if (!Initialized)
     {
       Pending = true;
       return;
     }
-    if (!TryParseYaml(yaml, out var data)) return;
+    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
+  }
+  public static bool Set(Dictionary<string, string> files)
+  {
+    if (!TryParseYaml(files, out var data)) return false;
     ClutterSystem.instance.m_clutter.Clear();
     foreach (var clutter in data)
       ClutterSystem.instance.m_clutter.Add(clutter);
     ClutterSystem.instance.ClearAll();
+    EWD.Instance.InvokeRegenerate();
+    return true;
   }
-  private static bool TryParseYaml(string yaml, out List<ClutterSystem.Clutter> data)
+  private static bool TryParseYaml(Dictionary<string, string> files, out List<ClutterSystem.Clutter> data)
   {
-    if (yaml == "")
+    if (files.Count == 0)
     {
       Log.Info($"Reloading default clutter data ({DefaultEntries.Count} entries).");
       data = DefaultEntries;
@@ -167,8 +174,12 @@ public class ClutterManager
     }
     try
     {
-      data = Yaml.Deserialize<ClutterYaml>(yaml, "Clutter")
-          .Select(d => FromData(d, "Clutter")).Where(clutter => clutter.m_prefab).ToList();
+      data = [];
+      foreach (var file in files)
+      {
+        if (!Yaml.TryDeserialize<ClutterYaml>(file.Value, file.Key, out var parsed)) return false;
+        data.AddRange(parsed.Select(d => FromData(d, file.Key)).Where(clutter => clutter.m_prefab));
+      }
     }
     catch (Exception e)
     {

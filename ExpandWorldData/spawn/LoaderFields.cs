@@ -28,7 +28,7 @@ public class LoaderFields
       customData.Strings ??= [];
       customData.Strings[HashFaction] = DataValue.Simple(data.faction);
     }
-    if (Configuration.DataDrops && data.drops != null)
+    if (ExpandWorld.Drops.Patcher.Enabled && data.drops != null)
     {
       customData ??= new();
       customData.Hashes ??= [];

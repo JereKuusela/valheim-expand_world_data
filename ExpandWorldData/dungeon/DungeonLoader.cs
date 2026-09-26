@@ -61,8 +61,8 @@ public partial class Loader
 
   public static void Load()
   {
-    DungeonObjects.Generators.Clear();
     if (Helper.IsClient()) return;
+    DungeonObjects.Generators.Clear();
     if (!Configuration.DataRooms)
     {
       Log.Info($"Reloading default dungeon entries).");

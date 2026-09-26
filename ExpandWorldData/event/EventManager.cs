@@ -20,41 +20,54 @@ public class Manager
     File.WriteAllText(FilePath, Yaml.Serializer().Serialize(RandEventSystem.instance.m_events.Select(Loader.ToData).ToList()));
   }
 
-  public static void ReadConfig()
+  public static void ReadConfigs()
   {
-    if (!Configuration.DataEvents || Helper.IsClient()) return;
-    var yaml = DataManager.Read<Data, RandomEvent>(Pattern, Loader.FromData, out var hasFiles, out var hasData);
-    if (hasFiles && !hasData) return;
-    Set(yaml);
-    Configuration.valueEventData.Value = Yaml.Serializer().Serialize(RandEventSystem.instance.m_events.Select(Loader.ToData).ToList());
+    if (Helper.IsClient()) return;
+    if (!Configuration.DataEvents)
+    {
+      if (Set([]))
+        Configuration.valueEventData.Value = "";
+      return;
+    }
+    var files = DataManager.Read(Pattern);
+    if (files == null || !Set(files)) return;
+    Configuration.valueEventData.Value = string.Join("\n", files.Values);
   }
 
   public static void FromSetting(string yaml)
   {
-    ClientDataFlow.Apply(yaml, Configuration.DataEvents, Set, ready: !LoadDelayed);
+    if (Helper.IsClient() && !LoadDelayed) Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
   }
 
-  private static void Set(string yaml)
+  private static bool Set(Dictionary<string, string> files)
   {
-    if (RandEventSystem.instance == null) { ExpandWorldData.Patcher.Update(EWD.Harmony); return; }
+    if (RandEventSystem.instance == null) return false;
     if (Originals.Count == 0) Originals = [.. RandEventSystem.instance.m_events];
-    if (string.IsNullOrEmpty(yaml))
+    if (files.Count == 0)
     {
-      Log.Warning("Failed to load any event data. No changes done.");
-      return;
+      Patcher.SetEnabled(false);
+      EWD.Instance.InvokeRegenerate();
+      return true;
     }
-    RemoveSpawnMetadata(RandEventSystem.instance.m_events);
-    Loader.ExtraData.Clear();
     try
     {
-      var data = Yaml.Deserialize<Data>(yaml, "Events").Select(entry => Loader.FromData(entry, "Events")).ToList();
-      if (data.Count == 0) { Log.Warning("Failed to load any event data."); return; }
-      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data)) return;
+      List<RandomEvent> data = [];
+      foreach (var file in files)
+      {
+        if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return false;
+        data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)));
+      }
+      if (data.Count == 0) return false;
+      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data)) return false;
       Log.Info($"Reloading event data ({data.Count} entries).");
+      RemoveSpawnMetadata(RandEventSystem.instance.m_events);
+      Loader.ExtraData.Clear();
       RandEventSystem.instance.m_events = data;
+      Patcher.SetEnabled(true);
+      EWD.Instance.InvokeRegenerate();
+      return true;
     }
-    catch (Exception e) { Log.Error(e.Message); Log.Error(e.StackTrace); }
-    finally { ExpandWorldData.Patcher.Update(EWD.Harmony); }
+    catch (Exception e) { Log.Error(e.Message); Log.Error(e.StackTrace); return false; }
   }
 
   private static void RemoveSpawnMetadata(IEnumerable<RandomEvent> events)
@@ -77,33 +90,13 @@ public class Manager
     return true;
   }
 
-  public static void Toggle()
-  {
-    if (Configuration.DataEvents)
-    {
-      ExpandWorldData.Patcher.Update(EWD.Harmony);
-      ApplyTiming(RandEventSystem.instance);
-      if (Helper.IsServer())
-      {
-        CreateConfig();
-        ReadConfig();
-      }
-      else FromSetting(Configuration.valueEventData.Value);
-    }
-    else
-    {
-      Log.Warning("Disabling event data requires a restart to restore the original event data and timing.");
-      ExpandWorldData.Patcher.Update(EWD.Harmony);
-    }
-  }
-
   internal static void DelayClientLoad() => LoadDelayed = true;
 
   internal static void InitializeServerData()
   {
     if (!Helper.IsServer()) return;
     CreateConfig();
-    ReadConfig();
+    ReadConfigs();
   }
 
   internal static void InitializeClientData()
@@ -120,5 +113,5 @@ public class Manager
     system.m_eventIntervalMin = Configuration.EventInterval;
   }
 
-  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfig);
+  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfigs);
 }

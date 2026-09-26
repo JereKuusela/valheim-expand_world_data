@@ -5,9 +5,13 @@ namespace ExpandWorld.Drops;
 
 public static class Patcher
 {
+  public static bool Enabled { get; private set; }
+
+  public static void SetEnabled(bool enabled) => Enabled = enabled;
+
   public static void Patch(Harmony harmony)
   {
-    var shouldPatch = Configuration.DataDrops;
+    var shouldPatch = Enabled;
     ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(Loader), nameof(Loader.InitializeData), HarmonyPatchType.Postfix, Priority.VeryLow);
     ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(CharacterDrop), nameof(CharacterDrop.GenerateDropList), typeof(CharacterDropPatches), nameof(CharacterDropPatches.CharacterDropGenerateDropList), HarmonyPatchType.Prefix);
     ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(Piece), nameof(Piece.DropResources), typeof(PieceRequirementPatches), nameof(PieceRequirementPatches.PieceDropResources), HarmonyPatchType.Prefix);

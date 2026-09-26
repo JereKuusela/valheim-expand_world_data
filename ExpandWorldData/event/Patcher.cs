@@ -6,18 +6,22 @@ namespace ExpandWorld.Event;
 
 public static class Patcher
 {
+  public static bool Enabled { get; private set; }
+
   public static void Patch(Harmony harmony)
   {
-    PatchMultipleEvents(harmony, Configuration.DataEvents && Configuration.MultipleEvents);
-    PatchCheckPerPlayer(harmony, Configuration.DataEvents && Configuration.CheckPerPlayer);
-    PatchLifecycle(harmony, Configuration.DataEvents);
-    PatchExtraChecks(harmony, Configuration.DataEvents && Loader.ExtraData.Values.Any(data =>
+    PatchMultipleEvents(harmony, Configuration.MultipleEvents);
+    PatchCheckPerPlayer(harmony, Configuration.CheckPerPlayer);
+    PatchLifecycle(harmony, Enabled);
+    PatchExtraChecks(harmony, Enabled && Loader.ExtraData.Values.Any(data =>
       data.RequiredEnvironments.Count > 0 || data.PlayerLimit != null || data.EventLimit != null));
-    PatchCheckBase(harmony, Configuration.DataEvents && Loader.ExtraData.Values.Any(data =>
+    PatchCheckBase(harmony, Enabled && Loader.ExtraData.Values.Any(data =>
       data.MinBaseValue != 3 || data.MaxBaseValue != int.MaxValue));
-    PatchCommands(harmony, Configuration.DataEvents && Loader.ExtraData.Values.Any(data =>
+    PatchCommands(harmony, Enabled && Loader.ExtraData.Values.Any(data =>
       data.StartCommands?.Length > 0 || data.EndCommands?.Length > 0));
   }
+
+  public static void SetEnabled(bool enabled) => Enabled = enabled;
 
   private static void PatchLifecycle(Harmony harmony, bool shouldPatch)
   {

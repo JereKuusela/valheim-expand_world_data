@@ -4,6 +4,10 @@ namespace ExpandWorldData.World;
 
 public static class Patcher
 {
+  public static bool TerritoryEnabled { get; private set; }
+
+  public static void SetTerritoryEnabled(bool enabled) => TerritoryEnabled = enabled;
+
   public static void Patch(Harmony harmony)
   {
     var environmentRules = BiomeManager.HasEnvironmentRules;
@@ -14,7 +18,7 @@ public static class Patcher
     Patches.Apply(harmony, globalKeyRules, typeof(ZoneSystem), nameof(ZoneSystem.GlobalKeyAdd), typeof(GlobalKeyAdd), nameof(GlobalKeyAdd.ResetEnvironmentPeriod), HarmonyPatchType.Postfix);
     Patches.Apply(harmony, globalKeyRules, typeof(ZoneSystem), nameof(ZoneSystem.GlobalKeyRemove), typeof(GlobalKeyRemove), nameof(GlobalKeyRemove.ResetEnvironmentPeriod), HarmonyPatchType.Postfix);
 
-    var territoryData = TerritoryManager.HasData;
+    var territoryData = TerritoryEnabled;
     Patches.Apply(harmony, territoryData, typeof(Minimap), nameof(Minimap.UpdateBiome), typeof(UpdateBiome), nameof(UpdateBiome.PrepareTerritoryNameDisplay), HarmonyPatchType.Prefix);
     Patches.Apply(harmony, territoryData, typeof(Minimap), nameof(Minimap.UpdateBiome), typeof(UpdateBiome), nameof(UpdateBiome.AppendTerritoryNameToDisplay), HarmonyPatchType.Transpiler);
     Patches.Apply(harmony, territoryData, typeof(Minimap), nameof(Minimap.UpdateBiome), typeof(UpdateBiome), nameof(UpdateBiome.RestoreTerritoryNameDisplay), HarmonyPatchType.Postfix);

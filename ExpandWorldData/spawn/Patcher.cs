@@ -8,23 +8,27 @@ namespace ExpandWorld.Spawn;
 
 public static class Patcher
 {
+  public static bool Enabled { get; private set; }
+
   public static void Patch(Harmony harmony)
   {
-    var enabled = Configuration.DataSpawns || Configuration.DataEvents;
+    var enabled = Enabled || Event.Patcher.Enabled;
     var active = enabled ? ActiveSpawns().ToHashSet() : [];
-    PatchLifecycle(harmony, Configuration.DataSpawns);
+    PatchLifecycle(harmony, enabled);
     PatchData(harmony, enabled && active.Any(Loader.Data.ContainsKey));
     PatchObjects(harmony, enabled && active.Any(Loader.Objects.ContainsKey));
-    PatchGlobalKeys(harmony, Configuration.DataSpawns && Manager.Override?.Any(UsesNumericGlobalKey) == true);
+    PatchGlobalKeys(harmony, enabled && Manager.Override?.Any(UsesNumericGlobalKey) == true);
   }
 
   private static IEnumerable<SpawnSystem.SpawnData> ActiveSpawns()
   {
-    if (Configuration.DataSpawns && Manager.Override != null)
+    if (Enabled && Manager.Override != null)
       foreach (var spawn in Manager.Override) yield return spawn;
-    if (Configuration.DataEvents && RandEventSystem.instance != null)
+    if (Event.Patcher.Enabled && RandEventSystem.instance != null)
       foreach (var spawn in RandEventSystem.instance.m_events.SelectMany(entry => entry.m_spawn)) yield return spawn;
   }
+
+  public static void SetEnabled(bool enabled) => Enabled = enabled;
 
   private static bool UsesNumericGlobalKey(SpawnSystem.SpawnData spawn)
   {

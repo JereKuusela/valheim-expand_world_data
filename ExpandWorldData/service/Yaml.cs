@@ -164,6 +164,40 @@ public class Yaml
       }
     }
   }
+  public static bool TryDeserialize<T>(string raw, string fileName, out List<T> result)
+  {
+    try
+    {
+      result = Deserializer().Deserialize<List<T>>(raw) ?? [];
+      return true;
+    }
+    catch (Exception ex1)
+    {
+      Log.Error($"{fileName}: {ex1.Message}");
+      try
+      {
+        result = DeserializerUnSafe().Deserialize<List<T>>(raw) ?? [];
+        return true;
+      }
+      catch (Exception ex2)
+      {
+        Log.Error($"{fileName}: {ex2.Message}");
+        result = [];
+        return false;
+      }
+    }
+  }
+  public static bool TryDeserialize<T>(Dictionary<string, string> files, out List<T> result)
+  {
+    result = [];
+    foreach (var file in files)
+    {
+      if (!TryDeserialize<T>(file.Value, file.Key, out var parsed))
+        return false;
+      result.AddRange(parsed);
+    }
+    return true;
+  }
   public static List<T> LoadList<T>(string file) where T : new()
   {
     if (!File.Exists(file)) return [];
