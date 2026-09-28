@@ -20,9 +20,15 @@ public class NoBuildManager
   private static bool Initialized;
   private static bool Pending;
 
-  public static void Load()
+  /// <summary>Marks this manager ready to accept sync updates. Does not replay pending data yet
+  /// — call <see cref="ApplyPending"/> once every manager has initialized.</summary>
+  public static void Initialize()
   {
     Initialized = true;
+  }
+
+  public static void ApplyPending()
+  {
     if (!Pending) return;
     Pending = false;
     Apply(Configuration.valueNoBuildData.Value);

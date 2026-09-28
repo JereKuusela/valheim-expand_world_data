@@ -7,14 +7,14 @@ using Service;
 
 namespace ExpandWorld.Event;
 
-public class Manager
+public class EventManager
 {
   public static readonly string FilePath = Path.Combine(Yaml.Directory, "expand_events.yaml");
   public const string Pattern = "expand_events*.yaml";
   public static List<RandomEvent> Originals = [];
   public static bool LoadDelayed;
 
-  public static void CreateConfig()
+  public static void CreateConfigs()
   {
     if (!Configuration.DataEvents || Helper.IsClient() || File.Exists(FilePath)) return;
     File.WriteAllText(FilePath, Yaml.Serializer().Serialize(RandEventSystem.instance.m_events.Select(Loader.ToData).ToList()));
@@ -95,7 +95,7 @@ public class Manager
   internal static void InitializeServerData()
   {
     if (!Helper.IsServer()) return;
-    CreateConfig();
+    CreateConfigs();
     ReadConfigs();
   }
 
@@ -113,5 +113,5 @@ public class Manager
     system.m_eventIntervalMin = Configuration.EventInterval;
   }
 
-  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfigs);
+  public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataEvents, ReadConfigs);
 }

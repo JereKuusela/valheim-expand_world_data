@@ -37,7 +37,7 @@ public class TryParseTheme
   }
   static bool Prefix(string value, ref Room.Theme result, ref bool __result)
   {
-    __result = RoomLoading.TryGetTheme(value, out result);
+    __result = RoomManager.TryGetTheme(value, out result);
     return false;
   }
 }
@@ -54,7 +54,7 @@ public class GetValues
     }
     if (enumType == typeof(Room.Theme))
     {
-      __result = RoomLoading.ThemeToName.Keys.ToArray();
+      __result = RoomManager.ThemeToName.Keys.ToArray();
       return false;
     }
     return true;
@@ -72,7 +72,7 @@ public class GetNames
     }
     if (enumType == typeof(Room.Theme))
     {
-      __result = RoomLoading.ThemeToName.Values.ToArray();
+      __result = RoomManager.ThemeToName.Values.ToArray();
       return false;
     }
     return true;
@@ -93,7 +93,7 @@ public class GetName
     }
     if (enumType == typeof(Room.Theme))
     {
-      if (RoomLoading.ThemeToName.TryGetValue((Room.Theme)value, out var result))
+      if (RoomManager.ThemeToName.TryGetValue((Room.Theme)value, out var result))
         __result = result;
       else
         __result = ((int)value).ToString();
@@ -118,7 +118,7 @@ public class EnumParse
     }
     if (enumType == typeof(Room.Theme))
     {
-      if (RoomLoading.TryGetTheme(value, out var theme))
+      if (RoomManager.TryGetTheme(value, out var theme))
       {
         __result = theme;
         return false;
@@ -144,7 +144,7 @@ public class ParseIgnoreCase
     }
     if (enumType == typeof(Room.Theme))
     {
-      if (RoomLoading.TryGetTheme(value, out var theme))
+      if (RoomManager.TryGetTheme(value, out var theme))
       {
         __result = theme;
         return false;

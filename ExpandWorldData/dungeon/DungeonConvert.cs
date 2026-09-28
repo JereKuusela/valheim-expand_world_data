@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace ExpandWorldData.Dungeon;
 
-public partial class Loader
+public partial class DungeonManager
 {
   public static FakeDungeonGenerator From(DungeonYaml data, string fileName)
   {
@@ -39,8 +39,8 @@ public partial class Loader
     dg.m_maxTilt = data.maxTilt;
     dg.m_minAltitude = data.minAltitude;
     dg.m_minRequiredRooms = data.minRequiredRooms;
-    dg.m_excludedRooms = [.. RoomLoading.ParseRooms(data.excludedRooms)];
-    dg.m_requiredRooms = RoomLoading.ParseRooms(data.requiredRooms);
+    dg.m_excludedRooms = [.. RoomManager.ParseRooms(data.excludedRooms)];
+    dg.m_requiredRooms = RoomManager.ParseRooms(data.requiredRooms);
     dg.m_roomLimits = ParseRoomLimits(data.roomLimits);
     dg.m_themes = DataManager.ToList(data.themes);
     dg.m_tileWidth = data.tileWidth;

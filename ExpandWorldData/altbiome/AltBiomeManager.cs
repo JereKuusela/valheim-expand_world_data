@@ -7,7 +7,7 @@ using Service;
 
 namespace ExpandWorldData;
 
-public static class AltBiomeLoading
+public static class AltBiomeManager
 {
   public static readonly string FilePath = Path.Combine(Yaml.BaseDirectory, "expand_altbiomes.yaml");
   public const string Pattern = "expand_altbiomes*.yaml";
@@ -20,32 +20,23 @@ public static class AltBiomeLoading
     Active = [.. Original];
   }
 
-  public static void CreateConfigs()
+  private class Sync : SyncedDataManager
   {
-    if (Helper.IsClient() || !Configuration.DataAltBiomes || File.Exists(FilePath)) return;
-    var yaml = Yaml.Serializer().Serialize(Original.Select(ToData).ToList());
-    Configuration.valueAltBiomeData.Value = yaml;
-    File.WriteAllText(FilePath, yaml);
+    protected override string FilePath => AltBiomeManager.FilePath;
+    protected override string Pattern => AltBiomeManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataAltBiomes;
+    protected override string ConfigValue { get => Configuration.valueAltBiomeData.Value; set => Configuration.valueAltBiomeData.Value = value; }
+    protected override bool RequireFileExistsCheckOnRead => false;
+    protected override bool Set(Dictionary<string, string> files) => AltBiomeManager.Set(files);
+    protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(Original.Select(ToData).ToList()));
   }
+  private static readonly Sync Instance = new();
 
-  public static void ReadConfigs()
-  {
-    if (Helper.IsClient()) return;
-    if (!Configuration.DataAltBiomes)
-    {
-      if (Set([]))
-        Configuration.valueAltBiomeData.Value = "";
-      return;
-    }
-    var files = DataManager.Read(Pattern);
-    if (files == null || !Set(files)) return;
-    Configuration.valueAltBiomeData.Value = string.Join("\n", files.Values);
-  }
+  public static void CreateConfigs() => Instance.CreateConfigs();
 
-  public static void FromSetting(string yaml)
-  {
-    if (Helper.IsClient()) Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
-  }
+  public static void ReadConfigs() => Instance.ReadConfigs();
+
+  public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
 
   private static bool Set(Dictionary<string, string> files)
   {
@@ -89,7 +80,7 @@ public static class AltBiomeLoading
       EWD.Instance.InvokeRegenerate();
   }
 
-  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfigs);
+  public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataAltBiomes, ReadConfigs);
 
   public static AltBiome FromData(AltBiomeYaml data, string fileName = "AltBiomes")
   {
@@ -130,9 +121,9 @@ public static class AltBiomeLoading
     if (data.spawn != null)
       alt.m_spawn = [.. data.spawn.Select(item => Loader.FromData(item, fileName))];
     if (data.addVegetation != null)
-      alt.m_addVegetation = [.. data.addVegetation.Select(item => VegetationLoading.FromData(item, fileName))];
+      alt.m_addVegetation = [.. data.addVegetation.Select(item => VegetationManager.FromData(item, fileName))];
     if (data.addLocations != null)
-      alt.m_addLocations = [.. data.addLocations.Select(item => LocationLoading.FromData(item, fileName))];
+      alt.m_addLocations = [.. data.addLocations.Select(item => LocationManager.FromData(item, fileName))];
     return alt;
   }
 
@@ -169,7 +160,7 @@ public static class AltBiomeLoading
     terrainTextureOverride = DataManager.FromBiomes(alt.m_terrainTextureOverride),
     addEnvironments = alt.m_addEnvironments.Count > 0 ? [.. alt.m_addEnvironments.Select(BiomeManager.ToData)] : null,
     spawn = alt.m_spawn.Count > 0 ? [.. alt.m_spawn.Select(Loader.ToData)] : null,
-    addVegetation = alt.m_addVegetation.Count > 0 ? [.. alt.m_addVegetation.Select(VegetationLoading.ToData)] : null,
-    addLocations = alt.m_addLocations.Count > 0 ? [.. alt.m_addLocations.Select(LocationLoading.ToData)] : null
+    addVegetation = alt.m_addVegetation.Count > 0 ? [.. alt.m_addVegetation.Select(VegetationManager.ToData)] : null,
+    addLocations = alt.m_addLocations.Count > 0 ? [.. alt.m_addLocations.Select(LocationManager.ToData)] : null
   };
 }

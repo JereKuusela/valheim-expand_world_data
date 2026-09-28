@@ -118,10 +118,9 @@ public class BiomeManager
     };
   }
 
-  public static void CreateConfigs()
+  public static void CreateConfigs() => Instance.CreateConfigs();
+  private static void WriteDefaultConfig()
   {
-    if (Helper.IsClient() || !Configuration.DataBiome) return;
-    if (File.Exists(FilePath)) return;
     // World setup can run before EnvMan exists (fresh install without the yaml file).
     // Configs get created later at ZoneSystem.Start where EnvMan is guaranteed to exist.
     if (EnvMan.instance == null) return;
@@ -129,46 +128,16 @@ public class BiomeManager
     List<BiomeYaml> data = [.. biomes.Select(ToData).ToList(), .. ExtraBiomeYamls.Values];
     var yaml = Yaml.Serializer().Serialize(data);
     File.WriteAllText(FilePath, yaml);
-    // Biomes are important so that other files work, so this guarantees that custom biomes get loaded.
-    if (ExtraBiomeYamls.Count > 0)
-      ReadConfigs();
   }
 
-  public static void ReadConfigs()
-  {
-    if (Helper.IsClient()) return;
-    if (Configuration.DataBiome)
-    {
-      if (File.Exists(FilePath))
-      {
-        var files = DataManager.Read(Pattern);
-        if (files == null || !Set(files)) return;
-        Configuration.valueBiomeData.Value = string.Join("\n", files.Values);
-      }
-      else
-      {
-        // Watcher will trigger reload.
-        CreateConfigs();
-      }
-    }
-    else
-    {
-      if (Set([]))
-        Configuration.valueBiomeData.Value = "";
-    }
-  }
+  public static void ReadConfigs() => Instance.ReadConfigs();
   public static void NamesFromFile()
   {
     if (!Configuration.DataBiome) return;
     LoadNames(DataManager.ReadData<BiomeYaml, BiomeYaml>(Pattern, From));
   }
   private static BiomeYaml From(BiomeYaml data, string file) => data;
-  public static void FromSetting(string yaml)
-  {
-    if (!Helper.IsClient()) return;
-    if (!Initialized) { Pending = true; return; }
-    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
-  }
+  public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
   public static bool BiomeForestMultiplier = false;
 
   private static List<BiomeYaml> Parse(string yaml)
@@ -208,22 +177,23 @@ public class BiomeManager
     NameToBiome = BiomeToDisplayName.ToDictionary(kvp => kvp.Value.ToLowerInvariant(), kvp => kvp.Key);
   }
   private static List<BiomeEnvSetup> Environments = [];
-  private static bool Initialized;
-  private static bool Pending;
 
-  public static void Load()
+  private class Sync : SyncedDataManager
   {
-    Initialized = true;
-    if (!Pending) return;
-    Pending = false;
-    FromSetting(Configuration.valueBiomeData.Value);
+    protected override string FilePath => BiomeManager.FilePath;
+    protected override string Pattern => BiomeManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataBiome;
+    protected override string ConfigValue { get => Configuration.valueBiomeData.Value; set => Configuration.valueBiomeData.Value = value; }
+    protected override bool Set(Dictionary<string, string> files) => BiomeManager.Set(files);
+    protected override void WriteDefaultConfig() => BiomeManager.WriteDefaultConfig();
+    protected override void AfterCreateConfigs()
+    {
+      // Biomes are important so that other files work, so this guarantees that custom biomes get loaded.
+      if (ExtraBiomeYamls.Count > 0)
+        ReadConfigs();
+    }
   }
-
-  public static void CleanUp()
-  {
-    Initialized = false;
-    Pending = false;
-  }
+  private static readonly Sync Instance = new();
 
   private static void Load(List<BiomeYaml> rawData)
   {
@@ -343,7 +313,7 @@ public class BiomeManager
       if (ZNet.m_instance == null) NamesFromFile();
       else ReadConfigs();
     }
-    Yaml.SetupWatcher(Pattern, callback);
+    Yaml.SetupDataWatcher(Pattern, Configuration.configDataBiome, callback);
   }
 
   public static bool CheckKeys(EnvEntry env) => !EnvKeys.TryGetValue(env, out var keys) || keys.CheckKeys();

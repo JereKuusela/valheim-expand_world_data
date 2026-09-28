@@ -22,7 +22,7 @@ public static class Loader
     ReferenceFileGenerator.Save();
   }
 
-  public static void CreateConfig()
+  public static void CreateConfigs()
   {
     if (!Configuration.DataDrops || Helper.IsClient() || File.Exists(FilePath)) return;
     File.WriteAllText(FilePath, "# Drop data. See reference file for examples.");
@@ -77,8 +77,8 @@ public static class Loader
   {
     if (files.Count == 0)
     {
-      Manager.DataByHash.Clear();
-      Manager.DataByName.Clear();
+      DropManager.DataByHash.Clear();
+      DropManager.DataByName.Clear();
       Patcher.SetEnabled(false);
       EWD.Instance.InvokeRegenerate();
       return true;
@@ -93,10 +93,10 @@ public static class Loader
       }
       if (data.Count == 0)
         return false;
-      Manager.DataByHash.Clear();
-      Manager.DataByName.Clear();
+      DropManager.DataByHash.Clear();
+      DropManager.DataByName.Clear();
       foreach (var entry in data)
-        Manager.Add(entry);
+        DropManager.Add(entry);
       Patcher.SetEnabled(true);
       Log.Info($"Reloading drop data ({data.Count} entries).");
       EWD.Instance.InvokeRegenerate();
@@ -113,10 +113,10 @@ public static class Loader
   internal static void InitializeData()
   {
     ToReferenceFile();
-    CreateConfig();
+    CreateConfigs();
     if (Helper.IsServer()) ReadConfigs();
     else if (Configuration.valueDropData.Value != "") FromSetting(Configuration.valueDropData.Value);
   }
 
-  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfigs);
+  public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataDrops, ReadConfigs);
 }

@@ -25,10 +25,10 @@ public static class Patcher
 
   private static void PatchLifecycle(Harmony harmony, bool shouldPatch)
   {
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZNet), nameof(ZNet.Awake), typeof(Manager), nameof(Manager.DelayClientLoad), HarmonyPatchType.Prefix, Priority.Normal);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(Manager), nameof(Manager.InitializeServerData), HarmonyPatchType.Postfix, Priority.Last);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(Manager), nameof(Manager.InitializeClientData), HarmonyPatchType.Postfix, Priority.Normal);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.Awake), typeof(Manager), nameof(Manager.ApplyTiming), HarmonyPatchType.Postfix, Priority.Normal);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZNet), nameof(ZNet.Awake), typeof(EventManager), nameof(EventManager.DelayClientLoad), HarmonyPatchType.Prefix, Priority.Normal);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(EventManager), nameof(EventManager.InitializeServerData), HarmonyPatchType.Postfix, Priority.Last);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(EventManager), nameof(EventManager.InitializeClientData), HarmonyPatchType.Postfix, Priority.Normal);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.Awake), typeof(EventManager), nameof(EventManager.ApplyTiming), HarmonyPatchType.Postfix, Priority.Normal);
     ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.SetRandomEvent), typeof(Loader), nameof(Loader.ResolveEventConfiguration), HarmonyPatchType.Prefix, Priority.First);
   }
 

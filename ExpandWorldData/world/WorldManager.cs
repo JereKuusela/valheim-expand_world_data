@@ -11,22 +11,17 @@ public class WorldManager
   public static string FileName = "expand_world.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_world*.yaml";
-  private static bool Initialized;
-  private static bool Pending;
 
-  public static void Load()
+  private class Sync : SyncedDataManager
   {
-    Initialized = true;
-    if (!Pending) return;
-    Pending = false;
-    FromSetting(Configuration.valueWorldData.Value);
+    protected override string FilePath => WorldManager.FilePath;
+    protected override string Pattern => WorldManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataWorld;
+    protected override string ConfigValue { get => Configuration.valueWorldData.Value; set => Configuration.valueWorldData.Value = value; }
+    protected override bool Set(Dictionary<string, string> files) => WorldManager.Set(files);
+    protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(DefaultData));
   }
-
-  public static void CleanUp()
-  {
-    Initialized = false;
-    Pending = false;
-  }
+  private static readonly Sync Instance = new();
 
   public static List<WorldYaml> DefaultData = [
       new() {
@@ -94,46 +89,9 @@ public class WorldManager
 
   public static WorldYaml ToData(WorldYaml biome) => biome;
 
-  public static void CreateConfigs()
-  {
-    if (Helper.IsClient() || !Configuration.DataWorld) return;
-    if (File.Exists(FilePath)) return;
-    var yaml = Yaml.Serializer().Serialize(DefaultData);
-    File.WriteAllText(FilePath, yaml);
-  }
-  public static void ReadConfigs()
-  {
-    if (Helper.IsClient()) return;
-    if (Configuration.DataWorld)
-    {
-      if (File.Exists(FilePath))
-      {
-        var files = DataManager.Read(Pattern);
-        if (files == null || !Set(files)) return;
-        Configuration.valueWorldData.Value = string.Join("\n", files.Values);
-      }
-      else
-      {
-        // Watcher will trigger reload.
-        CreateConfigs();
-      }
-    }
-    else
-    {
-      if (Set([]))
-        Configuration.valueWorldData.Value = "";
-    }
-  }
-  public static void FromSetting(string yaml)
-  {
-    if (!Helper.IsClient()) return;
-    if (!Initialized)
-    {
-      Pending = true;
-      return;
-    }
-    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
-  }
+  public static void CreateConfigs() => Instance.CreateConfigs();
+  public static void ReadConfigs() => Instance.ReadConfigs();
+  public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
   private static bool Set(Dictionary<string, string> files)
   {
     try
@@ -184,6 +142,6 @@ public class WorldManager
   }
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, ReadConfigs);
+    Yaml.SetupDataWatcher(Pattern, Configuration.configDataWorld, ReadConfigs);
   }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ExpandWorld.Drops;
 
-public class Manager
+public class DropManager
 {
   public static readonly int HashDrop = "ews_drops".GetStableHashCode();
 

@@ -51,25 +51,21 @@ public class EWD : BaseUnityPlugin
       {
         Yaml.SetupWatcher(Config);
         DataLoading.SetupWatcher();
-        BiomeManager.SetupWatcher();
-        TerritoryManager.SetupWatcher();
-        LocationLoading.SetupWatcher();
-        VegetationLoading.SetupWatcher();
-        WorldManager.SetupWatcher();
-        ClutterManager.SetupWatcher();
-        EnvironmentManager.SetupWatcher();
-        AltBiomeLoading.SetupWatcher();
-        Dungeon.Loader.SetupWatcher();
-        RoomLoading.SetupWatcher();
         BlueprintManager.SetupBlueprintWatcher();
-        // Looks weird here? Should be dynamic, no?
-        if (Configuration.DataSpawns)
-          ExpandWorld.Spawn.Manager.SetupWatcher();
-        if (Configuration.DataEvents)
-          ExpandWorld.Event.Manager.SetupWatcher();
-        if (Configuration.DataDrops)
-          ExpandWorld.Drops.Loader.SetupWatcher();
       }
+      BiomeManager.SetupWatcher();
+      TerritoryManager.SetupWatcher();
+      LocationManager.SetupWatcher();
+      VegetationManager.SetupWatcher();
+      WorldManager.SetupWatcher();
+      ClutterManager.SetupWatcher();
+      EnvironmentManager.SetupWatcher();
+      AltBiomeManager.SetupWatcher();
+      Dungeon.DungeonManager.SetupWatcher();
+      RoomManager.SetupWatcher();
+      ExpandWorld.Spawn.SpawnManager.SetupWatcher();
+      ExpandWorld.Event.EventManager.SetupWatcher();
+      ExpandWorld.Drops.Loader.SetupWatcher();
     }
     catch (Exception e)
     {
@@ -81,17 +77,14 @@ public class EWD : BaseUnityPlugin
     if (Chainloader.PluginInfos.ContainsKey("expand_world_events") && !Configuration.DataEvents)
     {
       Configuration.configDataEvents.Value = true;
-      if (Configuration.DataReload) ExpandWorld.Event.Manager.SetupWatcher();
     }
     if (Chainloader.PluginInfos.ContainsKey("expand_world_spawns"))
     {
       if (!Configuration.DataSpawns)
       {
         Configuration.configDataSpawns.Value = true;
-        if (Configuration.DataReload) ExpandWorld.Spawn.Manager.SetupWatcher();
       }
       Configuration.configDataDrops.Value = true;
-      if (Configuration.DataReload) ExpandWorld.Drops.Loader.SetupWatcher();
     }
     BiomeManager.NamesFromFile();
     new DebugCommands();

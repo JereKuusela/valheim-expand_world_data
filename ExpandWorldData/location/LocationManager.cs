@@ -9,7 +9,7 @@ using UnityEngine;
 using Data;
 namespace ExpandWorldData;
 
-public class LocationLoading
+public class LocationManager
 {
   public static string FileName = "expand_locations.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
@@ -327,7 +327,7 @@ public class LocationLoading
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, ReadConfigs);
+    Yaml.SetupDataWatcher(Pattern, Configuration.configDataLocation, ReadConfigs);
   }
 }
 

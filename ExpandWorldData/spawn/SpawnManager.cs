@@ -7,7 +7,7 @@ using Service;
 
 namespace ExpandWorld.Spawn;
 
-public class Manager
+public class SpawnManager
 {
   public static readonly string FilePath = Path.Combine(Yaml.Directory, "expand_spawns.yaml");
   public const string Pattern = "expand_spawns*.yaml";
@@ -25,7 +25,7 @@ public class Manager
     return yaml;
   }
 
-  public static void CreateConfig()
+  public static void CreateConfigs()
   {
     if (!Configuration.DataSpawns || Helper.IsClient() || File.Exists(FilePath)) return;
     Configuration.valueSpawnData.Value = Save();
@@ -102,7 +102,7 @@ public class Manager
     if (Override == null)
     {
       if (Helper.IsClient() && Configuration.valueSpawnData.Value != "") FromSetting(Configuration.valueSpawnData.Value);
-      if (Helper.IsServer()) CreateConfig();
+      if (Helper.IsServer()) CreateConfigs();
     }
     ApplySpawnData(__instance);
   }
@@ -114,7 +114,7 @@ public class Manager
     system.m_spawnLists[0].m_spawners = Override;
   }
 
-  public static void SetupWatcher() => Yaml.SetupWatcher(Pattern, ReadConfigs);
+  public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataSpawns, ReadConfigs);
 }
 
 public class GlobalKeys

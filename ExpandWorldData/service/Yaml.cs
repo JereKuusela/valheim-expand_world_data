@@ -120,6 +120,33 @@ public class Yaml
     BackupFile(file);
     action();
   });
+  public static void SetupDataWatcher(string pattern, ConfigEntry<bool> setting, Action action)
+  {
+    FileSystemWatcher watcher = new(BaseDirectory, pattern);
+    void Changed(string path)
+    {
+      if (!File.Exists(path))
+      {
+        if (setting.Value && ExpandWorldData.Configuration.DataReload) action();
+        return;
+      }
+      BackupFile(path);
+      if (!setting.Value)
+      {
+        Log.Info($"Automatically enabling {setting.Definition.Key} after editing {Path.GetFileName(path)}.");
+        setting.Value = true;
+      }
+      else if (ExpandWorldData.Configuration.DataReload)
+        action();
+    }
+    watcher.Created += (s, e) => Changed(e.FullPath);
+    watcher.Changed += (s, e) => Changed(e.FullPath);
+    watcher.Renamed += (s, e) => Changed(e.FullPath);
+    watcher.Deleted += (s, e) => Changed(e.FullPath);
+    watcher.IncludeSubdirectories = true;
+    watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
+    watcher.EnableRaisingEvents = true;
+  }
   private static void BackupFile(string path)
   {
     if (!File.Exists(path)) return;

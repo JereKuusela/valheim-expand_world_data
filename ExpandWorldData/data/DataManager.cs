@@ -17,9 +17,9 @@ public class InitializeRooms
 {
   static void Postfix()
   {
-    RoomLoading.Initialize();
+    RoomManager.Initialize();
     // Dungeons require room names to be loaded.
-    Dungeon.Loader.Initialize();
+    Dungeon.DungeonManager.Initialize();
   }
 }
 
@@ -46,47 +46,44 @@ public class InitializeContent
   {
     AddEmptyAssetReference();
 
-    // 1) Initialize managers that need original data snapshots.
+    // 1) Initialize managers (both client and server; snapshots + arms client sync gate).
     EnvironmentManager.Initialize();
-    AltBiomeLoading.Initialize();
+    AltBiomeManager.Initialize();
     // Clutter must be here because since SetupLocations adds prefabs to the list.
     ClutterManager.Initialize();
-    VegetationLoading.Initialize();
-    LocationLoading.Initialize();
+    VegetationManager.Initialize();
+    LocationManager.Initialize();
+    NoBuildManager.Initialize();
 
-    // 2) Create config files on server.
+    // 1b) All managers are initialized now, so any sync data that arrived early can be replayed.
+    SyncedDataManager.PostInitialize();
+    NoBuildManager.ApplyPending();
+
+    // 2) Server: create and read configs synchronously (no client sync gating needed).
     if (Helper.IsServer())
     {
       EnvironmentManager.CreateConfigs();
-      AltBiomeLoading.CreateConfigs();
+      AltBiomeManager.CreateConfigs();
       BiomeManager.CreateConfigs();
       TerritoryManager.CreateConfigs();
       WorldManager.CreateConfigs();
       ClutterManager.CreateConfigs();
-      VegetationLoading.CreateConfigs();
-      LocationLoading.CreateConfigs();
+      VegetationManager.CreateConfigs();
+      LocationManager.CreateConfigs();
 
-      // 3) Read configs on server. Managers are still gated by Initialized flag.
       DataLoading.LoadEntries();
       EnvironmentManager.ReadConfigs();
       BiomeManager.ReadConfigs();
       TerritoryManager.ReadConfigs();
       WorldManager.ReadConfigs();
       ClutterManager.ReadConfigs();
-      VegetationLoading.ReadConfigs();
-      LocationLoading.ReadConfigs();
-      AltBiomeLoading.ReadConfigs();
+      VegetationManager.ReadConfigs();
+      LocationManager.ReadConfigs();
+      AltBiomeManager.ReadConfigs();
 
       // Dungeon and room data is handled elsewhere.
     }
 
-    // 4) Load for both server and client.
-    EnvironmentManager.Load();
-    BiomeManager.Load();
-    TerritoryManager.Load();
-    WorldManager.Load();
-    NoBuildManager.Load();
-    ClutterManager.Load();
     EWD.Instance.CancelInvoke("Regenerate");
     EWD.Instance.Regenerate();
   }
@@ -126,13 +123,9 @@ public class CleanupOnShutdown
   static void Postfix()
   {
     NoBuildManager.CleanUp();
-    WorldManager.CleanUp();
-    TerritoryManager.CleanUp();
-    BiomeManager.CleanUp();
-    EnvironmentManager.CleanUp();
-    ClutterManager.CleanUp();
-    LocationLoading.CleanUp();
-    VegetationLoading.CleanUp();
+    LocationManager.CleanUp();
+    VegetationManager.CleanUp();
+    SyncedDataManager.CleanUpAll();
   }
 }
 

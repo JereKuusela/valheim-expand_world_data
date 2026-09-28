@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace ExpandWorldData;
 
-public class VegetationLoading
+public class VegetationManager
 {
   private static readonly string FileName = "expand_vegetation.yaml";
   private static readonly string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
@@ -322,6 +322,6 @@ public class VegetationLoading
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, ReadConfigs);
+    Yaml.SetupDataWatcher(Pattern, Configuration.configDataVegetation, ReadConfigs);
   }
 }

@@ -11,22 +11,23 @@ public class TerritoryManager
   public static string FileName = "expand_territories.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_territories*.yaml";
-  private static bool Initialized;
-  private static bool Pending;
 
-  public static void Load()
+  private class Sync : SyncedDataManager
   {
-    Initialized = true;
-    if (!Pending) return;
-    Pending = false;
-    FromSetting(Configuration.valueTerritoryData.Value);
+    protected override string FilePath => TerritoryManager.FilePath;
+    protected override string Pattern => TerritoryManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataTerritory;
+    protected override string ConfigValue { get => Configuration.valueTerritoryData.Value; set => Configuration.valueTerritoryData.Value = value; }
+    protected override bool RequireFileExistsCheckOnRead => false;
+    protected override bool Set(Dictionary<string, string> files) => TerritoryManager.Set(files);
+    protected override void WriteDefaultConfig()
+    {
+      if (ExtraTerritoryYamls.Count == 0) return;
+      var yaml = Yaml.Serializer().Serialize(ExtraTerritoryYamls.Values);
+      File.WriteAllText(FilePath, yaml);
+    }
   }
-
-  public static void CleanUp()
-  {
-    Initialized = false;
-    Pending = false;
-  }
+  private static readonly Sync Instance = new();
 
   private static readonly Dictionary<string, TerritoryYaml> ExtraTerritoryYamls = [];
 
@@ -46,36 +47,13 @@ public class TerritoryManager
   public static bool HasNoBuild => Data.Values.Any(data => data.noBuild);
   public static bool HasStatusEffects => Data.Values.Any(data => data.statusEffects.Count > 0);
 
-  public static void CreateConfigs()
-  {
-    if (Helper.IsClient() || !Configuration.DataTerritory) return;
-    if (File.Exists(FilePath)) return;
-    if (ExtraTerritoryYamls.Count == 0) return;
-    var yaml = Yaml.Serializer().Serialize(ExtraTerritoryYamls.Values);
-    File.WriteAllText(FilePath, yaml);
-  }
+  public static void CreateConfigs() => Instance.CreateConfigs();
 
-  public static void ReadConfigs()
-  {
-    if (Helper.IsClient()) return;
-    if (Configuration.DataTerritory)
-    {
-      var files = DataManager.Read(Pattern);
-      if (files == null || !Set(files)) return;
-      Configuration.valueTerritoryData.Value = string.Join("\n", files.Values);
-    }
-    else if (Set([]))
-      Configuration.valueTerritoryData.Value = "";
-  }
+  public static void ReadConfigs() => Instance.ReadConfigs();
 
   private static TerritoryYaml From(TerritoryYaml data, string file) => data;
 
-  public static void FromSetting(string yaml)
-  {
-    if (!Helper.IsClient()) return;
-    if (!Initialized) { Pending = true; return; }
-    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
-  }
+  public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
 
   private static bool Set(Dictionary<string, string> files)
   {
@@ -103,7 +81,7 @@ public class TerritoryManager
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, ReadConfigs);
+    Yaml.SetupDataWatcher(Pattern, Configuration.configDataTerritory, ReadConfigs);
   }
 
   private static string Normalize(string value) => value.Trim().ToLowerInvariant();

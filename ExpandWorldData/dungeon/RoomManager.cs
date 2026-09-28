@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace ExpandWorldData;
 
-public class RoomLoading
+public class RoomManager
 {
   public static string FileName = "expand_rooms.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
@@ -34,7 +34,7 @@ public class RoomLoading
     RoomSpawning.RoomSizes.Clear();
     if (Helper.IsServer())
       SetDefaultEntries();
-    Load();
+    ReadConfigs();
   }
   private static void ToFile()
   {
@@ -78,7 +78,7 @@ public class RoomLoading
   public static Dictionary<Room.Theme, string> ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
   public static bool TryGetTheme(string name, out Room.Theme theme) => NameToTheme.TryGetValue(name.ToLowerInvariant(), out theme);
 
-  public static void Load()
+  public static void ReadConfigs()
   {
     RoomSpawning.Data.Clear();
     RoomSpawning.Blueprints.Clear();
@@ -328,6 +328,6 @@ public class RoomLoading
   }
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, Load);
+    Yaml.SetupDataWatcher(Pattern, Configuration.configDataRooms, ReadConfigs);
   }
 }

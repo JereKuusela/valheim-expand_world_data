@@ -17,13 +17,13 @@ public static class Patcher
     PatchLifecycle(harmony, enabled);
     PatchData(harmony, enabled && active.Any(Loader.Data.ContainsKey));
     PatchObjects(harmony, enabled && active.Any(Loader.Objects.ContainsKey));
-    PatchGlobalKeys(harmony, enabled && Manager.Override?.Any(UsesNumericGlobalKey) == true);
+    PatchGlobalKeys(harmony, enabled && SpawnManager.Override?.Any(UsesNumericGlobalKey) == true);
   }
 
   private static IEnumerable<SpawnSystem.SpawnData> ActiveSpawns()
   {
-    if (Enabled && Manager.Override != null)
-      foreach (var spawn in Manager.Override) yield return spawn;
+    if (Enabled && SpawnManager.Override != null)
+      foreach (var spawn in SpawnManager.Override) yield return spawn;
     if (Event.Patcher.Enabled && RandEventSystem.instance != null)
       foreach (var spawn in RandEventSystem.instance.m_events.SelectMany(entry => entry.m_spawn)) yield return spawn;
   }
@@ -39,8 +39,8 @@ public static class Patcher
 
   private static void PatchLifecycle(Harmony harmony, bool shouldPatch)
   {
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(Manager), nameof(Manager.InitializeData), HarmonyPatchType.Postfix, Priority.VeryLow);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(Manager), nameof(Manager.InitializeSpawnSystem), HarmonyPatchType.Postfix);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(SpawnManager), nameof(SpawnManager.InitializeData), HarmonyPatchType.Postfix, Priority.VeryLow);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(SpawnManager), nameof(SpawnManager.InitializeSpawnSystem), HarmonyPatchType.Postfix);
   }
 
   private static void PatchData(Harmony harmony, bool shouldPatch)

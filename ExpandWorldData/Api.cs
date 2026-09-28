@@ -35,19 +35,19 @@ public static class Api
   }
   public static void AddDungeon(DungeonYaml data)
   {
-    Dungeon.Loader.AddDungeon(data);
+    Dungeon.DungeonManager.AddDungeon(data);
   }
   public static void AddLocation(LocationYaml data)
   {
-    LocationLoading.AddLocation(data);
+    LocationManager.AddLocation(data);
   }
   public static void AddRoom(RoomYaml data)
   {
-    RoomLoading.AddRoom(data);
+    RoomManager.AddRoom(data);
   }
   public static void AddVegetation(VegetationYaml data)
   {
-    VegetationLoading.AddVegetation(data);
+    VegetationManager.AddVegetation(data);
   }
   public static void ChangeWorld(WorldYaml data, int index)
   {

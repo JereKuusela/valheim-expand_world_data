@@ -11,7 +11,7 @@ namespace ExpandWorldData.Dungeon;
 // So compared to other data,  the default dungeon generators are never removed.
 // So handling missing entries isn't very important but can be added later.
 [HarmonyPatch]
-public partial class Loader
+public partial class DungeonManager
 {
   public static string FileName = "expand_dungeons.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
@@ -33,7 +33,7 @@ public partial class Loader
       DefaultGenerators = ZNetScene.instance.m_namedPrefabs.Values.Where(prefab => prefab.GetComponent<DungeonGenerator>())
         .Select(prefab => prefab.GetComponent<DungeonGenerator>()).ToDictionary(kvp => kvp.name, kvp => kvp);
     }
-    Load();
+    ReadConfigs();
   }
 
   private static void ToFile()
@@ -59,11 +59,11 @@ public partial class Loader
     return [];
   }
 
-  public static void Load()
+  public static void ReadConfigs()
   {
     if (Helper.IsClient()) return;
     DungeonObjects.Generators.Clear();
-    if (!Configuration.DataRooms)
+    if (!Configuration.DataDungeons)
     {
       Log.Info($"Reloading default dungeon entries).");
       return;
@@ -128,6 +128,6 @@ public partial class Loader
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, Load);
+    Yaml.SetupDataWatcher(Pattern, Configuration.configDataDungeons, ReadConfigs);
   }
 }

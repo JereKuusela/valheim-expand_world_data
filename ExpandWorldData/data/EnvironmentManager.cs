@@ -11,8 +11,6 @@ public class EnvironmentManager
   public static string FileName = "expand_environments.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_environments*.yaml";
-  private static bool Initialized;
-  private static bool Pending;
   private static Dictionary<string, EnvSetup> Originals = [];
   public static Dictionary<string, EnvironmentData> Extra = [];
   public static bool HasStatusEffects => Extra.Values.Any(data => data.statusEffects.Count > 0);
@@ -27,19 +25,16 @@ public class EnvironmentManager
     if (newOriginals.Count > 0) Originals = newOriginals;
   }
 
-  public static void Load()
+  private class Sync : SyncedDataManager
   {
-    Initialized = true;
-    if (!Pending) return;
-    Pending = false;
-    FromSetting(Configuration.valueEnvironmentData.Value);
+    protected override string FilePath => EnvironmentManager.FilePath;
+    protected override string Pattern => EnvironmentManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataEnvironments;
+    protected override string ConfigValue { get => Configuration.valueEnvironmentData.Value; set => Configuration.valueEnvironmentData.Value = value; }
+    protected override bool Set(Dictionary<string, string> files) => EnvironmentManager.Set(files);
+    protected override void WriteDefaultConfig() => Save(EnvMan.instance.m_environments, false);
   }
-
-  public static void CleanUp()
-  {
-    Initialized = false;
-    Pending = false;
-  }
+  private static readonly Sync Instance = new();
 
   public static EnvSetup FromData(EnvironmentYaml data, string fileName)
   {
@@ -141,42 +136,9 @@ public class EnvironmentManager
     return data;
   }
 
-  public static void CreateConfigs()
-  {
-    if (Helper.IsClient() || !Configuration.DataEnvironments) return;
-    if (File.Exists(FilePath)) return;
-    Save(EnvMan.instance.m_environments, false);
-  }
-
-  public static void ReadConfigs()
-  {
-    if (Helper.IsClient()) return;
-    if (Configuration.DataEnvironments)
-    {
-      if (File.Exists(FilePath))
-      {
-        var files = DataManager.Read(Pattern);
-        if (files == null || !Set(files)) return;
-        Configuration.valueEnvironmentData.Value = string.Join("\n", files.Values);
-      }
-      else
-      {
-        // Watcher will trigger reload.
-        CreateConfigs();
-      }
-    }
-    else
-    {
-      if (Set([]))
-        Configuration.valueEnvironmentData.Value = "";
-    }
-  }
-  public static void FromSetting(string yaml)
-  {
-    if (!Helper.IsClient()) return;
-    if (!Initialized) { Pending = true; return; }
-    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
-  }
+  public static void CreateConfigs() => Instance.CreateConfigs();
+  public static void ReadConfigs() => Instance.ReadConfigs();
+  public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
   private static bool Set(Dictionary<string, string> files)
   {
     var previousExtra = Extra;
@@ -269,6 +231,6 @@ public class EnvironmentManager
 
   public static void SetupWatcher()
   {
-    Yaml.SetupWatcher(Pattern, ReadConfigs);
+    Yaml.SetupDataWatcher(Pattern, Configuration.configDataEnvironments, ReadConfigs);
   }
 }
