@@ -152,6 +152,8 @@ public class BiomeCalculator
   public static List<WorldEntry> GetBiomeData() => BiomeData ?? WorldManager.DefaultEntries;
   public static List<WorldEntry>? BiomeData = null;
   public static List<WorldEntry>? TerritoryData = null;
+  public static List<WorldEntry>? AltBiomeData = null;
+  public static bool HasAltBiomeData => AltBiomeData != null && AltBiomeData.Count > 0;
   public static bool CheckAngles = false;
   public static Dictionary<Heightmap.Biome, float> Offsets = [];
 
@@ -159,6 +161,7 @@ public class BiomeCalculator
   {
     BiomeData = [.. data.Where(item => item.biome != Heightmap.Biome.None)];
     TerritoryData = [.. data.Where(item => item.territory != "")];
+    AltBiomeData = [.. data.Where(item => item.altBiomes.Length > 0)];
   }
 
   private static float GetOffset(WorldGenerator obj, Heightmap.Biome biome)
@@ -179,6 +182,13 @@ public class BiomeCalculator
       return null;
     var angle = Mathf.Atan2(wx, wy);
     return GetEntry(wg, TerritoryData, wx, wy, angle);
+  }
+  public static WorldEntry? GetAltBiomeEntry(WorldGenerator wg, float wx, float wy)
+  {
+    if (AltBiomeData == null || AltBiomeData.Count == 0)
+      return null;
+    var angle = Mathf.Atan2(wx, wy);
+    return GetEntry(wg, AltBiomeData, wx, wy, angle);
   }
   public static TerritoryData? GetTerritory(float wx, float wy)
   {
@@ -258,7 +268,30 @@ public class BiomeCalculator
       min += Mathf.Sin(angle * item.wiggleDistanceLength) * item.wiggleDistanceWidth;
     else if (min == 0f)
       min = -0.1f; // To handle the center (0,0) correctly.
-    return item.boiling * (dist - min) / 300f;
+    var edge = dist - min;
+    if (item.hasRectangle)
+    {
+      var rectEdge = RectangleEdge(item, sx, sy);
+      edge = item.minDistance > 0f ? Mathf.Min(edge, rectEdge) : rectEdge;
+    }
+    return item.boiling * edge / 300f;
+  }
+
+  // Distance to the nearest (wiggled) rectangle edge, positive inside.
+  private static float RectangleEdge(WorldEntry item, float sx, float sy)
+  {
+    var dx = sx - item.centerX;
+    var dy = sy - item.centerY;
+    var lx = dx * item.rotationCos - dy * item.rotationSin;
+    var ly = dx * item.rotationSin + dy * item.rotationCos;
+    var limitX = item.halfSizeX;
+    var limitY = item.halfSizeY;
+    if (item.wiggleRectangleWidth > 0f)
+    {
+      limitX += Mathf.Sin(ly / item.wiggleRectangleLength) * item.wiggleRectangleWidth;
+      limitY += Mathf.Sin(lx / item.wiggleRectangleLength) * item.wiggleRectangleWidth;
+    }
+    return Mathf.Min(limitX - Mathf.Abs(lx), limitY - Mathf.Abs(ly));
   }
 
   private static WorldEntry? GetEntry(WorldGenerator obj, List<WorldEntry> data, float wx, float wy, float worldAngle)
@@ -292,6 +325,7 @@ public class BiomeCalculator
       }
       var distOk = mag > min && (max >= radius || mag < max);
       if (!distOk) continue;
+      if (item.hasRectangle && RectangleEdge(item, sx, sy) <= 0f) continue;
       if (CheckAngles)
       {
         min = item.minSector;

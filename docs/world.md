@@ -2,10 +2,15 @@
 
 The file `expand_world.yaml` sets the biome distribution.
 
-Each entry in the file adds a new rule. When determining the biome and territory, the rules are checked one by one from the top until a valid rule is found. This means the order of entries is especially important for this file.
+Each entry in the file adds a new rule. When determining the biome, territory and alternative biomes, the rules are checked one by one from the top until a valid rule is found. This means the order of entries is especially important for this file.
 
 - biome: Identifier of the biome if this rule is valid.
 - territory: Identifier of the territory if this rule is valid.
+- altBiome: Comma separated list of [alternative biomes](alt-biomes.md) added to biome sectors if this rule is valid.
+  - Checked at the center point of each biome sector.
+  - Added on top of the normal alternative biome generation. Ignores `biome`, `enabled`, amount limits and other placement requirements.
+  - Doesn't count towards `minAmountSpawned` or `maxAmountSpawned`.
+  - Normal generation doesn't add alternative biomes to these sectors.
 - maxAltitude (default: `1000` meters): Maximum terrain height relative to the water level.
 - minAltitude (default: `0` meters if maxAltitude is positive, otherwise `-1000` meters): Minimum terrain height relative to the water level.
 - maxDistance (default: `1.0` of world radius): Maximum distance from the world center.
@@ -14,6 +19,12 @@ Each entry in the file adds a new rule. When determining the biome and territory
 - maxSector (default: `1.0` of world angle): End of the [circle sector](https://en.wikipedia.org/wiki/Circular_sector).
 - centerX (default: `0.0` of world radius): Moves the center point away from the world center.
 - centerY (default: `0.0` of world radius): Moves the center point away from the world center.
+- sizeX: If set, limits the rule to a rectangle with this east-west size (of world radius) around the center point.
+- sizeY: If set, limits the rule to a rectangle with this north-south size (of world radius) around the center point.
+  - If only one of `sizeX` or `sizeY` is set, the other direction is unlimited.
+  - Combined with other filters, so both the rectangle and for example `minDistance` must be valid.
+  - Not supported by the legacy generation for biomes (territories and alternative biomes still work).
+- rotation (default: `0` degrees): Rotates the rectangle clockwise around the center point.
 - amount (default: `1.0` of total area): How much of the valid area is randomly filled with this biome. Uses normal distribution, see values below.
 - stretch (default: `1.0`): Same as the Stretch biomes setting in Expand World Size but applied just to a single entry. Multiplies the size of biome areas (average total area stays the same).
 - seed: Overrides the random outcome of `amount`. Numeric value fixes the outcome. Biome name uses a biome specific value derived from the world seed. No value uses biome from the `terrain` parameter.
@@ -32,9 +43,15 @@ Each entry in the file adds a new rule. When determining the biome and territory
   - The default value 500 meters causes a wiggle to appear every 2 \* Pi \* 500 = 3142 meters.
 - wiggleSectorWidth: If set, overrides the "Distance wiggle width" setting.
   - The default value 0.01 causes each wiggle to modify the sector from -0.01 to +0.01.
+- wiggleRectangle (default: `true`): Applies "wiggle" to the rectangle edges.
+- wiggleRectangleLength: If set, overrides the "Distance wiggle length" setting.
+  - The default value 500 meters causes a wiggle to appear every 2 \* Pi \* 500 = 3142 meters along the edge.
+- wiggleRectangleWidth: If set, overrides the "Wiggle width" setting.
+  - The default value 100 meters causes each wiggle to move the edge from -100 meters to +100 meters.
 - boiling (default: `false`): If true, the water is boiling hot.
   - For Ashlands biome, the default value is `true` to keep old configurations working.
   - The boiling effect gradually increases over 300 meters.
+    - With a rectangle, the effect increases from the rectangle edges.
     - This can be modified by using a numeric value instead of `true`.
     - For example `0.5` would make the effect increase over 600 meters while `2.0` would make the effect increase over 150 meters.
 
@@ -127,4 +144,16 @@ Offset-center pocket biome that also applies a territory:
   maxDistance: 0.16
   minAltitude: 5
   maxAltitude: 90
+```
+
+Rotated rectangular territory with straight edges:
+
+```yaml
+- territory: Frontier
+  centerX: 0.3
+  centerY: -0.2
+  sizeX: 0.25
+  sizeY: 0.1
+  rotation: 30
+  wiggleRectangle: false
 ```

@@ -6,6 +6,8 @@ Alternative biomes are generated during world generation. They can add extra ene
 
 This data is synced to clients. Editing the file automatically reloads the data and regenerates the world data. Already explored areas may require reloading the world or using other reset tools depending on what was changed.
 
+Alternative biomes can also be assigned to specific areas with the `altBiome` field in the [world data](world.md).
+
 Use `None` for biome fields that should have no biome selected. Leaving `biome` empty means all configured biomes.
 
 - name: Identifier of the alternative biome modifier. Used by locations and vegetation with the `altBiome` field.

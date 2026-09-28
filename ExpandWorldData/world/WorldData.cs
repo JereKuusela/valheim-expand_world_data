@@ -8,6 +8,8 @@ public class WorldYaml
   public string biome = "";
   [DefaultValue("")]
   public string territory = "";
+  [DefaultValue("")]
+  public string altBiome = "";
   [DefaultValue(10000f)]
   public float maxAltitude = 10000f;
   [DefaultValue(-1000f)]
@@ -24,6 +26,12 @@ public class WorldYaml
   public float centerX = 0f;
   [DefaultValue(0f)]
   public float centerY = 0f;
+  [DefaultValue(null)]
+  public float? sizeX;
+  [DefaultValue(null)]
+  public float? sizeY;
+  [DefaultValue(0f)]
+  public float rotation = 0f;
   [DefaultValue(1f)]
   public float amount = 1f;
   [DefaultValue(1f)]
@@ -43,6 +51,12 @@ public class WorldYaml
   public float? wiggleSectorLength;
   [DefaultValue(null)]
   public float? wiggleSectorWidth;
+  [DefaultValue(true)]
+  public bool wiggleRectangle = true;
+  [DefaultValue(null)]
+  public float? wiggleRectangleLength;
+  [DefaultValue(null)]
+  public float? wiggleRectangleWidth;
   [DefaultValue("")]
   public string boiling = "";
 }
@@ -54,6 +68,7 @@ public class WorldEntry
   public WorldEntry(WorldYaml data, string fileName)
   {
     territory = data.territory;
+    altBiomes = Parse.Split(data.altBiome);
     if (data.biome != "")
       biome = DataManager.ToBiomes(data.biome, fileName);
     biomeSeed = BiomeManager.GetTerrain(biome);
@@ -96,11 +111,23 @@ public class WorldEntry
     if (data.wiggleSectorWidth.HasValue)
       wiggleSectorWidth = data.wiggleSectorWidth.Value;
 
+    hasRectangle = data.sizeX.HasValue || data.sizeY.HasValue;
+    if (data.sizeX.HasValue)
+      halfSizeX = ConvertDist(data.sizeX.Value) / 2f;
+    if (data.sizeY.HasValue)
+      halfSizeY = ConvertDist(data.sizeY.Value) / 2f;
+    var radians = data.rotation * UnityEngine.Mathf.Deg2Rad;
+    rotationCos = UnityEngine.Mathf.Cos(radians);
+    rotationSin = UnityEngine.Mathf.Sin(radians);
+    wiggleRectangleLength = data.wiggleRectangleLength ?? Configuration.DistanceWiggleLength;
+    wiggleRectangleWidth = data.wiggleRectangle ? data.wiggleRectangleWidth ?? Configuration.WiggleWidth : 0f;
+
     if (minSector < 0f) minSector += 1f;
     if (maxSector > 1f) maxSector -= 1f;
   }
   public Heightmap.Biome biome = Heightmap.Biome.None;
   public string territory = "";
+  public string[] altBiomes = [];
   public float maxAltitude = 10000f;
   public float minAltitude = -1000f;
   public float maxDistance = 1f;
@@ -117,5 +144,12 @@ public class WorldEntry
   public float wiggleDistanceWidth = 100f;
   public float wiggleSectorLength = 500f;
   public float wiggleSectorWidth = 0.01f;
+  public bool hasRectangle = false;
+  public float halfSizeX = float.PositiveInfinity;
+  public float halfSizeY = float.PositiveInfinity;
+  public float rotationCos = 1f;
+  public float rotationSin = 0f;
+  public float wiggleRectangleLength = 500f;
+  public float wiggleRectangleWidth = 100f;
   public float boiling = 0f;
 }

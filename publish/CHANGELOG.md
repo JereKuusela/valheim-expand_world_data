@@ -1,5 +1,8 @@
 - v1.74
+  - Adds field `altBiome` to the world data to assign alternative biomes to specific areas.
+  - Adds fields `sizeX`, `sizeY`, `rotation` and `wiggleRectangle` to the world data for rectangular areas.
   - Fixes default world data putting Mountains before Deep North.
+  - Optimizes the mod by conditionally patching only the necessary parts of the game.
 
 - v1.73
   - Now includes Expand World Spawns and Expand World Events (automatic migration).

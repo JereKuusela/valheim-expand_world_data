@@ -23,8 +23,17 @@ public static class Patcher
     Patches.Apply(harmony, WorldEnabled && Configuration.LegacyGeneration, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateLegacyBiome), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
     Patches.Apply(harmony, WorldEnabled, typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsOceanGradient), typeof(GetAshlandsOceanGradient), nameof(GetAshlandsOceanGradient.CalculateGradient), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float)]);
     Patches.Apply(harmony, Configuration.WiggleFrequency != DefaultWiggleFrequency, typeof(WorldGenerator), nameof(WorldGenerator.WorldAngle), typeof(WorldAngle), nameof(WorldAngle.CalculateAngle), HarmonyPatchType.Prefix, argumentTypes: [typeof(float), typeof(float)]);
+    PatchAltBiomes(harmony);
     PatchNature(harmony);
     PatchWaterColor(harmony);
+  }
+
+  private static void PatchAltBiomes(Harmony harmony)
+  {
+    var shouldPatch = WorldEnabled && BiomeCalculator.HasAltBiomeData;
+    Patches.Apply(harmony, shouldPatch, typeof(AltBiomeWorldData), nameof(AltBiomeWorldData.GenerateAltBiomes), typeof(AltBiomePlacement), nameof(AltBiomePlacement.PrepareWorldAltBiomes), HarmonyPatchType.Prefix);
+    Patches.Apply(harmony, shouldPatch, typeof(AltBiomeWorldData), nameof(AltBiomeWorldData.GenerateAltBiomes), typeof(AltBiomePlacement), nameof(AltBiomePlacement.ApplyWorldAltBiomes), HarmonyPatchType.Postfix);
+    Patches.Apply(harmony, shouldPatch, typeof(BiomeSector), nameof(BiomeSector.CanAddModifier), typeof(AltBiomePlacement), nameof(AltBiomePlacement.BlockForcedSectors), HarmonyPatchType.Prefix);
   }
 
   private static void PatchNature(Harmony harmony)
