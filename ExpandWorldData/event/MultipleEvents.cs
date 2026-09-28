@@ -17,7 +17,6 @@ public class MultipleEvents
 
   internal static bool UpdateEvents(RandEventSystem __instance)
   {
-    if (Helper.IsClient()) return true;
     var delta = Time.fixedDeltaTime;
     __instance.UpdateForcedEvents(delta);
     __instance.UpdateRandomEvent(delta);
@@ -38,7 +37,6 @@ public class MultipleEvents
 
   internal static bool SetEvent(RandEventSystem __instance, RandomEvent ev, Vector3 pos)
   {
-    if (Helper.IsClient()) return true;
     if (ev == null)
     {
       var toStop = Events.ToList();
@@ -59,7 +57,7 @@ public class MultipleEvents
 
   internal static bool SendEvent()
   {
-    if (Helper.IsClient() || Events.Count == 0) return true;
+    if (Events.Count == 0) return true;
     if (Events.Count == 1)
     {
       var randomEvent = Events[0].Event;

@@ -29,7 +29,7 @@ public class WorldInfo
   {
     WaterLevel = waterLevel;
   }
-  public static void AutomaticRegenerate(Harmony harmony)
+  public static void AutomaticRegenerate()
   {
     if (WorldGenerator.instance == null) return;
     Log.Info("Regenerating the world.");
@@ -37,7 +37,7 @@ public class WorldInfo
     WorldGenerator.s_cachedBiomes.Clear();
     foreach (var altBiome in AltBiomeList.m_altBiomes)
       altBiome.Sectors.Clear();
-    Patcher.Update(harmony);
+    Refresh.FlushPatches();
     WorldGenerator.instance.Pregenerate();
     AltBiomeWorldData.VerifyBiomeData(WorldGenerator.instance.m_world);
     foreach (var heightmap in Object.FindObjectsByType<Heightmap>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))

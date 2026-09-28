@@ -24,21 +24,12 @@ public class EWD : BaseUnityPlugin
     ModRequired = true,
     IsLocked = true
   };
-  public void InvokeRegenerate()
-  {
-    // Nothing to regenerate because the world hasn't been generated yet.
-    if (WorldGenerator.instance?.m_world?.m_menu != false) return;
-    // Debounced for smooth config editing.
-    CancelInvoke("Regenerate");
-    Invoke("Regenerate", 1.0f);
-  }
-  public void Regenerate() => WorldInfo.AutomaticRegenerate(Harmony);
   public void Awake()
   {
     Instance = this;
     Log.Init(Logger);
     Yaml.Init();
-    ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, InvokeRegenerate);
+    ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, Refresh.World);
     Configuration.Init(wrapper);
     LegacyEventsConfiguration.Migrate(Config);
     Harmony = new(GUID);
@@ -91,6 +82,7 @@ public class EWD : BaseUnityPlugin
   }
   public void LateUpdate()
   {
+    Refresh.Tick(Time.deltaTime);
     WaterColor.Transition(Time.deltaTime);
   }
 

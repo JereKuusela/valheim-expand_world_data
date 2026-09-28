@@ -5,28 +5,29 @@ using UnityEngine;
 
 namespace ExpandWorldData;
 
-[HarmonyPatch]
-public class BiomeHeat
+[HarmonyPatch(typeof(Character), nameof(Character.UpdateLava))]
+public class FixLavaHeatReset
 {
-  [HarmonyPatch(typeof(Character), nameof(Character.UpdateLava)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> UpdateLava(IEnumerable<CodeInstruction> instructions) => new CodeMatcher(PatchBiomeHeat(instructions))
   // Vanilla code has bug that heat doesn't reset when not in hot biome.
+  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => new CodeMatcher(instructions)
     .MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.IsAshlands))))
     .Advance(2)
     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, 0f))
     .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(Character), nameof(Character.m_lavaHeatLevel))))
     .InstructionEnumeration();
+}
 
+public class BiomeHeat
+{
+  internal static IEnumerable<CodeInstruction> UpdateLava(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
 
-  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetLava)), HarmonyPrefix]
-  static bool GetLava(Heightmap __instance, Vector3 worldPos, ref float __result)
+  internal static bool ReplaceGetLava(Heightmap __instance, Vector3 worldPos, ref float __result)
   {
     __result = GetLava(__instance, worldPos);
     return false;
   }
-  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.IsLava)), HarmonyPrefix]
-  static bool IsLava(Heightmap __instance, Vector3 worldPos, float lavaValue, ref bool __result)
+  internal static bool ReplaceIsLava(Heightmap __instance, Vector3 worldPos, float lavaValue, ref bool __result)
   {
     __result = GetLava(__instance, worldPos) > lavaValue;
     return false;
@@ -54,17 +55,13 @@ public class BiomeHeat
   }
 
 
-  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetHeightOffset)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> GetHeightOffset(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
+  internal static IEnumerable<CodeInstruction> GetHeightOffset(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
 
-  [HarmonyPatch(typeof(AudioMan), nameof(AudioMan.ScanForLava)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> ScanForLava(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
+  internal static IEnumerable<CodeInstruction> ScanForLava(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
 
-  [HarmonyPatch(typeof(AudioMan), nameof(AudioMan.UpdateLavaAmbient)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> UpdateLavaAmbient(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
+  internal static IEnumerable<CodeInstruction> UpdateLavaAmbient(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
 
-  [HarmonyPatch(typeof(AudioMan), nameof(AudioMan.UpdateLavaAmbientLoops)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> UpdateLavaAmbientLoops(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
+  internal static IEnumerable<CodeInstruction> UpdateLavaAmbientLoops(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
 
 
 
@@ -80,8 +77,7 @@ public class BiomeHeat
     static IEnumerable<CodeInstruction> CanSpawnCinder(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat2(instructions);
     */
 
-  [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.IsLavaPreHeightmap)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> IsLavaPreHeightmap(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat2(instructions);
+  internal static IEnumerable<CodeInstruction> IsLavaPreHeightmap(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat2(instructions);
 
   private static IEnumerable<CodeInstruction> PatchBiomeHeat2(IEnumerable<CodeInstruction> instructions) =>
     new CodeMatcher(instructions).MatchForward(false, new CodeMatch(OpCodes.Ldc_I4_S, (sbyte)32))
@@ -94,12 +90,10 @@ public class BiomeHeat
 
 
 
-  [HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.IsAshlands)), HarmonyPrefix]
-  static bool IsAshlands(float x, float y, ref bool __result)
+  internal static bool IsAshlands(float x, float y, ref bool __result)
   {
     var wg = WorldGenerator.instance;
     if (wg == null || wg.m_world.m_menu) return true;
-    if (!Configuration.DataWorld) return true;
     var boiling = BiomeCalculator.GetBoiling(wg, x, y);
     __result = boiling > 0f;
     return false;

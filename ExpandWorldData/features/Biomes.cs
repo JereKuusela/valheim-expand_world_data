@@ -15,10 +15,9 @@ public class WorldAngle
   }
 }
 
-[HarmonyPatch(typeof(Minimap), nameof(Minimap.GetPixelColor))]
 public class GetPixelColor
 {
-  static bool Prefix(Heightmap.Biome biome, ref Color __result)
+  internal static bool ApplyCustomColor(Heightmap.Biome biome, ref Color __result)
   {
     var territory = BiomeCalculator.GetTerritory(BiomeHeight.LastX, BiomeHeight.LastY);
     if (territory != null && territory.colorMap.HasValue)
@@ -65,22 +64,20 @@ public class ResetBiomeOffsets
   }
 }
 
-[HarmonyPatch(typeof(Minimap), nameof(Minimap.GetMaskColor))]
 public class GetMaskColor
 {
-  static void Prefix(ref Heightmap.Biome biome)
+  internal static void ApplyTerrain(ref Heightmap.Biome biome)
   {
     biome = BiomeManager.GetTerrain(biome);
   }
 }
 
-[HarmonyPatch(typeof(Minimap), nameof(Minimap.GenerateWorldMap))]
 public class GenerateWorldMapHeight
 {
 
   static float ModifyHeight(float height, Heightmap.Biome biome) => Api.GetMinimapHeight(height, biome);
 
-  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) =>
+  internal static IEnumerable<CodeInstruction> ApplyMapColorMultiplier(IEnumerable<CodeInstruction> instructions) =>
     new CodeMatcher(instructions).MatchForward(true, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Minimap), nameof(Minimap.GetMaskColor))))
     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 13))
     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 12))

@@ -19,11 +19,13 @@ public class BiomeManager
 
   public static Dictionary<EnvEntry, EnvEntryKeys> EnvKeys = [];
   public static bool HasEnvironmentRules => EnvKeys.Count > 0;
+  public static bool HasData { get; private set; }
 
   public static Heightmap.Biome LavaBiomes = Heightmap.Biome.AshLands;
   // Minor optimization to skip terrain color based calculations.
   public static Heightmap.Biome FullLavaBiomes = Heightmap.Biome.AshLands;
   public static Heightmap.Biome NoBuildBiomes = 0;
+  public static bool HasLavaOverrides => HasData && (LavaBiomes != Heightmap.Biome.AshLands || FullLavaBiomes != Heightmap.Biome.AshLands);
   private static HashSet<string> UsedGlobalKeys = [];
   public static bool HasGlobalKeyRules => UsedGlobalKeys.Count > 0;
 
@@ -197,14 +199,9 @@ public class BiomeManager
 
   private static void Load(List<BiomeYaml> rawData)
   {
-    if (rawData.Count == 0)
-    {
-      Features.Patcher.SetBiomeEnabled(false);
-      return;
-    }
-    Features.Patcher.SetBiomeEnabled(rawData.Count > 0);
-    if (rawData.Count > 0)
-      Log.Info($"Reloading biome data ({rawData.Count} entries).");
+    HasData = rawData.Count > 0;
+    if (!HasData) return;
+    Log.Info($"Reloading biome data ({rawData.Count} entries).");
     EnvKeys.Clear();
     UsedGlobalKeys.Clear();
     BiomeData.Clear();
@@ -303,7 +300,7 @@ public class BiomeManager
   {
     if (!Yaml.TryDeserialize<BiomeYaml>(files, out var data)) return false;
     Load(data);
-    EWD.Instance.InvokeRegenerate();
+    Refresh.World();
     return true;
   }
   public static void SetupWatcher()

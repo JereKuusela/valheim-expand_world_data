@@ -6,30 +6,29 @@ namespace ExpandWorld.Event;
 
 public static class Patcher
 {
-  public static bool Enabled { get; private set; }
-
   public static void Patch(Harmony harmony)
   {
-    PatchMultipleEvents(harmony, Configuration.MultipleEvents);
-    PatchCheckPerPlayer(harmony, Configuration.CheckPerPlayer);
-    PatchLifecycle(harmony, Enabled);
-    PatchExtraChecks(harmony, Enabled && Loader.ExtraData.Values.Any(data =>
+    var isServer = Helper.IsServer();
+    var hasData = EventManager.HasData;
+    PatchMultipleEvents(harmony, isServer && Configuration.MultipleEvents);
+    PatchCheckPerPlayer(harmony, isServer && Configuration.CheckPerPlayer);
+    PatchLifecycle(harmony, isServer, hasData);
+    PatchExtraChecks(harmony, hasData && Loader.ExtraData.Values.Any(data =>
       data.RequiredEnvironments.Count > 0 || data.PlayerLimit != null || data.EventLimit != null));
-    PatchCheckBase(harmony, Enabled && Loader.ExtraData.Values.Any(data =>
+    PatchCheckBase(harmony, hasData && Loader.ExtraData.Values.Any(data =>
       data.MinBaseValue != 3 || data.MaxBaseValue != int.MaxValue));
-    PatchCommands(harmony, Enabled && Loader.ExtraData.Values.Any(data =>
+    PatchCommands(harmony, isServer && hasData && Loader.ExtraData.Values.Any(data =>
       data.StartCommands?.Length > 0 || data.EndCommands?.Length > 0));
   }
 
-  public static void SetEnabled(bool enabled) => Enabled = enabled;
-
-  private static void PatchLifecycle(Harmony harmony, bool shouldPatch)
+  private static void PatchLifecycle(Harmony harmony, bool isServer, bool hasData)
   {
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZNet), nameof(ZNet.Awake), typeof(EventManager), nameof(EventManager.DelayClientLoad), HarmonyPatchType.Prefix, Priority.Normal);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(EventManager), nameof(EventManager.InitializeServerData), HarmonyPatchType.Postfix, Priority.Last);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(EventManager), nameof(EventManager.InitializeClientData), HarmonyPatchType.Postfix, Priority.Normal);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.Awake), typeof(EventManager), nameof(EventManager.ApplyTiming), HarmonyPatchType.Postfix, Priority.Normal);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.SetRandomEvent), typeof(Loader), nameof(Loader.ResolveEventConfiguration), HarmonyPatchType.Prefix, Priority.First);
+    // Role is not known yet at ZNet.Awake prefix.
+    ExpandWorldData.Patches.Apply(harmony, true, typeof(ZNet), nameof(ZNet.Awake), typeof(EventManager), nameof(EventManager.DelayClientLoad), HarmonyPatchType.Prefix);
+    ExpandWorldData.Patches.Apply(harmony, isServer, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(EventManager), nameof(EventManager.InitializeServerData), HarmonyPatchType.Postfix, Priority.Last);
+    ExpandWorldData.Patches.Apply(harmony, !isServer, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(EventManager), nameof(EventManager.InitializeClientData), HarmonyPatchType.Postfix);
+    ExpandWorldData.Patches.Apply(harmony, true, typeof(RandEventSystem), nameof(RandEventSystem.Awake), typeof(EventManager), nameof(EventManager.ApplyTiming), HarmonyPatchType.Postfix);
+    ExpandWorldData.Patches.Apply(harmony, hasData, typeof(RandEventSystem), nameof(RandEventSystem.SetRandomEvent), typeof(Loader), nameof(Loader.ResolveEventConfiguration), HarmonyPatchType.Prefix, Priority.First);
   }
 
   private static void PatchExtraChecks(Harmony harmony, bool shouldPatch)
@@ -50,15 +49,15 @@ public static class Patcher
 
   private static void PatchMultipleEvents(Harmony harmony, bool shouldPatch)
   {
-    var wasPatched = ExpandWorldData.Patches.IsRegistered(typeof(MultipleEvents), nameof(MultipleEvents.UpdateEvents));
-    if (!shouldPatch && wasPatched)
-    {
-      foreach (var entry in MultipleEvents.Events.ToList()) entry.Event.OnStop();
-      MultipleEvents.Events.Clear();
-    }
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.FixedUpdate), typeof(MultipleEvents), nameof(MultipleEvents.UpdateEvents), HarmonyPatchType.Prefix, Priority.Normal);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.SetRandomEvent), typeof(MultipleEvents), nameof(MultipleEvents.SetEvent), HarmonyPatchType.Prefix, Priority.Normal);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.SendCurrentRandomEvent), typeof(MultipleEvents), nameof(MultipleEvents.SendEvent), HarmonyPatchType.Prefix, Priority.Normal);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.FixedUpdate), typeof(MultipleEvents), nameof(MultipleEvents.UpdateEvents), HarmonyPatchType.Prefix, onUnpatch: StopEvents);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.SetRandomEvent), typeof(MultipleEvents), nameof(MultipleEvents.SetEvent), HarmonyPatchType.Prefix);
+    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(RandEventSystem), nameof(RandEventSystem.SendCurrentRandomEvent), typeof(MultipleEvents), nameof(MultipleEvents.SendEvent), HarmonyPatchType.Prefix);
+  }
+
+  private static void StopEvents()
+  {
+    foreach (var entry in MultipleEvents.Events.ToList()) entry.Event.OnStop();
+    MultipleEvents.Events.Clear();
   }
 
   private static void PatchCheckPerPlayer(Harmony harmony, bool shouldPatch)

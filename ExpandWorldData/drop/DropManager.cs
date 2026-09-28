@@ -9,6 +9,7 @@ public class DropManager
 
   public static Dictionary<int, Data> DataByHash = [];
   public static Dictionary<string, Data> DataByName = [];
+  public static bool HasData => DataByHash.Count > 0;
 
   public static bool Matches(Heightmap.Biome biomes, Heightmap.BiomeArea areas, Vector3 pos)
   {

@@ -79,8 +79,7 @@ public static class Loader
     {
       DropManager.DataByHash.Clear();
       DropManager.DataByName.Clear();
-      Patcher.SetEnabled(false);
-      EWD.Instance.InvokeRegenerate();
+      Refresh.Patches();
       return true;
     }
     try
@@ -97,9 +96,8 @@ public static class Loader
       DropManager.DataByName.Clear();
       foreach (var entry in data)
         DropManager.Add(entry);
-      Patcher.SetEnabled(true);
+      Refresh.Patches();
       Log.Info($"Reloading drop data ({data.Count} entries).");
-      EWD.Instance.InvokeRegenerate();
       return true;
     }
     catch (Exception e)

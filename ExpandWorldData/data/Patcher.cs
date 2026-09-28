@@ -8,6 +8,7 @@ public static class DataPatcher
   {
     PatchNoBuild(harmony, NoBuildManager.HasData || BiomeManager.NoBuildBiomes != 0 || TerritoryManager.HasNoBuild);
     PatchStatusEffects(harmony, BiomeManager.HasStatusEffects || TerritoryManager.HasStatusEffects || EnvironmentManager.HasStatusEffects);
+    Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.Load), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData), HarmonyPatchType.Postfix);
   }
 
   private static void PatchNoBuild(Harmony harmony, bool shouldPatch)
@@ -17,9 +18,7 @@ public static class DataPatcher
 
   private static void PatchStatusEffects(Harmony harmony, bool shouldPatch)
   {
-    var callback = nameof(StatusManager.UpdateStatusEffects);
-    if (!shouldPatch && Patches.IsRegistered(typeof(StatusManager), callback)) StatusManager.CleanUp();
-    Patches.Apply(harmony, shouldPatch, typeof(Player), nameof(Player.UpdateEnvStatusEffects), typeof(StatusManager), nameof(StatusManager.UpdateStatusEffects), HarmonyPatchType.Postfix);
+    Patches.Apply(harmony, shouldPatch, typeof(Player), nameof(Player.UpdateEnvStatusEffects), typeof(StatusManager), nameof(StatusManager.UpdateStatusEffects), HarmonyPatchType.Postfix, onUnpatch: StatusManager.CleanUp);
   }
 
 }

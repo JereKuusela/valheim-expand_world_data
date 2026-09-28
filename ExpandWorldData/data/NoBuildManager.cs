@@ -108,7 +108,7 @@ public class NoBuildManager
       return;
     }
     NoBuild.Clear();
-    if (yaml == "") { EWD.Instance.InvokeRegenerate(); return; }
+    if (yaml == "") { Refresh.Patches(); return; }
     try
     {
       var data = Yaml.Deserialize<NoBuildData>(yaml, "No build");
@@ -120,7 +120,7 @@ public class NoBuildManager
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
-    finally { EWD.Instance.InvokeRegenerate(); }
+    finally { Refresh.Patches(); }
   }
 
   internal static bool CheckAdditionalZones(bool result, Vector3 point)
@@ -131,15 +131,5 @@ public class NoBuildManager
            IsInsideNoBuildBiome(point);
   }
 
-  internal static void SynchronizeLocationData()
-  {
-    if (Helper.IsClient()) return;
-    UpdateData();
-  }
-}
-
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.Load))]
-public class SynchronizeNoBuildData
-{
-  static void Postfix() => NoBuildManager.SynchronizeLocationData();
+  internal static void SynchronizeLocationData() => UpdateData();
 }

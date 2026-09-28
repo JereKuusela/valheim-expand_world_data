@@ -12,6 +12,7 @@ public class SpawnManager
   public static readonly string FilePath = Path.Combine(Yaml.Directory, "expand_spawns.yaml");
   public const string Pattern = "expand_spawns*.yaml";
   public static List<SpawnSystem.SpawnData>? Override;
+  public static bool HasData => Override != null;
 
   public static bool IsValid(SpawnSystem.SpawnData spawn) => spawn.m_prefab;
 
@@ -78,16 +79,14 @@ public class SpawnManager
     Override = null;
     if (files.Count == 0)
     {
-      Patcher.SetEnabled(false);
-      EWD.Instance.InvokeRegenerate();
+      Refresh.Patches();
       return true;
     }
     if (data.Count == 0) return false;
     Log.Info($"Reloading spawn data ({data.Count} entries).");
     Override = data;
-    Patcher.SetEnabled(true);
+    Refresh.Patches();
     SpawnSystem.m_instances.ForEach(ApplySpawnData);
-    EWD.Instance.InvokeRegenerate();
     return true;
   }
 

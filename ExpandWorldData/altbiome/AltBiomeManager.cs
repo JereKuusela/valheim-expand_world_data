@@ -77,7 +77,7 @@ public static class AltBiomeManager
     AltBiomeList.m_altBiomes.AddRange(Active);
     Log.Info($"Reloading alt biome data ({data.Count} entries).");
     if (regenerate)
-      EWD.Instance.InvokeRegenerate();
+      Refresh.World();
   }
 
   public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataAltBiomes, ReadConfigs);

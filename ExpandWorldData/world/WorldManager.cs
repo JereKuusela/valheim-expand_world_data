@@ -86,6 +86,7 @@ public class WorldManager
     DefaultEntries.Insert(index, new WorldEntry(data, ""));
   }
   public static List<WorldYaml> Data = DefaultData;
+  public static bool HasData { get; private set; }
 
   public static WorldYaml ToData(WorldYaml biome) => biome;
 
@@ -98,8 +99,8 @@ public class WorldManager
     {
       if (files.Count == 0)
       {
-        Features.Patcher.SetWorldEnabled(false);
-        EWD.Instance.InvokeRegenerate();
+        HasData = false;
+        Refresh.World();
         return true;
       }
       List<WorldYaml> data = [];
@@ -121,8 +122,8 @@ public class WorldManager
       BiomeCalculator.SetData(entries);
       BiomeCalculator.CheckAngles = data.Any(x => x.minSector != 0f || x.maxSector != 1f);
       Data = data;
-      Features.Patcher.SetWorldEnabled(data.Count > 0);
-      EWD.Instance.InvokeRegenerate();
+      HasData = data.Count > 0;
+      Refresh.World();
       return true;
     }
     catch (Exception e)
@@ -138,7 +139,7 @@ public class WorldManager
     BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
     BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
     GetRandomPointByBiome.Warned.Clear();
-    EWD.Instance.InvokeRegenerate();
+    Refresh.World();
   }
   public static void SetupWatcher()
   {

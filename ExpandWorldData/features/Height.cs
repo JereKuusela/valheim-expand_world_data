@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace ExpandWorldData;
 
-[HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight))]
 public class BiomeHeight
 {
   private static float ApplyHeight(float height, BiomeData data)
@@ -35,7 +34,7 @@ public class BiomeHeight
     return height;
   }
 
-  static void Prefix(WorldGenerator __instance, ref Heightmap.Biome biome, ref Heightmap.Biome __state)
+  internal static void ReplaceTerrain(WorldGenerator __instance, ref Heightmap.Biome biome, ref Heightmap.Biome __state)
   {
     if (__instance.m_world.m_menu) return;
     __state = biome;
@@ -45,7 +44,7 @@ public class BiomeHeight
   public static float LastX = 0f;
   [ThreadStatic]
   public static float LastY = 0f;
-  static void Postfix(WorldGenerator __instance, Heightmap.Biome __state, Heightmap.Biome biome, float wx, float wy, ref Color mask, ref float __result)
+  internal static void ModifyHeight(WorldGenerator __instance, Heightmap.Biome __state, Heightmap.Biome biome, float wx, float wy, ref Color mask, ref float __result)
   {
     LastX = wx;
     LastY = wy;
@@ -89,71 +88,23 @@ public class BiomeHeight
 
 public class GetAshlandsHeight
 {
-  private static readonly double DefaultWidthRestriction = 7500f;
-  private static double WidthRestriction = DefaultWidthRestriction;
-  private static readonly double DefaultLengthRestriction = 1000f;
-  private static double LengthRestriction = DefaultLengthRestriction;
-  public static void Patch(Harmony harmony, double widthRestriction, double lengthRestriction)
-  {
-    if (WidthRestriction == widthRestriction && LengthRestriction == lengthRestriction) return;
-    var method = AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsHeight));
-    var transpiler = AccessTools.Method(typeof(GetAshlandsHeight), nameof(Transpiler));
-    WidthRestriction = widthRestriction;
-    LengthRestriction = lengthRestriction;
-    harmony.Unpatch(method, transpiler);
-    if (WidthRestriction != DefaultWidthRestriction || LengthRestriction != DefaultLengthRestriction)
-      harmony.Patch(method, transpiler: new HarmonyMethod(transpiler));
-  }
+  public const double DefaultWidthRestriction = 7500.0;
+  public const double DefaultLengthRestriction = 1000.0;
 
-  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+  internal static IEnumerable<CodeInstruction> ReplaceRestrictions(IEnumerable<CodeInstruction> instructions)
   {
     return new CodeMatcher(instructions)
-      .MatchForward(false, new CodeMatch(OpCodes.Ldc_R8, 1000.0))
-      .SetOperandAndAdvance(LengthRestriction)
-      .MatchForward(false, new CodeMatch(OpCodes.Ldc_R8, 7500.0))
-      .SetOperandAndAdvance(WidthRestriction)
+      .MatchForward(false, new CodeMatch(OpCodes.Ldc_R8, DefaultLengthRestriction))
+      .SetOperandAndAdvance(Configuration.AshlandsLengthRestriction)
+      .MatchForward(false, new CodeMatch(OpCodes.Ldc_R8, DefaultWidthRestriction))
+      .SetOperandAndAdvance(Configuration.AshlandsWidthRestriction)
       .InstructionEnumeration();
   }
 }
 
-public class CreateAshlandsGap
+public class DisableGap
 {
-  private static bool IsPatched = false;
-  public static void Patch(Harmony harmony, bool doPatch)
-  {
-    if (IsPatched == doPatch) return;
-    var method = AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.CreateAshlandsGap));
-    var prefix = AccessTools.Method(typeof(CreateAshlandsGap), nameof(DisableGap));
-    IsPatched = doPatch;
-    if (doPatch)
-      harmony.Patch(method, prefix: new HarmonyMethod(prefix));
-    else
-      harmony.Unpatch(method, prefix);
-  }
-
-  static bool DisableGap(ref double __result)
-  {
-    __result = 1d;
-    return false;
-  }
-}
-
-public class CreateDeepNorthGap
-{
-  private static bool IsPatched = false;
-  public static void Patch(Harmony harmony, bool doPatch)
-  {
-    if (IsPatched == doPatch) return;
-    var method = AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.CreateDeepNorthGap));
-    var prefix = AccessTools.Method(typeof(CreateAshlandsGap), nameof(DisableGap));
-    IsPatched = doPatch;
-    if (doPatch)
-      harmony.Patch(method, prefix: new HarmonyMethod(prefix));
-    else
-      harmony.Unpatch(method, prefix);
-  }
-
-  static bool DisableGap(ref double __result)
+  internal static bool SkipGap(ref double __result)
   {
     __result = 1d;
     return false;

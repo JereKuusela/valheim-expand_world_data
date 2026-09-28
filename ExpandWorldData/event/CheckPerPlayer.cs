@@ -8,7 +8,7 @@ public class CheckPerPlayer
 {
   internal static void UpdateEvents(RandEventSystem __instance, float dt)
   {
-    if (Helper.IsClient() || Game.m_eventRate == 0f) return;
+    if (Game.m_eventRate == 0f) return;
     if (RandEventSystem.s_randomEventNeedsRefresh) RandEventSystem.RefreshPlayerEventData();
     CheckGlobalEvent(__instance, dt);
     CheckStandaloneEvents(__instance, dt);

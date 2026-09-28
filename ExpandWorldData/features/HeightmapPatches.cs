@@ -4,7 +4,6 @@ using UnityEngine;
 namespace ExpandWorldData;
 
 
-[HarmonyPatch(typeof(Heightmap))]
 public class HeightmapPatches
 {
   private static readonly Dictionary<Heightmap, Color32[]> cornerColors = [];
@@ -27,11 +26,11 @@ public class HeightmapPatches
       cornerColors[__instance] = [c0, c1, c2, c3];
     return cornerColors[__instance];
   }
-  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.OnDestroy)), HarmonyPostfix]
-  static void RemoveCornerTerritories(Heightmap __instance)
+  internal static void RemoveCornerTerritories(Heightmap __instance)
   {
     cornerColors.Remove(__instance);
   }
+  internal static void ClearCornerTerritories() => cornerColors.Clear();
 
   private static Vector3 CalcWorld(Heightmap __instance, float ix, float iy)
   {
@@ -41,8 +40,7 @@ public class HeightmapPatches
     return new Vector3(x, 0, z);
   }
 
-  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetBiomeColor), typeof(float), typeof(float)), HarmonyPrefix]
-  static bool CustomGetBiomeColor(Heightmap __instance, float ix, float iy, ref Color __result)
+  internal static bool CustomGetBiomeColor(Heightmap __instance, float ix, float iy, ref Color __result)
   {
     var pos = CalcWorld(__instance, ix, iy);
     var territory = BiomeCalculator.GetTerritory(pos.x, pos.z);
@@ -68,8 +66,7 @@ public class HeightmapPatches
   }
 
 
-  [HarmonyPatch(typeof(Heightmap), nameof(Heightmap.GetBiomeColor), typeof(Heightmap.Biome)), HarmonyPrefix]
-  static bool GetBiomeColor(Heightmap.Biome biome, ref Color32 __result)
+  internal static bool GetBiomeColor(Heightmap.Biome biome, ref Color32 __result)
   {
     if (!BiomeManager.TryGetData(biome, out var data)) return true;
     __result = data.colorTerrain;

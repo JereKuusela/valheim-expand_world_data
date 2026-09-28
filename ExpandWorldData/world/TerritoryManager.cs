@@ -74,8 +74,7 @@ public class TerritoryManager
     }
     Data.Clear();
     foreach (var entry in data) Data[entry.Key] = entry.Value;
-    World.Patcher.SetTerritoryEnabled(Data.Count > 0);
-    EWD.Instance.InvokeRegenerate();
+    Refresh.World();
     return true;
   }
 

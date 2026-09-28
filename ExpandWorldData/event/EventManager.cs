@@ -13,6 +13,7 @@ public class EventManager
   public const string Pattern = "expand_events*.yaml";
   public static List<RandomEvent> Originals = [];
   public static bool LoadDelayed;
+  public static bool HasData { get; private set; }
 
   public static void CreateConfigs()
   {
@@ -45,8 +46,8 @@ public class EventManager
     if (Originals.Count == 0) Originals = [.. RandEventSystem.instance.m_events];
     if (files.Count == 0)
     {
-      Patcher.SetEnabled(false);
-      EWD.Instance.InvokeRegenerate();
+      HasData = false;
+      Refresh.Patches();
       return true;
     }
     try
@@ -63,8 +64,8 @@ public class EventManager
       RemoveSpawnMetadata(RandEventSystem.instance.m_events);
       Loader.ExtraData.Clear();
       RandEventSystem.instance.m_events = data;
-      Patcher.SetEnabled(true);
-      EWD.Instance.InvokeRegenerate();
+      HasData = true;
+      Refresh.Patches();
       return true;
     }
     catch (Exception e) { Log.Error(e.Message); Log.Error(e.StackTrace); return false; }
@@ -94,7 +95,6 @@ public class EventManager
 
   internal static void InitializeServerData()
   {
-    if (!Helper.IsServer()) return;
     CreateConfigs();
     ReadConfigs();
   }

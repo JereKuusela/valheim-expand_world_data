@@ -25,10 +25,12 @@ public class VegetationManager
 
   // Default items are stored to track missing entries.
   private static List<ZoneSystem.ZoneVegetation> DefaultEntries = [];
+  public static bool HasData { get; private set; }
   public static void Initialize()
   {
     DefaultEntries.Clear();
     DefaultKeys.Clear();
+    HasData = false;
     if (Helper.IsServer())
       SetDefaultEntries();
   }
@@ -64,32 +66,38 @@ public class VegetationManager
 
   private static void Apply(List<ZoneSystem.ZoneVegetation> data)
   {
+    HasData = SetData(data);
+    Refresh.Patches();
+  }
+
+  private static bool SetData(List<ZoneSystem.ZoneVegetation> data)
+  {
     ZoneSystem.instance.m_vegetation = DefaultEntries;
     if (!Configuration.DataVegetation)
     {
       Log.Info($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
-      return;
+      return false;
     }
     if (data.Count == 0)
     {
       Log.Warning($"Failed to load any vegetation data.");
       Log.Info($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
-      return;
+      return false;
     }
     if (Configuration.DataMigration && AltBiomeMigration.MigrateVegetation(data, DefaultEntries, Pattern))
     {
       // Watcher triggers reload.
-      return;
+      return false;
     }
     if (Configuration.DataMigration && AddMissingEntries(data))
     {
       // Watcher triggers reload.
-      return;
+      return false;
     }
     Log.Info($"Reloading vegetation data ({data.Count} entries).");
     ZoneSystem.instance.m_vegetation = data;
     IdManager.SendVegetationIds();
-
+    return true;
   }
   private static void ToFile()
   {

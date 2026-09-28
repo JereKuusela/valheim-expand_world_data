@@ -7,7 +7,7 @@ public static class Patcher
 {
   public static void Patch(Harmony harmony)
   {
-    var shouldPatch = Configuration.DataVegetation;
+    var shouldPatch = VegetationManager.HasData;
     Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.PlaceVegetation), typeof(VegetationSpawning), nameof(VegetationSpawning.InitializePlacement), HarmonyPatchType.Prefix);
     Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.PlaceVegetation), typeof(VegetationSpawning), nameof(VegetationSpawning.ReplacePlacementOperations), HarmonyPatchType.Transpiler);
     Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.InsideClearArea), typeof(VegetationSpawning), nameof(VegetationSpawning.OverrideClearAreaCheck), HarmonyPatchType.Prefix);

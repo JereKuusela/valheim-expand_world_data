@@ -45,10 +45,10 @@ public abstract class SyncedDataManager
         return;
       }
       var files = DataManager.Read(Pattern);
-      if (files == null || !Set(files)) return;
+      if (files == null || !Apply(files)) return;
       ConfigValue = string.Join("\n", files.Values);
     }
-    else if (Set([]))
+    else if (Apply([]))
     {
       ConfigValue = "";
     }
@@ -58,7 +58,14 @@ public abstract class SyncedDataManager
   {
     if (!Helper.IsClient()) return;
     if (!Initialized) { Pending = true; return; }
-    Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
+    Apply(yaml == "" ? [] : new() { ["synchronized"] = yaml });
+  }
+
+  private bool Apply(Dictionary<string, string> files)
+  {
+    if (!Set(files)) return false;
+    Refresh.Patches();
+    return true;
   }
 
   private void ApplyPending()

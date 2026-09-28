@@ -30,11 +30,12 @@ public class InitializeWorld
   // Saving is done later because that requires environments.
   static void Postfix()
   {
-    Patcher.Update(EWD.Harmony);
     // Only called for server so no need to check.
     BiomeManager.ReadConfigs();
     TerritoryManager.ReadConfigs();
     WorldManager.ReadConfigs();
+    // Pregenerate runs right after this.
+    Refresh.PatchesNow();
   }
 }
 
@@ -84,8 +85,7 @@ public class InitializeContent
       // Dungeon and room data is handled elsewhere.
     }
 
-    EWD.Instance.CancelInvoke("Regenerate");
-    EWD.Instance.Regenerate();
+    Refresh.WorldNow();
   }
 
   // Blueprints will use empty asset, which must be added to prevent errors.
