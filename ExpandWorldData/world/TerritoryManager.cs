@@ -18,7 +18,6 @@ public class TerritoryManager
     protected override string Pattern => TerritoryManager.Pattern;
     protected override bool DataEnabled => Configuration.DataTerritory;
     protected override string ConfigValue { get => Configuration.valueTerritoryData.Value; set => Configuration.valueTerritoryData.Value = value; }
-    protected override bool RequireFileExistsCheckOnRead => false;
     protected override bool Set(Dictionary<string, string> files) => TerritoryManager.Set(files);
     protected override void WriteDefaultConfig()
     {

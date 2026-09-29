@@ -26,7 +26,6 @@ public static class AltBiomeManager
     protected override string Pattern => AltBiomeManager.Pattern;
     protected override bool DataEnabled => Configuration.DataAltBiomes;
     protected override string ConfigValue { get => Configuration.valueAltBiomeData.Value; set => Configuration.valueAltBiomeData.Value = value; }
-    protected override bool RequireFileExistsCheckOnRead => false;
     protected override bool Set(Dictionary<string, string> files) => AltBiomeManager.Set(files);
     protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(Original.Select(ToData).ToList()));
   }

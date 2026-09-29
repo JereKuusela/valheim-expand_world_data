@@ -106,11 +106,11 @@ public class EventManager
     FromSetting(Configuration.valueEventData.Value);
   }
 
-  internal static void ApplyTiming(RandEventSystem system)
+  internal static void ApplyTiming(RandEventSystem __instance)
   {
-    if (!system) return;
-    system.m_eventChance = Configuration.EventChance;
-    system.m_eventIntervalMin = Configuration.EventInterval;
+    if (__instance == null) return;
+    __instance.m_eventChance = Configuration.EventChance;
+    __instance.m_eventIntervalMin = Configuration.EventInterval;
   }
 
   public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataEvents, ReadConfigs);

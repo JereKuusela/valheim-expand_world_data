@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace ExpandWorldData;
 
-[HarmonyPatch(typeof(Minimap))]
 public class MinimapIcon
 {
 
@@ -21,8 +20,7 @@ public class MinimapIcon
     IconSizes.Clear();
   }
 
-  [HarmonyPatch(nameof(Minimap.GetLocationIcon)), HarmonyPostfix]
-  static Sprite NewLocationIcons(Sprite result, string name)
+  internal static Sprite NewLocationIcons(Sprite result, string name)
   {
     if (result != null) return result;
     name = Parse.Split(name)[0];
@@ -38,8 +36,7 @@ public class MinimapIcon
 
   private static readonly Dictionary<Minimap.PinData, float> IconSizes = [];
 
-  [HarmonyPatch(nameof(Minimap.UpdateLocationPins)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> IconSizeSetup(IEnumerable<CodeInstruction> instructions)
+  internal static IEnumerable<CodeInstruction> IconSizeSetup(IEnumerable<CodeInstruction> instructions)
   {
     return new CodeMatcher(instructions)
       // Remove can be just wrapped.
@@ -72,14 +69,12 @@ public class MinimapIcon
     pin.m_animate = split.Length > 2;
   }
 
-  [HarmonyPatch(nameof(Minimap.Awake)), HarmonyPostfix]
-  static void ClearSizes()
+  internal static void ClearSizes()
   {
     IconSizes.Clear();
   }
 
-  [HarmonyPatch(nameof(Minimap.UpdatePins)), HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> ApplyIconSize(IEnumerable<CodeInstruction> instructions)
+  internal static IEnumerable<CodeInstruction> ApplyIconSize(IEnumerable<CodeInstruction> instructions)
   {
     return new CodeMatcher(instructions)
     // For some reason, targeting the size variable doesn't work, so hack the multiplier instead.

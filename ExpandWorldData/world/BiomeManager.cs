@@ -7,7 +7,6 @@ using HarmonyLib;
 using Service;
 using UnityEngine;
 
-// TODO: Biomes should be optimized. Scale them by world size on load.
 namespace ExpandWorldData;
 
 public class BiomeManager
@@ -261,7 +260,6 @@ public class BiomeManager
       .SelectMany(data => data.requiredGlobalKeys.Concat(data.forbiddenGlobalKeys))
       .Where(key => key != null && key != "")
       .Select(NormalizeKey)];
-    LoadEnvironments();
   }
   public static void LoadEnvironments()
   {

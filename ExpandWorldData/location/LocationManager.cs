@@ -14,6 +14,7 @@ public class LocationManager
   public static string FileName = "expand_locations.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_locations*.yaml";
+  public static bool HasData { get; private set; }
   private static readonly List<LocationYaml> ExtraLocationYamls = [];
   public static void AddLocation(LocationYaml yaml)
   {
@@ -181,6 +182,7 @@ public class LocationManager
 
   private static void Apply(List<ZoneSystem.ZoneLocation> data)
   {
+    HasData = false;
     ZoneSystem.instance.m_locations = DefaultEntries;
     if (Configuration.DataLocation)
     {
@@ -202,6 +204,7 @@ public class LocationManager
           return;
         }
         ZoneSystem.instance.m_locations = data;
+        HasData = true;
         Log.Info($"Reloading location data ({data.Count} entries).");
       }
     }
@@ -214,6 +217,7 @@ public class LocationManager
     MinimapIcon.Clear();
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
     IdManager.SendLocationIds();
+    Refresh.Patches();
   }
   private static void UpdateHashes()
   {
@@ -332,15 +336,10 @@ public class LocationManager
 }
 
 
-[HarmonyPatch(typeof(ZoneSystem))]
 public static class ZoneSystemPatches
 {
-  [HarmonyPatch(nameof(ZoneSystem.GetLocationIcon))]
-  [HarmonyPrefix]
-  static bool GetLocationIcon(ZoneSystem __instance, string name, ref Vector3 pos, ref bool __result)
+  internal static bool GetLocationIcon(ZoneSystem __instance, string name, ref Vector3 pos, ref bool __result)
   {
-    if (!ZNet.instance.IsServer())
-      return true;
     // Server should also use GetLocationIcons so that single player matches the dedicated server behavior.
     __instance.tempIconList.Clear();
     __instance.GetLocationIcons(__instance.tempIconList);
@@ -357,12 +356,8 @@ public static class ZoneSystemPatches
     return false;
   }
 
-  [HarmonyPatch(nameof(ZoneSystem.GetLocationIcons))]
-  [HarmonyPrefix]
-  static bool GetLocationIcons(ZoneSystem __instance, Dictionary<Vector3, string> icons)
+  internal static bool GetLocationIcons(ZoneSystem __instance, Dictionary<Vector3, string> icons)
   {
-    if (!Configuration.DataLocation) return true;
-    if (!ZNet.instance.IsServer()) return true;
     foreach (var kvp in __instance.m_locationInstances)
     {
       var loc = kvp.Value.m_location;
@@ -393,7 +388,7 @@ public static class ZoneSystemPatches
 
   // Vanilla checks that location prefabs are valid.
   // This doesn't work with blueprints because they would need proper asset ID (which might conflict with other mods).
-  [HarmonyPatch(nameof(ZoneSystem.GetLocation), typeof(string))]
+  [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GetLocation), typeof(string))]
   [HarmonyPrefix]
   static bool GetLocation(ZoneSystem __instance, string name, ref ZoneSystem.ZoneLocation __result)
   {

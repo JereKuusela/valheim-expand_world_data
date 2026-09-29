@@ -81,11 +81,11 @@ public class InitializeContent
       VegetationManager.ReadConfigs();
       LocationManager.ReadConfigs();
       AltBiomeManager.ReadConfigs();
+      BiomeManager.LoadEnvironments();
 
       // Dungeon and room data is handled elsewhere.
     }
-
-    Refresh.WorldNow();
+    Refresh.WorldStart();
   }
 
   // Blueprints will use empty asset, which must be added to prevent errors.

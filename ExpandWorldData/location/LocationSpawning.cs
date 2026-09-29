@@ -51,18 +51,16 @@ public class LocationSpawning
 
 
 }
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PlaceLocations))]
 public class PrepareTerrainBeforeZoneContents
 {
-  static void Prefix(Heightmap hmap, ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
+  internal static void Prefix(Heightmap hmap, ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
   {
     Terrain.PrepareZoneTerrain(hmap, mode, spawnedObjects);
   }
 }
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.CreateLocationProxy))]
 public class LocationZDO
 {
-  static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
+  internal static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
   {
     if (!LocationExtra.TryGet(location, out var extra)) return;
     var key = extra.ZDOData;
@@ -256,13 +254,10 @@ public class LocationObjectDataAndSwap
   }
 }
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocationsTimeSliced), typeof(ZoneSystem.ZoneLocation), typeof(Stopwatch), typeof(ZPackage))]
-[HarmonyPatch(MethodType.Enumerator)]
 public class ScaleLocationHeightRequirement
 {
   static float ScaleHeight(float height, Heightmap.Biome biome)
   {
-    if (!Configuration.ScaleLocationAltitudeRequirement) return height;
     if (!BiomeManager.TryGetData(biome, out var data))
       return height;
 
@@ -273,8 +268,7 @@ public class ScaleLocationHeightRequirement
     return height;
   }
 
-  [HarmonyTranspiler]
-  static IEnumerable<CodeInstruction> TranspileMoveNext(IEnumerable<CodeInstruction> instructions) =>
+  internal static IEnumerable<CodeInstruction> TranspileMoveNext(IEnumerable<CodeInstruction> instructions) =>
       new CodeMatcher(instructions)
         .MatchForward(useEnd: false, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_minAltitude))))
         .Advance(1)
@@ -288,11 +282,10 @@ public class ScaleLocationHeightRequirement
 
 }
 
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.CreateLocalZones))]
 public class CreateLocalZones
 {
   public static bool LocationsPregenerated = false;
-  static bool Postfix(bool result, ZoneSystem __instance)
+  internal static bool Postfix(bool result, ZoneSystem __instance)
   {
     // If vanilla zone generated, wait until next attempt.
     if (result) return result;
@@ -318,10 +311,9 @@ public class CreateLocalZones
 }
 
 // TODO: Could look into optimizing like how vanilla now works.
-[HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange))]
 public class HaveLocationInRange
 {
-  static bool Prefix(ref bool __result, ZoneSystem __instance, SoftReferenceableAssets.AssetID assetID, string group, Vector3 p, float radius)
+  internal static bool Prefix(ref bool __result, ZoneSystem __instance, SoftReferenceableAssets.AssetID assetID, string group, Vector3 p, float radius)
   {
     var isVirtual = LocationExtra.IsVirtualGroupId(group);
     if (isVirtual)

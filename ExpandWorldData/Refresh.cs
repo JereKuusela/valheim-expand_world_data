@@ -31,6 +31,17 @@ public static class Refresh
     WorldTimer = -1f;
     WorldInfo.AutomaticRegenerate();
   }
+  public static void WorldStart()
+  {
+    WorldTimer = -1f;
+    WorldGenerator.s_cachedBiomeAreas.Clear();
+    WorldGenerator.s_cachedBiomes.Clear();
+    foreach (var altBiome in AltBiomeList.m_altBiomes)
+      altBiome.Sectors.Clear();
+    FlushPatches();
+    WorldGenerator.instance.Pregenerate();
+    AltBiomeWorldData.VerifyBiomeData(WorldGenerator.instance.m_world);
+  }
 
   internal static void FlushPatches()
   {

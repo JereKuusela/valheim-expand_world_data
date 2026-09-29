@@ -18,9 +18,6 @@ public abstract class SyncedDataManager
   protected abstract string Pattern { get; }
   protected abstract bool DataEnabled { get; }
   protected abstract string ConfigValue { get; set; }
-  /// <summary>False for managers whose default file is optional (e.g. only written when extra entries exist).</summary>
-  protected virtual bool RequireFileExistsCheckOnRead => true;
-
   protected abstract bool Set(Dictionary<string, string> files);
   /// <summary>Writes the default config file content. May no-op if there's nothing to write.</summary>
   protected abstract void WriteDefaultConfig();
@@ -38,11 +35,10 @@ public abstract class SyncedDataManager
     if (Helper.IsClient()) return;
     if (DataEnabled)
     {
-      if (RequireFileExistsCheckOnRead && !File.Exists(FilePath))
+      if (!File.Exists(FilePath))
       {
-        // Watcher will trigger reload.
         CreateConfigs();
-        return;
+        if (File.Exists(FilePath)) return;
       }
       var files = DataManager.Read(Pattern);
       if (files == null || !Apply(files)) return;
