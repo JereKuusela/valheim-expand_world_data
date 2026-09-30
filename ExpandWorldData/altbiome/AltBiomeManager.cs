@@ -27,6 +27,7 @@ public static class AltBiomeManager
     protected override bool DataEnabled => Configuration.DataAltBiomes;
     protected override string ConfigValue { get => Configuration.valueAltBiomeData.Value; set => Configuration.valueAltBiomeData.Value = value; }
     protected override bool Set(Dictionary<string, string> files) => AltBiomeManager.Set(files);
+    protected override string ToSyncValue(Dictionary<string, string> files) => AltBiomeManager.ToSyncValue(files);
     protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(Original.Select(ToData).ToList()));
   }
   private static readonly Sync Instance = new();
@@ -36,6 +37,23 @@ public static class AltBiomeManager
   public static void ReadConfigs() => Instance.ReadConfigs();
 
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
+
+  // Vegetation and locations are only used by the server, so clients don't need them.
+  private static string ToSyncValue(Dictionary<string, string> files)
+  {
+    List<AltBiomeYaml> all = [];
+    foreach (var file in files)
+    {
+      if (!Yaml.TryDeserialize<AltBiomeYaml>(file.Value, file.Key, out var parsed)) return string.Join("\n", files.Values);
+      all.AddRange(parsed);
+    }
+    foreach (var item in all)
+    {
+      item.addVegetation = null;
+      item.addLocations = null;
+    }
+    return Yaml.Serializer().Serialize(all);
+  }
 
   private static bool Set(Dictionary<string, string> files)
   {

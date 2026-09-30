@@ -32,6 +32,7 @@ Note: All distances are in meters, and don't scale up with the world size. For b
   - This can be used to create limited spawns.
   - Creature deaths can be changed to increase the key value by using the `defeatSetGlobalKey` field.
 - requiredEnvironments: List of valid environments/weathers.
+- requiredPersistentEvent: Name of the persistent event that must be active at the spawn point.
 - spawnDistance (default: `10` meters): Distance to suppress similar spawns.
 - spawnRadiusMin (default: `40` meters): Minimum distance from every player.
 - spawnRadiusMax (default: `80` meters): Maximum distance from any player.

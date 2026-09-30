@@ -10,9 +10,9 @@ public class BiomeEnvironment
   [DefaultValue(1f)]
   public float weight = 1f;
   [DefaultValue(false)]
-  public bool? ashlandsOverride;
+  public bool ashlandsOverride;
   [DefaultValue(false)]
-  public bool? deepNorthOverride;
+  public bool deepNorthOverride;
   [DefaultValue("")]
   public string requiredGlobalKeys = "";
   [DefaultValue("")]

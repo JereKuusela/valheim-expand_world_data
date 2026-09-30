@@ -22,6 +22,8 @@ public abstract class SyncedDataManager
   /// <summary>Writes the default config file content. May no-op if there's nothing to write.</summary>
   protected abstract void WriteDefaultConfig();
   protected virtual void AfterCreateConfigs() { }
+  /// <summary>Builds the value sent to clients. Override to strip server-only or redundant data.</summary>
+  protected virtual string ToSyncValue(Dictionary<string, string> files) => string.Join("\n", files.Values);
 
   public void CreateConfigs()
   {
@@ -42,7 +44,7 @@ public abstract class SyncedDataManager
       }
       var files = DataManager.Read(Pattern);
       if (files == null || !Apply(files)) return;
-      ConfigValue = string.Join("\n", files.Values);
+      ConfigValue = ToSyncValue(files);
     }
     else if (Apply([]))
     {
@@ -54,7 +56,7 @@ public abstract class SyncedDataManager
   {
     if (!Helper.IsClient()) return;
     if (!Initialized) { Pending = true; return; }
-    Apply(yaml == "" ? [] : new() { ["synchronized"] = yaml });
+    Apply(string.IsNullOrEmpty(yaml) ? [] : new() { ["synchronized"] = yaml });
   }
 
   private bool Apply(Dictionary<string, string> files)

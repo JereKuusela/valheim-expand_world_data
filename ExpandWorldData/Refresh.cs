@@ -34,11 +34,12 @@ public static class Refresh
   public static void WorldStart()
   {
     WorldTimer = -1f;
+    FlushPatches();
+    if (WorldGenerator.instance == null) return;
     WorldGenerator.s_cachedBiomeAreas.Clear();
     WorldGenerator.s_cachedBiomes.Clear();
     foreach (var altBiome in AltBiomeList.m_altBiomes)
       altBiome.Sectors.Clear();
-    FlushPatches();
     WorldGenerator.instance.Pregenerate();
     AltBiomeWorldData.VerifyBiomeData(WorldGenerator.instance.m_world);
   }

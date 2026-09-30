@@ -15,30 +15,25 @@ public class EventManager
   public static bool LoadDelayed;
   public static bool HasData { get; private set; }
 
-  public static void CreateConfigs()
-  {
-    if (!Configuration.DataEvents || Helper.IsClient() || File.Exists(FilePath)) return;
-    File.WriteAllText(FilePath, Yaml.Serializer().Serialize(RandEventSystem.instance.m_events.Select(Loader.ToData).ToList()));
-  }
+  public static void CreateConfigs() => Instance.CreateConfigs();
 
-  public static void ReadConfigs()
-  {
-    if (Helper.IsClient()) return;
-    if (!Configuration.DataEvents)
-    {
-      if (Set([]))
-        Configuration.valueEventData.Value = "";
-      return;
-    }
-    var files = DataManager.Read(Pattern);
-    if (files == null || !Set(files)) return;
-    Configuration.valueEventData.Value = string.Join("\n", files.Values);
-  }
+  public static void ReadConfigs() => Instance.ReadConfigs();
 
   public static void FromSetting(string yaml)
   {
-    if (Helper.IsClient() && !LoadDelayed) Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
+    if (!LoadDelayed) Instance.FromSetting(yaml);
   }
+
+  private class Sync : SyncedDataManager
+  {
+    protected override string FilePath => EventManager.FilePath;
+    protected override string Pattern => EventManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataEvents;
+    protected override string ConfigValue { get => Configuration.valueEventData.Value; set => Configuration.valueEventData.Value = value; }
+    protected override bool Set(Dictionary<string, string> files) => EventManager.Set(files);
+    protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(RandEventSystem.instance.m_events.Select(Loader.ToData).ToList()));
+  }
+  private static readonly Sync Instance = new();
 
   private static bool Set(Dictionary<string, string> files)
   {
@@ -47,7 +42,6 @@ public class EventManager
     if (files.Count == 0)
     {
       HasData = false;
-      Refresh.Patches();
       return true;
     }
     try
@@ -65,7 +59,6 @@ public class EventManager
       Loader.ExtraData.Clear();
       RandEventSystem.instance.m_events = data;
       HasData = true;
-      Refresh.Patches();
       return true;
     }
     catch (Exception e) { Log.Error(e.Message); Log.Error(e.StackTrace); return false; }

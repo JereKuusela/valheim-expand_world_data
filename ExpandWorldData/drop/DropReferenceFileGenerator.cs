@@ -25,7 +25,7 @@ public static class ReferenceFileGenerator
       .ToList();
 
     var yaml = Yaml.Serializer().Serialize(data);
-    File.WriteAllText(Loader.ReferenceFilePath, yaml);
+    File.WriteAllText(DropManager.ReferenceFilePath, yaml);
     Log.Info($"Regenerated drop reference file ({data.Count} entries).");
     return yaml;
   }

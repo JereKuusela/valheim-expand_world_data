@@ -7,7 +7,7 @@ public static class Patcher
 {
   public static void Patch(Harmony harmony)
   {
-    ExpandWorldData.Patches.Apply(harmony, true, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(Loader), nameof(Loader.InitializeData), HarmonyPatchType.Postfix, Priority.VeryLow);
+    ExpandWorldData.Patches.Apply(harmony, true, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(DropManager), nameof(DropManager.InitializeData), HarmonyPatchType.Postfix, Priority.VeryLow);
     var shouldPatch = DropManager.HasData;
     ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(CharacterDrop), nameof(CharacterDrop.GenerateDropList), typeof(CharacterDropPatches), nameof(CharacterDropPatches.CharacterDropGenerateDropList), HarmonyPatchType.Prefix);
     ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(Piece), nameof(Piece.DropResources), typeof(PieceRequirementPatches), nameof(PieceRequirementPatches.PieceDropResources), HarmonyPatchType.Prefix);

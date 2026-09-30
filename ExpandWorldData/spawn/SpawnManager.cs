@@ -26,32 +26,24 @@ public class SpawnManager
     return yaml;
   }
 
-  public static void CreateConfigs()
-  {
-    if (!Configuration.DataSpawns || Helper.IsClient() || File.Exists(FilePath)) return;
-    Configuration.valueSpawnData.Value = Save();
-  }
+  public static void CreateConfigs() => Instance.CreateConfigs();
 
-  public static void ReadConfigs()
-  {
-    if (Helper.IsClient()) return;
-    if (!Configuration.DataSpawns)
-    {
-      if (Set([]))
-        Configuration.valueSpawnData.Value = "";
-      return;
-    }
-    var files = DataManager.Read(Pattern);
-    if (files == null || !Set(files)) return;
-    Configuration.valueSpawnData.Value = string.Join("\n", files.Values);
-  }
+  public static void ReadConfigs() => Instance.ReadConfigs();
 
-  public static void FromSetting(string yaml)
-  {
-    if (Helper.IsClient()) Set(yaml == "" ? [] : new() { ["synchronized"] = yaml });
-  }
+  public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
 
-  public static bool Set(Dictionary<string, string> files)
+  private class Sync : SyncedDataManager
+  {
+    protected override string FilePath => SpawnManager.FilePath;
+    protected override string Pattern => SpawnManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataSpawns;
+    protected override string ConfigValue { get => Configuration.valueSpawnData.Value; set => Configuration.valueSpawnData.Value = value; }
+    protected override bool Set(Dictionary<string, string> files) => SpawnManager.Set(files);
+    protected override void WriteDefaultConfig() => ConfigValue = Save();
+  }
+  private static readonly Sync Instance = new();
+
+  private static bool Set(Dictionary<string, string> files)
   {
     List<SpawnSystem.SpawnData> data = [];
     try
@@ -77,15 +69,10 @@ public class SpawnManager
       }
     }
     Override = null;
-    if (files.Count == 0)
-    {
-      Refresh.Patches();
-      return true;
-    }
+    if (files.Count == 0) return true;
     if (data.Count == 0) return false;
     Log.Info($"Reloading spawn data ({data.Count} entries).");
     Override = data;
-    Refresh.Patches();
     SpawnSystem.m_instances.ForEach(ApplySpawnData);
     return true;
   }
@@ -96,14 +83,42 @@ public class SpawnManager
     if (Helper.IsServer()) ReadConfigs();
   }
 
+  private static bool defaultsCaptured;
+
   internal static void InitializeSpawnSystem(SpawnSystem __instance)
   {
+    // Lists are still vanilla until ApplySpawnData runs for the first time.
+    if (!defaultsCaptured)
+    {
+      defaultsCaptured = true;
+      if (Helper.IsServer() && Configuration.DataMigration && Configuration.DataSpawns)
+        MigratePersistentEvents(__instance.m_spawnLists.SelectMany(list => list.m_spawners));
+    }
     if (Override == null)
     {
       if (Helper.IsClient() && Configuration.valueSpawnData.Value != "") FromSetting(Configuration.valueSpawnData.Value);
       if (Helper.IsServer()) CreateConfigs();
     }
     ApplySpawnData(__instance);
+  }
+
+  ///<summary>Backfills requiredPersistentEvent for yaml files saved before the field existed, by pulling values from vanilla data.</summary>
+  private static void MigratePersistentEvents(IEnumerable<SpawnSystem.SpawnData> vanilla)
+  {
+    if (!File.Exists(FilePath)) return;
+    if (!Yaml.TryDeserialize<Data>(File.ReadAllText(FilePath), FilePath, out var existing)) return;
+    // Any entry with the field set means the file is up to date.
+    if (existing.Any(entry => !string.IsNullOrEmpty(entry.requiredPersistentEvent))) return;
+    // Only prefabs whose vanilla entries all agree on one event can be keyed safely.
+    var migrations = vanilla
+      .Where(spawn => spawn.m_prefab)
+      .GroupBy(spawn => spawn.m_prefab.name)
+      .Where(group => group.Select(spawn => spawn.m_requiredPersistentEvent).Distinct().Count() == 1 && !string.IsNullOrEmpty(group.First().m_requiredPersistentEvent))
+      .ToDictionary(group => group.Key, group => group.First().m_requiredPersistentEvent);
+    if (migrations.Count == 0) return;
+    if (!Yaml.InsertMissingField(Pattern, "prefab", "requiredPersistentEvent", migrations)) return;
+    Log.Warning($"Added requiredPersistentEvent to {migrations.Count} prefabs in {Pattern} files.");
+    ReadConfigs();
   }
 
   public static void ApplySpawnData(SpawnSystem system)

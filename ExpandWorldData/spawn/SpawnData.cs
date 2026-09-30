@@ -26,6 +26,7 @@ public class Data
   [DefaultValue(true)] public bool spawnAtNight = true;
   [DefaultValue("")] public string requiredGlobalKey = "";
   [DefaultValue("")] public string requiredEnvironments = "";
+  [DefaultValue("")] public string requiredPersistentEvent = "";
   [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
   public float spawnDistance = 10f;
   [DefaultValue(0f)] public float spawnRadiusMin = 0f;

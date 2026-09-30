@@ -170,7 +170,7 @@ public partial class Configuration
     configDataSpawns = wrapper.Bind(section, "Spawn data", false, false, "Use spawn data.", synchronizedSetting: false);
     configDataSpawns.SettingChanged += (s, e) => ExpandWorld.Spawn.SpawnManager.ReadConfigs();
     configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.", synchronizedSetting: false);
-    configDataDrops.SettingChanged += (s, e) => ExpandWorld.Drops.Loader.ReadConfigs();
+    configDataDrops.SettingChanged += (s, e) => ExpandWorld.Drops.DropManager.ReadConfigs();
     configBlueprintFolder = wrapper.Bind(section, "Blueprint folder", "PlanBuild", false, "Folder relative to the config folder.");
 
     valueNoBuildData = wrapper.AddValue("no_build_data");
@@ -192,7 +192,7 @@ public partial class Configuration
     valueEventData = wrapper.AddValue("event_data");
     valueEventData.ValueChanged += () => ExpandWorld.Event.EventManager.FromSetting(valueEventData.Value);
     valueDropData = wrapper.AddValue("drop_data");
-    valueDropData.ValueChanged += () => ExpandWorld.Drops.Loader.FromSetting(valueDropData.Value);
+    valueDropData.ValueChanged += () => ExpandWorld.Drops.DropManager.FromSetting(valueDropData.Value);
 
     section = "4. Poles";
     configRestrictAshlands = wrapper.Bind(section, "Restrict Ashlands position", true, true, "If true, restricts Ashlands biome position.");

@@ -34,8 +34,8 @@ public class BiomeManager
     {
       m_environment = data.environment,
       m_weight = data.weight,
-      m_ashlandsOverride = data.ashlandsOverride ?? data.environment == "Ashlands_SeaStorm",
-      m_deepnorthOverride = data.deepNorthOverride ?? false
+      m_ashlandsOverride = data.ashlandsOverride,
+      m_deepnorthOverride = data.deepNorthOverride
     };
     EnvEntryKeys key = new(data);
     if (key.HasKeys())
