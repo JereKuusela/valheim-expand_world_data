@@ -54,6 +54,7 @@ public class EnvironmentManager
     env.m_isCold = data.isCold;
     env.m_isColdAtNight = data.isColdAtNight;
     env.m_alwaysDark = data.alwaysDark;
+    env.m_snowBuildup = data.snowBuildup;
     env.m_ambColorNight = data.ambColorNight ?? DataManager.ToColor(data.colorAmbientNight);
     env.m_ambColorDay = data.ambColorDay ?? DataManager.ToColor(data.colorAmbientDay);
     env.m_fogColorNight = data.fogColorNight ?? DataManager.ToColor(data.colorFogNight);
@@ -102,6 +103,7 @@ public class EnvironmentManager
       isCold = env.m_isCold,
       isColdAtNight = env.m_isColdAtNight,
       alwaysDark = env.m_alwaysDark,
+      snowBuildup = env.m_snowBuildup,
       colorAmbientDay = DataManager.FromColor(env.m_ambColorDay),
       colorAmbientNight = DataManager.FromColor(env.m_ambColorNight),
       colorFogNight = DataManager.FromColor(env.m_fogColorNight),
@@ -163,7 +165,7 @@ public class EnvironmentManager
         Extra = previousExtra;
         return false;
       }
-      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data))
+      if (Configuration.DataMigration && Helper.IsServer() && (MigrateSnowBuildup() || AddMissingEntries(data)))
       {
         // Watcher triggers reload.
         Extra = previousExtra;
@@ -190,6 +192,18 @@ public class EnvironmentManager
       Extra = previousExtra;
       return false;
     }
+  }
+
+  ///<summary>Backfills snowBuildup for yaml files saved before the field existed. Returns true if any file was changed.</summary>
+  private static bool MigrateSnowBuildup()
+  {
+    if (Yaml.HasField(Pattern, "snowBuildup")) return false;
+    var migrations = Originals.Values.Where(env => env.m_snowBuildup > 0f)
+      .ToDictionary(env => env.m_name, env => env.m_snowBuildup.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    if (migrations.Count == 0) return false;
+    var changed = Yaml.InsertMissingField(Pattern, "name", "snowBuildup", migrations);
+    if (changed) Log.Warning($"Added snowBuildup to {Pattern} files.");
+    return changed;
   }
 
   private static bool AddMissingEntries(List<EnvSetup> entries)

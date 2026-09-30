@@ -49,6 +49,7 @@ public partial class DungeonManager
     dg.m_perimeterSections = data.perimeterSections;
     dg.m_perimeterBuffer = data.perimeterBuffer;
     dg.m_useCustomInteriorTransform = data.interiorTransform;
+    dg.m_addBaseSeedToRandomSpawn = data.addBaseSeedToRandomSpawn;
     dg.m_randomSeed = data.randomSeed;
     if (data.objectSwap != null)
     {
@@ -66,7 +67,8 @@ public partial class DungeonManager
       name = Utils.GetPrefabName(dg.gameObject),
       algorithm = dg.m_algorithm.ToString(),
       themes = DataManager.FromEnum(dg.m_themes),
-      interiorTransform = dg.m_useCustomInteriorTransform
+      interiorTransform = dg.m_useCustomInteriorTransform,
+      addBaseSeedToRandomSpawn = dg.m_addBaseSeedToRandomSpawn
     };
     if (dg.m_zoneSize.x == dg.m_zoneSize.y && dg.m_zoneSize.y == dg.m_zoneSize.z)
       data.bounds = Helper.Print(dg.m_zoneSize.x);

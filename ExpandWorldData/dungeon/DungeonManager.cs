@@ -81,13 +81,24 @@ public partial class DungeonManager
       Log.Info($"Reloading default dungeon data.");
       return;
     }
-    if (Configuration.DataMigration && AddMissingEntries(data))
+    if (Configuration.DataMigration && (MigrateBaseSeed() || AddMissingEntries(data)))
     {
       // Watcher triggers reload.
       return;
     }
     Log.Info($"Reloading dungeon data ({data.Count} entries).");
     DungeonObjects.Generators = data;
+  }
+
+  ///<summary>Backfills addBaseSeedToRandomSpawn for yaml files saved before the field existed. Returns true if any file was changed.</summary>
+  private static bool MigrateBaseSeed()
+  {
+    if (Yaml.HasField(Pattern, "addBaseSeedToRandomSpawn")) return false;
+    var migrations = DefaultGenerators.Where(kvp => kvp.Value.m_addBaseSeedToRandomSpawn).ToDictionary(kvp => kvp.Key, _ => "true");
+    if (migrations.Count == 0) return false;
+    var changed = Yaml.InsertMissingField(Pattern, "name", "addBaseSeedToRandomSpawn", migrations);
+    if (changed) Log.Warning($"Added addBaseSeedToRandomSpawn to {Pattern} files.");
+    return changed;
   }
 
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>

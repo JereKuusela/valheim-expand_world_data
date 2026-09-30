@@ -224,6 +224,7 @@ public class Spawner
     dg.m_perimeterSections = data.m_perimeterSections;
     dg.m_perimeterBuffer = data.m_perimeterBuffer;
     dg.m_useCustomInteriorTransform = data.m_useCustomInteriorTransform;
+    dg.m_addBaseSeedToRandomSpawn = data.m_addBaseSeedToRandomSpawn;
   }
   [HarmonyPatch(nameof(DungeonGenerator.SetupAvailableRooms)), HarmonyPostfix]
   public static void SetupAvailableRooms(DungeonGenerator __instance)

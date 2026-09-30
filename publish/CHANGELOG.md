@@ -2,7 +2,9 @@
   - Adds field `altBiome` to the world data to assign alternative biomes to specific areas.
   - Adds fields `sizeX`, `sizeY`, `rotation` and `wiggleRectangle` to the world data for rectangular areas.
   - Adds field `requiredPersistentEvent` to the spawn data for specifying persistent event requirements.
-  - Fixes some Deep North entries missing required persistent events (caused them to spawn everywhere).
+  - Adds field `addBaseSeedToRandomSpawn` to the dungeon data for including the dungeon base seed in random spawner seeds.
+  - Adds field `snowBuildup` to the environment data for specifying snow accumulation levels.
+  - Adds migration for new fields (fixes some Deep North spawns spawning everywhere).
   - Fixes default world data putting Mountains before Deep North.
   - Fixes drops.yaml not being loaded.
   - Fixes some possible data sync issues.

@@ -25,6 +25,8 @@ public class EnvironmentYaml
   [DefaultValue(false)]
   public bool alwaysDark = false;
   [DefaultValue(0f)]
+  public float snowBuildup = 0f;
+  [DefaultValue(0f)]
   public float windMin = 0f;
   [DefaultValue(1f)]
   public float windMax = 1f;

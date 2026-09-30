@@ -231,6 +231,15 @@ public class Yaml
     return Deserialize<T>(File.ReadAllText(file), file);
   }
 
+  ///<summary>Returns true if any matching yaml file contains the given field.</summary>
+  public static bool HasField(string pattern, string field)
+  {
+    if (!System.IO.Directory.Exists(BaseDirectory)) return false;
+    var prefix = $"{field}:";
+    return System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories)
+      .Any(file => File.ReadLines(file).Any(line => line.TrimStart().TrimStart('-', ' ').StartsWith(prefix)));
+  }
+
   ///<summary>Inserts a missing field into existing list entries in matching yaml files, preserving comments/formatting. Returns true if any file was changed.</summary>
   public static bool InsertMissingField(string pattern, string keyField, string targetField, Dictionary<string, string> valuesByKey)
   {

@@ -13,6 +13,7 @@ Command `ew_musics` can be used to print available musics.
 - isCold (default: `false`): If true, causes the cold debuff.
 - isColdAtNight (default: `false`): If true, causes the cold at night.
 - alwaysDark (default: `false`): If true, causes constant darkness.
+- snowBuildup (default: `0`): How quickly snow builds up on structures.
 - windMin (default: `0.0`): The minimum wind strength.
 - windMax (default: `1.0`): The maximum wind strength.
 - rainCloudAlpha (default: `0.0`): Amount of clouds in the sky.

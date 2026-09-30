@@ -64,6 +64,8 @@ public class DungeonYaml
   public float perimeterBuffer;
   [DefaultValue(false)]
   public bool interiorTransform = false;
+  [DefaultValue(false)]
+  public bool addBaseSeedToRandomSpawn = false;
   [DefaultValue("")]
   public string bounds = "";
   [DefaultValue(null)]
@@ -103,6 +105,7 @@ public class FakeDungeonGenerator
   public int m_perimeterSections;
   public float m_perimeterBuffer;
   public bool m_useCustomInteriorTransform;
+  public bool m_addBaseSeedToRandomSpawn;
   public Dictionary<string, List<Tuple<float, string>>> m_objectSwaps = [];
   public Dictionary<string, List<Tuple<float, DataEntry?>>> m_objectData = [];
   public bool m_randomSeed;
