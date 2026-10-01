@@ -86,6 +86,36 @@ public class EnvironmentYaml
   public float lightIntensityNight = 0f;
   [DefaultValue(60f)]
   public float sunAngle = 60f;
+  [DefaultValue(0f)]
+  public float auroraIntensityNight = 0f;
+  [DefaultValue(0f)]
+  public float auroraIntensityMorning = 0f;
+  [DefaultValue(0f)]
+  public float auroraIntensityDay = 0f;
+  [DefaultValue(0f)]
+  public float auroraIntensityEvening = 0f;
+  [DefaultValue(null)]
+  public string[]? auroraColors;
+  [DefaultValue(8.53f)]
+  public float cloudOpacityNight = 8.53f;
+  [DefaultValue(8.53f)]
+  public float cloudOpacityMorning = 8.53f;
+  [DefaultValue(8.53f)]
+  public float cloudOpacityDay = 8.53f;
+  [DefaultValue(8.53f)]
+  public float cloudOpacityEvening = 8.53f;
+  [DefaultValue(1f)]
+  public float aoIntensityNight = 1f;
+  [DefaultValue(0.85f)]
+  public float aoIntensityMorning = 0.85f;
+  [DefaultValue(0.8f)]
+  public float aoIntensityDay = 0.8f;
+  [DefaultValue(0.85f)]
+  public float aoIntensityEvening = 0.85f;
+  [DefaultValue("0.005, 0, 0.226")]
+  public string colorAmbientOcclusion = "0.005, 0, 0.226";
+  [DefaultValue(false)]
+  public bool psystemsOutsideOnly = false;
   [DefaultValue(null)]
   public StatusData[]? statusEffects;
 }

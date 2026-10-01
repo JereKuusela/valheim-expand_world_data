@@ -43,7 +43,6 @@ public class NoBuildManager
 
   public static void UpdateData()
   {
-    if (ZoneSystem.instance.m_locationInstances.Count == 0) return;
     var noBuilds = LocationExtra.GetNoBuilds();
     var locations = ZoneSystem.instance.m_locationInstances.Values.Where(loc => noBuilds.Contains(loc.m_location));
     var data = locations.Select(loc =>
@@ -69,26 +68,48 @@ public class NoBuildManager
     }).Where(x => x.radius != 0f || x.dungeon != 0f).ToList();
     Configuration.valueNoBuildData.Value = Yaml.Serializer().Serialize(data);
   }
-  private static Dictionary<Vector2s, NoBuildData> NoBuild = [];
+  private static Dictionary<Vector2s, List<NoBuildData>> NoBuild = [];
   public static bool HasData => NoBuild.Count > 0;
   public static bool IsInsideNoBuildZone(Vector3 point)
   {
     var zone = ZoneSystem.GetZone(point);
-    for (var i = zone.x - 1; i <= zone.x + 1; ++i)
+    if (!NoBuild.TryGetValue(zone, out var candidates)) return false;
+    foreach (var noBuild in candidates)
     {
-      for (var j = zone.y - 1; j <= zone.y + 1; j++)
-      {
-        if (!NoBuild.TryGetValue(new(i, j), out var noBuild)) continue;
-        if (point.y <= 3000 && Utils.DistanceXZ(new(noBuild.X, 0, noBuild.Z), point) < noBuild.radius)
-          return true;
-        // Negative value means the whole zone.
-        if (noBuild.dungeon < 0f && point.y > 3000 && i == zone.x && j == zone.y)
-          return true;
-        if (point.y > 3000 && Utils.DistanceXZ(new(noBuild.X, 0, noBuild.Z), point) < noBuild.dungeon)
-          return true;
-      }
+      if (point.y <= 3000 && Utils.DistanceXZ(new(noBuild.X, 0, noBuild.Z), point) < noBuild.radius)
+        return true;
+      if (point.y > 3000 && noBuild.dungeon < 0f && zone == ZoneSystem.GetZone(new(noBuild.X, 0, noBuild.Z)))
+        return true;
+      if (point.y > 3000 && Utils.DistanceXZ(new(noBuild.X, 0, noBuild.Z), point) < noBuild.dungeon)
+        return true;
     }
     return false;
+  }
+  private static Dictionary<Vector2s, List<NoBuildData>> CreateIndex(List<NoBuildData> data)
+  {
+    Dictionary<Vector2s, List<NoBuildData>> index = [];
+    foreach (var noBuild in data)
+    {
+      if (float.IsNaN(noBuild.radius) || float.IsInfinity(noBuild.radius) ||
+          float.IsNaN(noBuild.dungeon) || float.IsInfinity(noBuild.dungeon) ||
+          float.IsNaN(noBuild.X) || float.IsInfinity(noBuild.X) ||
+          float.IsNaN(noBuild.Z) || float.IsInfinity(noBuild.Z))
+        throw new FormatException("No build coordinates and radii must be finite.");
+      if (noBuild.radius <= 0f && noBuild.dungeon == 0f) continue;
+      var radius = Mathf.Max(0f, Mathf.Max(noBuild.radius, noBuild.dungeon));
+      var min = ZoneSystem.GetZone(new(noBuild.X - radius, 0, noBuild.Z - radius));
+      var max = ZoneSystem.GetZone(new(noBuild.X + radius, 0, noBuild.Z + radius));
+      for (var zoneX = (int)min.x; zoneX <= max.x; ++zoneX)
+      {
+        for (var zoneZ = (int)min.y; zoneZ <= max.y; ++zoneZ)
+        {
+          Vector2s zone = new(zoneX, zoneZ);
+          if (!index.TryGetValue(zone, out var candidates)) index[zone] = candidates = [];
+          candidates.Add(noBuild);
+        }
+      }
+    }
+    return index;
   }
   public static bool IsInsideNoBuildBiome(Vector3 point)
   {
@@ -107,13 +128,11 @@ public class NoBuildManager
       Pending = true;
       return;
     }
-    NoBuild.Clear();
-    if (yaml == "") { Refresh.Patches(); return; }
     try
     {
-      var data = Yaml.Deserialize<NoBuildData>(yaml, "No build");
+      var data = string.IsNullOrEmpty(yaml) ? new List<NoBuildData>() : Yaml.Deserialize<NoBuildData>(yaml, "No build");
+      NoBuild = CreateIndex(data);
       Log.Info($"Reloading no build data ({data.Count} entries).");
-      NoBuild = data.ToDictionary(data => ZoneSystem.GetZone(new(data.X, 0, data.Z)));
     }
     catch (Exception e)
     {
@@ -132,4 +151,9 @@ public class NoBuildManager
   }
 
   internal static void SynchronizeLocationData() => UpdateData();
+
+  internal static void SynchronizeGeneratedLocations(bool value)
+  {
+    if (value) UpdateData();
+  }
 }

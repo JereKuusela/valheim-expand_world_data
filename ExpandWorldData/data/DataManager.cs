@@ -26,6 +26,13 @@ public class InitializeRooms
 [HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.VersionSetup)), HarmonyPriority(Priority.VeryLow)]
 public class InitializeWorld
 {
+  static void Prefix(WorldGenerator __instance)
+  {
+    if (__instance.m_world.m_menu) return;
+    Yaml.WorldLoading = true;
+    Yaml.WorldLoadedAt = DateTime.MaxValue;
+  }
+
   // River generation requires biome and world data being loaded.
   // Saving is done later because that requires environments.
   static void Postfix()
@@ -55,10 +62,12 @@ public class InitializeContent
     VegetationManager.Initialize();
     LocationManager.Initialize();
     NoBuildManager.Initialize();
+    LocationClientData.Initialize();
 
     // 1b) All managers are initialized now, so any sync data that arrived early can be replayed.
     SyncedDataManager.PostInitialize();
     NoBuildManager.ApplyPending();
+    LocationClientData.ApplyPending();
 
     // 2) Server: create and read configs synchronously (no client sync gating needed).
     if (Helper.IsServer())
@@ -86,6 +95,7 @@ public class InitializeContent
       // Dungeon and room data is handled elsewhere.
     }
     Refresh.WorldStart();
+    Yaml.WorldLoadedAt = DateTime.UtcNow;
   }
 
   // Blueprints will use empty asset, which must be added to prevent errors.
@@ -122,7 +132,10 @@ public class CleanupOnShutdown
 {
   static void Postfix()
   {
+    Yaml.WorldLoading = false;
+    Yaml.WorldLoadedAt = DateTime.MinValue;
     NoBuildManager.CleanUp();
+    LocationClientData.CleanUp();
     LocationManager.CleanUp();
     VegetationManager.CleanUp();
     SyncedDataManager.CleanUpAll();

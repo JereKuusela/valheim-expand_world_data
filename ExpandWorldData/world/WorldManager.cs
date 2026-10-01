@@ -79,6 +79,16 @@ public class WorldManager
         biome = "meadows",
       },
     ];
+  // Previous default had deepnorth and mountain swapped.
+  private static readonly List<WorldYaml> OldData = SwapDeepNorthAndMountain(DefaultData);
+  private static List<WorldYaml> SwapDeepNorthAndMountain(List<WorldYaml> source)
+  {
+    var list = new List<WorldYaml>(source);
+    var a = list.FindIndex(x => x.biome == "deepnorth");
+    var b = list.FindIndex(x => x.biome == "mountain");
+    (list[a], list[b]) = (list[b], list[a]);
+    return list;
+  }
   public static List<WorldEntry> DefaultEntries = [.. DefaultData.Select(s => new WorldEntry(s, "default world"))];
   public static void AddWorld(WorldYaml data, int index)
   {
@@ -109,6 +119,15 @@ public class WorldManager
         if (!Yaml.TryDeserialize<WorldYaml>(file.Value, file.Key, out var parsed))
           return false;
         data.AddRange(parsed);
+      }
+      if (Configuration.DataMigration && Helper.IsServer() && data.Count == OldData.Count && Yaml.Serializer().Serialize(data) == Yaml.Serializer().Serialize(OldData))
+      {
+        Log.Info("Detected old default world data with swapped deepnorth and mountain. Using fixed default.");
+        data = DefaultData;
+        if (File.Exists(FilePath))
+          File.Delete(FilePath);
+        CreateConfigs();
+        // Watcher triggers erload.
       }
       if (data.Count == 0)
       {

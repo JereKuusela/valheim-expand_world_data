@@ -38,7 +38,6 @@ public class VegetationManager
   public static void CreateConfigs()
   {
     if (Helper.IsClient()) return;
-    if (!Configuration.DataVegetation) return;
     if (File.Exists(FilePath)) return;
     ToFile();
   }

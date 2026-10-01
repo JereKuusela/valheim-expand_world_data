@@ -122,13 +122,26 @@ public class LocationManager
       data.exteriorRadius = prefab.m_exteriorRadius;
       data.clearArea = prefab.m_clearArea;
       data.discoverLabel = prefab.m_discoverLabel;
-      data.noBuild = prefab.m_noBuild ? "true" : "";
-      if (prefab.m_noBuild && prefab.m_noBuildRadiusOverride > 0f)
-        data.noBuild = prefab.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
+      FillClientFields(data, prefab);
     }
     loc.m_prefab.Release();
     return data;
   }
+
+  internal static void FillClientFields(LocationYaml data, Location prefab)
+  {
+    data.noBuild = prefab.m_noBuild ? "true" : "";
+    if (prefab.m_noBuild && prefab.m_noBuildRadiusOverride > 0f)
+      data.noBuild = prefab.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
+    data.interiorRadius = prefab.m_hasInterior ? prefab.m_interiorRadius : 0f;
+    data.interiorEnvironment = prefab.m_interiorEnvironment;
+    data.enemyMinLevel = prefab.m_enemyMinLevelOverride;
+    data.enemyMaxLevel = prefab.m_enemyMaxLevelOverride;
+    data.enemyLevelUpChance = prefab.m_enemyLevelUpOverride;
+    data.enemyLevelExcludeGroups = string.Join(",", prefab.m_excludeEnemyLevelOverrideGroups);
+    data.blockSpawnGroups = string.Join(",", prefab.m_blockSpawnGroups);
+  }
+
   public static bool IsValid(ZoneSystem.ZoneLocation loc) => loc.m_prefab.IsValid;
 
   private static void ToFile()
@@ -155,7 +168,6 @@ public class LocationManager
   public static void CreateConfigs()
   {
     if (Helper.IsClient()) return;
-    if (!Configuration.DataLocation) return;
     if (File.Exists(FilePath)) return;
     ToFile();
   }
@@ -198,6 +210,11 @@ public class LocationManager
           // Watcher triggers reload.
           return;
         }
+        if (Configuration.DataMigration && LocationMigration.Migrate(data, Locations, Pattern))
+        {
+          // Watcher triggers reload.
+          return;
+        }
         if (Configuration.DataMigration && AddMissingEntries(data))
         {
           // Watcher triggers reload.
@@ -214,6 +231,7 @@ public class LocationManager
     UpdateInstances();
     CreateLocalZones.LocationsPregenerated = false;
     NoBuildManager.UpdateData();
+    LocationClientData.UpdateData();
     MinimapIcon.Clear();
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
     IdManager.SendLocationIds();
@@ -296,6 +314,8 @@ public class LocationManager
   private static void ApplyLocationData(ZoneSystem.ZoneLocation item, float? radius = null)
   {
     if (!LocationExtra.TryGetData(item, out var data)) return;
+    // Zero means that the vanilla value is used.
+    if (data.interiorRadius > 0f) item.m_interiorRadius = data.interiorRadius;
     // Old config won't have exterior radius so don't set anything.
     if (data.exteriorRadius == 0f && radius == null) return;
     item.m_exteriorRadius = data.exteriorRadius;

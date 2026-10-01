@@ -70,6 +70,7 @@ public partial class Configuration
   public static CustomSyncedValue<string> valueClutterData;
   public static CustomSyncedValue<string> valueEnvironmentData;
   public static CustomSyncedValue<string> valueNoBuildData;
+  public static CustomSyncedValue<string> valueLocationClientData;
   public static CustomSyncedValue<string> valueSpawnData;
   public static CustomSyncedValue<string> valueAltBiomeData;
   public static CustomSyncedValue<string> valueEventData;
@@ -175,6 +176,8 @@ public partial class Configuration
 
     valueNoBuildData = wrapper.AddValue("no_build_data");
     valueNoBuildData.ValueChanged += () => NoBuildManager.Apply(valueNoBuildData.Value);
+    valueLocationClientData = wrapper.AddValue("location_client_data");
+    valueLocationClientData.ValueChanged += () => LocationClientData.Apply(valueLocationClientData.Value);
     valueEnvironmentData = wrapper.AddValue("environment_data");
     valueEnvironmentData.ValueChanged += () => EnvironmentManager.FromSetting(valueEnvironmentData.Value);
     valueBiomeData = wrapper.AddValue("biome_data");

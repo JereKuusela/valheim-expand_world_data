@@ -35,8 +35,6 @@ public class DropManager
   }
   private static readonly Sync Instance = new();
 
-  public static void CreateConfigs() => Instance.CreateConfigs();
-
   public static void ReadConfigs() => Instance.ReadConfigs();
 
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);

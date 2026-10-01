@@ -29,6 +29,14 @@ Command `ew_musics` can be used to print available musics.
 - lightIntensityDay (default: `1.2`): ???.
 - lightIntensityNight (default: `0`): ???.
 - sunAngle (default: `60`): ???.
+- auroraIntensityMorning, auroraIntensityDay, auroraIntensityEvening, auroraIntensityNight (default: `0`): Strength of the aurora (northern lights) at each time of day.
+- auroraColors (default: no aurora): Aurora gradient as a list of color keys. Format is `time, r, g, b` where time is from 0.0 to 1.0.
+  - Maximum of 8 keys. Alpha is not supported.
+  - Example: `auroraColors: ["0, 0.1, 0.9, 0.4", "1, 0.8, 0.2, 0.6"]`.
+- cloudOpacityMorning, cloudOpacityDay, cloudOpacityEvening, cloudOpacityNight (default: `8.53`): Opacity of the clouds at each time of day.
+- aoIntensityNight (default: `1`), aoIntensityMorning (default: `0.85`), aoIntensityDay (default: `0.8`), aoIntensityEvening (default: `0.85`): Ambient occlusion intensity at each time of day.
+- colorAmbientOcclusion (default: `0.005, 0, 0.226`): Ambient occlusion color.
+- psystemsOutsideOnly (default: `false`): If true, the particles are only shown outside.
 - statusEffects: List of status effects that are active in this environment.
   - See [Status effects](status-effects.md) for format and more information.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.

@@ -82,6 +82,11 @@ public class EWD : BaseUnityPlugin
   }
   public void LateUpdate()
   {
+    if (Yaml.WorldLoading && Yaml.WorldLoadedAt != DateTime.MaxValue)
+    {
+      Yaml.WorldLoadedAt = DateTime.UtcNow;
+      Yaml.WorldLoading = false;
+    }
     Refresh.Tick(Time.deltaTime);
     WaterColor.Transition(Time.deltaTime);
   }

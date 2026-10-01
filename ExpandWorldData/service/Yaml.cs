@@ -16,6 +16,8 @@ public class Yaml
   // Dependencies use this field.
   public static string Directory = BaseDirectory;
   public static string BackupDirectory = Path.Combine(Paths.ConfigPath, "expand_world_backups");
+  public static bool WorldLoading;
+  public static DateTime WorldLoadedAt = DateTime.MinValue;
 
 
   public static List<T> Read<T>(string pattern)
@@ -130,6 +132,7 @@ public class Yaml
         if (setting.Value && ExpandWorldData.Configuration.DataReload) action();
         return;
       }
+      if (!setting.Value && (WorldLoading || File.GetLastWriteTimeUtc(path) <= WorldLoadedAt)) return;
       BackupFile(path);
       if (!setting.Value)
       {

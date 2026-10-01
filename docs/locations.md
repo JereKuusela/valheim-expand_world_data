@@ -1,6 +1,6 @@
 ﻿# Locations
 
-The file `expand_locations.yaml` sets the available locations and their placement. This is a server side feature, clients don't have access to this data.
+The file `expand_locations.yaml` sets the available locations and their placement. This is mostly a server side feature. Only fields marked with (synced) are sent to clients.
 
 Note: Missing locations are automatically added to the file. To disable, set `enabled` to `false` instead of removing anything.
 
@@ -23,7 +23,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - prioritized (default: `false`): Generated first with more attempts.
 - centerFirst (default: `false`): Generating is attempted at world center, with gradually moving towards the world edge.
 - unique (default: `false`): When placed, all other unplaced locations are removed. Guaranteed maximum of one instance.
-- discoverLabel: Shown text when the location is discovered.
+- discoverLabel (synced): Shown text when the location is discovered.
 - iconAlways: Location icon that is always shown. Use `ew_icons` to see what is available.
   - Format is `icon,size,pulse`.
   - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
@@ -73,14 +73,21 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - objects: Extra objects in the location, relative to the location center.
   - See [Custom objects](custom-objects.md) for details.
 - randomDamage (default: `false`): If true, pieces without custom health are randomly damaged. If all, all pieces are randomly damaged.
-- exteriorRadius: How many meters are cleared, leveled or no build. If not given for blueprints, this is the radius of the blueprint (+ 2 meters).
+- exteriorRadius (synced): How many meters are cleared, leveled or no build. If not given for blueprints, this is the radius of the blueprint (+ 2 meters). If `0`, the value of the original location is used.
   - Note: Maximum suggested value is 32 meters. Higher values go past the zone border and can cause issues.
+- interiorRadius (synced, default: `0`): Radius of the dungeon interior. If `0`, the value of the original location is used.
+- interiorEnvironment (synced): Environment inside the dungeon. Only for locations that have an interior.
+- enemyMinLevel (synced, default: `-1`): Overrides the minimum level of creature spawners in the location. Negative value disables the override.
+- enemyMaxLevel (synced, default: `-1`): Overrides the maximum level of creature spawners in the location. Negative value disables the override.
+- enemyLevelUpChance (synced, default: `-1`): Overrides the level up chance of creature spawners in the location. Negative value disables the override.
+- enemyLevelExcludeGroups (synced): List of creature spawner groups that ignore the level overrides.
+- blockSpawnGroups (synced): List of creature spawner groups that are removed from the location.
 - commands: List of commands that will be executed when spawning the location.
   - Use `<x>`, `<y>` and `<z>` in the command to use the location center point.
   - Use `<a>` in the command to use the location rotation.
   - Basic arithmetic is supported. For example `<x>+10` would add 10 meters to the x coordinate.
 - clearArea (default: `false`): If true, vegetation is not placed within `exteriorRadius`.
-- noBuild (default: `false`): If true, players can't build within `exteriorRadius`. If number, player can't build within the given radius.
+- noBuild (synced, default: `false`): If true, players can't build within `exteriorRadius`. If number, player can't build within the given radius. If omitted, building is allowed (even if the original location blocks it).
 - noBuildDungeon (default: `false`): If true, players can't build inside dungeons within the whole zone. If number, player can't build inside dungeons within the given radius.
   - Note: For bigger dungeons, the number should be set manually (dungeon `bounds` divided by sqrt 2).
 - levelArea (default: `true` for blueprints): Flattens the area.

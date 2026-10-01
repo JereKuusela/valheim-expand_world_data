@@ -27,7 +27,7 @@ public abstract class SyncedDataManager
 
   public void CreateConfigs()
   {
-    if (Helper.IsClient() || !DataEnabled || File.Exists(FilePath)) return;
+    if (Helper.IsClient() || File.Exists(FilePath)) return;
     WriteDefaultConfig();
     AfterCreateConfigs();
   }

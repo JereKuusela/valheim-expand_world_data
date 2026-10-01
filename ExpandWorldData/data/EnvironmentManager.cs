@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 using Service;
+using UnityEngine;
 
 namespace ExpandWorldData;
 
@@ -85,6 +87,21 @@ public class EnvironmentManager
     env.m_musicEvening = data.musicEvening;
     env.m_musicDay = data.musicDay;
     env.m_musicNight = data.musicNight;
+    env.m_auroraIntensityNight = data.auroraIntensityNight;
+    env.m_auroraIntensityMorning = data.auroraIntensityMorning;
+    env.m_auroraIntensityDay = data.auroraIntensityDay;
+    env.m_auroraIntensityEvening = data.auroraIntensityEvening;
+    env.m_auroraColors = ToGradient(data.auroraColors, fileName);
+    env.m_cloudOpacityNight = data.cloudOpacityNight;
+    env.m_cloudOpacityMorning = data.cloudOpacityMorning;
+    env.m_cloudOpacityDay = data.cloudOpacityDay;
+    env.m_cloudOpacityEvening = data.cloudOpacityEvening;
+    env.m_aoIntensityNight = data.aoIntensityNight;
+    env.m_aoIntensityMorning = data.aoIntensityMorning;
+    env.m_aoIntensityDay = data.aoIntensityDay;
+    env.m_aoIntensityEvening = data.aoIntensityEvening;
+    env.m_ambientOcclusionColor = DataManager.ToColor(data.colorAmbientOcclusion);
+    env.m_psystemsOutsideOnly = data.psystemsOutsideOnly;
 
     EnvironmentData extra = new(data);
     if (extra.IsValid())
@@ -133,9 +150,54 @@ public class EnvironmentManager
       musicMorning = env.m_musicMorning,
       musicEvening = env.m_musicEvening,
       musicDay = env.m_musicDay,
-      musicNight = env.m_musicNight
+      musicNight = env.m_musicNight,
+      auroraIntensityNight = env.m_auroraIntensityNight,
+      auroraIntensityMorning = env.m_auroraIntensityMorning,
+      auroraIntensityDay = env.m_auroraIntensityDay,
+      auroraIntensityEvening = env.m_auroraIntensityEvening,
+      auroraColors = FromGradient(env.m_auroraColors),
+      cloudOpacityNight = env.m_cloudOpacityNight,
+      cloudOpacityMorning = env.m_cloudOpacityMorning,
+      cloudOpacityDay = env.m_cloudOpacityDay,
+      cloudOpacityEvening = env.m_cloudOpacityEvening,
+      aoIntensityNight = env.m_aoIntensityNight,
+      aoIntensityMorning = env.m_aoIntensityMorning,
+      aoIntensityDay = env.m_aoIntensityDay,
+      aoIntensityEvening = env.m_aoIntensityEvening,
+      colorAmbientOcclusion = DataManager.FromColor(env.m_ambientOcclusionColor),
+      psystemsOutsideOnly = env.m_psystemsOutsideOnly
     };
     return data;
+  }
+
+  // Unity supports at most 8 color keys. A new gradient is required because cloned environments share the original reference.
+  private static Gradient ToGradient(string[]? keys, string fileName)
+  {
+    var colorKeys = new List<GradientColorKey>();
+    foreach (var key in keys ?? [])
+    {
+      if (colorKeys.Count >= 8)
+      {
+        Log.Warning($"{fileName}: auroraColors supports at most 8 keys, ignoring the rest.");
+        break;
+      }
+      var kvp = Parse.Kvp(key);
+      var color = DataManager.ToColor(kvp.Value);
+      colorKeys.Add(new(color, Mathf.Clamp01(Parse.Float(kvp.Key))));
+    }
+    if (colorKeys.Count == 0)
+      colorKeys.Add(new(Color.black, 0f));
+    var gradient = new Gradient();
+    // Alpha is ignored because the aurora texture is RGB only.
+    gradient.SetKeys([.. colorKeys], [new GradientAlphaKey(1f, 0f)]);
+    return gradient;
+  }
+
+  internal static string[]? FromGradient(Gradient? gradient)
+  {
+    if (gradient == null) return null;
+    var keys = gradient.colorKeys.Select(key => $"{key.time.ToString("0.###", CultureInfo.InvariantCulture)}, {DataManager.FromColor(key.color)}").ToArray();
+    return keys.Length == 0 ? null : keys;
   }
 
   public static void CreateConfigs() => Instance.CreateConfigs();
@@ -154,9 +216,11 @@ public class EnvironmentManager
         return true;
       }
       List<EnvSetup> data = [];
+      List<EnvironmentYaml> yamls = [];
       foreach (var file in files)
       {
         if (!Yaml.TryDeserialize<EnvironmentYaml>(file.Value, file.Key, out var parsed)) return false;
+        yamls.AddRange(parsed);
         data.AddRange(parsed.Select(d => FromData(d, file.Key)));
       }
       if (data.Count == 0)
@@ -165,7 +229,7 @@ public class EnvironmentManager
         Extra = previousExtra;
         return false;
       }
-      if (Configuration.DataMigration && Helper.IsServer() && (MigrateSnowBuildup() || AddMissingEntries(data)))
+      if (Configuration.DataMigration && Helper.IsServer() && (EnvironmentMigration.Migrate(yamls, Originals, Pattern) || AddMissingEntries(data)))
       {
         // Watcher triggers reload.
         Extra = previousExtra;
@@ -192,18 +256,6 @@ public class EnvironmentManager
       Extra = previousExtra;
       return false;
     }
-  }
-
-  ///<summary>Backfills snowBuildup for yaml files saved before the field existed. Returns true if any file was changed.</summary>
-  private static bool MigrateSnowBuildup()
-  {
-    if (Yaml.HasField(Pattern, "snowBuildup")) return false;
-    var migrations = Originals.Values.Where(env => env.m_snowBuildup > 0f)
-      .ToDictionary(env => env.m_name, env => env.m_snowBuildup.ToString(System.Globalization.CultureInfo.InvariantCulture));
-    if (migrations.Count == 0) return false;
-    var changed = Yaml.InsertMissingField(Pattern, "name", "snowBuildup", migrations);
-    if (changed) Log.Warning($"Added snowBuildup to {Pattern} files.");
-    return changed;
   }
 
   private static bool AddMissingEntries(List<EnvSetup> entries)

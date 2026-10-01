@@ -97,6 +97,20 @@ public class LocationYaml
   public string[]? commands = null;
   [DefaultValue(0f)]
   public float exteriorRadius = 0f;
+  [DefaultValue(0f)]
+  public float interiorRadius = 0f;
+  [DefaultValue("")]
+  public string interiorEnvironment = "";
+  [DefaultValue(-1)]
+  public int enemyMinLevel = -1;
+  [DefaultValue(-1)]
+  public int enemyMaxLevel = -1;
+  [DefaultValue(-1f)]
+  public float enemyLevelUpChance = -1f;
+  [DefaultValue("")]
+  public string enemyLevelExcludeGroups = "";
+  [DefaultValue("")]
+  public string blockSpawnGroups = "";
   [DefaultValue(false)]
   public bool clearArea = false;
   [DefaultValue("")]
