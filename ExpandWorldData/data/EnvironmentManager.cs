@@ -212,7 +212,7 @@ public class EnvironmentManager
       if (files.Count == 0)
       {
         Extra.Clear();
-        Refresh.World();
+        Refresh.Request(Regen.Patches);
         return true;
       }
       List<EnvSetup> data = [];
@@ -246,7 +246,7 @@ public class EnvironmentManager
       em.m_firstEnv = true;
       foreach (var biome in em.m_biomes)
         em.InitializeBiomeEnvSetup(biome);
-      Refresh.World();
+      Refresh.Request(Regen.Patches);
       return true;
     }
     catch (Exception e)

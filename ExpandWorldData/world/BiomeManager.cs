@@ -298,7 +298,7 @@ public class BiomeManager
   {
     if (!Yaml.TryDeserialize<BiomeYaml>(files, out var data)) return false;
     Load(data);
-    Refresh.World();
+    Refresh.Request(Regen.Terrain | Regen.Water | Regen.Minimap);
     return true;
   }
   public static void SetupWatcher()

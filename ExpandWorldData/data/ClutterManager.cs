@@ -125,8 +125,7 @@ public class ClutterManager
     ClutterSystem.instance.m_clutter.Clear();
     foreach (var clutter in data)
       ClutterSystem.instance.m_clutter.Add(clutter);
-    ClutterSystem.instance.ClearAll();
-    Refresh.World();
+    Refresh.Request(Regen.Clutter);
     return true;
   }
   private static bool TryParseYaml(Dictionary<string, string> files, out List<ClutterSystem.Clutter> data)

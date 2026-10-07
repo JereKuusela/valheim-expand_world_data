@@ -235,7 +235,7 @@ public class LocationManager
     MinimapIcon.Clear();
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
     IdManager.SendLocationIds();
-    Refresh.Patches();
+    Refresh.Request(Regen.Patches);
   }
   private static void UpdateHashes()
   {

@@ -15,8 +15,6 @@ public partial class Configuration
   public static bool SplitDataPerMod => configSplitDataPerMod.Value;
   public static ConfigEntry<bool> configLegacyGeneration;
   public static bool LegacyGeneration => configLegacyGeneration.Value;
-  public static ConfigEntry<bool> configRegenerateMap;
-  public static bool RegenerateMap => configRegenerateMap.Value;
   public static ConfigEntry<bool> configCustomWaterColor;
   public static bool CustomWaterColor => configCustomWaterColor.Value;
   public static ConfigEntry<bool> configDataEvents;
@@ -109,19 +107,18 @@ public partial class Configuration
   public static void Init(ConfigWrapper wrapper)
   {
     var section = "1. General";
-    configRegenerateMap = wrapper.Bind(section, "Regenerate map", true, false, "If true, the world map is regenerated automatically on data changes.");
     configServerOnly = wrapper.Bind(section, "Server only", false, false, "If true, enables server side only mode and clients can't have the mod installed.");
     configLegacyGeneration = wrapper.Bind(section, "Legacy generation", false, true, "Old Expand World had a bug that cause incorrect generation near biome borders. Set this true for older worlds.");
-    configLegacyGeneration.SettingChanged += (s, e) => Refresh.Patches();
+    configLegacyGeneration.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
     configZoneSpawners = wrapper.Bind(section, "Zone spawners", true, false, "If disabled, zone spawners are not generated.");
-    configZoneSpawners.SettingChanged += (s, e) => Refresh.Patches();
+    configZoneSpawners.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
     configRandomLocations = wrapper.Bind(section, "Random locations", false, false, "If true, all locations have a random generation instead of depending on the location coordinates.");
 
     section = "2. Features";
     configMultipleEvents = wrapper.Bind(section, "Multiple events", false, false, "If enabled, multiple events can be active at the same time.");
-    configMultipleEvents.SettingChanged += (s, e) => Refresh.Patches();
+    configMultipleEvents.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
     configCheckPerPlayer = wrapper.Bind(section, "Check per player", false, false, "If enabled, the event check is done separately for each player.");
-    configCheckPerPlayer.SettingChanged += (s, e) => Refresh.Patches();
+    configCheckPerPlayer.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
     configEventMinimumDistance = wrapper.BindFloat(section, "Minimum distance between events", 100f, false, "The minimum distance between events.");
     configEventChance = wrapper.BindFloat(section, "Random event chance", 20f, false, "The chance to try starting a random event.");
     configEventInterval = wrapper.BindFloat(section, "Random event interval", 46f, false, "How often the random events are checked (minutes).");
@@ -134,13 +131,13 @@ public partial class Configuration
     configWiggleFrequency.SettingChanged += (s, e) =>
     {
       WorldManager.ReadConfigs();
-      Refresh.Patches();
+      Refresh.Request(Regen.Patches);
     };
     configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, false, "How many meters are the wiggles.");
     configWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configScaleLocationAltitudeRequirement = wrapper.Bind(section, "Scale location altitude requirement", false, false, "If true, location requirements are scaled based on the biome altitude delta and multiplier.");
     configCustomWaterColor = wrapper.Bind(section, "Custom water color", false, false, "If true, custom water color system is enabled.");
-    configCustomWaterColor.SettingChanged += (s, e) => Refresh.Patches();
+    configCustomWaterColor.SettingChanged += (s, e) => Refresh.Request(Regen.Patches | Regen.Water);
 
     section = "3. Data";
     configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.", synchronizedSetting: false);

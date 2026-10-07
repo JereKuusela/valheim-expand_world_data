@@ -62,7 +62,7 @@ public abstract class SyncedDataManager
   private bool Apply(Dictionary<string, string> files)
   {
     if (!Set(files)) return false;
-    Refresh.Patches();
+    Refresh.Request(Regen.Patches);
     return true;
   }
 

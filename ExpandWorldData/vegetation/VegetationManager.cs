@@ -66,7 +66,7 @@ public class VegetationManager
   private static void Apply(List<ZoneSystem.ZoneVegetation> data)
   {
     HasData = SetData(data);
-    Refresh.Patches();
+    Refresh.Request(Regen.Patches);
   }
 
   private static bool SetData(List<ZoneSystem.ZoneVegetation> data)

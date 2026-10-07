@@ -19,7 +19,7 @@ public static class Patches
     Type patchType,
     string patchName,
     HarmonyPatchType patchKind,
-    int priority = Priority.Normal,
+    int? priority = null,
     Type[]? argumentTypes = null,
     bool enumerator = false,
     object? state = null,
@@ -58,9 +58,11 @@ public static class Patches
       ?? throw new MissingMethodException(originalType.FullName, $"{originalName}.MoveNext");
   }
 
-  private static void Patch(Harmony harmony, MethodBase original, MethodInfo patch, HarmonyPatchType patchKind, int priority)
+  private static void Patch(Harmony harmony, MethodBase original, MethodInfo patch, HarmonyPatchType patchKind, int? priority)
   {
-    var harmonyMethod = new HarmonyMethod(patch) { priority = priority };
+    // Without an explicit priority the [HarmonyPriority] attribute on the patch method is kept.
+    var harmonyMethod = new HarmonyMethod(patch);
+    if (priority != null) harmonyMethod.priority = priority.Value;
     switch (patchKind)
     {
       case HarmonyPatchType.Prefix:

@@ -139,7 +139,7 @@ public class NoBuildManager
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
-    finally { Refresh.Patches(); }
+    finally { Refresh.Request(Regen.Patches); }
   }
 
   internal static bool CheckAdditionalZones(bool result, Vector3 point)

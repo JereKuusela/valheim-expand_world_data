@@ -110,7 +110,7 @@ public class WorldManager
       if (files.Count == 0)
       {
         HasData = false;
-        Refresh.World();
+        Refresh.Request(Regen.World);
         return true;
       }
       List<WorldYaml> data = [];
@@ -142,7 +142,7 @@ public class WorldManager
       BiomeCalculator.CheckAngles = data.Any(x => x.minSector != 0f || x.maxSector != 1f);
       Data = data;
       HasData = data.Count > 0;
-      Refresh.World();
+      Refresh.Request(Regen.World);
       return true;
     }
     catch (Exception e)
@@ -158,7 +158,7 @@ public class WorldManager
     BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
     BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
     GetRandomPointByBiome.Warned.Clear();
-    Refresh.World();
+    Refresh.Request(Regen.World);
   }
   public static void SetupWatcher()
   {

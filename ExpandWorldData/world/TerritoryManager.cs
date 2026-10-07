@@ -73,7 +73,7 @@ public class TerritoryManager
     }
     Data.Clear();
     foreach (var entry in data) Data[entry.Key] = entry.Value;
-    Refresh.World();
+    Refresh.Request(Regen.Terrain | Regen.Water | Regen.Minimap);
     return true;
   }
 

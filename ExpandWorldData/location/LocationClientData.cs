@@ -74,7 +74,7 @@ public static class LocationClientData
     }
     Configuration.valueLocationClientData.Value = list.Count == 0 ? "" : Yaml.Serializer().Serialize(list);
     SetTable(list);
-    Refresh.Patches();
+    Refresh.Request(Regen.Patches);
   }
 
   private static LocationClientYaml ToClient(string name, LocationYaml data) => new()
@@ -126,7 +126,7 @@ public static class LocationClientData
       Log.Error(e.Message);
       Log.Error(e.StackTrace);
     }
-    finally { Refresh.Patches(); }
+    finally { Refresh.Request(Regen.Patches); }
   }
 
   public static void Patch(Harmony harmony)

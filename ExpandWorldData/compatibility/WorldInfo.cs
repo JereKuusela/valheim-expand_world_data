@@ -29,25 +29,23 @@ public class WorldInfo
   {
     WaterLevel = waterLevel;
   }
-  public static void AutomaticRegenerate()
+  public static void RegenerateBiomes()
   {
     if (WorldGenerator.instance == null) return;
-    Log.Info("Regenerating the world.");
     WorldGenerator.s_cachedBiomeAreas.Clear();
     WorldGenerator.s_cachedBiomes.Clear();
     foreach (var altBiome in AltBiomeList.m_altBiomes)
       altBiome.Sectors.Clear();
-    Refresh.FlushPatches();
     WorldGenerator.instance.Pregenerate();
     AltBiomeWorldData.VerifyBiomeData(WorldGenerator.instance.m_world);
+  }
+  public static void RegenerateTerrain()
+  {
     foreach (var heightmap in Object.FindObjectsByType<Heightmap>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
     {
       heightmap.m_buildData = null;
       heightmap.Regenerate();
     }
-    WaterColor.Regenerate();
-    ClutterSystem.instance?.ClearAll();
-    if (Configuration.RegenerateMap) RegenerateMap();
   }
   public static void RegenerateMap()
   {

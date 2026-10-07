@@ -12,7 +12,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.74";
+  public const string VERSION = "1.74.1";
 #nullable disable
   public static EWD Instance;
   public static Harmony Harmony;
@@ -29,7 +29,7 @@ public class EWD : BaseUnityPlugin
     Instance = this;
     Log.Init(Logger);
     Yaml.Init();
-    ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, Refresh.World);
+    ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, () => Refresh.Request(Regen.World));
     Configuration.Init(wrapper);
     LegacyEventsConfiguration.Migrate(Config);
     Harmony = new(GUID);

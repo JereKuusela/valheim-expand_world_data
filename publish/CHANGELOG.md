@@ -11,6 +11,9 @@
   - Fixes default world data putting Mountains before Deep North.
   - Fixes drops.yaml not being loaded.
   - Fixes some possible data sync issues.
+  - Fixes clutter data triggering world regeneration.
+  - Improves data reloading to only regenerate the affected parts (terrain, water, map, clutter) instead of the whole world.
+  - Removes the `Regenerate map` setting (the map is always regenerated when needed).
   - Optimizes the mod by conditionally patching only necessary parts of the game.
 
 - v1.73
