@@ -1,32 +1,157 @@
+﻿// Shared code: keep identical in EWD, EWP and WEC (common/). Sync changes to all three.
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Data;
+using UnityEngine;
 
-namespace Service;
-
-/// <summary>Plain data snapshot of an item, decoupled from ItemDrop.ItemData/prefab lifetime.</summary>
-public class ItemRecord
-{
-  public int PrefabHash;
-  public string PrefabName = "";
-  public int Stack;
-  public float Durability;
-  public Vector2i GridPos;
-  public bool Equipped;
-  public int Quality = 1;
-  public int Variant;
-  public long CrafterID;
-  public string CrafterName = "";
-  public Dictionary<string, string> CustomData = [];
-  public int WorldLevel;
-  public bool PickedUp;
-  public bool Cheated;
-}
+namespace Data;
 
 /// <summary>Reads/writes ZDOVars.s_items without instantiating item GameObjects (unlike Inventory.Load/AddItem).</summary>
 public static class ItemDataHelper
 {
+  // A nonzero ID is required for the crafter name to be visible.
+  public const long SyntheticCrafterId = 1L;
+
+  public static long EnsureVisibleCrafterId(long crafterId, string crafterName)
+    => crafterId == 0L && !string.IsNullOrWhiteSpace(crafterName)
+      ? SyntheticCrafterId
+      : crafterId;
+
+  private static bool TryLoadDrop(ZDO zdo, out ItemDrop.ItemData itemData)
+  {
+    itemData = new ItemDrop.ItemData();
+    var packed = zdo.GetByteArray(ZDOVars.s_itemData);
+    if (packed == null || packed.Length <= 2) return false;
+    var pkg = new ZPackage(packed);
+    var version = (Version.Item)pkg.ReadByte();
+    (_, itemData) = ItemDrop.ItemData.Load(pkg, version);
+    return true;
+  }
+
+  public static ItemRecord? LoadSingle(ZDO zdo)
+  {
+    if (!TryLoadDrop(zdo, out var item)) return null;
+    return ToRecord(zdo.m_prefab, item);
+  }
+
+  // Packed single item, the version is a byte unlike in inventories.
+  public static ItemRecord? LoadItem(byte[] bytes)
+  {
+    if (bytes.Length <= 2) return null;
+    try
+    {
+      var pkg = new ZPackage(bytes);
+      var version = (Version.Item)pkg.ReadByte();
+      var (hash, item) = ItemDrop.ItemData.Load(pkg, version);
+      return ToRecord(hash, item);
+    }
+    catch
+    {
+      return null;
+    }
+  }
+
+  private static ItemRecord ToRecord(int hash, ItemDrop.ItemData item) => new()
+  {
+    PrefabHash = hash,
+    // Empty PrefabName means the prefab no longer exists (removed mod/item).
+    PrefabName = hash != 0 ? ObjectDB.instance.GetItemPrefab(hash)?.name ?? "" : "",
+    Stack = item.m_stack,
+    Durability = item.m_durability,
+    GridPos = item.m_gridPos,
+    Equipped = item.m_equipped,
+    Quality = item.m_quality,
+    Variant = item.m_variant,
+    CrafterID = item.m_crafterID,
+    CrafterName = item.m_crafterName,
+    CustomData = item.m_customData,
+    WorldLevel = item.m_worldLevel,
+    PickedUp = item.m_pickedUp,
+    Cheated = item.m_cheated,
+  };
+
+  public static byte[] Serialize(ItemDrop.ItemData itemData)
+  {
+    ZPackage pkg = new();
+    // Inventory uses int for version, itemDrops uses byte.
+    pkg.Write((byte)Version.Item.ChunksNCheats);
+    itemData.Save(pkg);
+    return pkg.GetArray();
+  }
+
+  public static bool TryGetString(ZDO zdo, int hash, out string value)
+  {
+    value = "";
+    if (hash != ZDOVars.s_crafterName) return false;
+    if (!TryLoadDrop(zdo, out var itemData)) return false;
+    value = itemData.m_crafterName;
+    return true;
+  }
+
+  public static bool TryGetFloat(ZDO zdo, int hash, out float value)
+  {
+    value = 0f;
+    if (hash != ZDOVars.s_durability) return false;
+    if (!TryLoadDrop(zdo, out var itemData)) return false;
+    value = itemData.m_durability;
+    return true;
+  }
+
+  public static bool TryGetInt(ZDO zdo, int hash, out int value)
+  {
+    value = 0;
+    if (hash != ZDOVars.s_stack && hash != ZDOVars.s_quality && hash != ZDOVars.s_variant && hash != ZDOVars.s_worldLevel && hash != ZDOVars.s_pickedUp) return false;
+    if (!TryLoadDrop(zdo, out var itemData)) return false;
+    if (hash == ZDOVars.s_stack) value = itemData.m_stack;
+    else if (hash == ZDOVars.s_quality) value = itemData.m_quality;
+    else if (hash == ZDOVars.s_variant) value = itemData.m_variant;
+    else if (hash == ZDOVars.s_worldLevel) value = itemData.m_worldLevel;
+    else if (hash == ZDOVars.s_pickedUp) value = itemData.m_pickedUp ? 1 : 0;
+    else return false;
+    return true;
+  }
+
+  public static bool TryGetLong(ZDO zdo, int hash, out long value)
+  {
+    value = 0L;
+    if (hash != ZDOVars.s_crafterID) return false;
+    if (!TryLoadDrop(zdo, out var itemData)) return false;
+    value = itemData.m_crafterID;
+    return true;
+  }
+
+  public static ItemDrop.ItemData Create(
+    GameObject prefab,
+    int stack,
+    float? durability,
+    int quality,
+    int variant,
+    long crafterId,
+    string crafterName,
+    int worldLevel,
+    bool pickedUp,
+    bool cheated,
+    bool equipped,
+    Dictionary<string, string>? customData)
+  {
+    var drop = prefab.GetComponent<ItemDrop>();
+    var itemData = drop.m_itemData.Clone();
+    itemData.m_dropPrefab = prefab;
+    itemData.m_stack = stack;
+    itemData.m_quality = quality;
+    itemData.m_variant = variant;
+    itemData.m_crafterID = EnsureVisibleCrafterId(crafterId, crafterName);
+    itemData.m_crafterName = crafterName;
+    itemData.m_worldLevel = worldLevel;
+    itemData.m_durability = durability ?? itemData.GetMaxDurability(quality);
+    itemData.m_equipped = equipped;
+    itemData.m_pickedUp = pickedUp;
+    itemData.m_cheated = cheated;
+    if (customData != null)
+      itemData.m_customData = new(customData);
+    return itemData;
+  }
+
   public static ZPackage? GetPackage(ZDO zdo)
   {
     var bytes = zdo.GetByteArray(ZDOVars.s_items);
@@ -65,25 +190,7 @@ public static class ItemDataHelper
     for (var i = 0; i < count; i++)
     {
       var (hash, item) = ItemDrop.ItemData.Load(pkg, version);
-      // Empty PrefabName means the prefab no longer exists (removed mod/item).
-      var prefabName = hash != 0 ? ObjectDB.instance.GetItemPrefab(hash)?.name ?? "" : "";
-      records.Add(new ItemRecord
-      {
-        PrefabHash = hash,
-        PrefabName = prefabName,
-        Stack = item.m_stack,
-        Durability = item.m_durability,
-        GridPos = item.m_gridPos,
-        Equipped = item.m_equipped,
-        Quality = item.m_quality,
-        Variant = item.m_variant,
-        CrafterID = item.m_crafterID,
-        CrafterName = item.m_crafterName,
-        CustomData = item.m_customData,
-        WorldLevel = item.m_worldLevel,
-        PickedUp = item.m_pickedUp,
-        Cheated = item.m_cheated,
-      });
+      records.Add(ToRecord(hash, item));
     }
   }
 
@@ -151,9 +258,28 @@ public static class ItemDataHelper
     return pkg.GetArray();
   }
 
+  public static void SaveTo(ZDO zdo, List<ItemRecord> records) => zdo.Set(ZDOVars.s_items, Save(records));
+
+  // First empty row-major grid cell not occupied by an existing record.
+  public static Vector2i? FindFreeSlot(List<ItemRecord> records, Vector2i size)
+  {
+    for (var y = 0; y < size.y; ++y)
+      for (var x = 0; x < size.x; ++x)
+      {
+        var pos = new Vector2i(x, y);
+        if (!records.Any(r => r.GridPos == pos))
+          return pos;
+      }
+    return null;
+  }
+
+  public static int GetMaxStackSize(int prefabHash) =>
+    ObjectDB.instance.GetItemPrefab(prefabHash)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_maxStackSize ?? 1;
+
   public static void Save(List<ItemRecord> records, ZPackage pkg)
   {
-    pkg.Write((byte)Version.Item.ChunksNCheats);
+    // Inventory uses int for version, itemDrops uses byte.
+    pkg.Write((int)Version.Item.ChunksNCheats);
     pkg.Write((ushort)records.Count);
     foreach (var record in records)
     {
@@ -253,7 +379,7 @@ public static class ItemDataHelper
     RemoveLegacyItemData(data, itemData);
   }
 
-  // Builds an ItemData from legacy loose fields, merged onto the existing s_itemData bytes if present.
+  // Builds an ItemDrop.ItemData from legacy loose fields, merged onto the existing s_itemData bytes if present.
   private static ItemDrop.ItemData ParseLegacyItemData(ResolvedDataEntry data, byte[]? existing)
   {
     ItemDrop.ItemData itemData = new();
@@ -277,6 +403,7 @@ public static class ItemDataHelper
       itemData.m_crafterID = crafterId;
     if (data.Strings != null && data.Strings.TryGetValue(ZDOVars.s_crafterName, out var crafterName))
       itemData.m_crafterName = crafterName;
+    itemData.m_crafterID = EnsureVisibleCrafterId(itemData.m_crafterID, itemData.m_crafterName);
     if (data.Ints != null && data.Ints.TryGetValue(ZDOVars.s_dataCount, out var dataCount))
     {
       for (var i = 0; i < dataCount; i++)

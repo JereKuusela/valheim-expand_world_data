@@ -1,9 +1,10 @@
+﻿// Shared code: keep identical in EWD, EWP and WEC (common/). Sync changes to all three.
 using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace Data;
 
-public class DataData
+public class DataYaml
 {
   [DefaultValue(null)]
   public string? name;
@@ -32,7 +33,9 @@ public class DataData
   [DefaultValue(null)]
   public string[]? bytes;
   [DefaultValue(null)]
-  public ItemData[]? items;
+  public ItemYaml[]? items;
+  [DefaultValue(null)]
+  public ItemYaml? item;
   [DefaultValue(null)]
   public string? containerSize;
   [DefaultValue(null)]
@@ -52,7 +55,7 @@ public class DataData
   public string? priority;
 }
 
-public class ItemData
+public class ItemYaml
 {
   public string pos = "";
   [DefaultValue(1f)]
@@ -68,5 +71,6 @@ public class ItemData
   public string? worldLevel;
   public string? equipped;
   public string? pickedUp;
+  public string? cheated;
   public Dictionary<string, string>? customData;
 }

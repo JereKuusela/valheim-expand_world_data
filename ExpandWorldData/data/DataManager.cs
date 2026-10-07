@@ -8,6 +8,7 @@ using Service;
 using UnityEngine;
 using Data;
 using SoftReferenceableAssets;
+using Common;
 
 namespace ExpandWorldData;
 

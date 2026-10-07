@@ -6,6 +6,7 @@ using System.Linq;
 using Data;
 using Service;
 using UnityEngine;
+using Common;
 
 namespace ExpandWorldData;
 
@@ -220,7 +221,7 @@ public class VegetationManager
       m_minDistanceFromCenter = data.minDistance,
       m_maxDistanceFromCenter = data.maxDistance,
     };
-    Range<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
+    ValueRange<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
     {
       Uniform = data.scaleUniform
     };

@@ -4,6 +4,7 @@ using ExpandWorldData;
 using HarmonyLib;
 using Service;
 using UnityEngine;
+using Common;
 
 namespace ExpandWorld.Event;
 
@@ -27,14 +28,14 @@ public class ExtraChecks
     return required.Contains(environment.m_name.ToLower());
   }
 
-  private static bool PlayerCheck(Vector3 position, Range<int>? limit, float distance)
+  private static bool PlayerCheck(Vector3 position, ValueRange<int>? limit, float distance)
   {
     if (limit == null) return true;
     var count = RandEventSystem.s_playerEventDatas.Count(player => Utils.DistanceXZ(position, player.position) <= distance);
     return limit.Min <= count && count <= limit.Max;
   }
 
-  private static bool EventCheck(Vector3 position, Range<int>? limit)
+  private static bool EventCheck(Vector3 position, ValueRange<int>? limit)
   {
     if (limit == null || !Configuration.MultipleEvents) return true;
     var count = MultipleEvents.Events.Where(entry => Utils.DistanceXZ(position, entry.Event.m_pos) <= Configuration.EventMinimumDistance).Sum(entry => entry.Count);

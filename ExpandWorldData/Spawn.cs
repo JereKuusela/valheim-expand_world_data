@@ -6,6 +6,7 @@ using Data;
 
 using DataOverride = System.Func<Data.DataEntry?, string, Data.DataEntry?>;
 using Service;
+using Common;
 
 namespace ExpandWorldData;
 
@@ -235,7 +236,7 @@ public class Spawn
     DataEntry? result = null;
     if (data.TryGetValue("all", out var d))
       result = DataHelper.Merge(result, RandomizeData(d));
-    var components = DataLoading.GetDefaultComponents(prefab);
+    var components = ValueGroups.GetComponents(prefab);
     foreach (var component in components)
     {
       if (data.TryGetValue(component, out d))

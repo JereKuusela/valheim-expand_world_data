@@ -3,6 +3,7 @@ using System.ComponentModel;
 using ExpandWorldData;
 using Service;
 using YamlDotNet.Serialization;
+using Common;
 
 namespace ExpandWorld.Event;
 
@@ -46,10 +47,10 @@ public class ExtraData
 {
   public List<string> RequiredEnvironments = [];
   public float PlayerDistance = 100f;
-  public Range<int>? PlayerLimit;
+  public ValueRange<int>? PlayerLimit;
   public int MinBaseValue = 3;
   public int MaxBaseValue = int.MaxValue;
-  public Range<int>? EventLimit;
+  public ValueRange<int>? EventLimit;
   public string[]? StartCommands;
   public string[]? EndCommands;
 

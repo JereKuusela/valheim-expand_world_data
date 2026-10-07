@@ -26,7 +26,7 @@ public class LoaderFields
     {
       customData ??= new();
       customData.Strings ??= [];
-      customData.Strings[HashFaction] = DataValue.Simple(data.faction);
+      customData.Strings[HashFaction] = DataValue.Constant(data.faction);
     }
     if (data.drops != null)
     {
@@ -94,7 +94,7 @@ public class LoaderFields
     else if (prefix == "bool") { customData.Bools ??= []; customData.Bools[hash] = DataValue.Bool(value); }
     else if (prefix == "vec") { customData.Vecs ??= []; customData.Vecs[hash] = DataValue.Vector3(value); }
     else if (prefix == "quat") { customData.Quats ??= []; customData.Quats[hash] = DataValue.Quaternion(value); }
-    else if (prefix == "string") { customData.Strings ??= []; customData.Strings[hash] = DataValue.Simple(value); }
+    else if (prefix == "string") { customData.Strings ??= []; customData.Strings[hash] = DataValue.Constant(value); }
     else
     {
       if (!componentFields.ContainsKey(prefix)) componentFields[prefix] = [];
@@ -122,13 +122,13 @@ public class LoaderFields
     var componentName = component.GetType().Name;
     var key = $"{componentName}.{info.Name}".GetStableHashCode();
     customData.Ints ??= [];
-    customData.Ints["HasFields".GetStableHashCode()] = DataValue.Simple(1);
-    customData.Ints[$"HasFields{componentName}".GetStableHashCode()] = DataValue.Simple(1);
+    customData.Ints["HasFields".GetStableHashCode()] = DataValue.Constant(1);
+    customData.Ints[$"HasFields{componentName}".GetStableHashCode()] = DataValue.Constant(1);
     if (info.FieldType == typeof(int)) { customData.Ints[key] = DataValue.Int(value); }
     else if (info.FieldType == typeof(float)) { customData.Floats ??= []; customData.Floats[key] = DataValue.Float(value); }
     else if (info.FieldType == typeof(bool)) { customData.Bools ??= []; customData.Bools[key] = DataValue.Bool(value); }
     else if (info.FieldType == typeof(Vector3)) { customData.Vecs ??= []; customData.Vecs[key] = DataValue.Vector3(value); }
     else if (info.FieldType == typeof(Quaternion)) { customData.Quats ??= []; customData.Quats[key] = DataValue.Quaternion(value); }
-    else { customData.Strings ??= []; customData.Strings[key] = DataValue.Simple(value); }
+    else { customData.Strings ??= []; customData.Strings[key] = DataValue.Constant(value); }
   }
 }

@@ -15,14 +15,19 @@ public class DataHelper
     var name = Utils.GetPrefabName(obj);
     var prefab = name.GetStableHashCode();
     ZNetView.m_initZDO = ZDOMan.instance.CreateNewZDO(pos, prefab);
-    var pars = new ObjectParameters(name, "", ZNetView.m_initZDO);
+    var f = new ObjectFunctions(name, [], ZNetView.m_initZDO);
     // View defaults are applied first so a Resolve()d entry can selectively override them.
     ZNetView.m_initZDO.m_rotation = rot.eulerAngles;
     ZNetView.m_initZDO.Type = view.m_type;
     ZNetView.m_initZDO.Distant = view.m_distant;
     ZNetView.m_initZDO.Persistent = view.m_persistent;
 
-    data?.Resolve(pars).Write(ZNetView.m_initZDO);
+    if (data != null)
+    {
+      ResolvedDataEntry resolved = new();
+      resolved.Load(data, f, ZNetView.m_initZDO);
+      resolved.Write(ZNetView.m_initZDO);
+    }
 
     ZNetView.m_initZDO.m_prefab = prefab;
     if (view.m_syncInitialScale && scale != null)
@@ -59,23 +64,16 @@ public class DataHelper
   }
   public static bool Exists(int hash) => DataLoading.Data.ContainsKey(hash);
 
-  public static bool Match(int hash, ZDO zdo, Parameters pars)
+  public static bool Match(int hash, ZDO zdo, Functions f)
   {
     if (DataLoading.Data.TryGetValue(hash, out var data))
     {
-      return data.Match(pars, zdo);
+      return data.Match(f, zdo);
     }
     return false;
   }
   public static DataEntry? Get(string name, string fileName) => name == "" ? null : DataLoading.Get(name, fileName);
 
-  public static List<string>? GetValuesFromGroup(string group)
-  {
-    var hash = group.ToLowerInvariant().GetStableHashCode();
-    if (DataLoading.ValueGroups.TryGetValue(hash, out var values))
-      return values;
-    return null;
-  }
   // This is mainly used to simplify code.
   // Not very efficient because usually only a single prefab is used.
   // So only use when the result is cached.
@@ -88,7 +86,7 @@ public class DataHelper
   private static void ResolvePrefabsSub(HashSet<string> prefabs, string value)
   {
     // Components are added directly, as they are handled separately.
-    if (value == "all" || DataLoading.IsComponentGroup(value))
+    if (value == "all" || ValueGroups.IsComponentGroup(value))
     {
       prefabs.Add(value.ToLowerInvariant());
       return;
@@ -98,8 +96,7 @@ public class DataHelper
       prefabs.Add(value);
       return;
     }
-    var values = GetValuesFromGroup(value);
-    if (values != null)
+    if (ValueGroups.TryGet(value, out var values))
     {
       foreach (var v in values)
         ResolvePrefabsSub(prefabs, v);

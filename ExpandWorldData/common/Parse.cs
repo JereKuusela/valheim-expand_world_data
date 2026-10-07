@@ -1,20 +1,21 @@
+﻿// Shared code: keep identical in EWD, EWP and WEC (common/). Sync changes to all three.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
-namespace Service;
+namespace Common;
 
-public class Range<T>
+public class ValueRange<T>
 {
   public T Min;
   public T Max;
-  public Range(T value)
+  public ValueRange(T value)
   {
     Min = value;
     Max = value;
   }
-  public Range(T min, T max)
+  public ValueRange(T min, T max)
   {
     Min = min;
     Max = max;
@@ -26,6 +27,7 @@ public class Range<T>
 public static class Parse
 {
   public static List<string> ToList(string str, bool removeEmpty = true) => [.. Split(str, removeEmpty)];
+  public static string[] ToArr(string str, bool removeEmpty = true) => [.. Split(str, removeEmpty)];
   public static Vector2i Vector2Int(string arg)
   {
     string[] array = SplitWithEmpty(arg);
@@ -82,6 +84,90 @@ public static class Parse
   {
     return float.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
   }
+  public static bool TryDistanceAngle(string arg, out Vector3 vector)
+  {
+    return TryDistanceAngle(Split(arg, true, ','), out vector);
+  }
+  public static bool TryDistanceAngle(string[] values, out Vector3 vector)
+  {
+    vector = Vector3.zero;
+    if (values.Length < 2 || values.Length > 3) return false;
+    if (values[1] == null || !HasAngleSuffix(values[1].Trim())) return false;
+    if (!TryDistanceAngle(values[0], values[1], out vector)) return false;
+    if (values.Length > 2 && !TryFloat(values[2], out vector.y)) return false;
+    return true;
+  }
+  private static bool TryDistanceAngle(string distanceValue, string angleValue, out Vector3 vector)
+  {
+    vector = Vector3.zero;
+    if (!TryFloat(distanceValue, out var distance)) return false;
+    if (!TryAngleRadians(angleValue, out var radians)) return false;
+    vector = new Vector3(Mathf.Cos(radians) * distance, 0f, Mathf.Sin(radians) * distance);
+    return true;
+  }
+  private static bool HasAngleSuffix(string arg)
+  {
+    return arg.EndsWith("deg", StringComparison.OrdinalIgnoreCase) || arg.EndsWith("rad", StringComparison.OrdinalIgnoreCase);
+  }
+  public static bool TryAngleRadians(string arg, out float radians)
+  {
+    radians = 0f;
+    if (arg == null) return false;
+
+    var value = arg.Trim();
+    if (value.EndsWith("deg", StringComparison.OrdinalIgnoreCase))
+    {
+      var degreesValue = value.Substring(0, value.Length - 3).Trim();
+      if (!TryFloat(degreesValue, out var degrees)) return false;
+      radians = degrees * Mathf.Deg2Rad;
+      return true;
+    }
+
+    if (value.EndsWith("rad", StringComparison.OrdinalIgnoreCase))
+    {
+      var radiansValue = value.Substring(0, value.Length - 3).Trim();
+      if (!TryFloat(radiansValue, out radians)) return false;
+      return true;
+    }
+
+    return TryFloat(value, out radians);
+  }
+  public static bool TryAngleDegrees(string arg, out float degrees)
+  {
+    degrees = 0f;
+    if (arg == null) return false;
+
+    var value = arg.Trim();
+    if (value.EndsWith("deg", StringComparison.OrdinalIgnoreCase))
+    {
+      var degreesValue = value.Substring(0, value.Length - 3).Trim();
+      return TryFloat(degreesValue, out degrees);
+    }
+
+    if (value.EndsWith("rad", StringComparison.OrdinalIgnoreCase))
+    {
+      var radiansValue = value.Substring(0, value.Length - 3).Trim();
+      if (!TryFloat(radiansValue, out var radians)) return false;
+      degrees = radians * Mathf.Rad2Deg;
+      return true;
+    }
+
+    return TryFloat(value, out degrees);
+  }
+  public static bool TryBoolean(string arg, out bool result)
+  {
+    result = false;
+    if (arg.ToLowerInvariant() == "true")
+    {
+      result = true;
+      return true;
+    }
+    if (arg.ToLowerInvariant() == "false")
+    {
+      return true;
+    }
+    return false;
+  }
 
   public static Quaternion AngleYXZ(string arg) => AngleYXZ(Split(arg), 0, Vector3.zero);
   public static Quaternion AngleYXZ(string[] args, int index) => AngleYXZ(args, index, Vector3.zero);
@@ -94,14 +180,22 @@ public static class Parse
     return Quaternion.Euler(vector);
   }
 
-  public static string[] Split(string arg, bool removeEmpty = true, char split = ',') => arg.Split(split).Select(s => s.Trim()).Where(s => !removeEmpty || s != "").ToArray();
+  public static string[] Split(string arg, bool removeEmpty = true, char split = ',') =>
+    removeEmpty ?
+    [.. arg.Split(split).Select(s => s.Trim()).Where(s => s != "")]
+    : [.. arg.Split(split).Select(s => s.Trim())];
   public static KeyValuePair<string, string> Kvp(string str, char separator = ',')
   {
-    var split = str.Split([separator], 2);
-    if (split.Length < 2) return new(split[0], "");
-    return new(split[0], split[1].Trim());
+    var index = str.IndexOf(separator);
+    if (index < 0) return new(str, "");
+    return new(str.Substring(0, index), str.Substring(index + 1).Trim());
   }
-  public static string[] SplitWithEmpty(string arg, char split = ',') => arg.Split(split).Select(s => s.Trim()).ToArray();
+  public static bool TryKvp(string str, out KeyValuePair<string, string> kvp, char separator = ',')
+  {
+    kvp = Kvp(str, separator);
+    return kvp.Value != "";
+  }
+  public static string[] SplitWithEmpty(string arg, char split = ',') => [.. arg.Split(split).Select(s => s.Trim())];
   public static string[] SplitWithEscape(string arg, char separator = ',')
   {
     var parts = new List<string>();
@@ -133,7 +227,11 @@ public static class Parse
   }
   public static string Name(string arg) => arg.Split(':')[0];
   public static Vector3 VectorXZY(string arg) => VectorXZY(arg, Vector3.zero);
-  public static Vector3 VectorXZY(string arg, Vector3 defaultValue) => VectorXZY(Split(arg), 0, defaultValue);
+  public static Vector3 VectorXZY(string arg, Vector3 defaultValue)
+  {
+    var split = Split(arg);
+    return TryDistanceAngle(split, out var polar) ? polar : VectorXZY(split, 0, defaultValue);
+  }
 
   ///<summary>Parses YXZ vector starting at given index. Zero is used for missing values.</summary>
   public static Vector3 VectorXZY(string[] args, int index) => VectorXZY(args, index, Vector3.zero);
@@ -168,34 +266,24 @@ public static class Parse
     return scale;
   }
 
-  public static Range<string> StringRange(string arg)
+  public static ValueRange<string> StringRange(string arg)
   {
-    var range = arg.Split('-').ToList();
-    if (range.Count > 1 && range[0] == "")
-    {
-      range[0] = "-" + range[1];
-      range.RemoveAt(1);
-    }
-    if (range.Count > 2 && range[1] == "")
-    {
-      range[1] = "-" + range[2];
-      range.RemoveAt(2);
-    }
-    if (range.Count == 1) return new(range[0]);
-    else return new(range[0], range[1]);
+    var range = Split(arg, true, ';');
+    if (range.Length > 1) return new(range[0], range[1]);
+    else return new(range[0], range[0]);
 
   }
-  public static Range<int> IntRange(string arg)
+  public static ValueRange<int> IntRange(string arg)
   {
     var range = StringRange(arg);
     return new(Int(range.Min), Int(range.Max));
   }
-  public static Range<float> FloatRange(string arg)
+  public static ValueRange<float> FloatRange(string arg)
   {
     var range = StringRange(arg);
     return new(Float(range.Min), Float(range.Max));
   }
-  public static Range<long> LongRange(string arg)
+  public static ValueRange<long> LongRange(string arg)
   {
     var range = StringRange(arg);
     return new(Long(range.Min), Long(range.Max));
@@ -236,31 +324,52 @@ public static class Parse
   public static Vector3? VectorXZYNull(string? arg) => arg == null ? null : VectorXZYNull(Split(arg));
   public static Vector3? VectorXZYNull(string[] args)
   {
+    if (TryDistanceAngle(args, out var polar)) return polar;
     var x = FloatNull(args, 0);
     var y = FloatNull(args, 2);
     var z = FloatNull(args, 1);
-    if (x == null || y == null || z == null) return null;
-    return new(x.Value, y.Value, z.Value);
+    if (x == null && y == null && z == null) return null;
+    return new(x ?? 0f, y ?? 0f, z ?? 0f);
   }
   public static Quaternion? AngleYXZNull(string? arg) => arg == null ? null : AngleYXZNull(Split(arg));
   public static Quaternion? AngleYXZNull(string[] values)
   {
-    var y = FloatNull(values, 0);
-    var x = FloatNull(values, 1);
-    var z = FloatNull(values, 2);
-    if (y == null || x == null || z == null) return null;
-    return Quaternion.Euler(new(x.Value, y.Value, z.Value));
+    if (values.Length >= 4)
+    {
+      var x = FloatNull(values, 0);
+      var y = FloatNull(values, 1);
+      var z = FloatNull(values, 2);
+      var w = FloatNull(values, 3);
+      if (x == null && y == null && z == null && w == null) return null;
+      return new Quaternion(x ?? 0f, y ?? 0f, z ?? 0f, w ?? 0f);
+    }
+    else
+    {
+      var y = FloatNull(values, 0);
+      var x = FloatNull(values, 1);
+      var z = FloatNull(values, 2);
+      if (y == null && x == null && z == null) return null;
+      return Quaternion.Euler(new(x ?? 0f, y ?? 0f, z ?? 0f));
+    }
   }
   public static string String(string[] args, int index) => args.Length > index ? args[index] : "";
   public static int Hash(string[] args, int index) => args.Length > index ? args[index].GetStableHashCode() : 0;
   public static bool Boolean(string[] args, int index) => args.Length > index && Boolean(args[index]);
   public static bool Boolean(string arg) => arg.ToLowerInvariant() == "true";
-  public static bool BooleanTrue(string arg) => arg.ToLowerInvariant() == "false";
   public static ZDOID ZdoId(string arg)
   {
-    var split = Split(arg, true, ':');
-    if (split.Length < 2) return ZDOID.None;
-    return new ZDOID(Long(split[0]), UInt(split[1]));
+    if (string.IsNullOrWhiteSpace(arg)) return ZDOID.None;
+    var normalized = arg.Trim().Trim('(', ')', '[', ']', '{', '}');
+    var split = normalized.Split([':', ','], StringSplitOptions.RemoveEmptyEntries)
+      .Select(value => value.Trim())
+      .ToArray();
+    if (split.Length < 2)
+    {
+      split = normalized.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+    }
+    if (split.Length < 2 || !long.TryParse(split[0], out var owner) || !uint.TryParse(split[1], out var id))
+      return ZDOID.None;
+    return new ZDOID(owner, id);
   }
   public static HitData Hit(ZDO? zdo, string arg)
   {
@@ -274,21 +383,21 @@ public static class Parse
       var kvp = Kvp(s, '=');
       var key = kvp.Key;
       var value = kvp.Value;
-      if (key == "damage") hit.m_damage.m_damage = Int(value);
-      if (key == "blunt") hit.m_damage.m_blunt = Int(value);
-      if (key == "slash") hit.m_damage.m_slash = Int(value);
-      if (key == "pierce") hit.m_damage.m_pierce = Int(value);
-      if (key == "chop") hit.m_damage.m_chop = Int(value);
-      if (key == "pickaxe") hit.m_damage.m_pickaxe = Int(value);
-      if (key == "fire") hit.m_damage.m_fire = Int(value);
-      if (key == "frost") hit.m_damage.m_frost = Int(value);
-      if (key == "lightning") hit.m_damage.m_lightning = Int(value);
-      if (key == "poison") hit.m_damage.m_poison = Int(value);
-      if (key == "spirit") hit.m_damage.m_spirit = Int(value);
+      if (key == "damage") hit.m_damage.m_damage = Float(value);
+      if (key == "blunt") hit.m_damage.m_blunt = Float(value);
+      if (key == "slash") hit.m_damage.m_slash = Float(value);
+      if (key == "pierce") hit.m_damage.m_pierce = Float(value);
+      if (key == "chop") hit.m_damage.m_chop = Float(value);
+      if (key == "pickaxe") hit.m_damage.m_pickaxe = Float(value);
+      if (key == "fire") hit.m_damage.m_fire = Float(value);
+      if (key == "frost") hit.m_damage.m_frost = Float(value);
+      if (key == "lightning") hit.m_damage.m_lightning = Float(value);
+      if (key == "poison") hit.m_damage.m_poison = Float(value);
+      if (key == "spirit") hit.m_damage.m_spirit = Float(value);
       if (key == "tier") hit.m_toolTier = (short)Int(value);
       if (key == "force") hit.m_pushForce = Float(value);
       if (key == "backstab") hit.m_backstabBonus = Float(value);
-      if (key == "stagger") hit.m_staggerMultiplier = Int(value);
+      if (key == "stagger") hit.m_staggerMultiplier = Float(value);
       if (key == "dodge") hit.m_dodgeable = Boolean(value);
       if (key == "block") hit.m_blockable = Boolean(value);
       if (key == "dir") hit.m_dir = VectorXZY(value);
@@ -324,5 +433,24 @@ public static class Parse
   public static int EnumTerrainPaint(string arg)
   {
     return Enum.TryParse(arg, true, out TerrainModifier.PaintType state) ? (int)state : Int(arg, 0);
+  }
+  private static Dictionary<string, Color> Paints = new() {
+    {"grass", UnityEngine.Color.black},
+    {"patches", new(0f, 0.75f, 0f)},
+    {"grass_dark", new(0.6f, 0.5f, 0f)},
+    {"dirt", UnityEngine.Color.red},
+    {"cultivated", UnityEngine.Color.green},
+    {"paved", UnityEngine.Color.blue},
+    {"paved_moss", new(0f, 0f, 0.5f)},
+    {"paved_dirt", new(1f, 0f, 0.5f)},
+    {"paved_dark", new(0f, 1f, 0.5f)},
+  };
+  public static Color? Color(string arg, float defaultAlpha)
+  {
+    var lower = arg.ToLowerInvariant();
+    if (Paints.TryGetValue(lower, out var color)) return color;
+    var split = Split(arg);
+    if (split.Length < 3) return null;
+    return new(Float(split[0]), Float(split[1]), Float(split[2]), split.Length > 3 ? Float(split[3]) : defaultAlpha);
   }
 }

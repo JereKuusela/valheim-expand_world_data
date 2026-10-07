@@ -5,6 +5,7 @@ using ExpandWorldData;
 using HarmonyLib;
 using Service;
 using UnityEngine;
+using Common;
 
 namespace ExpandWorld.Spawn;
 

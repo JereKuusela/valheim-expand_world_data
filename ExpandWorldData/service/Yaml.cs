@@ -7,6 +7,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using Common;
 
 namespace Service;
 

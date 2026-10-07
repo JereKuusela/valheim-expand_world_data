@@ -4,6 +4,7 @@ using Service;
 using Data;
 using UnityEngine;
 using YamlDotNet.Serialization;
+using Common;
 
 namespace ExpandWorldData;
 
@@ -116,10 +117,10 @@ public class VegetationExtra
   public List<string>? requiredGlobalKeys;
   public List<string>? forbiddenGlobalKeys;
   public DataEntry? data;
-  public Range<Vector3>? scale;
+  public ValueRange<Vector3>? scale;
   public float clearRadius = 0;
   public bool clearArea = false;
-  public Range<float>? distance;
+  public ValueRange<float>? distance;
   public Vector2? center;
 
   public bool IsDistanceOk(Vector3 pos)

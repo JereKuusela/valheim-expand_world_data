@@ -7,6 +7,7 @@ using System.Linq;
 using Service;
 using UnityEngine;
 using Data;
+using Common;
 namespace ExpandWorldData;
 
 public class BlueprintObject

@@ -4,6 +4,7 @@ using Service;
 using UnityEngine;
 using Data;
 using System.Linq;
+using Common;
 namespace ExpandWorldData;
 
 public class LocationExtra
@@ -176,7 +177,7 @@ public class LocationExtraInfo
   public Dictionary<string, List<Tuple<float, DataEntry?>>>? ObjectData;
   public Dictionary<string, List<Tuple<float, DataEntry?>>>? DungeonObjectData;
   public List<BlueprintObject>? Objects;
-  public Range<Vector3>? Scale;
+  public ValueRange<Vector3>? Scale;
   public string[]? Commands;
   public LocationYaml Data;
 
@@ -201,7 +202,7 @@ public class LocationExtraInfo
     if (data.commands != null)
       Commands = data.commands;
 
-    Range<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
+    ValueRange<Vector3> scale = new(Parse.Scale(data.scaleMin), Parse.Scale(data.scaleMax))
     {
       Uniform = data.scaleUniform
     };
