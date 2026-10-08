@@ -43,7 +43,7 @@ public class InitializeWorld
     TerritoryManager.ReadConfigs();
     WorldManager.ReadConfigs();
     // Pregenerate runs right after this.
-    Refresh.PatchesNow();
+    Refresh.Run(Regen.Patches);
   }
 }
 
@@ -95,7 +95,10 @@ public class InitializeContent
 
       // Dungeon and room data is handled elsewhere.
     }
-    Refresh.WorldStart();
+    // Patches were already applied by the world load, so only unapplied ones are needed.
+    if (Refresh.IsPending(Regen.Patches)) Refresh.Run(Regen.Patches);
+    Refresh.Clear();
+    Refresh.Run(Regen.Biomes);
     Yaml.WorldLoadedAt = DateTime.UtcNow;
   }
 

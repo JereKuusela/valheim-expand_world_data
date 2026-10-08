@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Service;
+using Common;
 
 namespace ExpandWorldData;
 
@@ -158,7 +159,6 @@ public class WorldManager
     BiomeCalculator.SetData([.. Data.Select(s => new WorldEntry(s, "world"))]);
     BiomeCalculator.CheckAngles = Data.Any(x => x.minSector != 0f || x.maxSector != 1f);
     GetRandomPointByBiome.Warned.Clear();
-    Refresh.Request(Regen.World);
   }
   public static void SetupWatcher()
   {

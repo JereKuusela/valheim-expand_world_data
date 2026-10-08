@@ -1,3 +1,4 @@
+using Common;
 using HarmonyLib;
 
 namespace ExpandWorldData;
@@ -38,5 +39,5 @@ public static class Patcher
 [HarmonyPatch(typeof(ZNet), nameof(ZNet.Awake))]
 public class UpdatePatchesForRole
 {
-  static void Postfix() => Refresh.PatchesNow();
+  static void Postfix() => Refresh.Run(Regen.Patches);
 }

@@ -1,8 +1,6 @@
 
 using HarmonyLib;
 using Service;
-using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace ExpandWorldData;
 
@@ -28,30 +26,6 @@ public class WorldInfo
   public static void SetWaterLevel(float waterLevel)
   {
     WaterLevel = waterLevel;
-  }
-  public static void RegenerateBiomes()
-  {
-    if (WorldGenerator.instance == null) return;
-    WorldGenerator.s_cachedBiomeAreas.Clear();
-    WorldGenerator.s_cachedBiomes.Clear();
-    foreach (var altBiome in AltBiomeList.m_altBiomes)
-      altBiome.Sectors.Clear();
-    WorldGenerator.instance.Pregenerate();
-    AltBiomeWorldData.VerifyBiomeData(WorldGenerator.instance.m_world);
-  }
-  public static void RegenerateTerrain()
-  {
-    foreach (var heightmap in Object.FindObjectsByType<Heightmap>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
-    {
-      heightmap.m_buildData = null;
-      heightmap.Regenerate();
-    }
-  }
-  public static void RegenerateMap()
-  {
-    if (WorldGenerator.instance == null || Minimap.instance == null) return;
-    if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return;
-    Minimap.instance.GenerateWorldMap();
   }
 }
 

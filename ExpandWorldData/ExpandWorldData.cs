@@ -4,6 +4,7 @@ using BepInEx.Bootstrap;
 using Data;
 using HarmonyLib;
 using Service;
+using Common;
 using UnityEngine;
 namespace ExpandWorldData;
 
@@ -29,6 +30,8 @@ public class EWD : BaseUnityPlugin
     Instance = this;
     Log.Init(Logger);
     Yaml.Init();
+    Refresh.Register(Regen.Patches, () => Patcher.Update(Harmony));
+    Refresh.Register(Regen.Water, WaterColor.Regenerate);
     ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, () => Refresh.Request(Regen.World));
     Configuration.Init(wrapper);
     LegacyEventsConfiguration.Migrate(Config);

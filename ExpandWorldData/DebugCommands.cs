@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Common;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -30,7 +31,7 @@ public class DebugCommands
   {
     new Terminal.ConsoleCommand("ew_map", "Refreshes the world map.", (args) =>
     {
-      WorldInfo.RegenerateMap();
+      Refresh.Run(Regen.Minimap);
     }, true);
     new Terminal.ConsoleCommand("ew_drops", "Forces drop reference file creation.", (args) =>
     {
