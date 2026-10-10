@@ -234,6 +234,8 @@ public class LocationManager
     NoBuildManager.UpdateData();
     LocationClientData.UpdateData();
     MinimapIcon.Clear();
+    // Refresh.Request is deferred; update icon patches before broadcasting the new configuration.
+    DataPatcher.PatchLocationIcons(EWD.Harmony);
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
     IdManager.SendLocationIds();
     Refresh.Request(Regen.Patches);

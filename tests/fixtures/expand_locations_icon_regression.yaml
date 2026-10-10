@@ -1,0 +1,23 @@
+# Copy into BepInEx/config/expand_world on a disposable test server with Location data enabled.
+# Vanilla prefabs/items keep this regression check independent of other content mods.
+- prefab: StartTemple:icon_alias
+  biome: Meadows
+  quantity: 2
+  minDistance: 0.05
+  maxDistance: 0.2
+  minAltitude: 3
+  prioritized: true
+  centerFirst: true
+  minDistanceFromSimilar: 320
+  iconAlways: StartTemple
+
+- prefab: StartTemple:icon_item
+  biome: Meadows
+  quantity: 2
+  minDistance: 0.05
+  maxDistance: 0.2
+  minAltitude: 3
+  prioritized: true
+  centerFirst: true
+  minDistanceFromSimilar: 320
+  iconAlways: TrophyDeer, 100
