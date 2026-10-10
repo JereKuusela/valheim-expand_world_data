@@ -155,6 +155,6 @@ public class LocationYaml
   public bool relaxableunique = false;
   [DefaultValue(false)]
   public bool relaxable = false;
-  [DefaultValue(0.5)]
+  [DefaultValue(0.5f)]
   public float relaxableamount = 0.5f;
 }

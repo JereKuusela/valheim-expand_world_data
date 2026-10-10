@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using HarmonyLib;
 
 namespace ExpandWorldData;
@@ -10,9 +11,21 @@ public static class DataPatcher
     PatchStatusEffects(harmony, BiomeManager.HasStatusEffects || TerritoryManager.HasStatusEffects || EnvironmentManager.HasStatusEffects);
     LocationClientData.Patch(harmony);
     PatchLocationIcons(harmony);
+    PatchLocations(harmony);
     Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.Load), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData), HarmonyPatchType.Postfix);
     Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.LoadOld), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData), HarmonyPatchType.Postfix);
     Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), "set_" + nameof(ZoneSystem.LocationsGenerated), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeGeneratedLocations), HarmonyPatchType.Postfix);
+  }
+
+  private static void PatchLocations(Harmony harmony)
+  {
+    var hasData = LocationManager.HasData;
+    Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.PlaceLocations), typeof(PrepareTerrainBeforeZoneContents), nameof(PrepareTerrainBeforeZoneContents.Prefix), HarmonyPatchType.Prefix);
+    Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.CreateLocationProxy), typeof(LocationZDO), nameof(LocationZDO.Prefix), HarmonyPatchType.Prefix);
+    Patches.Apply(harmony, Configuration.ScaleLocationAltitudeRequirement && BiomeManager.HasData, typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocationsTimeSliced), typeof(ScaleLocationHeightRequirement), nameof(ScaleLocationHeightRequirement.TranspileMoveNext), HarmonyPatchType.Transpiler, argumentTypes: [typeof(ZoneSystem.ZoneLocation), typeof(Stopwatch), typeof(ZPackage)], enumerator: true);
+    Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.CreateLocalZones), typeof(CreateLocalZones), nameof(CreateLocalZones.Postfix), HarmonyPatchType.Postfix);
+    Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange), typeof(HaveLocationInRange), nameof(HaveLocationInRange.Prefix), HarmonyPatchType.Prefix);
+    Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.GetLocation), typeof(ZoneSystemPatches), nameof(ZoneSystemPatches.GetLocation), HarmonyPatchType.Prefix, argumentTypes: [typeof(string)]);
   }
 
   internal static void PatchLocationIcons(Harmony harmony)

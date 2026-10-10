@@ -143,6 +143,7 @@ public class CleanupOnShutdown
     LocationManager.CleanUp();
     VegetationManager.CleanUp();
     SyncedDataManager.CleanUpAll();
+    DataManager.WarnedObjects.Clear();
   }
 }
 
@@ -322,13 +323,26 @@ public class DataManager : MonoBehaviour
   {
     if (ZNetView.m_ghostInit) CleanGhostInit(obj.GetComponent<ZNetView>());
   }
+
+  public static readonly HashSet<string> WarnedObjects = [];
   public static void CleanGhostInit(ZNetView view)
   {
     if (ZNetView.m_ghostInit && view)
     {
       view.m_ghost = true;
-      view.GetZDO().Created = false;
-      ZNetScene.instance.m_instances.Remove(view.GetZDO());
+      var zdo = view.GetZDO();
+      if (zdo == null)
+      {
+        var name = Utils.GetPrefabName(view.gameObject);
+        if (!WarnedObjects.Contains(name))
+        {
+          Log.Warning($"Object {name} has no ZDO during ghost init. Possible issue.");
+          WarnedObjects.Add(name);
+        }
+        return;
+      }
+      zdo.Created = false;
+      ZNetScene.instance.m_instances.Remove(zdo);
     }
   }
   public static List<U> ReadData<T, U>(string pattern, Func<T, string, U> converter)

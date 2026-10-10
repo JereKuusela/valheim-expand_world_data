@@ -1,3 +1,12 @@
+- v1.75
+  - Fixes custom location icons not working. Thanks sighsorry!
+  - Fixes custom location group system not working.
+  - Fixes error on CleanGhostInit (now should how warning instead).
+  - Fixes commands `ew_spawns`, `ew_test_spawn` and `ew_try_spawn` missing.
+  - Fixes changes to non-world data like clutter triggering full refresh.
+  - Reworks data system to match Expand World Prefabs mod.
+  - Reworks the world refresh system to be shared with Expand World Size mod (no double refresh).
+
 - v1.74
   - Adds field `altBiome` to the world data to assign alternative biomes to specific areas.
   - Adds fields `sizeX`, `sizeY`, `rotation` and `wiggleRectangle` to the world data for rectangular areas.
@@ -27,7 +36,3 @@
 
 - v1.71
   - Fixes for the new game update. Thanks JPValheim!
-
-- v1.70
-  - Adds experimental support for blueprint terrain data (only as main object). Thanks sighsorry!
-  - Fixes error when trying to scan prefabs with invalid components (for example from other mods).

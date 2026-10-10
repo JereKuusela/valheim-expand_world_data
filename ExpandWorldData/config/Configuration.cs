@@ -137,6 +137,7 @@ public partial class Configuration
     configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, false, "How many meters are the wiggles.");
     configWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
     configScaleLocationAltitudeRequirement = wrapper.Bind(section, "Scale location altitude requirement", false, false, "If true, location requirements are scaled based on the biome altitude delta and multiplier.");
+    configScaleLocationAltitudeRequirement.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
     configCustomWaterColor = wrapper.Bind(section, "Custom water color", false, false, "If true, custom water color system is enabled.");
     configCustomWaterColor.SettingChanged += (s, e) => Refresh.Request(Regen.Patches | Regen.Water);
 

@@ -411,9 +411,7 @@ public static class ZoneSystemPatches
 
   // Vanilla checks that location prefabs are valid.
   // This doesn't work with blueprints because they would need proper asset ID (which might conflict with other mods).
-  [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GetLocation), typeof(string))]
-  [HarmonyPrefix]
-  static bool GetLocation(ZoneSystem __instance, string name, ref ZoneSystem.ZoneLocation __result)
+  internal static bool GetLocation(ZoneSystem __instance, string name, ref ZoneSystem.ZoneLocation __result)
   {
     foreach (ZoneSystem.ZoneLocation zoneLocation in __instance.m_locations)
     {

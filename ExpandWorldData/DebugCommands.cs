@@ -26,6 +26,32 @@ public class DebugCommands
     loc.m_prefab.Release();
     return string.Join(", ", items);
   }
+  private static SpawnSystem? GetClosestSpawnSystem(Terminal context)
+  {
+    var player = Player.m_localPlayer;
+    if (!player) return null;
+    var pos = player.transform.position;
+    var ss = SpawnSystem.m_instances.OrderBy(s => Vector3.Distance(s.transform.position, pos)).FirstOrDefault();
+    if (!ss) context.AddString("No spawn system found nearby.");
+    return ss;
+  }
+
+  private static SpawnSystem.SpawnData? FindSpawn(Terminal context, SpawnSystem ss, string name)
+  {
+    foreach (var list in ss.m_spawnLists)
+    {
+      foreach (var spawn in list.m_spawners)
+      {
+        if (spawn.m_name.Equals(name, StringComparison.OrdinalIgnoreCase)) return spawn;
+      }
+    }
+    context.AddString($"Spawn '{name}' not found in closest spawn system.");
+    return null;
+  }
+
+  private static List<string> GetSpawnNames() =>
+    SpawnSystem.m_instances.SelectMany(s => s.m_spawnLists).SelectMany(l => l.m_spawners).Select(s => s.m_name).Distinct().ToList();
+
   private GameObject? goCollider;
   public DebugCommands()
   {
@@ -37,6 +63,40 @@ public class DebugCommands
     {
       ExpandWorld.Drops.ReferenceFileGenerator.Save();
     }, true);
+    new Terminal.ConsoleCommand("ew_spawns", "Forces spawn file creation.", (args) =>
+    {
+      ExpandWorld.Spawn.SpawnManager.Save();
+    }, true);
+    new Terminal.ConsoleCommand("ew_test_spawn", "[name] - Spawns a creature from spawn system by entry name.", (args) =>
+    {
+      var ss = GetClosestSpawnSystem(args.Context);
+      if (!ss) return;
+      ss!.m_nview.ClaimOwnership();
+      var spawn = FindSpawn(args.Context, ss, args.ArgsAll);
+      if (spawn == null) return;
+      ss.Spawn(spawn, Player.m_localPlayer.transform.position, false);
+    }, true, optionsFetcher: GetSpawnNames);
+    new Terminal.ConsoleCommand("ew_try_spawn", "[name] - Attempts to spawn a creature from spawn system by entry name.", (args) =>
+    {
+      var ss = GetClosestSpawnSystem(args.Context);
+      if (!ss) return;
+      ss!.m_nview.ClaimOwnership();
+      var spawn = FindSpawn(args.Context, ss, args.ArgsAll);
+      if (spawn == null) return;
+      var canSpawnCloseToPlayer = spawn.m_canSpawnCloseToPlayer;
+      var radiusMin = spawn.m_spawnRadiusMin;
+      var radiusMax = spawn.m_spawnRadiusMax;
+      var interval = spawn.m_spawnInterval;
+      spawn.m_canSpawnCloseToPlayer = true;
+      spawn.m_spawnRadiusMin = 0.01f;
+      spawn.m_spawnRadiusMax = 0.01f;
+      spawn.m_spawnInterval = 0.01f;
+      ss.UpdateSpawning();
+      spawn.m_canSpawnCloseToPlayer = canSpawnCloseToPlayer;
+      spawn.m_spawnRadiusMin = radiusMin;
+      spawn.m_spawnRadiusMax = radiusMax;
+      spawn.m_spawnInterval = interval;
+    }, true, optionsFetcher: GetSpawnNames);
     new Terminal.ConsoleCommand("ew_biomes", "[precision] - Counts biomes by sampling points with a given precision (meters).", args =>
     {
       var precision = 100f;

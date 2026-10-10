@@ -2,13 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using HarmonyLib;
 using Service;
 using Common;
 using UnityEngine;
 namespace ExpandWorldData;
 
-[HarmonyPatch]
 public class ClutterManager
 {
   public static string FileName = "expand_clutter.yaml";
