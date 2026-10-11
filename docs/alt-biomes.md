@@ -23,9 +23,7 @@ Use `None` for biome fields that should have no biome selected. Leaving `biome` 
 - blockEnvironments: List of [environment](environments.md) names that can't happen in this modifier.
 - spawn: Extra creature spawns for this modifier. Uses the same fields as Expand World Spawns.
 - blockSpawnNames: List of spawn prefab names that are removed in this modifier.
-- addVegetation: Extra [vegetation](vegetation.md) for this modifier. Uses the same fields.
 - blockVegetationNames: List of vegetation prefab names that are removed in this modifier.
-- addLocations: Extra [locations](locations.md) for this modifier. Uses the same fields.
 - blockLocationNames: List of location prefab names that are removed in this modifier.
 - terrainTextureOverride (default: `None`): Biome terrain texture to use for this modifier. `None` keeps the base terrain texture.
 - minDistanceFromCenter (default: `0` meters): Minimum distance from the world center.
@@ -61,13 +59,6 @@ Use `None` for biome fields that should have no biome selected. Leaving `biome` 
     biome: Meadows
     spawnChance: 25
     maxSpawned: 2
-  addVegetation:
-  - prefab: FirTree
-    biome: Meadows
-    min: 1
-    max: 2
-  addLocations:
-  - prefab: Grave1
-    biome: Meadows
-    quantity: 10
 ```
+
+Extra vegetation and locations are added with the `altBiome` field in the [vegetation](vegetation.md) and [locations](locations.md) files.

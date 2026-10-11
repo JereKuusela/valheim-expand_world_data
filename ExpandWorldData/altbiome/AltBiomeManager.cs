@@ -28,8 +28,13 @@ public static class AltBiomeManager
     protected override bool DataEnabled => Configuration.DataAltBiomes;
     protected override string ConfigValue { get => Configuration.valueAltBiomeData.Value; set => Configuration.valueAltBiomeData.Value = value; }
     protected override bool Set(Dictionary<string, string> files) => AltBiomeManager.Set(files);
-    protected override string ToSyncValue(Dictionary<string, string> files) => AltBiomeManager.ToSyncValue(files);
     protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(Original.Select(ToData).ToList()));
+    protected override void Migrate()
+    {
+      if (!Configuration.DataMigration) return;
+      if (Yaml.RemoveFields(Pattern, ["addVegetation", "addLocations"]))
+        Log.Warning($"Removed obsolete addVegetation and addLocations from {Pattern} files. These are handled by the vegetation and location files.");
+    }
   }
   private static readonly Sync Instance = new();
 
@@ -38,23 +43,6 @@ public static class AltBiomeManager
   public static void ReadConfigs() => Instance.ReadConfigs();
 
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
-
-  // Vegetation and locations are only used by the server, so clients don't need them.
-  private static string ToSyncValue(Dictionary<string, string> files)
-  {
-    List<AltBiomeYaml> all = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<AltBiomeYaml>(file.Value, file.Key, out var parsed)) return string.Join("\n", files.Values);
-      all.AddRange(parsed);
-    }
-    foreach (var item in all)
-    {
-      item.addVegetation = null;
-      item.addLocations = null;
-    }
-    return Yaml.Serializer().Serialize(all);
-  }
 
   private static bool Set(Dictionary<string, string> files)
   {
@@ -138,10 +126,6 @@ public static class AltBiomeManager
       alt.m_addEnvironments = [.. data.addEnvironments.Select(item => BiomeManager.FromData(item, []))];
     if (data.spawn != null)
       alt.m_spawn = [.. data.spawn.Select(item => Loader.FromData(item, fileName))];
-    if (data.addVegetation != null)
-      alt.m_addVegetation = [.. data.addVegetation.Select(item => VegetationManager.FromData(item, fileName))];
-    if (data.addLocations != null)
-      alt.m_addLocations = [.. data.addLocations.Select(item => LocationManager.FromData(item, fileName))];
     return alt;
   }
 
@@ -177,8 +161,6 @@ public static class AltBiomeManager
     aboveWorldY = alt.m_aboveWorldY,
     terrainTextureOverride = DataManager.FromBiomes(alt.m_terrainTextureOverride),
     addEnvironments = alt.m_addEnvironments.Count > 0 ? [.. alt.m_addEnvironments.Select(BiomeManager.ToData)] : null,
-    spawn = alt.m_spawn.Count > 0 ? [.. alt.m_spawn.Select(Loader.ToData)] : null,
-    addVegetation = alt.m_addVegetation.Count > 0 ? [.. alt.m_addVegetation.Select(VegetationManager.ToData)] : null,
-    addLocations = alt.m_addLocations.Count > 0 ? [.. alt.m_addLocations.Select(LocationManager.ToData)] : null
+    spawn = alt.m_spawn.Count > 0 ? [.. alt.m_spawn.Select(Loader.ToData)] : null
   };
 }

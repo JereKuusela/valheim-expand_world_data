@@ -244,6 +244,51 @@ public class Yaml
       .Any(file => File.ReadLines(file).Any(line => line.TrimStart().TrimStart('-', ' ').StartsWith(prefix)));
   }
 
+  ///<summary>Removes the given fields (including nested blocks) from list entries in matching yaml files. Returns true if any file was changed.</summary>
+  public static bool RemoveFields(string pattern, string[] fields)
+  {
+    if (!System.IO.Directory.Exists(BaseDirectory)) return false;
+    var changedAny = false;
+    foreach (var file in System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories))
+    {
+      var lines = File.ReadAllLines(file).ToList();
+      var changed = false;
+      for (var i = 0; i < lines.Count; i++)
+      {
+        var trimmed = lines[i].TrimStart();
+        var dashed = trimmed.StartsWith("- ");
+        var key = dashed ? trimmed.Substring(2).TrimStart() : trimmed;
+        if (!fields.Any(field => key.StartsWith($"{field}:"))) continue;
+        var keyIndent = lines[i].Length - key.Length;
+        // Nested content is either more indented or a compact sequence at the same indent.
+        var last = i;
+        for (var j = i + 1; j < lines.Count; j++)
+        {
+          var lineTrimmed = lines[j].TrimStart();
+          if (lineTrimmed == "") continue;
+          var lineIndent = lines[j].Length - lineTrimmed.Length;
+          if (lineIndent > keyIndent || (lineIndent == keyIndent && lineTrimmed.StartsWith("-"))) last = j;
+          else break;
+        }
+        var dashPrefix = lines[i].Substring(0, keyIndent);
+        lines.RemoveRange(i, last - i + 1);
+        // Keep the list item marker on the next sibling field when the removed field started the item.
+        if (dashed && i < lines.Count)
+        {
+          var next = lines[i].TrimStart();
+          if (lines[i].Length - next.Length == keyIndent && !next.StartsWith("-"))
+            lines[i] = dashPrefix + next;
+        }
+        changed = true;
+        i--;
+      }
+      if (!changed) continue;
+      File.WriteAllLines(file, lines);
+      changedAny = true;
+    }
+    return changedAny;
+  }
+
   ///<summary>Inserts a missing field into existing list entries in matching yaml files, preserving comments/formatting. Returns true if any file was changed.</summary>
   public static bool InsertMissingField(string pattern, string keyField, string targetField, Dictionary<string, string> valuesByKey)
   {

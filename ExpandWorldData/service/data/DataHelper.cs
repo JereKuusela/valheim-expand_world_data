@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Service;
@@ -21,6 +20,7 @@ public class DataHelper
     ZNetView.m_initZDO.Type = view.m_type;
     ZNetView.m_initZDO.Distant = view.m_distant;
     ZNetView.m_initZDO.Persistent = view.m_persistent;
+    ZNetView.m_initZDO.m_prefab = prefab;
 
     if (data != null)
     {
@@ -29,7 +29,6 @@ public class DataHelper
       resolved.Write(ZNetView.m_initZDO);
     }
 
-    ZNetView.m_initZDO.m_prefab = prefab;
     if (view.m_syncInitialScale && scale != null)
       ZNetView.m_initZDO.Set(ZDOVars.s_scaleHash, scale.Value);
     ZNetView.m_initZDO.DataRevision = 0;

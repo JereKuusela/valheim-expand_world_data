@@ -1,3 +1,7 @@
+- v1.76
+  - Fixes error when trying to override container inventory.
+  - Removes obsolete fields `addLocations` and `addVegetation` from altbiomes yaml.
+
 - v1.75
   - Fixes custom location icons not working. Thanks sighsorry!
   - Fixes custom location group system not working.

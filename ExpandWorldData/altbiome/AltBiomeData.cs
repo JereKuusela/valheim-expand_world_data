@@ -32,11 +32,7 @@ public class AltBiomeYaml
   [DefaultValue(null)]
   public string[]? blockSpawnNames;
   [DefaultValue(null)]
-  public VegetationYaml[]? addVegetation;
-  [DefaultValue(null)]
   public string[]? blockVegetationNames;
-  [DefaultValue(null)]
-  public LocationYaml[]? addLocations;
   [DefaultValue(null)]
   public string[]? blockLocationNames;
   [DefaultValue("None")]

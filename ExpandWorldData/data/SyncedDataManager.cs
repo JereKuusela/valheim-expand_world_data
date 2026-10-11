@@ -23,6 +23,8 @@ public abstract class SyncedDataManager
   /// <summary>Writes the default config file content. May no-op if there's nothing to write.</summary>
   protected abstract void WriteDefaultConfig();
   protected virtual void AfterCreateConfigs() { }
+  /// <summary>Upgrades yaml files on disk before they are read.</summary>
+  protected virtual void Migrate() { }
   /// <summary>Builds the value sent to clients. Override to strip server-only or redundant data.</summary>
   protected virtual string ToSyncValue(Dictionary<string, string> files) => string.Join("\n", files.Values);
 
@@ -43,6 +45,7 @@ public abstract class SyncedDataManager
         CreateConfigs();
         if (File.Exists(FilePath)) return;
       }
+      Migrate();
       var files = DataManager.Read(Pattern);
       if (files == null || !Apply(files)) return;
       ConfigValue = ToSyncValue(files);
