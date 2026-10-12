@@ -299,6 +299,7 @@ public class BiomeManager
   {
     if (!Yaml.TryDeserialize<BiomeYaml>(files, out var data)) return false;
     Load(data);
+    LoadEnvironments();
     Refresh.Request(Regen.Terrain | Regen.Water | Regen.Minimap);
     return true;
   }

@@ -82,6 +82,8 @@ public static class AltBiomeManager
     AltBiomeList.m_altBiomes.Clear();
     AltBiomeList.m_altBiomes.AddRange(Active);
     Log.Info($"Reloading alt biome data ({data.Count} entries).");
+    // Alt biomes can force or block environments, so the current weather must be rerolled.
+    if (EnvMan.instance != null) EnvMan.instance.m_environmentPeriod = -1;
     if (regenerate)
       Refresh.Request(Regen.World);
   }

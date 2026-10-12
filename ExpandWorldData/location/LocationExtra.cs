@@ -15,6 +15,8 @@ public class LocationExtra
   public static void AddInfo(ZoneSystem.ZoneLocation loc, LocationYaml data, string fileName)
   {
     var extra = new LocationExtraInfo(data, fileName);
+    if (BlueprintManager.Has(loc.m_prefab.Name))
+      extra.UseNameForSimilar(loc.m_prefab.Name);
     // Distance rules may update these for compatibility.
     loc.m_minDistanceFromSimilar = data.minDistanceFromSimilar;
     loc.m_maxDistanceFromSimilar = data.maxDistanceFromSimilar;
@@ -246,6 +248,30 @@ public class LocationExtraInfo
   {
     VirtualGroupId += 1;
     return $"_{VirtualGroupId}";
+  }
+
+  // Blueprints all share the same empty asset id, so vanilla similarity check would match every blueprint.
+  // Luckily our system works with the name.
+  public void UseNameForSimilar(string name)
+  {
+    if (AwayFrom == null && Data.minDistanceFromSimilar > 0f)
+    {
+      var distance = Data.minDistanceFromSimilar;
+      AwayFrom = [new(name, distance)];
+      if (Data.group != "")
+        AwayFrom.Add(new(Data.group, distance));
+      Data.group = CreateVirtualGroupName();
+      Data.minDistanceFromSimilar = 1f;
+    }
+    if (CloseTo == null && Data.maxDistanceFromSimilar > 0f)
+    {
+      var distance = Data.maxDistanceFromSimilar;
+      CloseTo = [new(name, distance)];
+      if (Data.groupMax != "")
+        CloseTo.Add(new(Data.groupMax, distance));
+      Data.groupMax = CreateVirtualGroupName();
+      Data.maxDistanceFromSimilar = 1f;
+    }
   }
 
   private void LoadDistanceRules(LocationYaml data, string fileName)

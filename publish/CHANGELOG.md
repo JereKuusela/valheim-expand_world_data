@@ -1,3 +1,7 @@
+- v1.77
+  - Fixes blueprint locations being in the same group for location "distance from similar" checks.
+  - Fixes environments not resetting after changes.
+
 - v1.76
   - Fixes error when trying to override container inventory.
   - Removes obsolete fields `addLocations` and `addVegetation` from altbiomes yaml.
@@ -28,15 +32,3 @@
   - Improves data reloading to only regenerate the affected parts (terrain, water, map, clutter) instead of the whole world.
   - Removes the `Regenerate map` setting (the map is always regenerated when needed).
   - Optimizes the mod by conditionally patching only necessary parts of the game.
-
-- v1.73
-  - Now includes Expand World Spawns and Expand World Events (automatic migration).
-  - Adds support for configuring alternative biomes.
-  - Fixes world generation being messed up.
-  - Fixes custom biomes throwing errors.
-
-- v1.72
-  - Fixes edits not clearing biome cache.
-
-- v1.71
-  - Fixes for the new game update. Thanks JPValheim!
