@@ -1,3 +1,6 @@
+- v1.78
+  - Hotfix.
+
 - v1.77
   - Fixes blueprint locations being in the same group for location "distance from similar" checks.
   - Fixes environments not resetting after changes.

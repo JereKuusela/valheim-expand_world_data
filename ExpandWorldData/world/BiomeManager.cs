@@ -264,7 +264,7 @@ public class BiomeManager
   }
   public static void LoadEnvironments()
   {
-    if (Environments.Count == 0) return;
+    if (!EnvMan.instance || Environments.Count == 0) return;
 
     SetupBiomeEnvs(Environments);
   }
