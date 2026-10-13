@@ -1,5 +1,24 @@
 # Test fixtures
 
+## Alternative biome migration regression
+
+Run `dotnet run --project tests/AltBiomeMigration` with .NET 8 or later.
+The test compiles the production migration code with small replacements for the
+game types and YAML writer. It checks ordinary and restricted rules for the same
+prefab, conflicting restrictions, custom biome masks, duplicate YAML entries,
+explicit restrictions, and the shared location migration path.
+
+For a live check, back up the world and configs on a test server. Load an older
+vegetation file without `altBiome` fields while automatic migration is enabled.
+Ordinary trees and rocks that also have alternative-biome variants must remain
+unrestricted. Exclusive alternative-biome entries may still be migrated.
+Reload the resulting file, reset a bounded test zone, and visit it with a client.
+Compare the generated vegetation with the original unrestricted rules.
+
+This prevents incorrect future migrations. It cannot identify whether an
+existing `altBiome` field was intentional. Repair already-migrated custom files
+from a known-good backup before checking regeneration.
+
 `fixtures/terrain-blueprint-contract.blueprint` is a minimal interoperability and manual regression fixture for terrain snapshots.
 
 It deliberately places the first piece at X = -2 while the terrain grid is centered at X = 1. This catches multi-piece placement code that incorrectly uses the first child instead of the blueprint root. The height and paint sections are both 3 columns by 2 rows and contain one empty cell, which consumers must leave unchanged.
