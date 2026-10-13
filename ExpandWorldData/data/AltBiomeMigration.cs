@@ -30,7 +30,7 @@ internal static class AltBiomeMigration
       string prefab = entries.Key;
       if (!vanillaByPrefab.TryGetValue(Parse.Name(prefab), out List<T>? candidates)) continue;
       string? value = getAltBiome(candidates[0]);
-      if (string.IsNullOrEmpty(value)) continue;
+      if (value == null || value.Length == 0) continue;
       if (candidates.Any(item => getAltBiome(item) != value)) continue;
       Heightmap.Biome allowedBiomes = candidates.Aggregate((Heightmap.Biome)0, (biomes, item) => biomes | getBiome(item));
       // The YAML writer updates every entry with this prefab name. Skip the
