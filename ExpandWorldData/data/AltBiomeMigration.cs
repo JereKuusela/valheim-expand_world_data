@@ -10,26 +10,32 @@ namespace ExpandWorldData;
 internal static class AltBiomeMigration
 {
   public static bool MigrateLocations(List<ZoneSystem.ZoneLocation> data, List<ZoneSystem.ZoneLocation> defaults, string pattern) =>
-    Migrate(data, defaults, location => location.m_prefab.Name, location => location.m_altBiomeParent, location => Parse.Name(location.m_prefab.Name), pattern);
+    Migrate(data, defaults, location => location.m_prefab.Name, location => location.m_altBiomeParent, location => Parse.Name(location.m_prefab.Name), location => location.m_biome, pattern);
 
   public static bool MigrateVegetation(List<ZoneSystem.ZoneVegetation> data, List<ZoneSystem.ZoneVegetation> defaults, string pattern) =>
-    Migrate(data, defaults, vegetation => vegetation.m_prefab.name, vegetation => vegetation.m_altBiomeParent, vegetation => Parse.Name(vegetation.m_prefab.name), pattern);
+    Migrate(data, defaults, vegetation => vegetation.m_prefab.name, vegetation => vegetation.m_altBiomeParent, vegetation => Parse.Name(vegetation.m_prefab.name), vegetation => vegetation.m_biome, pattern);
 
-  private static bool Migrate<T>(List<T> data, List<T> defaults, Func<T, string> getPrefab, Func<T, string?> getAltBiome, Func<T, string> getDefaultPrefab, string pattern)
+  private static bool Migrate<T>(List<T> data, List<T> defaults, Func<T, string> getPrefab, Func<T, string?> getAltBiome, Func<T, string> getDefaultPrefab, Func<T, Heightmap.Biome> getBiome, string pattern)
   {
     // If any entry already has altBiome set, assume the file is up to date.
     if (data.Any(item => getAltBiome(item) != null)) return false;
-    var vanillaAltBiomeByPrefab = defaults
-      .Where(item => !string.IsNullOrEmpty(getAltBiome(item)))
+    // A prefab may have both ordinary and alternative-biome spawn rules. Never
+    // discard its ordinary rules when deciding whether a restriction is safe.
+    Dictionary<string, List<T>> vanillaByPrefab = defaults
       .GroupBy(getDefaultPrefab)
-      .ToDictionary(group => group.Key, group => getAltBiome(group.First())!);
+      .ToDictionary(group => group.Key, group => group.ToList());
     Dictionary<string, string> migrations = [];
-    foreach (var item in data)
+    foreach (IGrouping<string, T> entries in data.GroupBy(getPrefab))
     {
-      var prefab = getPrefab(item);
-      if (migrations.ContainsKey(prefab)) continue;
-      if (!vanillaAltBiomeByPrefab.TryGetValue(Parse.Name(prefab), out var value)) continue;
-      if (string.IsNullOrEmpty(value)) continue;
+      string prefab = entries.Key;
+      if (!vanillaByPrefab.TryGetValue(Parse.Name(prefab), out List<T>? candidates)) continue;
+      string? value = getAltBiome(candidates[0]);
+      if (value == null || value.Length == 0) continue;
+      if (candidates.Any(item => getAltBiome(item) != value)) continue;
+      Heightmap.Biome allowedBiomes = candidates.Aggregate((Heightmap.Biome)0, (biomes, item) => biomes | getBiome(item));
+      // The YAML writer updates every entry with this prefab name. Skip the
+      // entire group if even one custom rule allows a different base biome.
+      if (entries.Any(item => getBiome(item) == 0 || (getBiome(item) & allowedBiomes) != getBiome(item))) continue;
       migrations[prefab] = value;
     }
     if (migrations.Count == 0) return false;
