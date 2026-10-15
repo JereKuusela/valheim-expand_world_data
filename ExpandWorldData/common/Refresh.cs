@@ -204,8 +204,6 @@ public static class Refresh
     if (generator == null) return;
     WorldGenerator.s_cachedBiomeAreas.Clear();
     WorldGenerator.s_cachedBiomes.Clear();
-    foreach (var altBiome in AltBiomeList.m_altBiomes)
-      altBiome.Sectors.Clear();
     generator.Pregenerate();
     AltBiomeWorldData.VerifyBiomeData(generator.m_world);
   }

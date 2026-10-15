@@ -19,7 +19,7 @@ public static class DataPatcher
 
   private static void PatchLocations(Harmony harmony)
   {
-    var hasData = LocationManager.HasData;
+    var hasData = LocationManager.Customized;
     Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.PlaceLocations), typeof(PrepareTerrainBeforeZoneContents), nameof(PrepareTerrainBeforeZoneContents.Prefix), HarmonyPatchType.Prefix);
     Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.CreateLocationProxy), typeof(LocationZDO), nameof(LocationZDO.Prefix), HarmonyPatchType.Prefix);
     Patches.Apply(harmony, Configuration.ScaleLocationAltitudeRequirement && BiomeManager.HasData, typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocationsTimeSliced), typeof(ScaleLocationHeightRequirement), nameof(ScaleLocationHeightRequirement.TranspileMoveNext), HarmonyPatchType.Transpiler, argumentTypes: [typeof(ZoneSystem.ZoneLocation), typeof(Stopwatch), typeof(ZPackage)], enumerator: true);

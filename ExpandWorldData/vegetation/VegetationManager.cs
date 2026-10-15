@@ -26,12 +26,12 @@ public class VegetationManager
 
   // Default items are stored to track missing entries.
   private static List<ZoneSystem.ZoneVegetation> DefaultEntries = [];
-  public static bool HasData { get; private set; }
+  public static bool Customized { get; private set; }
   public static void Initialize()
   {
     DefaultEntries.Clear();
     DefaultKeys.Clear();
-    HasData = false;
+    Customized = false;
     if (Helper.IsServer())
       SetDefaultEntries();
   }
@@ -49,7 +49,7 @@ public class VegetationManager
     if (Helper.IsClient()) return;
     if (!Configuration.DataVegetation)
     {
-      Apply(DefaultEntries);
+      if (Customized) Apply(DefaultEntries);
       return;
     }
     if (!File.Exists(FilePath))
@@ -66,7 +66,7 @@ public class VegetationManager
 
   private static void Apply(List<ZoneSystem.ZoneVegetation> data)
   {
-    HasData = SetData(data);
+    Customized = SetData(data);
     Refresh.Request(Regen.Patches);
   }
 

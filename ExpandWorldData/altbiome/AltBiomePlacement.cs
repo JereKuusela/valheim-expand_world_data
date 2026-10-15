@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using HarmonyLib;
 using Service;
 
 namespace ExpandWorldData;
@@ -8,6 +9,17 @@ public static class AltBiomePlacement
 {
   private static readonly Dictionary<BiomeSector, List<AltBiome>> Forced = [];
   private static readonly HashSet<string> Warned = new(StringComparer.OrdinalIgnoreCase);
+
+  // Vanilla never clears these, so every regeneration would count the old sectors towards the caps.
+  [HarmonyPatch(typeof(AltBiomeWorldData), nameof(AltBiomeWorldData.GenerateAltBiomes)), HarmonyPriority(Priority.VeryHigh)]
+  public class ClearAltBiomeSectors
+  {
+    static void Prefix()
+    {
+      foreach (var alt in AltBiomeList.m_altBiomes)
+        alt.Sectors.Clear();
+    }
+  }
 
   internal static void PrepareWorldAltBiomes(AltBiomeWorldData __instance)
   {

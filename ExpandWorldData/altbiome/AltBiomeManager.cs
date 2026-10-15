@@ -18,7 +18,13 @@ public static class AltBiomeManager
   public static void Initialize()
   {
     Original = [.. AltBiomeList.m_altBiomes];
-    Active = [.. Original];
+    Active = Original;
+  }
+
+  // Static list must be cleared. Otherwise each load adds duplicate entries.
+  public static void CleanUp()
+  {
+    AltBiomeList.m_altBiomes.Clear();
   }
 
   private class Sync : SyncedDataManager

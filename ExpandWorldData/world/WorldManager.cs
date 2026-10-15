@@ -111,6 +111,9 @@ public class WorldManager
       if (files.Count == 0)
       {
         HasData = false;
+        Data = DefaultData;
+        BiomeCalculator.SetData(DefaultEntries);
+        BiomeCalculator.CheckAngles = false;
         Refresh.Request(Regen.World);
         return true;
       }

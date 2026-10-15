@@ -71,6 +71,8 @@ public class NoBuildManager
   }
   private static Dictionary<Vector2s, List<NoBuildData>> NoBuild = [];
   public static bool HasData => NoBuild.Count > 0;
+  // Empty data is skipped unless custom data was previously applied.
+  private static bool Customized;
   public static bool IsInsideNoBuildZone(Vector3 point)
   {
     var zone = ZoneSystem.GetZone(point);
@@ -129,10 +131,12 @@ public class NoBuildManager
       Pending = true;
       return;
     }
+    if (string.IsNullOrEmpty(yaml) && !Customized) return;
     try
     {
-      var data = string.IsNullOrEmpty(yaml) ? new List<NoBuildData>() : Yaml.Deserialize<NoBuildData>(yaml, "No build");
+      var data = string.IsNullOrEmpty(yaml) ? [] : Yaml.Deserialize<NoBuildData>(yaml, "No build");
       NoBuild = CreateIndex(data);
+      Customized = data.Count > 0;
       Log.Info($"Reloading no build data ({data.Count} entries).");
     }
     catch (Exception e)

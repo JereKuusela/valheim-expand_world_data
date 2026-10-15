@@ -123,6 +123,13 @@ public class Yaml
     BackupFile(file);
     action();
   });
+  // Files written by the mod that are loaded synchronously right after, so the delayed watcher event must be skipped.
+  private static readonly Dictionary<string, DateTime> IgnoredWrites = [];
+  public static void IgnoreWrites(string pattern)
+  {
+    foreach (var file in System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories))
+      IgnoredWrites[file] = File.GetLastWriteTimeUtc(file);
+  }
   public static void SetupDataWatcher(string pattern, ConfigEntry<bool> setting, Action action)
   {
     FileSystemWatcher watcher = new(BaseDirectory, pattern);
@@ -133,6 +140,7 @@ public class Yaml
         if (setting.Value && ExpandWorldData.Configuration.DataReload) action();
         return;
       }
+      if (IgnoredWrites.TryGetValue(path, out var ignored) && File.GetLastWriteTimeUtc(path) <= ignored) return;
       if (!setting.Value && (WorldLoading || File.GetLastWriteTimeUtc(path) <= WorldLoadedAt)) return;
       BackupFile(path);
       if (!setting.Value)

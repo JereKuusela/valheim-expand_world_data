@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Common;
+using Service;
 
 namespace ExpandWorldData;
 
@@ -27,12 +28,15 @@ public abstract class SyncedDataManager
   protected virtual void Migrate() { }
   /// <summary>Builds the value sent to clients. Override to strip server-only or redundant data.</summary>
   protected virtual string ToSyncValue(Dictionary<string, string> files) => string.Join("\n", files.Values);
+  // Disabled data must not touch anything unless custom data was previously applied.
+  private bool Customized;
 
   public void CreateConfigs()
   {
     if (Helper.IsClient() || File.Exists(FilePath)) return;
     WriteDefaultConfig();
     AfterCreateConfigs();
+    Yaml.IgnoreWrites(Pattern);
   }
 
   public void ReadConfigs()
@@ -43,7 +47,6 @@ public abstract class SyncedDataManager
       if (!File.Exists(FilePath))
       {
         CreateConfigs();
-        if (File.Exists(FilePath)) return;
       }
       Migrate();
       var files = DataManager.Read(Pattern);
@@ -65,7 +68,9 @@ public abstract class SyncedDataManager
 
   private bool Apply(Dictionary<string, string> files)
   {
+    if (files.Count == 0 && !Customized) return true;
     if (!Set(files)) return false;
+    Customized = files.Count > 0;
     Refresh.Request(Regen.Patches);
     return true;
   }

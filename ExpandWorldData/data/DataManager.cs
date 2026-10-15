@@ -95,10 +95,8 @@ public class InitializeContent
 
       // Dungeon and room data is handled elsewhere.
     }
-    // Patches were already applied by the world load, so only unapplied ones are needed.
-    if (Refresh.IsPending(Regen.Patches)) Refresh.Run(Regen.Patches);
     Refresh.Clear();
-    Refresh.Run(Regen.Biomes);
+    Refresh.Run(Regen.Patches | Regen.Biomes);
     Yaml.WorldLoadedAt = DateTime.UtcNow;
   }
 
@@ -142,6 +140,7 @@ public class CleanupOnShutdown
     LocationClientData.CleanUp();
     LocationManager.CleanUp();
     VegetationManager.CleanUp();
+    AltBiomeManager.CleanUp();
     SyncedDataManager.CleanUpAll();
     DataManager.WarnedObjects.Clear();
   }

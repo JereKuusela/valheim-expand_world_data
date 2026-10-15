@@ -15,7 +15,7 @@ public class LocationManager
   public static string FileName = "expand_locations.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_locations*.yaml";
-  public static bool HasData { get; private set; }
+  public static bool Customized { get; private set; }
   private static readonly List<LocationYaml> ExtraLocationYamls = [];
   public static void AddLocation(LocationYaml yaml)
   {
@@ -179,7 +179,7 @@ public class LocationManager
     if (Helper.IsClient()) return;
     if (!Configuration.DataLocation)
     {
-      Apply(DefaultEntries);
+      if (Customized) Apply(DefaultEntries);
       return;
     }
     if (!File.Exists(FilePath))
@@ -195,7 +195,7 @@ public class LocationManager
 
   private static void Apply(List<ZoneSystem.ZoneLocation> data)
   {
-    HasData = false;
+    Customized = false;
     ZoneSystem.instance.m_locations = DefaultEntries;
     if (Configuration.DataLocation)
     {
@@ -222,7 +222,7 @@ public class LocationManager
           return;
         }
         ZoneSystem.instance.m_locations = data;
-        HasData = true;
+        Customized = true;
         Log.Info($"Reloading location data ({data.Count} entries).");
       }
     }
