@@ -56,6 +56,7 @@ Note: All distances are in meters, and don't scale up with the world size. For b
 - **overrideLevelupChance** (default: `-1` percent): Chance per level up (from the default 10%).
 - **faction**: Name of the faction. Requires [Expand World Factions](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Factions/).
 - **drops**: Name of the drop table to attach. See [Drops](drops.md) for more info.
+- **data**: ZDO data override. Can be a data entry name, base64 string, shorthand `type, key, value` (for example `int, level, 3`) or an inline data mapping.
 - **fields**: Custom fields to override prefab properties. See [Fields](#fields) section below.
 - **objects**: Extra objects to spawn. Spawned on top of any obstacles. Format is `id,posX,posZ,posY,chance,data`.
 

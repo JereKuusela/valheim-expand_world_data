@@ -14,6 +14,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - enabled (default: `true`): Quick way to disable this entry.
 - biome: List of possible biomes.
 - biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome).
+- altBiome: Name of an [alternative biome](alt-biomes.md) modifier. The location is only placed in zones with that alternative biome.
 - dungeon: Overrides the default dungeon generator with a custom one from `expand_dungeons.yaml`.
 - quantity: Maximum amount. Actual amount is determined if enough suitable positions are found. The base .cfg has a setting to multiply these.
 - minDistance (default: `0.0` of world radius): Minimum distance from the world center.
@@ -60,7 +61,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
   - This scales the requirement from the average mask to the highest mask.
   - The value must be less than 1.0 because the mask can't be higher than the highest mask.
   - Negative values can also be used.
-- data: ZDO data override. For example to change altars with Spawner Tweaks mod (`object copy` from World Edit Commands).
+- data: ZDO data override. For example to change altars with Spawner Tweaks mod (`object copy` from World Edit Commands). Can be a data entry name, base64 string, shorthand `type, key, value` (for example `int, level, 3`) or an inline data mapping.
 - locationObjectSwap: Changes location objects to other objects.
 - dungeonObjectSwap: Changes dungeon objects to other objects.
 - objectSwap: Changes location and dungeon objects to other objects.

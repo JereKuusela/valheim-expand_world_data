@@ -20,6 +20,11 @@ public class DataLoading
     var hash = name.GetStableHashCode();
     if (!Data.ContainsKey(hash))
     {
+      if (TryParseShorthand(name, out var shorthand))
+      {
+        Data[hash] = shorthand;
+        return shorthand;
+      }
       try
       {
         Data[hash] = new DataEntry(new ZPackage(name));
@@ -34,6 +39,22 @@ public class DataLoading
       }
     }
     return Data[hash];
+  }
+  private static bool TryParseShorthand(string value, out DataEntry entry)
+  {
+    entry = null!;
+    if (!value.Contains(',')) return false;
+    var tkv = value.Split([','], 3).Select(s => s.Trim()).ToArray();
+    if (tkv.Length != 3 || !DataEntry.SupportedTypes.Contains(tkv[0].ToLowerInvariant())) return false;
+    try
+    {
+      entry = new DataEntry(tkv);
+      return true;
+    }
+    catch
+    {
+      return false;
+    }
   }
   public static DataEntry? Get(int hash) => Data.ContainsKey(hash) ? Data[hash] : null;
 

@@ -64,9 +64,7 @@ public class LocationZDO
   internal static void Prefix(ZoneSystem __instance, ZoneSystem.ZoneLocation location, Vector3 pos, Quaternion rotation)
   {
     if (!LocationExtra.TryGet(location, out var extra)) return;
-    var key = extra.ZDOData;
-    if (string.IsNullOrEmpty(key)) return;
-    var data = DataHelper.Get(key!, location.m_prefab.Name);
+    var data = extra.ZDOData;
     if (data != null) DataHelper.Init(__instance.m_locationProxyPrefab, pos, rotation, null, data);
   }
 }

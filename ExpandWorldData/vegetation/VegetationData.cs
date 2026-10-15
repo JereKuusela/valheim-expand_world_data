@@ -90,8 +90,8 @@ public class VegetationYaml
   public string requiredGlobalKey = "";
   [DefaultValue("")]
   public string forbiddenGlobalKey = "";
-  [DefaultValue("")]
-  public string data = "";
+  [DefaultValue(null)]
+  public DataField? data = null;
   [DefaultValue(false)]
   public bool surroundCheckVegetation = false;
   [DefaultValue(20f)]

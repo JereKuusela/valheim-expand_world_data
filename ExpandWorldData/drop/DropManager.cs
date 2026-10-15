@@ -84,6 +84,7 @@ public class DropManager
   public static Dictionary<int, Data> DataByHash = [];
   public static Dictionary<string, Data> DataByName = [];
   public static bool HasData => DataByHash.Count > 0;
+  public static bool HasCustomData => DataByHash.Values.Any(d => d.logDataEntry != null || d.stumpDataEntry != null || d.drops.Any(e => e.dataEntry != null));
 
   public static bool Matches(Heightmap.Biome biomes, Heightmap.BiomeArea areas, Vector3 pos)
   {
@@ -124,6 +125,6 @@ public class DropManager
     var name = zDO.GetString(HashDrop, "");
     if (name != "")
       return DataByName.TryGetValue(name, out data);
-    return false;
+    return DataByHash.TryGetValue(zDO.GetPrefab(), out data);
   }
 }

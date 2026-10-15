@@ -12,6 +12,25 @@ using Common;
 
 namespace ExpandWorldData;
 
+// Load order (vanilla calls, with EWD hooks).
+// Server:
+// 1. ZNet.Awake -> WorldGenerator.Initialize
+//    - Pregenerate needs biome, territory and world data.
+//    - EnvMan not initialized yet so can't fully initialize biomes.
+// 2. ZoneSystem.Awake: AltBiomeList.Awake fills AltBiomeList.m_altBiomes with vanilla alt biomes.
+//    - Alt biomes can't be changed before this.
+// 3. ZoneSystem.Start
+//    - SetupLocations adds the locations and vegetation of vanilla alt biomes.
+//    - Default data is available, All data can be loaded.
+// 4. ZNet.Start -> ServerLoadWorld
+//    - Locations are generated, must be loaded before this.
+//    - Alternative biomes are generated, must be loaded before this.
+//
+// Client:
+// 1. ZNet.Awake: no world generator yet.
+// 2. ZoneSystem.Awake and ZoneSystem.Start: as on server, but no configs are read.
+// 3. ServerSync configs arrive before PeerInfo; FromSetting applies them.
+// 4. RPC_PeerInfo -> WorldGenerator.Initialize (VersionSetup, Pregenerate) -> VerifyBiomeData.
 
 [HarmonyPatch(typeof(DungeonDB), nameof(DungeonDB.Start)), HarmonyPriority(Priority.VeryLow)]
 public class InitializeRooms
@@ -24,6 +43,7 @@ public class InitializeRooms
   }
 }
 
+// This triggers before Pregenerate and alternative biome setup.
 [HarmonyPatch(typeof(WorldGenerator), nameof(WorldGenerator.VersionSetup)), HarmonyPriority(Priority.VeryLow)]
 public class InitializeWorld
 {
@@ -36,9 +56,10 @@ public class InitializeWorld
 
   // River generation requires biome and world data being loaded.
   // Saving is done later because that requires environments.
-  static void Postfix()
+  static void Postfix(WorldGenerator __instance)
   {
-    // Only called for server so no need to check.
+    if (__instance.m_world.m_menu) return;
+    // No-ops on clients, which get the data from the server.
     BiomeManager.ReadConfigs();
     TerritoryManager.ReadConfigs();
     WorldManager.ReadConfigs();
@@ -46,7 +67,6 @@ public class InitializeWorld
     Refresh.Run(Regen.Patches);
   }
 }
-
 
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.Start)), HarmonyPriority(Priority.VeryLow)]
 public class InitializeContent
@@ -75,18 +95,13 @@ public class InitializeContent
     {
       EnvironmentManager.CreateConfigs();
       AltBiomeManager.CreateConfigs();
-      BiomeManager.CreateConfigs();
-      TerritoryManager.CreateConfigs();
-      WorldManager.CreateConfigs();
+      BiomeManager.CompleteDefaultConfig();
       ClutterManager.CreateConfigs();
       VegetationManager.CreateConfigs();
       LocationManager.CreateConfigs();
 
       DataLoading.LoadEntries();
       EnvironmentManager.ReadConfigs();
-      BiomeManager.ReadConfigs();
-      TerritoryManager.ReadConfigs();
-      WorldManager.ReadConfigs();
       ClutterManager.ReadConfigs();
       VegetationManager.ReadConfigs();
       LocationManager.ReadConfigs();
@@ -95,8 +110,9 @@ public class InitializeContent
 
       // Dungeon and room data is handled elsewhere.
     }
+    // Alt biomes not generated yet, so refresh not needed.
     Refresh.Clear();
-    Refresh.Run(Regen.Patches | Regen.Biomes);
+    Refresh.Run(Regen.Patches);
     Yaml.WorldLoadedAt = DateTime.UtcNow;
   }
 

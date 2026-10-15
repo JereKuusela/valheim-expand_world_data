@@ -176,11 +176,11 @@ public class Yaml
   }
 
   public static IDeserializer Deserializer() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
-  .WithYamlFormatter(formatter).Build();
+  .WithTypeConverter(new global::Data.DataFieldConverter()).WithYamlFormatter(formatter).Build();
   public static IDeserializer DeserializerUnSafe() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
-  .WithYamlFormatter(formatter).IgnoreUnmatchedProperties().Build();
+  .WithTypeConverter(new global::Data.DataFieldConverter()).WithYamlFormatter(formatter).IgnoreUnmatchedProperties().Build();
   public static ISerializer Serializer() => new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).DisableAliases()
-    .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults).WithYamlFormatter(formatter)
+    .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults).WithTypeConverter(new global::Data.DataFieldConverter()).WithYamlFormatter(formatter)
       .Build();
   private static readonly YamlFormatter formatter = new() { NumberFormat = NumberFormatInfo.InvariantInfo };
 

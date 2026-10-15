@@ -10,6 +10,8 @@ Custom drops can be attached to most objects that drop or contain items by setti
 
 Drop tables are saved as references, meaning changes retroactively affect existing objects.
 
+If the table `name` matches a prefab name, the table applies automatically to all instances of that prefab. The `ews_drops` data on an object takes priority. For pieces, this also changes the resources returned when deconstructing.
+
 ### Drop Table Fields
 
 - name: Identifier used to register the drop data.
@@ -21,6 +23,10 @@ Drop tables are saved as references, meaning changes retroactively affect existi
 - biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome).
 - log: Overrides the log prefab when a tree is chopped down. Use `none` to prevent logs from spawning.
 - stump: Overrides the stump when a tree is chopped down. Use `none` to prevent stumps from spawning.
+- logData: ZDO data for the spawned log. Can be a data entry name, base64 string, shorthand `type, key, value` or an inline data mapping.
+- stumpData: ZDO data for the spawned stump. Same formats as `logData`.
+- logDrops: Name of the drop table to attach to the spawned log.
+- stumpDrops: Name of the drop table to attach to the spawned stump.
 - drops: List of individual item drops.
 
 ### Drop Entry Fields
@@ -39,6 +45,8 @@ Individual entries within a drop table:
 - amount (default: `1`): Legacy amount override for some item types.
 - recover (default: `true`): Whether the drop is recoverable.
 - dontScale (default: `false`): Keep the drop size unscaled.
+- data: ZDO data for the spawned item. Same formats as `logData`.
+- drops: Name of the drop table to attach to the spawned item.
 - biome: List of possible biomes. If the object isn't in a matching biome, this entry is excluded.
 - biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome).
 

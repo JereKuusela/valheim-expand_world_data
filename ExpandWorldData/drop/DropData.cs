@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using UnityEngine;
+using DataEntry = global::Data.DataEntry;
+using DataField = global::Data.DataField;
 
 namespace ExpandWorld.Drops;
 
@@ -24,6 +26,14 @@ public class Data
   public string log = "";
   [DefaultValue("")]
   public string stump = "";
+  [DefaultValue(null)]
+  public DataField? logData = null;
+  [DefaultValue(null)]
+  public DataField? stumpData = null;
+  [DefaultValue("")]
+  public string logDrops = "";
+  [DefaultValue("")]
+  public string stumpDrops = "";
 
   // Parsed from biome/biomeArea, not serialized.
   internal Heightmap.Biome biomes = 0;
@@ -34,6 +44,8 @@ public class Data
   // True when log/stump is set to "none", meaning nothing should spawn at all.
   internal bool logNone = false;
   internal bool stumpNone = false;
+  internal DataEntry? logDataEntry = null;
+  internal DataEntry? stumpDataEntry = null;
 
   public DropEntry[] drops = [];
 }
@@ -70,6 +82,12 @@ public class DropEntry
 
   [DefaultValue(false)]
   public bool dontScale = false;
+
+  [DefaultValue(null)]
+  public DataField? data = null;
+  [DefaultValue("")]
+  public string drops = "";
+  internal DataEntry? dataEntry = null;
 
   [DefaultValue("")]
   public string biome = "";

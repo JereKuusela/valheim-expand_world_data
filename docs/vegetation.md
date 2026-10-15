@@ -19,6 +19,7 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
 - chanceToUseGroundTilt (default: `0.0`): Chance to set rotation based on terrain angle (from 0.0 to 1.0).
 - biome: List of possible biomes.
 - biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome, 4 = unused from Valheim data).
+- altBiome: Name of an [alternative biome](alt-biomes.md) modifier. The vegetation is only placed in zones with that alternative biome.
 - blockCheck (default: `true`): If enabled, clear ground is required.
 - minAltitude (default: `0` meters): Minimum terrain altitude.
 - maxAltitude (default: `1000` meters): Maximum terrain altitude.
@@ -75,5 +76,5 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
 - forbiddenGlobalKey: List of [global keys](https://valheim.wiki/Global_Keys). If any is set, the vegetation is not placed.
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
-- data: ZDO data override. For example to create hidden stashes with Spawner Tweaks mod (`object copy` from World Edit Commands).
+- data: ZDO data override. For example to create hidden stashes with Spawner Tweaks mod (`object copy` from World Edit Commands). Can be a data entry name, base64 string, shorthand `type, key, value` (for example `int, level, 3`) or an inline data mapping.
 - drops: Custom drops from Expand World Spawns mod.

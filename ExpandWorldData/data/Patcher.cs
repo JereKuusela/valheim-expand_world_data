@@ -12,45 +12,45 @@ public static class DataPatcher
     LocationClientData.Patch(harmony);
     PatchLocationIcons(harmony);
     PatchLocations(harmony);
-    Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.Load), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData), HarmonyPatchType.Postfix);
-    Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.LoadOld), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData), HarmonyPatchType.Postfix);
-    Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), "set_" + nameof(ZoneSystem.LocationsGenerated), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeGeneratedLocations), HarmonyPatchType.Postfix);
+    Patches.Postfix(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.Load), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData));
+    Patches.Postfix(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.LoadOld), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeLocationData));
+    Patches.Postfix(harmony, Helper.IsServer(), typeof(ZoneSystem), "set_" + nameof(ZoneSystem.LocationsGenerated), typeof(NoBuildManager), nameof(NoBuildManager.SynchronizeGeneratedLocations));
   }
 
   private static void PatchLocations(Harmony harmony)
   {
     var hasData = LocationManager.Customized;
-    Patches.Apply(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.PlaceLocations), typeof(PrepareTerrainBeforeZoneContents), nameof(PrepareTerrainBeforeZoneContents.Prefix), HarmonyPatchType.Prefix);
-    Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.CreateLocationProxy), typeof(LocationZDO), nameof(LocationZDO.Prefix), HarmonyPatchType.Prefix);
-    Patches.Apply(harmony, Configuration.ScaleLocationAltitudeRequirement && BiomeManager.HasData, typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocationsTimeSliced), typeof(ScaleLocationHeightRequirement), nameof(ScaleLocationHeightRequirement.TranspileMoveNext), HarmonyPatchType.Transpiler, argumentTypes: [typeof(ZoneSystem.ZoneLocation), typeof(Stopwatch), typeof(ZPackage)], enumerator: true);
-    Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.CreateLocalZones), typeof(CreateLocalZones), nameof(CreateLocalZones.Postfix), HarmonyPatchType.Postfix);
-    Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange), typeof(HaveLocationInRange), nameof(HaveLocationInRange.Prefix), HarmonyPatchType.Prefix);
-    Patches.Apply(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.GetLocation), typeof(ZoneSystemPatches), nameof(ZoneSystemPatches.GetLocation), HarmonyPatchType.Prefix, argumentTypes: [typeof(string)]);
+    Patches.Prefix(harmony, Helper.IsServer(), typeof(ZoneSystem), nameof(ZoneSystem.PlaceLocations), typeof(PrepareTerrainBeforeZoneContents), nameof(PrepareTerrainBeforeZoneContents.Prefix));
+    Patches.Prefix(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.CreateLocationProxy), typeof(LocationZDO), nameof(LocationZDO.Prefix));
+    Patches.Transpiler(harmony, Configuration.ScaleLocationAltitudeRequirement && BiomeManager.HasData, typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocationsTimeSliced), typeof(ScaleLocationHeightRequirement), nameof(ScaleLocationHeightRequirement.TranspileMoveNext), argumentTypes: [typeof(ZoneSystem.ZoneLocation), typeof(Stopwatch), typeof(ZPackage)], enumerator: true);
+    Patches.Postfix(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.CreateLocalZones), typeof(CreateLocalZones), nameof(CreateLocalZones.Postfix));
+    Patches.Prefix(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.HaveLocationInRange), typeof(HaveLocationInRange), nameof(HaveLocationInRange.Prefix));
+    Patches.Prefix(harmony, hasData, typeof(ZoneSystem), nameof(ZoneSystem.GetLocation), typeof(ZoneSystemPatches), nameof(ZoneSystemPatches.GetLocation), argumentTypes: [typeof(string)]);
   }
 
   internal static void PatchLocationIcons(Harmony harmony)
   {
     // Only servers build icons from location instances. Clients must keep reading the RPC cache.
     var server = Helper.IsServer();
-    Patches.Apply(harmony, server, typeof(ZoneSystem), nameof(ZoneSystem.GetLocationIcon), typeof(ZoneSystemPatches), nameof(ZoneSystemPatches.GetLocationIcon), HarmonyPatchType.Prefix);
-    Patches.Apply(harmony, server && Configuration.DataLocation, typeof(ZoneSystem), nameof(ZoneSystem.GetLocationIcons), typeof(ZoneSystemPatches), nameof(ZoneSystemPatches.GetLocationIcons), HarmonyPatchType.Prefix);
+    Patches.Prefix(harmony, server, typeof(ZoneSystem), nameof(ZoneSystem.GetLocationIcon), typeof(ZoneSystemPatches), nameof(ZoneSystemPatches.GetLocationIcon));
+    Patches.Prefix(harmony, server && Configuration.DataLocation, typeof(ZoneSystem), nameof(ZoneSystem.GetLocationIcons), typeof(ZoneSystemPatches), nameof(ZoneSystemPatches.GetLocationIcons));
 
     // Remote clients receive icon tokens without loading LocationManager data locally.
     // Keep the renderer and its size-cache lifecycle available regardless of HasData or server role.
-    Patches.Apply(harmony, true, typeof(Minimap), nameof(Minimap.GetLocationIcon), typeof(MinimapIcon), nameof(MinimapIcon.NewLocationIcons), HarmonyPatchType.Postfix);
-    Patches.Apply(harmony, true, typeof(Minimap), nameof(Minimap.UpdateLocationPins), typeof(MinimapIcon), nameof(MinimapIcon.IconSizeSetup), HarmonyPatchType.Transpiler);
-    Patches.Apply(harmony, true, typeof(Minimap), nameof(Minimap.Awake), typeof(MinimapIcon), nameof(MinimapIcon.ClearSizes), HarmonyPatchType.Postfix);
-    Patches.Apply(harmony, true, typeof(Minimap), nameof(Minimap.UpdatePins), typeof(MinimapIcon), nameof(MinimapIcon.ApplyIconSize), HarmonyPatchType.Transpiler);
+    Patches.Postfix(harmony, true, typeof(Minimap), nameof(Minimap.GetLocationIcon), typeof(MinimapIcon), nameof(MinimapIcon.NewLocationIcons));
+    Patches.Transpiler(harmony, true, typeof(Minimap), nameof(Minimap.UpdateLocationPins), typeof(MinimapIcon), nameof(MinimapIcon.IconSizeSetup));
+    Patches.Postfix(harmony, true, typeof(Minimap), nameof(Minimap.Awake), typeof(MinimapIcon), nameof(MinimapIcon.ClearSizes));
+    Patches.Transpiler(harmony, true, typeof(Minimap), nameof(Minimap.UpdatePins), typeof(MinimapIcon), nameof(MinimapIcon.ApplyIconSize));
   }
 
   private static void PatchNoBuild(Harmony harmony, bool shouldPatch)
   {
-    Patches.Apply(harmony, shouldPatch, typeof(Location), nameof(Location.IsInsideNoBuildLocation), typeof(NoBuildManager), nameof(NoBuildManager.CheckAdditionalZones), HarmonyPatchType.Postfix);
+    Patches.Postfix(harmony, shouldPatch, typeof(Location), nameof(Location.IsInsideNoBuildLocation), typeof(NoBuildManager), nameof(NoBuildManager.CheckAdditionalZones), Priority.HigherThanNormal);
   }
 
   private static void PatchStatusEffects(Harmony harmony, bool shouldPatch)
   {
-    Patches.Apply(harmony, shouldPatch, typeof(Player), nameof(Player.UpdateEnvStatusEffects), typeof(StatusManager), nameof(StatusManager.UpdateStatusEffects), HarmonyPatchType.Postfix, onUnpatch: StatusManager.CleanUp);
+    Patches.Postfix(harmony, shouldPatch, typeof(Player), nameof(Player.UpdateEnvStatusEffects), typeof(StatusManager), nameof(StatusManager.UpdateStatusEffects), onUnpatch: StatusManager.CleanUp);
   }
 
 }

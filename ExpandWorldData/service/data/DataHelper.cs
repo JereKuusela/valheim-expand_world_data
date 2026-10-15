@@ -72,6 +72,12 @@ public class DataHelper
     return false;
   }
   public static DataEntry? Get(string name, string fileName) => name == "" ? null : DataLoading.Get(name, fileName);
+  public static DataEntry? Get(DataField? field, string fileName)
+  {
+    if (field == null) return null;
+    if (field.Inline != null) return new DataEntry(field.Inline);
+    return Get(field.Name ?? "", fileName);
+  }
 
   // This is mainly used to simplify code.
   // Not very efficient because usually only a single prefab is used.

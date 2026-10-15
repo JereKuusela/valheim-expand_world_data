@@ -19,7 +19,7 @@ public static class Patches
     Type patchType,
     string patchName,
     HarmonyPatchType patchKind,
-    int? priority = null,
+    int priority = Priority.Normal,
     Type[]? argumentTypes = null,
     bool enumerator = false,
     object? state = null,
@@ -49,6 +49,18 @@ public static class Patches
     }
   }
 
+  public static void Prefix(Harmony harmony, bool shouldPatch, Type originalType, string originalName, Type patchType, string patchName, int priority = Priority.Normal, Type[]? argumentTypes = null, bool enumerator = false, object? state = null, Action? onUnpatch = null)
+    => Apply(harmony, shouldPatch, originalType, originalName, patchType, patchName, HarmonyPatchType.Prefix, priority, argumentTypes, enumerator, state, onUnpatch);
+
+  public static void Postfix(Harmony harmony, bool shouldPatch, Type originalType, string originalName, Type patchType, string patchName, int priority = Priority.Normal, Type[]? argumentTypes = null, bool enumerator = false, object? state = null, Action? onUnpatch = null)
+    => Apply(harmony, shouldPatch, originalType, originalName, patchType, patchName, HarmonyPatchType.Postfix, priority, argumentTypes, enumerator, state, onUnpatch);
+
+  public static void Transpiler(Harmony harmony, bool shouldPatch, Type originalType, string originalName, Type patchType, string patchName, int priority = Priority.Normal, Type[]? argumentTypes = null, bool enumerator = false, object? state = null, Action? onUnpatch = null)
+    => Apply(harmony, shouldPatch, originalType, originalName, patchType, patchName, HarmonyPatchType.Transpiler, priority, argumentTypes, enumerator, state, onUnpatch);
+
+  public static void Finalizer(Harmony harmony, bool shouldPatch, Type originalType, string originalName, Type patchType, string patchName, int priority = Priority.Normal, Type[]? argumentTypes = null, bool enumerator = false, object? state = null, Action? onUnpatch = null)
+    => Apply(harmony, shouldPatch, originalType, originalName, patchType, patchName, HarmonyPatchType.Finalizer, priority, argumentTypes, enumerator, state, onUnpatch);
+
   private static MethodBase ResolveOriginal(Type originalType, string originalName, Type[]? argumentTypes, bool enumerator)
   {
     var method = AccessTools.Method(originalType, originalName, argumentTypes)
@@ -58,11 +70,9 @@ public static class Patches
       ?? throw new MissingMethodException(originalType.FullName, $"{originalName}.MoveNext");
   }
 
-  private static void Patch(Harmony harmony, MethodBase original, MethodInfo patch, HarmonyPatchType patchKind, int? priority)
+  private static void Patch(Harmony harmony, MethodBase original, MethodInfo patch, HarmonyPatchType patchKind, int priority)
   {
-    // Without an explicit priority the [HarmonyPriority] attribute on the patch method is kept.
-    var harmonyMethod = new HarmonyMethod(patch);
-    if (priority != null) harmonyMethod.priority = priority.Value;
+    var harmonyMethod = new HarmonyMethod(patch, priority);
     switch (patchKind)
     {
       case HarmonyPatchType.Prefix:

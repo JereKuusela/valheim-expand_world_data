@@ -96,7 +96,9 @@ public class BiomeManager
     BiomeEnvSetup biome = new()
     {
       m_biome = DataManager.ToBiomes(data.biome, fileName),
-      m_environments = data.environments.Select(d => FromData(d, keys)).ToList(),
+      m_environments = data.environments == null || data.environments.Length == 0
+        ? [new EnvEntry() { m_environment = "Clear", m_weight = 1f }]
+        : [.. data.environments.Select(d => FromData(d, keys))],
       m_musicMorning = data.musicMorning,
       m_musicEvening = data.musicEvening,
       m_musicDay = data.musicDay,
@@ -119,17 +121,35 @@ public class BiomeManager
       lava = biome.m_biome == Heightmap.Biome.AshLands ? "true" : ""
     };
   }
-
   public static void CreateConfigs() => Instance.CreateConfigs();
+  // Set by Load when the default file still lacks environments, which can only be filled once EnvMan exists.
+  private static bool MissingEnvironments = false;
+  public static void CompleteDefaultConfig()
+  {
+    if (Helper.IsClient() || !Configuration.DataBiome || !MissingEnvironments) return;
+    MissingEnvironments = false;
+    WriteDefaultConfig();
+    Yaml.IgnoreWrites(Pattern);
+    ReadConfigs();
+  }
+  // Phase 1 runs before EnvMan exists and writes only what world generation needs.
+  private static BiomeYaml ToPartialData(Heightmap.Biome biome) => new()
+  {
+    biome = BiomeToDisplayName[biome],
+    colorTerrain = DataManager.FromColor(Heightmap.GetBiomeColor(biome)),
+    lava = biome == Heightmap.Biome.AshLands ? "true" : ""
+  };
   private static void WriteDefaultConfig()
   {
-    // World setup can run before EnvMan exists (fresh install without the yaml file).
-    // Configs get created later at ZoneSystem.Start where EnvMan is guaranteed to exist.
-    if (EnvMan.instance == null) return;
-    var biomes = OriginalBiomes.Values.Select(b => EnvMan.instance.m_biomes.Find(ev => ev.m_biome == b)).Where(b => b != null);
-    List<BiomeYaml> data = [.. biomes.Select(ToData).ToList(), .. ExtraBiomeYamls.Values];
-    var yaml = Yaml.Serializer().Serialize(data);
-    File.WriteAllText(FilePath, yaml);
+    List<BiomeYaml> data;
+    if (EnvMan.instance == null || Minimap.instance == null)
+      data = [.. OriginalBiomes.Values.Where(b => b != Heightmap.Biome.None).Select(ToPartialData), .. ExtraBiomeYamls.Values];
+    else
+    {
+      var biomes = OriginalBiomes.Values.Select(b => EnvMan.instance.m_biomes.Find(ev => ev.m_biome == b)).Where(b => b != null);
+      data = [.. biomes.Select(ToData), .. ExtraBiomeYamls.Values];
+    }
+    File.WriteAllText(FilePath, Yaml.Serializer().Serialize(data));
   }
 
   public static void ReadConfigs() => Instance.ReadConfigs();
@@ -188,17 +208,12 @@ public class BiomeManager
     protected override string ConfigValue { get => Configuration.valueBiomeData.Value; set => Configuration.valueBiomeData.Value = value; }
     protected override bool Set(Dictionary<string, string> files) => BiomeManager.Set(files);
     protected override void WriteDefaultConfig() => BiomeManager.WriteDefaultConfig();
-    protected override void AfterCreateConfigs()
-    {
-      // Biomes are important so that other files work, so this guarantees that custom biomes get loaded.
-      if (ExtraBiomeYamls.Count > 0)
-        ReadConfigs();
-    }
   }
   private static readonly Sync Instance = new();
 
   private static void Load(List<BiomeYaml> rawData)
   {
+    MissingEnvironments = false;
     HasData = rawData.Count > 0;
     if (!HasData) return;
     Log.Info($"Reloading biome data ({rawData.Count} entries).");
@@ -256,6 +271,8 @@ public class BiomeManager
       return GetBiome(data.biome);
     });
     BiomeForestMultiplier = rawData.Any(data => data.forestMultiplier != 1f);
+    var vanilla = rawData.Where(d => OriginalBiomes.Keys.Any(k => string.Equals(k, d.biome, StringComparison.OrdinalIgnoreCase))).ToList();
+    MissingEnvironments = vanilla.Count > 0 && vanilla.All(d => d.environments == null);
     Environments = [.. rawData.Select(d => FromData(d, EnvKeys, "Biomes"))];
     UsedGlobalKeys = [.. EnvKeys.Values
       .SelectMany(data => data.requiredGlobalKeys.Concat(data.forbiddenGlobalKeys))

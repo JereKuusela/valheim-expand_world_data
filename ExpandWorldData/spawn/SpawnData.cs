@@ -52,7 +52,7 @@ public class Data
   [DefaultValue(0f)] public float minDistance = 0f;
   [DefaultValue(0f)] public float maxDistance = 0f;
   [DefaultValue(null)] public string[]? objects = null;
-  [DefaultValue(null)] public string? data = null;
+  [DefaultValue(null)] public global::Data.DataField? data = null;
   [DefaultValue(null)] public string? faction = null;
   [DefaultValue(null)] public Dictionary<string, string>? fields = null;
 }

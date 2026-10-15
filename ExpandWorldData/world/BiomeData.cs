@@ -47,7 +47,8 @@ public class BiomeYaml
   public float forestMultiplier = 1f;
   [DefaultValue(0f)]
   public float altitudeDelta = 0f;
-  public BiomeEnvironment[] environments = [];
+  [DefaultValue(null)]
+  public BiomeEnvironment[]? environments = null;
   [DefaultValue("")]
   public string paint = "";
   public Color? color = null;

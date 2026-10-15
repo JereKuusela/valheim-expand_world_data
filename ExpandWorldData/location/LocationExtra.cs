@@ -169,7 +169,7 @@ public class LocationExtraInfo
 {
   private static int VirtualGroupId = 0;
 
-  public string? ZDOData;
+  public DataEntry? ZDOData;
   public string? Dungeon;
   public HashSet<string> Groups;
   public List<Tuple<string, float>>? AwayFrom;
@@ -193,8 +193,7 @@ public class LocationExtraInfo
       Groups.Add(data.groupMax);
 
     LoadDistanceRules(data, fileName);
-    if (data.data != "")
-      ZDOData = data.data;
+    ZDOData = DataHelper.Get(data.data, fileName);
     if (data.dungeon != "")
       Dungeon = data.dungeon;
     LoadObjectData(data, fileName);

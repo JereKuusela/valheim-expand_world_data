@@ -35,25 +35,25 @@ public static class Patcher
 
   private static void PatchLifecycle(Harmony harmony)
   {
-    ExpandWorldData.Patches.Apply(harmony, true, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(SpawnManager), nameof(SpawnManager.InitializeData), HarmonyPatchType.Postfix, Priority.VeryLow);
-    ExpandWorldData.Patches.Apply(harmony, true, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(SpawnManager), nameof(SpawnManager.InitializeSpawnSystem), HarmonyPatchType.Postfix);
+    ExpandWorldData.Patches.Postfix(harmony, true, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(SpawnManager), nameof(SpawnManager.InitializeData), priority: Priority.VeryLow);
+    ExpandWorldData.Patches.Postfix(harmony, true, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(SpawnManager), nameof(SpawnManager.InitializeSpawnSystem));
   }
 
   private static void PatchData(Harmony harmony, bool shouldPatch)
   {
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Spawn), typeof(Loader), nameof(Loader.ApplyData), HarmonyPatchType.Prefix);
+    ExpandWorldData.Patches.Prefix(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Spawn), typeof(Loader), nameof(Loader.ApplyData));
   }
 
   private static void PatchObjects(Harmony harmony, bool shouldPatch)
   {
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Spawn), typeof(Loader), nameof(Loader.SpawnObjects), HarmonyPatchType.Postfix);
+    ExpandWorldData.Patches.Postfix(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Spawn), typeof(Loader), nameof(Loader.SpawnObjects));
   }
 
   private static void PatchGlobalKeys(Harmony harmony, bool shouldPatch)
   {
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.RPC_SetGlobalKey), typeof(GlobalKeys), nameof(GlobalKeys.Mutate), HarmonyPatchType.Prefix);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.GetGlobalKey), typeof(GlobalKeys), nameof(GlobalKeys.CheckRequirement), HarmonyPatchType.Prefix, argumentTypes: [typeof(string)]);
-    ExpandWorldData.Patches.Apply(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Spawn), typeof(GlobalKeys), nameof(GlobalKeys.Consume), HarmonyPatchType.Postfix);
+    ExpandWorldData.Patches.Prefix(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.RPC_SetGlobalKey), typeof(GlobalKeys), nameof(GlobalKeys.Mutate));
+    ExpandWorldData.Patches.Prefix(harmony, shouldPatch, typeof(ZoneSystem), nameof(ZoneSystem.GetGlobalKey), typeof(GlobalKeys), nameof(GlobalKeys.CheckRequirement), argumentTypes: [typeof(string)]);
+    ExpandWorldData.Patches.Postfix(harmony, shouldPatch, typeof(SpawnSystem), nameof(SpawnSystem.Spawn), typeof(GlobalKeys), nameof(GlobalKeys.Consume));
   }
 
 }

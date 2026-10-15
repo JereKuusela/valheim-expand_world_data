@@ -233,7 +233,7 @@ public class VegetationManager
     // Minor optimization to skip RNG calls if there is nothing to randomize.
     if (Helper.IsMultiAxis(scale))
       extra.scale = scale;
-    if (data.data != "")
+    if (data.data != null)
       extra.data = DataHelper.Get(data.data, fileName);
     if (data.drops != "")
     {

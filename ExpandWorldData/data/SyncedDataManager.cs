@@ -23,7 +23,6 @@ public abstract class SyncedDataManager
   protected abstract bool Set(Dictionary<string, string> files);
   /// <summary>Writes the default config file content. May no-op if there's nothing to write.</summary>
   protected abstract void WriteDefaultConfig();
-  protected virtual void AfterCreateConfigs() { }
   /// <summary>Upgrades yaml files on disk before they are read.</summary>
   protected virtual void Migrate() { }
   /// <summary>Builds the value sent to clients. Override to strip server-only or redundant data.</summary>
@@ -35,7 +34,6 @@ public abstract class SyncedDataManager
   {
     if (Helper.IsClient() || File.Exists(FilePath)) return;
     WriteDefaultConfig();
-    AfterCreateConfigs();
     Yaml.IgnoreWrites(Pattern);
   }
 

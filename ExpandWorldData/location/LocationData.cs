@@ -77,8 +77,8 @@ public class LocationYaml
   public float? offset = null;
   [DefaultValue(0f)]
   public float groundOffset = 0f;
-  [DefaultValue("")]
-  public string data = "";
+  [DefaultValue(null)]
+  public global::Data.DataField? data = null;
   [DefaultValue(null)]
   public string[]? objectData = null;
   [DefaultValue(null)]

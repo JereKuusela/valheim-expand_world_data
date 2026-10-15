@@ -133,9 +133,9 @@ public static class LocationClientData
   public static void Patch(Harmony harmony)
   {
     var shouldPatch = HasData;
-    Patches.Apply(harmony, shouldPatch, typeof(LocationProxy), nameof(LocationProxy.SpawnLocation), typeof(LocationClientData), nameof(SetContext), HarmonyPatchType.Prefix);
-    Patches.Apply(harmony, shouldPatch, typeof(LocationProxy), nameof(LocationProxy.SpawnLocation), typeof(LocationClientData), nameof(ClearContext), HarmonyPatchType.Finalizer);
-    Patches.Apply(harmony, shouldPatch, typeof(Location), nameof(Location.Awake), typeof(LocationClientData), nameof(ApplyToLocation), HarmonyPatchType.Prefix);
+    Patches.Prefix(harmony, shouldPatch, typeof(LocationProxy), nameof(LocationProxy.SpawnLocation), typeof(LocationClientData), nameof(SetContext));
+    Patches.Finalizer(harmony, shouldPatch, typeof(LocationProxy), nameof(LocationProxy.SpawnLocation), typeof(LocationClientData), nameof(ClearContext));
+    Patches.Prefix(harmony, shouldPatch, typeof(Location), nameof(Location.Awake), typeof(LocationClientData), nameof(ApplyToLocation));
   }
 
   internal static void SetContext(LocationProxy __instance)
