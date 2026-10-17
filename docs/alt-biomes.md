@@ -66,4 +66,24 @@ Client side fields:
     maxSpawned: 2
 ```
 
+World rules (in `expand_world.yaml`) that always add this alternative biome to a sector of the Meadows, instead of relying on the `chance`:
+
+```yaml
+- biome: Meadows
+  altBiome: Haunted Meadows
+  minDistance: 0.2
+  maxDistance: 0.4
+  minSector: 0.1
+  maxSector: 0.3
+```
+
+Multiple alternative biomes can be added to the same rule with a comma separated list:
+
+```yaml
+- biome: Meadows
+  altBiome: Haunted Meadows, Mushroom
+  minDistance: 0.2
+  maxDistance: 0.4
+```
+
 Extra vegetation and locations are added with the `altBiome` field in the [vegetation](vegetation.md) and [locations](locations.md) files.
