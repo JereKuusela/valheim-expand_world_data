@@ -77,6 +77,8 @@ public class InitializeContent
 
     // 1) Initialize managers (both client and server; snapshots + arms client sync gate).
     EnvironmentManager.Initialize();
+    BiomeManager.Initialize();
+    ExpandWorld.Event.EventManager.Initialize();
     AltBiomeManager.Initialize();
     // Clutter must be here because since SetupLocations adds prefabs to the list.
     ClutterManager.Initialize();
@@ -90,15 +92,10 @@ public class InitializeContent
     NoBuildManager.ApplyPending();
     LocationClientData.ApplyPending();
 
-    // 2) Server: create and read configs synchronously (no client sync gating needed).
+    // 2) Server: read configs synchronously, creating missing files (no client sync gating needed).
     if (Helper.IsServer())
     {
-      EnvironmentManager.CreateConfigs();
-      AltBiomeManager.CreateConfigs();
       BiomeManager.CompleteDefaultConfig();
-      ClutterManager.CreateConfigs();
-      VegetationManager.CreateConfigs();
-      LocationManager.CreateConfigs();
 
       DataLoading.LoadEntries();
       EnvironmentManager.ReadConfigs();

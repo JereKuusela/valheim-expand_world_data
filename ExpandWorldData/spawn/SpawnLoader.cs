@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Data;
 using ExpandWorldData;
-using HarmonyLib;
-using Service;
 using UnityEngine;
 using Common;
 
@@ -13,6 +11,47 @@ public class Loader
 {
   public static Dictionary<SpawnSystem.SpawnData, DataEntry?> Data = [];
   public static Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>> Objects = [];
+
+  public sealed class MetadataLoad : System.IDisposable
+  {
+    private readonly Dictionary<SpawnSystem.SpawnData, DataEntry?> PreviousData = Data;
+    private readonly Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>> PreviousObjects = Objects;
+    private bool Committed;
+
+    public MetadataLoad()
+    {
+      Data = [];
+      Objects = [];
+    }
+
+    public void Commit(IEnumerable<SpawnSystem.SpawnData> previous, IEnumerable<SpawnSystem.SpawnData> current)
+    {
+      var retained = new HashSet<SpawnSystem.SpawnData>(current);
+      var data = new Dictionary<SpawnSystem.SpawnData, DataEntry?>(PreviousData);
+      var objects = new Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>>(PreviousObjects);
+      foreach (var spawn in previous)
+      {
+        if (retained.Contains(spawn)) continue;
+        data.Remove(spawn);
+        objects.Remove(spawn);
+      }
+      foreach (var spawn in retained)
+      {
+        if (Data.TryGetValue(spawn, out var entry)) data[spawn] = entry;
+        if (Objects.TryGetValue(spawn, out var entries)) objects[spawn] = entries;
+      }
+      Data = data;
+      Objects = objects;
+      Committed = true;
+    }
+
+    public void Dispose()
+    {
+      if (Committed) return;
+      Data = PreviousData;
+      Objects = PreviousObjects;
+    }
+  }
 
   public static SpawnSystem.SpawnData FromData(Data data, string fileName)
   {

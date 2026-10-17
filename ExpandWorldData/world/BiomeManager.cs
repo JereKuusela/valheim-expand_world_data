@@ -79,8 +79,8 @@ public class BiomeManager
   public static Dictionary<Heightmap.Biome, string> BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
   private static Dictionary<Heightmap.Biome, Heightmap.Biome> BiomeToTerrain = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
   private static Dictionary<Heightmap.Biome, Heightmap.Biome> BiomeToNature = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
-  private static readonly Dictionary<Heightmap.Biome, Color> BiomeToColor = [];
-  private static readonly Dictionary<Heightmap.Biome, BiomeData> BiomeData = [];
+  private static Dictionary<Heightmap.Biome, Color> BiomeToColor = [];
+  private static Dictionary<Heightmap.Biome, BiomeData> BiomeData = [];
   public static bool TryGetColor(Heightmap.Biome biome, out Color color) => BiomeToColor.TryGetValue(biome, out color);
   public static bool TryGetData(Heightmap.Biome biome, out BiomeData data) => BiomeData.TryGetValue(biome, out data);
   public static bool HasNatureOverrides => BiomeToNature.Any(pair => pair.Key != pair.Value);
@@ -122,11 +122,12 @@ public class BiomeManager
     };
   }
   public static void CreateConfigs() => Instance.CreateConfigs();
-  // Set by Load when the default file still lacks environments, which can only be filled once EnvMan exists.
+  // Set when the default file lacks environments, which can only be filled once EnvMan exists.
+  // Load sets it from file contents; writing a partial default sets it too, since Load doesn't run when disabled.
   private static bool MissingEnvironments = false;
   public static void CompleteDefaultConfig()
   {
-    if (Helper.IsClient() || !Configuration.DataBiome || !MissingEnvironments) return;
+    if (Helper.IsClient() || !MissingEnvironments) return;
     MissingEnvironments = false;
     WriteDefaultConfig();
     Yaml.IgnoreWrites(Pattern);
@@ -143,7 +144,10 @@ public class BiomeManager
   {
     List<BiomeYaml> data;
     if (EnvMan.instance == null || Minimap.instance == null)
+    {
+      MissingEnvironments = true;
       data = [.. OriginalBiomes.Values.Where(b => b != Heightmap.Biome.None).Select(ToPartialData), .. ExtraBiomeYamls.Values];
+    }
     else
     {
       var biomes = OriginalBiomes.Values.Select(b => EnvMan.instance.m_biomes.Find(ev => ev.m_biome == b)).Where(b => b != null);
@@ -206,26 +210,20 @@ public class BiomeManager
     protected override string Pattern => BiomeManager.Pattern;
     protected override bool DataEnabled => Configuration.DataBiome;
     protected override string ConfigValue { get => Configuration.valueBiomeData.Value; set => Configuration.valueBiomeData.Value = value; }
-    protected override bool Set(Dictionary<string, string> files) => BiomeManager.Set(files);
+    protected override SetResult Set(Dictionary<string, string> files) => BiomeManager.Set(files);
     protected override void WriteDefaultConfig() => BiomeManager.WriteDefaultConfig();
   }
   private static readonly Sync Instance = new();
 
-  private static void Load(List<BiomeYaml> rawData)
+  private static void Load(List<BiomeYaml> rawData, Dictionary<Heightmap.Biome, string> translations)
   {
     MissingEnvironments = false;
     HasData = rawData.Count > 0;
+    ResetData();
     if (!HasData) return;
     Log.Info($"Reloading biome data ({rawData.Count} entries).");
-    EnvKeys.Clear();
-    UsedGlobalKeys.Clear();
-    BiomeData.Clear();
-    BiomeToColor.Clear();
     LavaBiomes = 0;
     FullLavaBiomes = 0;
-    NoBuildBiomes = 0;
-    NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
-    BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
     var lastBiome = Heightmap.Biome.Mistlands;
 
     foreach (var item in rawData)
@@ -235,14 +233,14 @@ public class BiomeManager
       {
         biome = defaultBiome;
         if (item.name != "")
-          AddTranslation(biome, item.name);
+          translations[biome] = item.name;
       }
       else
       {
         biome = lastBiome = NextBiome(lastBiome);
         NameToBiome.Add(item.biome.ToLowerInvariant(), biome);
         BiomeToDisplayName[biome] = item.biome;
-        AddTranslation(biome, item.name);
+        translations[biome] = item.name;
       }
       BiomeData extra = new(item);
       if (extra.lava)
@@ -279,11 +277,43 @@ public class BiomeManager
       .Where(key => key != null && key != "")
       .Select(NormalizeKey)];
   }
+  private static void ResetData()
+  {
+    EnvKeys = [];
+    UsedGlobalKeys = [];
+    BiomeData = [];
+    BiomeToColor = [];
+    Environments = [];
+    LavaBiomes = Heightmap.Biome.AshLands;
+    FullLavaBiomes = Heightmap.Biome.AshLands;
+    NoBuildBiomes = 0;
+    BiomeForestMultiplier = false;
+    NameToBiome = OriginalBiomes.ToDictionary(kvp => kvp.Key.ToLowerInvariant(), kvp => kvp.Value);
+    BiomeToDisplayName = OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
+    BiomeToTerrain = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
+    BiomeToNature = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
+  }
+  // Vanilla biome environments, restored when custom data is removed.
+  private static List<BiomeEnvSetup> OriginalEnvironments = [];
+  private static bool EnvironmentsApplied;
+  public static void Initialize()
+  {
+    OriginalEnvironments = [.. EnvMan.instance.m_biomes];
+    EnvironmentsApplied = false;
+  }
   public static void LoadEnvironments()
   {
-    if (!EnvMan.instance || Environments.Count == 0) return;
-
-    SetupBiomeEnvs(Environments);
+    if (!EnvMan.instance) return;
+    if (Environments.Count > 0)
+    {
+      SetupBiomeEnvs(Environments);
+      EnvironmentsApplied = true;
+    }
+    else if (EnvironmentsApplied && OriginalEnvironments.Count > 0)
+    {
+      SetupBiomeEnvs(OriginalEnvironments);
+      EnvironmentsApplied = false;
+    }
   }
   private static void SetupBiomeEnvs(List<BiomeEnvSetup> data)
   {
@@ -312,13 +342,39 @@ public class BiomeManager
       return (Heightmap.Biome)0x80;
     return (Heightmap.Biome)(2 * number);
   }
-  private static bool Set(Dictionary<string, string> files)
+  private static SetResult Set(Dictionary<string, string> files)
   {
-    if (!Yaml.TryDeserialize<BiomeYaml>(files, out var data)) return false;
-    Load(data);
+    var previous = (EnvKeys, UsedGlobalKeys, BiomeData, BiomeToColor, Environments,
+      LavaBiomes, FullLavaBiomes, NoBuildBiomes, BiomeForestMultiplier, NameToBiome,
+      BiomeToDisplayName, BiomeToTerrain, BiomeToNature, MissingEnvironments, HasData, EnvironmentsApplied);
+    var result = SetResult.Failed;
+    try
+    {
+      return result = LoadAndApply(files);
+    }
+    finally
+    {
+      if (result != SetResult.Applied)
+        (EnvKeys, UsedGlobalKeys, BiomeData, BiomeToColor, Environments,
+          LavaBiomes, FullLavaBiomes, NoBuildBiomes, BiomeForestMultiplier, NameToBiome,
+          BiomeToDisplayName, BiomeToTerrain, BiomeToNature, MissingEnvironments, HasData, EnvironmentsApplied) = previous;
+    }
+  }
+  private static SetResult LoadAndApply(Dictionary<string, string> files)
+  {
+    if (!Yaml.TryDeserialize<BiomeYaml>(files, out var data)) return SetResult.Failed;
+    if (files.Count > 0 && data.Count == 0)
+    {
+      Log.Warning("Failed to load any biome data.");
+      return SetResult.Failed;
+    }
+    Dictionary<Heightmap.Biome, string> translations = [];
+    Load(data, translations);
     LoadEnvironments();
+    foreach (var translation in translations)
+      AddTranslation(translation.Key, translation.Value);
     Refresh.Request(Regen.Terrain | Regen.Water | Regen.Minimap);
-    return true;
+    return SetResult.Applied;
   }
   public static void SetupWatcher()
   {

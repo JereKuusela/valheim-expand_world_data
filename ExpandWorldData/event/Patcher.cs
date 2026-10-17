@@ -24,9 +24,7 @@ public static class Patcher
   private static void PatchLifecycle(Harmony harmony, bool isServer, bool hasData)
   {
     // Role is not known yet at ZNet.Awake prefix.
-    ExpandWorldData.Patches.Prefix(harmony, true, typeof(ZNet), nameof(ZNet.Awake), typeof(EventManager), nameof(EventManager.DelayClientLoad));
     ExpandWorldData.Patches.Postfix(harmony, isServer, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(EventManager), nameof(EventManager.InitializeServerData), priority: Priority.Last);
-    ExpandWorldData.Patches.Postfix(harmony, !isServer, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(EventManager), nameof(EventManager.InitializeClientData));
     ExpandWorldData.Patches.Postfix(harmony, true, typeof(RandEventSystem), nameof(RandEventSystem.Awake), typeof(EventManager), nameof(EventManager.ApplyTiming));
     ExpandWorldData.Patches.Prefix(harmony, hasData, typeof(RandEventSystem), nameof(RandEventSystem.SetRandomEvent), typeof(Loader), nameof(Loader.ResolveEventConfiguration), priority: Priority.First);
   }

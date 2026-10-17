@@ -19,7 +19,7 @@ public class WorldManager
     protected override string Pattern => WorldManager.Pattern;
     protected override bool DataEnabled => Configuration.DataWorld;
     protected override string ConfigValue { get => Configuration.valueWorldData.Value; set => Configuration.valueWorldData.Value = value; }
-    protected override bool Set(Dictionary<string, string> files) => WorldManager.Set(files);
+    protected override SetResult Set(Dictionary<string, string> files) => WorldManager.Set(files);
     protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(DefaultData));
   }
   private static readonly Sync Instance = new();
@@ -104,57 +104,48 @@ public class WorldManager
   public static void CreateConfigs() => Instance.CreateConfigs();
   public static void ReadConfigs() => Instance.ReadConfigs();
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
-  private static bool Set(Dictionary<string, string> files)
+  private static SetResult Set(Dictionary<string, string> files)
   {
-    try
+    if (files.Count == 0)
     {
-      if (files.Count == 0)
-      {
-        HasData = false;
-        Data = DefaultData;
-        BiomeCalculator.SetData(DefaultEntries);
-        BiomeCalculator.CheckAngles = false;
-        Refresh.Request(Regen.World);
-        return true;
-      }
-      List<WorldYaml> data = [];
-      foreach (var file in files)
-      {
-        if (!Yaml.TryDeserialize<WorldYaml>(file.Value, file.Key, out var parsed))
-          return false;
-        data.AddRange(parsed);
-      }
-      if (Configuration.DataMigration && Helper.IsServer() && data.Count == OldData.Count && Yaml.Serializer().Serialize(data) == Yaml.Serializer().Serialize(OldData))
-      {
-        Log.Info("Detected old default world data with swapped deepnorth and mountain. Using fixed default.");
-        data = DefaultData;
-        if (File.Exists(FilePath))
-          File.Delete(FilePath);
-        CreateConfigs();
-        // Watcher triggers erload.
-      }
-      if (data.Count == 0)
-      {
-        Log.Warning($"Failed to load any world data.");
-        Log.Info($"Reloading default world data ({data.Count} entries).");
-        data = DefaultData;
-      }
-      else
-        Log.Info($"Reloading world data ({data.Count} entries).");
-      var entries = data.Select(s => new WorldEntry(s, "world")).ToList();
-      BiomeCalculator.SetData(entries);
-      BiomeCalculator.CheckAngles = data.Any(x => x.minSector != 0f || x.maxSector != 1f);
-      Data = data;
-      HasData = data.Count > 0;
+      HasData = false;
+      Data = DefaultData;
+      BiomeCalculator.SetData(DefaultEntries);
+      BiomeCalculator.CheckAngles = false;
       Refresh.Request(Regen.World);
-      return true;
+      return SetResult.Applied;
     }
-    catch (Exception e)
+    List<WorldYaml> data = [];
+    foreach (var file in files)
     {
-      Log.Error(e.Message);
-      Log.Error(e.StackTrace);
-      return false;
+      if (!Yaml.TryDeserialize<WorldYaml>(file.Value, file.Key, out var parsed))
+        return SetResult.Failed;
+      data.AddRange(parsed);
     }
+    if (YamlDataManager.MigrationEnabled && MigrateOldDefault(data))
+      return SetResult.Rewritten;
+    if (data.Count == 0)
+    {
+      Log.Warning($"Failed to load any world data.");
+      return SetResult.Failed;
+    }
+    Log.Info($"Reloading world data ({data.Count} entries).");
+    var entries = data.Select(s => new WorldEntry(s, "world")).ToList();
+    BiomeCalculator.SetData(entries);
+    BiomeCalculator.CheckAngles = data.Any(x => x.minSector != 0f || x.maxSector != 1f);
+    Data = data;
+    HasData = true;
+    Refresh.Request(Regen.World);
+    return SetResult.Applied;
+  }
+  private static bool MigrateOldDefault(List<WorldYaml> data)
+  {
+    if (data.Count != OldData.Count || Yaml.Serializer().Serialize(data) != Yaml.Serializer().Serialize(OldData)) return false;
+    Log.Info("Detected old default world data with swapped deepnorth and mountain. Using fixed default.");
+    if (File.Exists(FilePath))
+      File.Delete(FilePath);
+    CreateConfigs();
+    return true;
   }
   public static void Reload()
   {

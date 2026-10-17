@@ -5,6 +5,7 @@
   - Fixes alternative biome migration for locations and vegetations possibly affecting custom entries. Thanks warp!
   - Fixes most alternative biomes missing on world load.
   - Fixes Infinity Hammer "Ignore no build" not ignoring no build zones.
+  - Fixes custom item data not working on data entries. Thanks Zeall!
   - Optimizes world load to not apply extra refresh.
 
 - v1.78

@@ -125,17 +125,17 @@ public partial class Configuration
     configEventInterval = wrapper.BindFloat(section, "Random event interval", 46f, false, "How often the random events are checked (minutes).");
 
     configDistanceWiggleLength = wrapper.BindFloat(section, "Distance wiggle length", 500f, false);
-    configDistanceWiggleLength.SettingChanged += (s, e) => WorldManager.ReadConfigs();
+    configDistanceWiggleLength.SettingChanged += (s, e) => WorldManager.Reload();
     configDistanceWiggleWidth = wrapper.BindFloat(section, "Distance wiggle width", 0.01f, false);
-    configDistanceWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
+    configDistanceWiggleWidth.SettingChanged += (s, e) => WorldManager.Reload();
     configWiggleFrequency = wrapper.BindFloat(section, "Wiggle frequency", 20f, false, "How many wiggles are per each circle.");
     configWiggleFrequency.SettingChanged += (s, e) =>
     {
-      WorldManager.ReadConfigs();
+      WorldManager.Reload();
       Refresh.Request(Regen.Patches);
     };
     configWiggleWidth = wrapper.BindFloat(section, "Wiggle width", 100f, false, "How many meters are the wiggles.");
-    configWiggleWidth.SettingChanged += (s, e) => WorldManager.ReadConfigs();
+    configWiggleWidth.SettingChanged += (s, e) => WorldManager.Reload();
     configScaleLocationAltitudeRequirement = wrapper.Bind(section, "Scale location altitude requirement", false, false, "If true, location requirements are scaled based on the biome altitude delta and multiplier.");
     configScaleLocationAltitudeRequirement.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
     configCustomWaterColor = wrapper.Bind(section, "Custom water color", false, false, "If true, custom water color system is enabled.");

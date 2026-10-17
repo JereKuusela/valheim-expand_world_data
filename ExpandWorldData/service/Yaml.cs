@@ -137,7 +137,8 @@ public class Yaml
     {
       if (!File.Exists(path))
       {
-        if (setting.Value && ExpandWorldData.Configuration.DataReload) action();
+        // Reading also recreates a deleted main file, even if the data is disabled.
+        if (ExpandWorldData.Configuration.DataReload) action();
         return;
       }
       if (IgnoredWrites.TryGetValue(path, out var ignored) && File.GetLastWriteTimeUtc(path) <= ignored) return;

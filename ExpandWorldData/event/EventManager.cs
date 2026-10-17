@@ -12,17 +12,13 @@ public class EventManager
   public static readonly string FilePath = Path.Combine(Yaml.Directory, "expand_events.yaml");
   public const string Pattern = "expand_events*.yaml";
   public static List<RandomEvent> Originals = [];
-  public static bool LoadDelayed;
   public static bool HasData { get; private set; }
 
   public static void CreateConfigs() => Instance.CreateConfigs();
 
   public static void ReadConfigs() => Instance.ReadConfigs();
 
-  public static void FromSetting(string yaml)
-  {
-    if (!LoadDelayed) Instance.FromSetting(yaml);
-  }
+  public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
 
   private class Sync : SyncedDataManager
   {
@@ -30,47 +26,72 @@ public class EventManager
     protected override string Pattern => EventManager.Pattern;
     protected override bool DataEnabled => Configuration.DataEvents;
     protected override string ConfigValue { get => Configuration.valueEventData.Value; set => Configuration.valueEventData.Value = value; }
-    protected override bool Set(Dictionary<string, string> files) => EventManager.Set(files);
-    protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(RandEventSystem.instance.m_events.Select(Loader.ToData).ToList()));
+    protected override SetResult Set(Dictionary<string, string> files) => EventManager.Set(files);
+    protected override void WriteDefaultConfig()
+    {
+      if (Originals.Count == 0) return;
+      File.WriteAllText(FilePath, Yaml.Serializer().Serialize(Originals.Select(Loader.ToData).ToList()));
+    }
   }
   private static readonly Sync Instance = new();
 
-  private static bool Set(Dictionary<string, string> files)
+  public static void Initialize()
   {
-    if (RandEventSystem.instance == null) return false;
-    if (Originals.Count == 0) Originals = [.. RandEventSystem.instance.m_events];
-    if (files.Count == 0)
-    {
-      HasData = false;
-      return true;
-    }
-    try
-    {
-      List<RandomEvent> data = [];
-      foreach (var file in files)
-      {
-        if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return false;
-        data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)));
-      }
-      if (data.Count == 0) return false;
-      if (Configuration.DataMigration && Helper.IsServer() && AddMissingEntries(data)) return false;
-      Log.Info($"Reloading event data ({data.Count} entries).");
-      RemoveSpawnMetadata(RandEventSystem.instance.m_events);
-      Loader.ExtraData.Clear();
-      RandEventSystem.instance.m_events = data;
-      HasData = true;
-      return true;
-    }
-    catch (Exception e) { Log.Error(e.Message); Log.Error(e.StackTrace); return false; }
+    if (RandEventSystem.instance == null) return;
+    Originals = [.. RandEventSystem.instance.m_events];
+    HasData = false;
   }
 
-  private static void RemoveSpawnMetadata(IEnumerable<RandomEvent> events)
+  private static SetResult Set(Dictionary<string, string> files)
   {
-    foreach (var spawn in events.SelectMany(entry => entry.m_spawn))
+    var system = RandEventSystem.instance;
+    if (system == null) return SetResult.Failed;
+    using var metadata = new Spawn.Loader.MetadataLoad();
+    var previousSpawns = system.m_events.SelectMany(entry => entry.m_spawn);
+    var previousExtra = Loader.ExtraData;
+    Loader.ExtraData = [];
+    var result = SetResult.Failed;
+    try
     {
-      Spawn.Loader.Data.Remove(spawn);
-      Spawn.Loader.Objects.Remove(spawn);
+      var loaded = LoadAndApply(files);
+      if (loaded == SetResult.Applied)
+        metadata.Commit(previousSpawns, system.m_events.SelectMany(entry => entry.m_spawn));
+      return result = loaded;
     }
+    finally
+    {
+      if (result != SetResult.Applied) Loader.ExtraData = previousExtra;
+    }
+  }
+
+  private static SetResult LoadAndApply(Dictionary<string, string> files)
+  {
+    if (RandEventSystem.instance == null || Originals.Count == 0) return SetResult.Failed;
+    if (files.Count == 0)
+    {
+      Log.Info($"Reloading default event data ({Originals.Count} entries).");
+      Restore();
+      return SetResult.Applied;
+    }
+    List<RandomEvent> data = [];
+    foreach (var file in files)
+    {
+      if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
+      data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)));
+    }
+    if (data.Count == 0) return SetResult.Failed;
+    if (YamlDataManager.MigrationEnabled && AddMissingEntries(data)) return SetResult.Rewritten;
+    Log.Info($"Reloading event data ({data.Count} entries).");
+    RandEventSystem.instance.m_events = data;
+    HasData = true;
+    return SetResult.Applied;
+  }
+
+  private static void Restore()
+  {
+    Loader.ExtraData.Clear();
+    RandEventSystem.instance.m_events = [.. Originals];
+    HasData = false;
   }
 
   private static bool AddMissingEntries(List<RandomEvent> entries)
@@ -84,20 +105,7 @@ public class EventManager
     return true;
   }
 
-  internal static void DelayClientLoad() => LoadDelayed = true;
-
-  internal static void InitializeServerData()
-  {
-    CreateConfigs();
-    ReadConfigs();
-  }
-
-  internal static void InitializeClientData()
-  {
-    if (!LoadDelayed) return;
-    LoadDelayed = false;
-    FromSetting(Configuration.valueEventData.Value);
-  }
+  internal static void InitializeServerData() => ReadConfigs();
 
   internal static void ApplyTiming(RandEventSystem __instance)
   {

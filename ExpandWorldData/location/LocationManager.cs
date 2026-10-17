@@ -10,7 +10,7 @@ using Data;
 using Common;
 namespace ExpandWorldData;
 
-public class LocationManager
+public partial class LocationManager
 {
   public static string FileName = "expand_locations.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
@@ -21,134 +21,12 @@ public class LocationManager
   {
     ExtraLocationYamls.Add(yaml);
   }
-  public static ZoneSystem.ZoneLocation FromData(LocationYaml data, string fileName)
-  {
-    var loc = new ZoneSystem.ZoneLocation
-    {
-      m_prefabName = data.prefab,
-
-      m_enable = data.enabled,
-      m_biome = DataManager.ToBiomes(data.biome, fileName),
-      m_biomeArea = DataManager.ToBiomeAreas(data.biomeArea, fileName),
-      m_altBiomeParent = string.IsNullOrWhiteSpace(data.altBiome) ? null : data.altBiome,
-      m_quantity = data.quantity,
-      m_prioritized = data.prioritized,
-      m_centerFirst = data.centerFirst,
-      m_unique = data.unique,
-      m_group = data.group,
-      m_minDistanceFromSimilar = data.minDistanceFromSimilar,
-      m_iconAlways = data.iconAlways != "" && data.iconAlways != "false",
-      m_iconPlaced = data.iconPlaced != "" && data.iconPlaced != "false",
-      m_randomRotation = data.randomRotation,
-      m_slopeRotation = data.slopeRotation,
-      m_snapToWater = data.snapToWater,
-      m_minTerrainDelta = data.minTerrainDelta,
-      m_maxTerrainDelta = data.maxTerrainDelta,
-      m_inForest = data.inForest,
-      m_forestTresholdMin = data.forestTresholdMin,
-      m_forestTresholdMax = data.forestTresholdMax,
-      m_minDistance = WorldEntry.ConvertDist(data.minDistance),
-      m_maxDistance = WorldEntry.ConvertDist(data.maxDistance),
-      m_minAltitude = data.minAltitude,
-      m_maxAltitude = data.maxAltitude,
-      m_groupMax = data.groupMax,
-      m_maxDistanceFromSimilar = data.maxDistanceFromSimilar,
-      m_minimumVegetation = data.minVegetation,
-      m_maximumVegetation = data.maxVegetation,
-      m_surroundCheckVegetation = data.surroundCheckVegetation,
-      m_surroundCheckDistance = data.surroundCheckDistance,
-      m_surroundCheckLayers = data.surroundCheckLayers,
-      m_surroundBetterThanAverage = data.surroundBetterThanAverage
-    };
-    LocationExtra.AddInfo(loc, data, fileName);
-
-    Setup(data.prefab, loc, fileName);
-    return loc;
-  }
-
-  public static LocationYaml ToData(ZoneSystem.ZoneLocation loc)
-  {
-    LocationYaml data = new();
-    // For migrations, ensures that old data is preserved.
-    if (LocationExtra.TryGetData(loc, out var extra))
-      data = extra;
-    // Original game has two fields for min/max distance from center. This merges the implementations.
-    if (loc.m_minDistanceFromCenter != 0f && (loc.m_minDistance == 0f || loc.m_minDistanceFromCenter > loc.m_minDistance))
-      loc.m_minDistance = loc.m_minDistanceFromCenter;
-    if (loc.m_maxDistanceFromCenter != 0f && (loc.m_maxDistance == 0f || loc.m_maxDistanceFromCenter < loc.m_maxDistance))
-      loc.m_maxDistance = loc.m_maxDistanceFromCenter;
-    data.prefab = loc.m_prefab.Name;
-    data.enabled = loc.m_enable;
-    data.biome = DataManager.FromBiomes(loc.m_biome);
-    data.biomeArea = DataManager.FromBiomeAreas(loc.m_biomeArea);
-    data.altBiome = loc.m_altBiomeParent ?? "";
-    data.quantity = loc.m_quantity;
-    data.prioritized = loc.m_prioritized;
-    data.centerFirst = loc.m_centerFirst;
-    data.unique = loc.m_unique;
-    data.group = loc.m_group;
-    data.minDistanceFromSimilar = loc.m_minDistanceFromSimilar;
-    data.iconAlways = loc.m_iconAlways ? loc.m_prefab.Name : "";
-    data.iconPlaced = loc.m_iconPlaced ? loc.m_prefab.Name : "";
-    data.randomRotation = loc.m_randomRotation;
-    data.slopeRotation = loc.m_slopeRotation;
-    data.snapToWater = loc.m_snapToWater;
-    data.maxTerrainDelta = loc.m_maxTerrainDelta;
-    data.minTerrainDelta = loc.m_minTerrainDelta;
-    data.inForest = loc.m_inForest;
-    data.forestTresholdMin = loc.m_forestTresholdMin;
-    data.forestTresholdMax = loc.m_forestTresholdMax;
-    data.minDistance = loc.m_minDistance / 10000f;
-    data.maxDistance = loc.m_maxDistance / 10000f;
-    data.minAltitude = loc.m_minAltitude;
-    data.groupMax = loc.m_groupMax;
-    data.maxDistanceFromSimilar = loc.m_maxDistanceFromSimilar;
-    data.minVegetation = loc.m_minimumVegetation;
-    data.maxVegetation = loc.m_maximumVegetation;
-    data.surroundCheckVegetation = loc.m_surroundCheckVegetation;
-    data.surroundCheckDistance = loc.m_surroundCheckDistance;
-    data.surroundCheckLayers = loc.m_surroundCheckLayers;
-    data.surroundBetterThanAverage = loc.m_surroundBetterThanAverage;
-    if (loc.m_maxAltitude == 1000f)
-      data.maxAltitude = 10000f;
-    else
-      data.maxAltitude = loc.m_maxAltitude;
-    var asset = Helper.SafeLoad(loc);
-    if (asset == null)
-      return data;
-    var prefab = asset.GetComponent<Location>();
-    if (prefab)
-    {
-      data.randomDamage = prefab.m_applyRandomDamage ? "true" : "";
-      data.exteriorRadius = prefab.m_exteriorRadius;
-      data.clearArea = prefab.m_clearArea;
-      data.discoverLabel = prefab.m_discoverLabel;
-      FillClientFields(data, prefab);
-    }
-    loc.m_prefab.Release();
-    return data;
-  }
-
-  internal static void FillClientFields(LocationYaml data, Location prefab)
-  {
-    data.noBuild = prefab.m_noBuild ? "true" : "";
-    if (prefab.m_noBuild && prefab.m_noBuildRadiusOverride > 0f)
-      data.noBuild = prefab.m_noBuildRadiusOverride.ToString(NumberFormatInfo.InvariantInfo);
-    data.interiorRadius = prefab.m_hasInterior ? prefab.m_interiorRadius : 0f;
-    data.interiorEnvironment = prefab.m_interiorEnvironment;
-    data.enemyMinLevel = prefab.m_enemyMinLevelOverride;
-    data.enemyMaxLevel = prefab.m_enemyMaxLevelOverride;
-    data.enemyLevelUpChance = prefab.m_enemyLevelUpOverride;
-    data.enemyLevelExcludeGroups = string.Join(",", prefab.m_excludeEnemyLevelOverrideGroups);
-    data.blockSpawnGroups = string.Join(",", prefab.m_blockSpawnGroups);
-  }
 
   public static bool IsValid(ZoneSystem.ZoneLocation loc) => loc.m_prefab.IsValid;
 
   private static void ToFile()
   {
-    if (File.Exists(FilePath)) return;
-    var data = ZoneSystem.instance.m_locations.Where(IsValid).Select(ToData).ToList();
+    var data = DefaultEntries.Where(IsValid).Select(ToData).ToList();
     if (ExtraLocationYamls.Count > 0)
       data.AddRange(ExtraLocationYamls);
     Save(data, false);
@@ -157,6 +35,7 @@ public class LocationManager
   {
     ZoneSystem.instance.m_locations = [.. ZoneSystem.instance.m_locations.Where(loc => loc.m_prefab.IsValid)];
 
+    Customized = false;
     DefaultEntries.Clear();
     Locations.Clear();
     if (Helper.IsServer())
@@ -166,68 +45,51 @@ public class LocationManager
     }
   }
 
-  public static void CreateConfigs()
+  private class Sync : YamlDataManager
   {
-    if (Helper.IsClient()) return;
-    if (File.Exists(FilePath)) return;
-    ToFile();
+    protected override string FilePath => LocationManager.FilePath;
+    protected override string Pattern => LocationManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataLocation;
+    protected override SetResult Set(Dictionary<string, string> files) => LocationManager.Set(files);
+    protected override void WriteDefaultConfig() => ToFile();
   }
+  private static readonly Sync Instance = new();
 
-  public static void ReadConfigs()
-  {
-    CleanUp();
-    if (Helper.IsClient()) return;
-    if (!Configuration.DataLocation)
-    {
-      if (Customized) Apply(DefaultEntries);
-      return;
-    }
-    if (!File.Exists(FilePath))
-      ToFile(); // Watcher will trigger reload.
-    else
-      Apply(FromFile());
-  }
+  public static void CreateConfigs() => Instance.CreateConfigs();
+
+  public static void ReadConfigs() => Instance.ReadConfigs();
 
   public static void CleanUp()
   {
     LocationExtra.ClearInfo();
   }
 
-  private static void Apply(List<ZoneSystem.ZoneLocation> data)
+  private static SetResult Set(Dictionary<string, string> files)
   {
-    Customized = false;
-    ZoneSystem.instance.m_locations = DefaultEntries;
-    if (Configuration.DataLocation)
+    var previousInfo = LocationExtra.ExtraInfo;
+    var previousVirtual = LocationExtra.ExtraInfoByVirtualId;
+    LocationExtra.ExtraInfo = [];
+    LocationExtra.ExtraInfoByVirtualId = [];
+    var result = SetResult.Failed;
+    try
     {
-      if (data.Count == 0)
+      return result = LoadAndApply(files);
+    }
+    finally
+    {
+      if (result != SetResult.Applied)
       {
-        Log.Warning($"Failed to load any location data.");
-        Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
-      }
-      else
-      {
-        if (Configuration.DataMigration && AltBiomeMigration.MigrateLocations(data, DefaultEntries, Pattern))
-        {
-          // Watcher triggers reload.
-          return;
-        }
-        if (Configuration.DataMigration && LocationMigration.Migrate(data, Locations, Pattern))
-        {
-          // Watcher triggers reload.
-          return;
-        }
-        if (Configuration.DataMigration && AddMissingEntries(data))
-        {
-          // Watcher triggers reload.
-          return;
-        }
-        ZoneSystem.instance.m_locations = data;
-        Customized = true;
-        Log.Info($"Reloading location data ({data.Count} entries).");
+        LocationExtra.ExtraInfo = previousInfo;
+        LocationExtra.ExtraInfoByVirtualId = previousVirtual;
       }
     }
-    else
-      Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
+  }
+  private static SetResult LoadAndApply(Dictionary<string, string> files)
+  {
+    var result = Load(files, out var data);
+    if (result != SetResult.Applied) return result;
+    Customized = !ReferenceEquals(data, DefaultEntries);
+    ZoneSystem.instance.m_locations = data;
     UpdateHashes();
     UpdateInstances();
     CreateLocalZones.LocationsPregenerated = false;
@@ -238,7 +100,35 @@ public class LocationManager
     DataPatcher.PatchLocationIcons(EWD.Harmony);
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
     IdManager.SendLocationIds();
-    Refresh.Request(Regen.Patches);
+    return SetResult.Applied;
+  }
+  private static SetResult Load(Dictionary<string, string> files, out List<ZoneSystem.ZoneLocation> data)
+  {
+    data = DefaultEntries;
+    if (files.Count == 0)
+    {
+      Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
+      return SetResult.Applied;
+    }
+    List<ZoneSystem.ZoneLocation> parsed = [];
+    foreach (var file in files)
+    {
+      if (!Yaml.TryDeserialize<LocationYaml>(file.Value, file.Key, out var items)) return SetResult.Failed;
+      parsed.AddRange(items.Select(item => FromData(item, file.Key)).Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name)));
+    }
+    if (parsed.Count == 0)
+    {
+      Log.Warning($"Failed to load any location data.");
+      return SetResult.Failed;
+    }
+    if (YamlDataManager.MigrationEnabled &&
+      (AltBiomeMigration.MigrateLocations(parsed, DefaultEntries, Pattern)
+      || LocationMigration.Migrate(parsed, Locations, Pattern)
+      || AddMissingEntries(parsed)))
+      return SetResult.Rewritten;
+    data = parsed;
+    Log.Info($"Reloading location data ({parsed.Count} entries).");
+    return SetResult.Applied;
   }
   private static void UpdateHashes()
   {
@@ -279,41 +169,9 @@ public class LocationManager
   }
   private static void Save(List<LocationYaml> data, bool log)
   {
-    Dictionary<string, List<LocationYaml>> perFile = [];
-    foreach (var item in data)
-    {
-      var mod = AssetTracker.GetModFromPrefab(item.prefab);
-      var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
-      if (!perFile.ContainsKey(file))
-        perFile[file] = [];
-      perFile[file].Add(item);
-
-      if (log)
-        Log.Warning($"{mod}: {item.prefab}");
-    }
-    foreach (var kvp in perFile)
-    {
-      var file = Path.Combine(Yaml.BaseDirectory, $"expand_locations{kvp.Key}.yaml");
-      var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
-      // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value);
-      File.WriteAllText(file, yaml);
-    }
+    YamlFiles.SavePerMod("locations", data, item => item.prefab, log);
   }
 
-  private static List<ZoneSystem.ZoneLocation> FromFile()
-  {
-    try
-    {
-      return [.. DataManager.ReadData<LocationYaml, ZoneSystem.ZoneLocation>(Pattern, FromData).Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name))];
-    }
-    catch (Exception e)
-    {
-      Log.Error(e.Message);
-      Log.Error(e.StackTrace);
-    }
-    return [];
-  }
   private static void ApplyLocationData(ZoneSystem.ZoneLocation item, float? radius = null)
   {
     if (!LocationExtra.TryGetData(item, out var data)) return;
@@ -355,73 +213,5 @@ public class LocationManager
   public static void SetupWatcher()
   {
     Yaml.SetupDataWatcher(Pattern, Configuration.configDataLocation, ReadConfigs);
-  }
-}
-
-
-public static class ZoneSystemPatches
-{
-  internal static bool GetLocationIcon(ZoneSystem __instance, string name, ref Vector3 pos, ref bool __result)
-  {
-    // Server should also use GetLocationIcons so that single player matches the dedicated server behavior.
-    __instance.tempIconList.Clear();
-    __instance.GetLocationIcons(__instance.tempIconList);
-    foreach (var kvp in __instance.tempIconList)
-    {
-      if (kvp.Value != name)
-        continue;
-      pos = kvp.Key;
-      __result = true;
-      return false;
-    }
-    pos = Vector3.zero;
-    __result = false;
-    return false;
-  }
-
-  internal static bool GetLocationIcons(ZoneSystem __instance, Dictionary<Vector3, string> icons)
-  {
-    foreach (var kvp in __instance.m_locationInstances)
-    {
-      var loc = kvp.Value.m_location;
-      var pos = kvp.Value.m_position;
-      if (loc == null) continue;
-      if (LocationExtra.TryGetData(loc, out var data))
-      {
-        var placed = data.iconPlaced == "true" ? loc.m_prefab.Name : data.iconPlaced == "false" ? "" : data.iconPlaced;
-        if (kvp.Value.m_placed && placed != "")
-        {
-          icons[pos] = placed;
-        }
-        else
-        {
-          pos.y += 0.00001f; // Trivial amount for a different key.
-          var always = data.iconAlways == "true" ? loc.m_prefab.Name : data.iconAlways == "false" ? "" : data.iconAlways;
-          if (always != "") icons[pos] = always;
-        }
-      }
-      // Jewelcrafting has dynamic locations so use the vanilla code as a fallback.
-      else if (loc.m_iconAlways || (loc.m_iconPlaced && kvp.Value.m_placed))
-      {
-        icons[pos] = loc.m_prefab.Name;
-      }
-    }
-    return false;
-  }
-
-  // Vanilla checks that location prefabs are valid.
-  // This doesn't work with blueprints because they would need proper asset ID (which might conflict with other mods).
-  internal static bool GetLocation(ZoneSystem __instance, string name, ref ZoneSystem.ZoneLocation __result)
-  {
-    foreach (ZoneSystem.ZoneLocation zoneLocation in __instance.m_locations)
-    {
-      if (zoneLocation.m_prefab.Name == name)
-      {
-        __result = zoneLocation;
-        return false;
-      }
-    }
-    __result = null!;
-    return false;
   }
 }

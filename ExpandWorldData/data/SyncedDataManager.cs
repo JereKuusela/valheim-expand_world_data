@@ -1,12 +1,10 @@
 using System.Collections.Generic;
-using System.IO;
-using Common;
 using Service;
 
 namespace ExpandWorldData;
 
-/// <summary>Common create/read/sync/cleanup lifecycle shared by YAML-backed data managers.</summary>
-public abstract class SyncedDataManager
+/// <summary>Adds client sync of the yaml contents to the shared create/read lifecycle.</summary>
+public abstract class SyncedDataManager : YamlDataManager
 {
   // Tracks every instance so pending sync data can be applied only after all managers are initialized.
   private static readonly List<SyncedDataManager> Instances = [];
@@ -16,45 +14,13 @@ public abstract class SyncedDataManager
   private static bool Initialized;
   protected bool Pending;
 
-  protected abstract string FilePath { get; }
-  protected abstract string Pattern { get; }
-  protected abstract bool DataEnabled { get; }
   protected abstract string ConfigValue { get; set; }
-  protected abstract bool Set(Dictionary<string, string> files);
-  /// <summary>Writes the default config file content. May no-op if there's nothing to write.</summary>
-  protected abstract void WriteDefaultConfig();
-  /// <summary>Upgrades yaml files on disk before they are read.</summary>
-  protected virtual void Migrate() { }
   /// <summary>Builds the value sent to clients. Override to strip server-only or redundant data.</summary>
   protected virtual string ToSyncValue(Dictionary<string, string> files) => string.Join("\n", files.Values);
-  // Disabled data must not touch anything unless custom data was previously applied.
-  private bool Customized;
 
-  public void CreateConfigs()
+  protected override void OnApplied(Dictionary<string, string> files)
   {
-    if (Helper.IsClient() || File.Exists(FilePath)) return;
-    WriteDefaultConfig();
-    Yaml.IgnoreWrites(Pattern);
-  }
-
-  public void ReadConfigs()
-  {
-    if (Helper.IsClient()) return;
-    if (DataEnabled)
-    {
-      if (!File.Exists(FilePath))
-      {
-        CreateConfigs();
-      }
-      Migrate();
-      var files = DataManager.Read(Pattern);
-      if (files == null || !Apply(files)) return;
-      ConfigValue = ToSyncValue(files);
-    }
-    else if (Apply([]))
-    {
-      ConfigValue = "";
-    }
+    ConfigValue = files.Count == 0 ? "" : ToSyncValue(files);
   }
 
   public void FromSetting(string yaml)
@@ -62,15 +28,6 @@ public abstract class SyncedDataManager
     if (!Helper.IsClient()) return;
     if (!Initialized) { Pending = true; return; }
     Apply(string.IsNullOrEmpty(yaml) ? [] : new() { ["synchronized"] = yaml });
-  }
-
-  private bool Apply(Dictionary<string, string> files)
-  {
-    if (files.Count == 0 && !Customized) return true;
-    if (!Set(files)) return false;
-    Customized = files.Count > 0;
-    Refresh.Request(Regen.Patches);
-    return true;
   }
 
   private void ApplyPending()

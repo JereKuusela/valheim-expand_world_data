@@ -30,7 +30,7 @@ public class DropManager
     protected override string Pattern => DropManager.Pattern;
     protected override bool DataEnabled => Configuration.DataDrops;
     protected override string ConfigValue { get => Configuration.valueDropData.Value; set => Configuration.valueDropData.Value = value; }
-    protected override bool Set(Dictionary<string, string> files) => DropManager.Set(files);
+    protected override SetResult Set(Dictionary<string, string> files) => Result(DropManager.Set(files));
     protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, "# Drop data. See reference file for examples.");
   }
   private static readonly Sync Instance = new();
@@ -47,36 +47,24 @@ public class DropManager
       DataByName.Clear();
       return true;
     }
-    try
+    List<Data> data = [];
+    foreach (var file in files)
     {
-      List<Data> data = [];
-      foreach (var file in files)
-      {
-        if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return false;
-        data.AddRange(parsed.Select(d => Loader.FromData(d, file.Key)).Where(Loader.IsValid));
-      }
-      if (data.Count == 0)
-        return false;
-      DataByHash.Clear();
-      DataByName.Clear();
-      foreach (var entry in data)
-        Add(entry);
-      Log.Info($"Reloading drop data ({data.Count} entries).");
-      return true;
+      if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return false;
+      data.AddRange(parsed.Select(d => Loader.FromData(d, file.Key)).Where(Loader.IsValid));
     }
-    catch (Exception e)
-    {
-      Log.Error(e.Message);
-      Log.Error(e.StackTrace);
-      return false;
-    }
+    DataByHash.Clear();
+    DataByName.Clear();
+    foreach (var entry in data)
+      Add(entry);
+    Log.Info($"Reloading drop data ({data.Count} entries).");
+    return true;
   }
 
   internal static void InitializeData()
   {
     ToReferenceFile();
     if (Helper.IsServer()) ReadConfigs();
-    else if (Configuration.valueDropData.Value != "") FromSetting(Configuration.valueDropData.Value);
   }
 
   public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataDrops, ReadConfigs);

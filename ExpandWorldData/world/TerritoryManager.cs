@@ -19,11 +19,12 @@ public class TerritoryManager
     protected override string Pattern => TerritoryManager.Pattern;
     protected override bool DataEnabled => Configuration.DataTerritory;
     protected override string ConfigValue { get => Configuration.valueTerritoryData.Value; set => Configuration.valueTerritoryData.Value = value; }
-    protected override bool Set(Dictionary<string, string> files) => TerritoryManager.Set(files);
+    protected override SetResult Set(Dictionary<string, string> files) => Result(TerritoryManager.Set(files));
     protected override void WriteDefaultConfig()
     {
-      if (ExtraTerritoryYamls.Count == 0) return;
-      var yaml = Yaml.Serializer().Serialize(ExtraTerritoryYamls.Values);
+      var yaml = ExtraTerritoryYamls.Count == 0
+        ? "# Territory data. See the documentation for examples."
+        : Yaml.Serializer().Serialize(ExtraTerritoryYamls.Values);
       File.WriteAllText(FilePath, yaml);
     }
   }

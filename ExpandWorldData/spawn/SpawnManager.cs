@@ -13,14 +13,16 @@ public class SpawnManager
   public const string Pattern = "expand_spawns*.yaml";
   public static List<SpawnSystem.SpawnData>? Override;
   public static bool HasData => Override != null;
+  // Vanilla lists, captured before they are first replaced. The list assets are shared and persist across worlds.
+  private static List<(SpawnSystemList List, List<SpawnSystem.SpawnData> Spawners)>? Defaults;
+  private static bool Modified;
 
   public static bool IsValid(SpawnSystem.SpawnData spawn) => spawn.m_prefab;
 
   public static string Save()
   {
-    var spawnSystem = SpawnSystem.m_instances.FirstOrDefault();
-    if (spawnSystem == null) return "";
-    var spawns = spawnSystem.m_spawnLists.SelectMany(list => list.m_spawners);
+    if (Defaults == null) return "";
+    var spawns = Defaults.SelectMany(entry => entry.Spawners);
     var yaml = Yaml.Serializer().Serialize(spawns.Select(Loader.ToData).ToList());
     File.WriteAllText(FilePath, yaml);
     return yaml;
@@ -38,66 +40,63 @@ public class SpawnManager
     protected override string Pattern => SpawnManager.Pattern;
     protected override bool DataEnabled => Configuration.DataSpawns;
     protected override string ConfigValue { get => Configuration.valueSpawnData.Value; set => Configuration.valueSpawnData.Value = value; }
-    protected override bool Set(Dictionary<string, string> files) => SpawnManager.Set(files);
-    protected override void WriteDefaultConfig() => ConfigValue = Save();
+    protected override SetResult Set(Dictionary<string, string> files) => SpawnManager.Set(files);
+    protected override void WriteDefaultConfig() => Save();
   }
   private static readonly Sync Instance = new();
 
-  private static bool Set(Dictionary<string, string> files)
+  private static SetResult Set(Dictionary<string, string> files)
+  {
+    using var metadata = new Loader.MetadataLoad();
+    var previous = Override;
+    var result = LoadAndApply(files);
+    if (result == SetResult.Applied)
+      metadata.Commit(previous ?? [], Override ?? []);
+    return result;
+  }
+
+  private static SetResult LoadAndApply(Dictionary<string, string> files)
   {
     List<SpawnSystem.SpawnData> data = [];
-    try
+    foreach (var file in files)
     {
-      foreach (var file in files)
-      {
-        if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return false;
-        data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)).Where(IsValid));
-      }
+      if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
+      data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)).Where(IsValid));
     }
-    catch (Exception e)
+    if (files.Count > 0 && data.Count == 0) return SetResult.Failed;
+    if (files.Count == 0)
     {
-      Log.Error(e.Message);
-      Log.Error(e.StackTrace);
-      return false;
+      Log.Info("Reloading default spawn data.");
+      Override = null;
     }
-    if (Override != null)
+    else
     {
-      foreach (var spawn in Override)
-      {
-        Loader.Data.Remove(spawn);
-        Loader.Objects.Remove(spawn);
-      }
+      Log.Info($"Reloading spawn data ({data.Count} entries).");
+      Override = data;
     }
-    Override = null;
-    if (files.Count == 0) return true;
-    if (data.Count == 0) return false;
-    Log.Info($"Reloading spawn data ({data.Count} entries).");
-    Override = data;
     SpawnSystem.m_instances.ForEach(ApplySpawnData);
-    return true;
+    // Instances created later get the restored shared lists.
+    if (Override == null) Modified = false;
+    return SetResult.Applied;
   }
 
   internal static void InitializeData()
   {
-    Override = null;
     if (Helper.IsServer()) ReadConfigs();
   }
-
-  private static bool defaultsCaptured;
 
   internal static void InitializeSpawnSystem(SpawnSystem __instance)
   {
     // Lists are still vanilla until ApplySpawnData runs for the first time.
-    if (!defaultsCaptured)
+    if (Defaults == null)
     {
-      defaultsCaptured = true;
-      if (Helper.IsServer() && Configuration.DataMigration && Configuration.DataSpawns)
-        MigratePersistentEvents(__instance.m_spawnLists.SelectMany(list => list.m_spawners));
-    }
-    if (Override == null)
-    {
-      if (Helper.IsClient() && Configuration.valueSpawnData.Value != "") FromSetting(Configuration.valueSpawnData.Value);
-      if (Helper.IsServer()) CreateConfigs();
+      Defaults = [.. __instance.m_spawnLists.Select(list => (list, list.m_spawners))];
+      if (Helper.IsServer())
+      {
+        if (Configuration.DataMigration && Configuration.DataSpawns)
+          MigratePersistentEvents(Defaults.SelectMany(entry => entry.Spawners));
+        CreateConfigs();
+      }
     }
     ApplySpawnData(__instance);
   }
@@ -118,40 +117,24 @@ public class SpawnManager
     if (migrations.Count == 0) return;
     if (!Yaml.InsertMissingField(Pattern, "prefab", "requiredPersistentEvent", migrations)) return;
     Log.Warning($"Added requiredPersistentEvent to {migrations.Count} prefabs in {Pattern} files.");
+    Yaml.IgnoreWrites(Pattern);
     ReadConfigs();
   }
 
   public static void ApplySpawnData(SpawnSystem system)
   {
-    if (Override == null) return;
-    while (system.m_spawnLists.Count > 1) system.m_spawnLists.RemoveAt(system.m_spawnLists.Count - 1);
-    system.m_spawnLists[0].m_spawners = Override;
+    if (Override != null)
+    {
+      while (system.m_spawnLists.Count > 1) system.m_spawnLists.RemoveAt(system.m_spawnLists.Count - 1);
+      system.m_spawnLists[0].m_spawners = Override;
+      Modified = true;
+    }
+    else if (Modified && Defaults != null)
+    {
+      system.m_spawnLists = [.. Defaults.Select(entry => entry.List)];
+      foreach (var entry in Defaults) entry.List.m_spawners = entry.Spawners;
+    }
   }
 
   public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataSpawns, ReadConfigs);
-}
-
-public class GlobalKeys
-{
-  internal static void Mutate(ZoneSystem __instance, ref string name)
-  {
-    var key = ZoneSystem.GetKeyValue(name.ToLower(), out var value, out _);
-    if (value.StartsWith("--", StringComparison.OrdinalIgnoreCase) && int.TryParse(value.Substring(2), out var decrease))
-      name = __instance.GetGlobalKey(key, out var previous) && int.TryParse(previous, out var previousValue) ? $"{key} {previousValue - decrease}" : $"{key} -{decrease}";
-    else if (value.StartsWith("++", StringComparison.OrdinalIgnoreCase) && int.TryParse(value.Substring(2), out var increase))
-      name = __instance.GetGlobalKey(key, out var previous) && int.TryParse(previous, out var previousValue) ? $"{key} {previousValue + increase}" : $"{key} {increase}";
-  }
-  internal static bool CheckRequirement(ZoneSystem __instance, string name, ref bool __result)
-  {
-    var split = name.Trim().Split(' ');
-    if (split.Length < 2 || !int.TryParse(split[1], out var requiredValue)) return true;
-    __result = __instance.m_globalKeysValues.TryGetValue(split[0].ToLower(), out var rawValue) && int.TryParse(rawValue, out var value) && value >= requiredValue;
-    return false;
-  }
-  internal static void Consume(SpawnSystem.SpawnData critter)
-  {
-    if (string.IsNullOrEmpty(critter.m_requiredGlobalKey)) return;
-    var split = critter.m_requiredGlobalKey.Trim().Split(' ');
-    if (split.Length > 1 && int.TryParse(split[1], out var amount)) ZoneSystem.instance.SetGlobalKey($"{split[0]} --{amount}");
-  }
 }
