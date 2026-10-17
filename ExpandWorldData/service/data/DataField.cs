@@ -2,6 +2,7 @@ using System;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Data;
 
@@ -16,6 +17,8 @@ internal sealed class DataFieldConverter : IYamlTypeConverter
 {
   public bool Accepts(Type type) => type == typeof(DataField);
 
+  private static readonly IDeserializer BlockDeserializer = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
+
   public object? ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)
   {
     if (parser.Current is MappingStart)
@@ -23,6 +26,8 @@ internal sealed class DataFieldConverter : IYamlTypeConverter
     if (parser.Current is Scalar scalar)
     {
       parser.MoveNext();
+      if (scalar.Style == ScalarStyle.Literal || scalar.Style == ScalarStyle.Folded)
+        return new DataField(null, BlockDeserializer.Deserialize<DataYaml>(scalar.Value));
       return string.IsNullOrWhiteSpace(scalar.Value) ? null : new DataField(scalar.Value);
     }
     rootDeserializer(typeof(object));
