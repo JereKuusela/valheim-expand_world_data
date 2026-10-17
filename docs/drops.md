@@ -38,7 +38,8 @@ Individual entries within a drop table:
 - maxAmount (default: `1`): Maximum count for this entry.
 - chance (default: `1`): Chance for this individual item entry.
 - onePerPlayer (default: `false`): Only one drop per player.
-- levelMultiplier (default: `false`): Scale item count by creature level.
+- levelMultiplier (default: `false`): Scale item count and chance by creature level.
+- levelOnlyChance (default: `false`): When `levelMultiplier` is enabled, creature level only increases the drop chance and not the amount.
 - minStack (default: `1`): Minimum stack size for stackable items.
 - maxStack (default: `1`): Maximum stack size for stackable items.
 - weight (default: `1`): Drop-selection weight used by the table.

@@ -67,6 +67,8 @@ public class DropEntry
   public bool onePerPlayer = false;
   [DefaultValue(false)]
   public bool levelMultiplier = false;
+  [DefaultValue(false)]
+  public bool levelOnlyChance = false;
 
   [DefaultValue(1)]
   public int minStack = 1;

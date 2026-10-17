@@ -27,6 +27,7 @@ public static class CharacterDropPatches
       m_dontScale = d.dontScale,
       m_onePerPlayer = d.onePerPlayer,
       m_levelMultiplier = d.levelMultiplier,
+      m_levelMultiplierNotAmount = d.levelOnlyChance,
     })];
   }
 }

@@ -125,6 +125,7 @@ public static class ReferenceFileGenerator
           dontScale = drop.m_dontScale,
           onePerPlayer = drop.m_onePerPlayer,
           levelMultiplier = drop.m_levelMultiplier,
+          levelOnlyChance = drop.m_levelMultiplierNotAmount,
         })],
     };
   }
