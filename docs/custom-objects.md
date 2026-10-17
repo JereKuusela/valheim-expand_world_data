@@ -4,6 +4,8 @@ New objects can be added to locations, dungeon rooms and zone spawners (creature
 
 The objects are added relative to the spawn or location center.
 
+## Usage
+
 ```yaml
   - objects:
     # Format is:

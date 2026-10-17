@@ -1,10 +1,14 @@
 # Territories
 
-The file `expand_territories.yaml` sets available territories and their configuration.
-
 Territories are like biomes but on a separate layer. They are configured separately and then selected from `expand_world.yaml` with the `territory` field.
 
+## Configuration
+
+The file `expand_territories.yaml` is created automatically when loading a world. Enable or disable territories from the config using the `Territory data` setting.
+
 Same world rule can have both `biome` and `territory` if you want them to line up.
+
+### Territory Fields
 
 - territory: Identifier for this territory. This is used in `expand_world.yaml`.
 - noBuild (default: `false`): If true, players can't build in this territory.
@@ -60,7 +64,7 @@ Territory status effects only:
     night: true
 ```
 
-World rules that apply this territory as an inner ring around the center:
+World rules (in `expand_world.yaml`) that apply this territory as an inner ring around the center:
 
 ```yaml
 - territory: SpawnRing

@@ -1,8 +1,14 @@
 ﻿# World
 
-The file `expand_world.yaml` sets the biome distribution.
+World rules set the biome distribution.
+
+## Configuration
+
+The file `expand_world.yaml` is created automatically when loading a world. Enable or disable world rules from the config using the `World data` setting.
 
 Each entry in the file adds a new rule. When determining the biome, territory and alternative biomes, the rules are checked one by one from the top until a valid rule is found. This means the order of entries is especially important for this file.
+
+### World Fields
 
 - biome: Identifier of the biome if this rule is valid.
 - territory: Identifier of the territory if this rule is valid.
@@ -11,8 +17,8 @@ Each entry in the file adds a new rule. When determining the biome, territory an
   - Added on top of the normal alternative biome generation. Ignores `biome`, `enabled`, amount limits and other placement requirements.
   - Doesn't count towards `minAmountSpawned` or `maxAmountSpawned`.
   - Normal generation doesn't add alternative biomes to these sectors.
-- maxAltitude (default: `1000` meters): Maximum terrain height relative to the water level.
-- minAltitude (default: `0` meters if maxAltitude is positive, otherwise `-1000` meters): Minimum terrain height relative to the water level.
+- maxAltitude (default: `10000` meters): Maximum terrain height relative to the water level.
+- minAltitude (default: `-1000` meters): Minimum terrain height relative to the water level.
 - maxDistance (default: `1.0` of world radius): Maximum distance from the world center.
 - minDistance (default: `0.0` of world radius): Minimum distance from the world center.
 - minSector (default: `0.0` of world angle): Start of the [circle sector](https://en.wikipedia.org/wiki/Circular_sector).

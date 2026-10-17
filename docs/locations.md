@@ -1,6 +1,10 @@
 ﻿# Locations
 
-The file `expand_locations.yaml` sets the available locations and their placement. This is mostly a server side feature. Only fields marked with (synced) are sent to clients.
+Locations are the points of interest in the world, like structures and dungeons.
+
+## Configuration
+
+The file `expand_locations.yaml` is created automatically when loading a world. Enable or disable locations from the config using the `Location data` setting. This is mostly a server side feature. Only fields marked with (synced) are sent to clients.
 
 Note: Missing locations are automatically added to the file. To disable, set `enabled` to `false` instead of removing anything.
 
@@ -10,6 +14,8 @@ See the [wiki](https://valheim.wiki/Point_of_Interest) for more info.
 
 Locations are pregenerated at world generation. You must use `genloc` command to redistribute them on unexplored areas after making any changes. For already explored areas, you need to use Upgrade World mod.
 
+### Location Fields
+
 - prefab: Identifier of the location object or name of [blueprint](blueprints.md) file. Check wiki for available locations. Hidden ones work too. To create a clone of an existing location, add `:text` to the prefab. For example "Dolmen01:Ghost".
 - enabled (default: `true`): Quick way to disable this entry.
 - biome: List of possible biomes.
@@ -18,9 +24,9 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - dungeon: Overrides the default dungeon generator with a custom one from `expand_dungeons.yaml`.
 - quantity: Maximum amount. Actual amount is determined if enough suitable positions are found. The base .cfg has a setting to multiply these.
 - minDistance (default: `0.0` of world radius): Minimum distance from the world center.
-- maxDistance (default: `1.0` of world radius): Maximum distance from the world center.
-- minAltitude (default: `0`): Minimum altitude.
-- maxAltitude (default: `1000`): Maximum altitude.
+- maxDistance (default: `0.0` of world radius): Maximum distance from the world center (0 = no limit).
+- minAltitude (default: `-1000` meters): Minimum altitude.
+- maxAltitude (default: `10000` meters): Maximum altitude.
 - prioritized (default: `false`): Generated first with more attempts.
 - centerFirst (default: `false`): Generating is attempted at world center, with gradually moving towards the world edge.
 - unique (default: `false`): When placed, all other unplaced locations are removed. Guaranteed maximum of one instance.
@@ -45,7 +51,7 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - maxTerrainDelta (default: `10` meters): Maximum nearby terrain height difference.
 - inForest (default: `false`): Only in forests.
 - forestTresholdMin (default: `0`): Minimum forest value (if only in forests).
-- forestTresholdMax (default: `0`): Maximum forest value (if only in forests).
+- forestTresholdMax (default: `1`): Maximum forest value (if only in forests).
 - groundOffset (default: `0` meters): Placed above the ground.
 - minVegetation (default: `0`): Minimum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
 - maxVegetation (default: `1`): Maximum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
@@ -65,12 +71,12 @@ Locations are pregenerated at world generation. You must use `genloc` command to
 - locationObjectSwap: Changes location objects to other objects.
 - dungeonObjectSwap: Changes dungeon objects to other objects.
 - objectSwap: Changes location and dungeon objects to other objects.
-  - See [Object swaps](object-swaps.md) for details.
-  - See [examples](https://github.com/JereKuusela/valheim-expand_world_data/blob/main/examples/examples.md).
+  - See [Object swaps](custom-objects.md#object-swaps) for details.
+  - See [examples](../examples/examples.md).
 - locationObjectData: Replaces object data in the location.
 - dungeonObjectData: Replaces object data in the dungeon.
 - objectData: Replaces object data in the location and the dungeon.
-  - See [Object data](object-data.md) for details.
+  - See [Object data](custom-objects.md#object-data) for details.
 - objects: Extra objects in the location, relative to the location center.
   - See [Custom objects](custom-objects.md) for details.
 - randomDamage (default: `false`): If true, pieces without custom health are randomly damaged. If all, all pieces are randomly damaged.
@@ -169,6 +175,30 @@ Original system is effectively two way and implicitly includes the location itse
 EWD and original systems share the groups so they can be used together. However only use one system for each entry.
 
 ## Examples
+
+New location created by cloning an existing one. The field `prefab` is required (`quantity` is also needed, otherwise nothing is placed):
+
+```yaml
+- prefab: StoneCircle:Rare
+  biome: Meadows
+  quantity: 5
+  minDistanceFromSimilar: 1000
+  minAltitude: 1
+  randomRotation: true
+  maxTerrainDelta: 3
+  exteriorRadius: 16
+  clearArea: true
+```
+
+Changing the amount of an existing location:
+
+```yaml
+- prefab: StoneCircle
+  biome: Meadows
+  quantity: 50
+  minAltitude: 1
+  minDistanceFromSimilar: 200
+```
 
 Placed icon configuration:
 

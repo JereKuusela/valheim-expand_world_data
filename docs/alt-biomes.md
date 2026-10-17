@@ -1,31 +1,20 @@
 # Alternative biomes
 
-The file `expand_altbiomes.yaml` sets the alternative biome modifiers.
-
 Alternative biomes are generated during world generation. They can add extra enemies, vegetation, locations and environments to parts of existing biomes.
 
-This data is synced to clients. Editing the file automatically reloads the data and regenerates the world data. Already explored areas may require reloading the world or using other reset tools depending on what was changed.
+## Configuration
 
-Alternative biomes can also be assigned to specific areas with the `altBiome` field in the [world data](world.md).
+The file `expand_altbiomes.yaml` is created automatically when loading a world. Enable or disable alternative biomes from the config using the `Alt biome data` setting.
 
-Use `None` for biome fields that should have no biome selected. Leaving `biome` empty means all configured biomes.
+Alternative biomes can be directly assigned to specific areas with the `altBiome` field in the [world data](world.md).
+
+### Alternative Biome Fields
+
+Server side fields:
 
 - name: Identifier of the alternative biome modifier. Used by locations and vegetation with the `altBiome` field.
 - enabled (default: `true`): Quick way to disable this modifier.
 - biome: List of base biomes where this modifier can appear. Empty means all configured biomes.
-- namePrefix: Prefix added to generated names that use this modifier.
-- nameSuffix: Suffix added to generated names that use this modifier.
-- nameOverride: Replaces the generated name when this modifier is used.
-- levelUpChanceMultiplier (default: `1`): Multiplier for creature level up chance in this modifier.
-- forceMusic: Music to use in this modifier. If multiple active modifiers set this, the first modifier in the list is used.
-- forceEnvironment: [Environment](environments.md) to use in this modifier. If multiple active modifiers set this, the first modifier in the list is used.
-- addEnvironments: Extra [environments](environments.md) that can happen in this modifier.
-- blockEnvironments: List of [environment](environments.md) names that can't happen in this modifier.
-- spawn: Extra creature spawns for this modifier. Uses the same fields as Expand World Spawns.
-- blockSpawnNames: List of spawn prefab names that are removed in this modifier.
-- blockVegetationNames: List of vegetation prefab names that are removed in this modifier.
-- blockLocationNames: List of location prefab names that are removed in this modifier.
-- terrainTextureOverride (default: `None`): Biome terrain texture to use for this modifier. `None` keeps the base terrain texture.
 - minDistanceFromCenter (default: `0` meters): Minimum distance from the world center.
 - minAmountSpawned (default: `0`): Minimum amount of this modifier that should be generated.
 - maxAmountSpawned (default: `0`): Maximum amount of this modifier that can be generated.
@@ -41,8 +30,24 @@ Use `None` for biome fields that should have no biome selected. Leaving `biome` 
 - aboveWorldX (default: `0`): Minimum X world coordinate. If set, the modifier only appears above this X value.
 - belowWorldY (default: `0`): Maximum Y world coordinate. If set, the modifier only appears below this Y value.
 - aboveWorldY (default: `0`): Minimum Y world coordinate. If set, the modifier only appears above this Y value.
+- blockVegetationNames: List of vegetation prefab names that are removed in this modifier.
+- blockLocationNames: List of location prefab names that are removed in this modifier.
 
-## Example
+Client side fields:
+
+- namePrefix: Prefix added to generated names that use this modifier.
+- nameSuffix: Suffix added to generated names that use this modifier.
+- nameOverride: Replaces the generated name when this modifier is used.
+- levelUpChanceMultiplier (default: `1`): Multiplier for creature level up chance in this modifier.
+- forceMusic: Music to use in this modifier. If multiple active modifiers set this, the first modifier in the list is used.
+- forceEnvironment: [Environment](environments.md) to use in this modifier. If multiple active modifiers set this, the first modifier in the list is used.
+- addEnvironments: Extra [environments](environments.md) that can happen in this modifier.
+- blockEnvironments: List of [environment](environments.md) names that can't happen in this modifier.
+- spawn: Extra creature spawns for this modifier. Uses the same fields as Expand World Spawns.
+- blockSpawnNames: List of spawn prefab names that are removed in this modifier.
+- terrainTextureOverride (default: `None`): Biome terrain texture to use for this modifier. `None` keeps the base terrain texture.
+
+## Examples
 
 ```yaml
 - name: Haunted Meadows

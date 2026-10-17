@@ -1,8 +1,14 @@
 ﻿# Dungeons
 
-The file `expand_dungeons.yaml` sets dungeon generators. This is a server side feature, clients don't have access to this data.
+Dungeons are generated from rooms by dungeon generators.
+
+## Configuration
+
+The file `expand_dungeons.yaml` is created automatically when loading a world. Enable or disable dungeons from the config using the `Dungeon data` setting. This is a server side feature, clients don't have access to this data.
 
 Command `ew_dungeons` can be used to list available rooms for each dungeon.
+
+### Dungeon Fields
 
 - name: Name of the dungeon generator.
 - algorithm: Type of the dungeon. Possible values are `Dungeon`, `CampGrid` or `CampRadial`.
@@ -45,17 +51,30 @@ Command `ew_dungeons` can be used to list available rooms for each dungeon.
 - gridSize (default: `0`): Size of the grid. Only for CampGrid.
 - tileWidth (default: `0` meters): Size of a single tile. Only for CampGrid.
 - spawnChance (default: `1`): Chance for each tile to spawn. Only for CampGrid.
-- interiorTransform (default: `false`): Makes the dungeon to be generated at specific position instead of straight above the entrance.  - This gives more room to fill out the entire zone.
+- interiorTransform (default: `false`): Makes the dungeon to be generated at specific position instead of straight above the entrance.
+  - This gives more room to fill out the entire zone.
   - The position is determined by the location entrance, so this only works if the location supports it.
   - Currently there is no need to change this setting, but you may need to change this if you change the entrance location.
 - addBaseSeedToRandomSpawn (default: `false`): If true, the dungeon base seed is included in the random spawner seeds.
 - objectData: Replaces object data in the dungeon.
-  - See [Object data](object-data.md) for details.
+  - See [Object data](custom-objects.md#object-data) for details.
 - objectSwap: Changes dungeon objects to other objects.
-  - See [Object swaps](object-swaps.md) for details.
+  - See [Object swaps](custom-objects.md#object-swaps) for details.
   - Note: If a room has object swaps, the dungeon swaps are applied first.
 
-Example room limits:
+## Examples
+
+Larger dungeon:
+
+```yaml
+- name: DG_ForestCrypt
+  algorithm: Dungeon
+  bounds: 128,64,128
+  minRooms: 30
+  maxRooms: 40
+```
+
+Room limits:
 
 ```yaml
 - name: DG_ForestCrypt

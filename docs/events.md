@@ -48,24 +48,26 @@ Server side fields:
 - nearBaseOnly (default: `true`): Minimum amount of player base structures within 40 meters.
   - Value `true` is 3 structures, so the event can only trigger with at least 3 nearby structures.
   - Value `false` is 0 structures.
-- **outsideBaseOnly** (default: `false`): Maximum amount of player base structures within 40 meters.
+- outsideBaseOnly (default: `false`): Maximum amount of player base structures within 40 meters.
   - Value `true` is 2 structures, so the event can only trigger with up to 2 nearby structures.
-  - Using this automatically disables **nearBaseOnly**.
-- **pauseIfNoPlayerInArea** (default: `true`): The event timer pauses if no player in the area.
-- **biome**: List of required biomes (default: any biome).
-- **random** (default: `true`): The event can happen randomly (unlike boss events which happen when near a boss).
-- **requiredEnvironments**: List of valid environments/weathers.
-- **requiredGlobalKeys**: Event becomes available if the world has any of these keys.
-- **notRequiredGlobalKeys**: Event is not available if the world has any of these keys.
-- **playerLimit**: Amount of required players in the area (`min-max`). Used to trigger stronger events with more players.
-- **playerDistance** (default: `100` meters): Distance from the triggering player.
-- **eventLimit**: Amount of required events in the area (`min-max`). Requires **Multiple events** to be enabled.
-- **customInterval**: Event specific interval. If set, a separate timer is used for this event.
-- **customChance**: Event specific chance override.
-- **startCommands**: Commands to execute when the event starts.
-- **endCommands**: Commands to execute when the event ends.
+  - Using this automatically disables nearBaseOnly.
+- pauseIfNoPlayerInArea (default: `true`): The event timer pauses if no player in the area.
+- biome: List of required biomes (default: any biome).
+- random (default: `true`): The event can happen randomly (unlike boss events which happen when near a boss).
+- requiredEnvironments: List of valid environments/weathers.
+- requiredGlobalKeys: Event becomes available if the world has any of these keys.
+- notRequiredGlobalKeys: Event is not available if the world has any of these keys.
+- playerLimit: Amount of required players in the area (`min-max`). Used to trigger stronger events with more players.
+- playerDistance (default: `100` meters): Distance from the triggering player.
+- eventLimit: Amount of required events in the area (`min-max`). Requires the `Multiple events` setting to be enabled.
+- customInterval: Event specific interval. If set, a separate timer is used for this event.
+- customChance: Event specific chance override.
+- startCommands: Commands to execute when the event starts.
+- endCommands: Commands to execute when the event ends.
 
-### Example
+## Examples
+
+New event. The field `name` is required (and `spawns`, otherwise nothing happens):
 
 ```yaml
 - name: greydwarf_swarm
@@ -84,4 +86,14 @@ Server side fields:
     - say "Greydwarf swarm incoming!"
   endCommands:
     - say "The swarm has been defeated!"
+```
+
+Changing an existing event to last longer and to be available only in the Meadows:
+
+```yaml
+- name: army_eikthyr
+  customChance: 100
+  duration: 180
+  biome: Meadows
+  notRequiredGlobalKeys: defeated_eikthyr
 ```

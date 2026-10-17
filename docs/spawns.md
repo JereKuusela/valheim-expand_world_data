@@ -20,7 +20,7 @@ Note: All distances are in meters, and don't scale up with the world size. For b
 - spawnInterval: How often the spawning is attempted.
 - minLevel (default: `1`): Minimum creature level.
 - maxLevel (default: `1`): Maximum creature level.
-- minAltitude (default: `-10000` meters): Minimum terrain altitude.
+- minAltitude (default: `0` meters if maxAltitude is positive, otherwise `-1000` meters): Minimum terrain altitude.
 - maxAltitude (default: `10000` meters): Maximum terrain altitude.
 - minDistance (default: `0` meters): Minimum distance from the world center (0 = disabled).
 - maxDistance (default: `0` meters): Maximum distance from the world center (0 = disabled).
@@ -49,18 +49,18 @@ Note: All distances are in meters, and don't scale up with the world size. For b
 - outsideLava (default: `true`): If set to false, can only spawn in lava.
 - minOceanDepth (default: `0` meters): Minimum ocean depth.
 - maxOceanDepth (default: `0` meters): Maximum ocean depth.
-- **huntPlayer** (default: `false`): Spawned creatures are more aggressive.
-- **groundOffset** (default: `0.5` meters): Spawns above the ground.
-- **groundOffsetRandom** (default: `0` meters): Maximum offset from the ground.
-- **levelUpMinCenterDistance** (default: `0` meters): Distance from the world center to enable higher creature levels.
-- **overrideLevelupChance** (default: `-1` percent): Chance per level up (from the default 10%).
-- **faction**: Name of the faction. Requires [Expand World Factions](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Factions/).
-- **drops**: Name of the drop table to attach. See [Drops](drops.md) for more info.
-- **data**: ZDO data override. Can be a data entry name, base64 string, shorthand `type, key, value` (for example `int, level, 3`) or an inline data mapping.
-- **fields**: Custom fields to override prefab properties. See [Fields](#fields) section below.
-- **objects**: Extra objects to spawn. Spawned on top of any obstacles. Format is `id,posX,posZ,posY,chance,data`.
+- huntPlayer (default: `false`): Spawned creatures are more aggressive.
+- groundOffset (default: `0.5` meters): Spawns above the ground.
+- groundOffsetRandom (default: `0` meters): Maximum offset from the ground.
+- levelUpMinCenterDistance (default: `0` meters): Distance from the world center to enable higher creature levels.
+- overrideLevelupChance (default: `-1` percent): Chance per level up (from the default 10%).
+- faction: Name of the faction. Requires [Expand World Factions](https://valheim.thunderstore.io/package/JereKuusela/Expand_World_Factions/).
+- drops: Name of the drop table to attach. See [Drops](drops.md) for more info.
+- data: ZDO data override. Can be a data entry name, base64 string, shorthand `type, key, value` (for example `int, level, 3`) or an inline data mapping.
+- fields: Custom fields to override prefab properties. See [Custom Fields](#custom-fields) section below.
+- objects: Extra objects to spawn. Spawned on top of any obstacles. Format is `id,posX,posZ,posY,chance,data`.
 
-### Fields
+### Custom Fields
 
 Fields can be used to override prefab properties. You can hover a creature and use `data dump=check` from World Edit Commands mod to print available fields to `config/data/data.yaml` file.
 
@@ -83,6 +83,46 @@ Fields can be used to override prefab properties. You can hover a creature and u
 ```
 
 The mod attempts to find the correct component and data type automatically. If this doesn't work, you can manually specify the component by using format `component.field` (for example `Character.m_boss`) or the data type by using format `type.key` (for example `float.health`).
+
+## Examples
+
+New spawn entry. The field `prefab` is required (and `biome`, `maxSpawned` and `spawnInterval` to control where and how often it spawns):
+
+```yaml
+- prefab: Skeleton
+  name: night_skeletons
+  biome: Meadows
+  spawnAtDay: false
+  spawnChance: 20
+  maxSpawned: 3
+  spawnInterval: 60
+  maxLevel: 2
+  groupSizeMax: 2
+  groupRadius: 5
+```
+
+Changing an existing entry to have more deer:
+
+```yaml
+- prefab: Deer
+  name: deer
+  biome: Meadows, BlackForest
+  spawnChance: 50
+  maxSpawned: 8
+  spawnInterval: 100
+  maxLevel: 3
+  groupSizeMax: 3
+  groupRadius: 5
+  outsideForest: false
+```
+
+Disabling an existing entry (without removing it from the file):
+
+```yaml
+- prefab: Boar
+  name: Boar
+  enabled: false
+```
 
 ## Debug Commands
 

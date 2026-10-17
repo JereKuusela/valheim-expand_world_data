@@ -1,10 +1,16 @@
 ﻿# Vegetation
 
-The file `expand_vegetations.yaml` sets the generated objects. This is a server side feature, clients don't have access to this data.
+Vegetation are the generated objects, like trees and rocks, that are placed in each zone.
+
+## Configuration
+
+The file `expand_vegetations.yaml` is created automatically when loading a world. Enable or disable vegetation from the config using the `Vegetation data` setting. This is a server side feature, clients don't have access to this data.
 
 Changes only apply to unexplored areas. Upgrade World mod can be used to reset areas.
 
 Note: Missing vegetation are automatically added to the file. To disable, set `enabled` to `false` instead of removing anything.
+
+### Vegetation Fields
 
 - prefab: Id of the object or name of [blueprint](blueprints.md) file.
   - If multiple prefabs are listed, the prefab is randomly selected.
@@ -22,11 +28,11 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
 - altBiome: Name of an [alternative biome](alt-biomes.md) modifier. The vegetation is only placed in zones with that alternative biome.
 - blockCheck (default: `true`): If enabled, clear ground is required.
 - minAltitude (default: `0` meters): Minimum terrain altitude.
-- maxAltitude (default: `1000` meters): Maximum terrain altitude.
+- maxAltitude (default: `10000` meters): Maximum terrain altitude.
 - minOceanDepth (default: `0` meters): Minimum ocean depth (interpolated from zone corners so slightly different from `minAltitude`).
 - maxOceanDepth (default: `0` meters): Maximum ocean depth (interpolated from zone corners so slightly different from `maxAltitude`).
 - minDistance (default: `0.0` of world radius): Minimum distance from the world center.
-- maxDistance (default: `1.0` of world radius): Maximum distance from the world center.
+- maxDistance (default: `0.0` of world radius): Maximum distance from the world center (0 = no limit).
 - centerX (default: `0.0`): Custom center point for the distance check.
 - centerY (default: `0.0`): Custom center point for the distance check.
 - minVegetation (default: `0`): Minimum vegetation mask (random value from 0.0 to 1.0, only used in Ashlands and Mistlands biome).
@@ -64,7 +70,7 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
   - Smaller values would be more closer to the forest center.
   - Larger values would be more away from the forest center.
 - forestTresholdMin (default: `0`): Minimum forest value.
-- forestTresholdMax (default: `0`): Maximum forest value.
+- forestTresholdMax (default: `1`): Maximum forest value.
 - clearRadius (default: `0` meters): Extra distance away from location clear areas.
   - Note: By default, only the vegetation center point is checked. So big objects can have part of them inside clear areas.
   - If this is a problem, increase the value.
@@ -78,3 +84,42 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
 - data: ZDO data override. For example to create hidden stashes with Spawner Tweaks mod (`object copy` from World Edit Commands). Can be a data entry name, base64 string, shorthand `type, key, value` (for example `int, level, 3`) or an inline data mapping.
 - drops: Custom drops from Expand World Spawns mod.
+
+## Examples
+
+New vegetation entry that adds an existing object (dandelions) to a biome where it doesn't normally grow. The field `prefab` is required (and `biome`, `min` and `max` to control where and how much is placed):
+
+```yaml
+- prefab: Pickable_Dandelion
+  biome: Plains
+  min: 2
+  max: 5
+  maxAltitude: 1000
+  groupSizeMin: 2
+  groupSizeMax: 4
+  groupRadius: 5
+```
+
+Changing an existing entry to have more rocks:
+
+```yaml
+- prefab: rock4_heath
+  min: 8
+  max: 20
+  scaleMin: 0.8
+  randTilt: 5
+  biome: Plains
+  minAltitude: 4
+  maxAltitude: 1000
+  minTilt: 15
+  maxTilt: 45
+  maxTerrainDelta: 2
+  groundOffset: -3
+```
+
+Disabling an existing entry (without removing it from the file):
+
+```yaml
+- prefab: HeathRockPillar
+  enabled: false
+```

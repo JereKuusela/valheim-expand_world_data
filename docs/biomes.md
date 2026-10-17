@@ -1,10 +1,16 @@
 ﻿# Biomes
 
-The file `expand_biomes.yaml` sets available biomes and their configuration.
+Biomes define the terrain, weather and other properties of each area in the world.
+
+## Configuration
+
+The file `expand_biomes.yaml` is created automatically when loading a world. Enable or disable biomes from the config using the `Biome data` setting.
 
 You can add up to 23 new biomes (on top of the 9 default ones).
 
 Note: The game assigns a number for each biome. If some mods don't recognize new biomes you can try using the number instead. The first new biome gets number 1024 which is doubled for each new biome (2nd biome is 2048, 3rd biome is 4096, etc).
+
+### Biome Fields
 
 - biome: Identifier for this biome. This is used in the other files.
 - name: Display name. Required for new biomes.
@@ -24,7 +30,7 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
   - forbiddenGlobalKeys: Active if none of these world keys are set.
   - requiredPlayerKeys: Active if all of these player keys are set.
   - forbiddenPlayerKeys: Active if none of these player keys are set.
-- maximumAltitude (default: `1000` meters): Maximum altitude.
+- maximumAltitude (default: `10000` meters): Maximum altitude.
 - minimumAltitude (default: `-1000` meters): Minimum altitude.
 - excessFactor (default: `0.5`): How strongly the altitude is reduced if over the maximum or minimum limit. For example 0.5 square roots the excess altitude.
 - paint: Default terrain paint. Format is `dirt,cultivated,paved,vegetation` (from 0.0 to 1.0) or a pre-defined color (cultivated, dirt, grass, grass_dark, patches, paved, paved_dark, paved_dirt, paved_moss)
@@ -56,23 +62,38 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
 
 ## Examples
 
-Conditional environment (only active if none of the players have the `resiststorm` key):
-
-```yaml
-- biome: Mountain
-  - environment: SnowStorm
-  - environment: Snow
-    weight: 5
-    forbiddenPlayerKeys: resiststorm
-```
-
-Water biome with clearer height differences on the map and custom water colors:
+New water biome with clearer height differences on the map and custom water colors. The fields `biome`, `name` and `terrain` are required for new biomes:
 
 ```yaml
 - biome: AbyssalShelf
   name: Abyssal Shelf
   terrain: Ocean
+  environments:
+  - environment: Clear
+    weight: 5
+  - environment: Misty
   mapColorMultiplier: -0.5
+  colorMap: 0.2, 0.35, 0.45
   colorWaterSurface: 0.08, 0.22, 0.27, 1
   colorWaterBottom: 0.01, 0.05, 0.07, 1
+```
+
+Changing the map color and music of an existing biome:
+
+```yaml
+- biome: Meadows
+  colorMap: 0.45, 0.7, 0.3
+  musicDay: blackforest
+```
+
+Conditional environment (only active if none of the players have the `resiststorm` key):
+
+```yaml
+- biome: Mountain
+  environments:
+  - environment: SnowStorm
+    weight: 1
+  - environment: Snow
+    weight: 5
+    forbiddenPlayerKeys: resiststorm
 ```

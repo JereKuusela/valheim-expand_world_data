@@ -1,8 +1,14 @@
 ﻿# Environments
 
-The file `expand_environments.yaml` sets the available weathers.
+Environments are the available weathers.
+
+## Configuration
+
+The file `expand_environments.yaml` is created automatically when loading a world. Enable or disable environments from the config using the `Environment data` setting.
 
 Command `ew_musics` can be used to print available musics.
+
+### Environment Fields
 
 - name: Identifier to be used in other files.
 - particles: Identifier of a default environment to set particles. Required for new environments.
@@ -17,18 +23,18 @@ Command `ew_musics` can be used to print available musics.
 - windMin (default: `0.0`): The minimum wind strength.
 - windMax (default: `1.0`): The maximum wind strength.
 - rainCloudAlpha (default: `0.0`): Amount of clouds in the sky.
-- ambientVol (default: `0.3`): ???.
-- ambientList: ???.
+- ambientVol (default: `0.3`): Volume of the ambient loop sound.
+- ambientList: Name of the ambient sound list used for random ambient sounds. Must match a list in the game's audio manager.
 - musicMorning: Music override for the morning time. Higher priority than the biome value.
 - musicDay: Music override for the day time. Higher priority than the biome value.
 - musicEvening: Music override for the evening time. Higher priority than the biome value.
 - musicNight: Music override for the night time. Higher priority than the biome value.
 - ambColorDay, ambColorNight, sunColorMorning, sunColorDay, sunColorEvening, sunColorNight: Color values.
 - fogColorMorning, fogColorDay, fogColorEvening, fogColorNight, fogColorSunMorning, fogColorSunDay, fogColorSunEvening, fogColorSunNight: Color values.
-- fogDensityMorning, fogDensityDay, fogDensityEvening, fogDensityNight (default: `0.01`): ???.
-- lightIntensityDay (default: `1.2`): ???.
-- lightIntensityNight (default: `0`): ???.
-- sunAngle (default: `60`): ???.
+- fogDensityMorning, fogDensityDay, fogDensityEvening, fogDensityNight (default: `0.01`): Fog density at each time of day. Higher value means thicker fog.
+- lightIntensityDay (default: `1.2`): Intensity of the directional light during the day.
+- lightIntensityNight (default: `0`): Intensity of the directional light during the night.
+- sunAngle (default: `60`): Elevation angle of the directional light's orbit in degrees.
 - auroraIntensityMorning, auroraIntensityDay, auroraIntensityEvening, auroraIntensityNight (default: `0`): Strength of the aurora (northern lights) at each time of day.
 - auroraColors (default: no aurora): Aurora gradient as a list of color keys. Format is `time, r, g, b` where time is from 0.0 to 1.0.
   - Maximum of 8 keys. Alpha is not supported.
@@ -41,4 +47,47 @@ Command `ew_musics` can be used to print available musics.
   - See [Status effects](status-effects.md) for format and more information.
   - Note: Normal effects are still active. There is no point to add Freezing to non-freezing environments.
 
-Note: As you can see, lots of values have unknown meaning. Probably better to look at the existing environments for inspiration.
+## Examples
+
+New foggy environment. The fields `name` and `particles` (an existing environment to copy the particles from) are required for new environments:
+
+```yaml
+- name: GreenFog
+  particles: Misty
+  windMax: 0.2
+  fogDensityMorning: 0.04
+  fogDensityDay: 0.03
+  fogDensityEvening: 0.04
+  fogDensityNight: 0.05
+  colorFogMorning: 0.25, 0.45, 0.25, 0
+  colorFogDay: 0.3, 0.5, 0.3, 0
+  colorFogEvening: 0.25, 0.4, 0.25, 0
+  colorFogNight: 0.1, 0.2, 0.1, 0
+```
+
+The new environment is then used from a biome:
+
+```yaml
+- biome: Swamp
+  environments:
+  - environment: SwampRain
+    weight: 3
+  - environment: GreenFog
+```
+
+Calmer weather for an existing environment:
+
+```yaml
+- name: Clear
+  windMax: 0.3
+```
+
+Colder nights for an existing environment:
+
+```yaml
+- name: Rain
+  statusEffects:
+  - name: Cold
+    day: false
+    night: true
+```

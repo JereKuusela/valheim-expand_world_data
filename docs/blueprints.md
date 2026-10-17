@@ -4,6 +4,12 @@ Dungeons, locations and vegetation support using blueprints to spawn multiple ob
 
 Both PlanBuild .blueprint and BuildShare .vbuild files are supported (recommended to use PlanBuild files).
 
+## Configuration
+
+Blueprint files are loaded from the folder set by the `Blueprint folder` setting (default: `PlanBuild`, relative to the config folder).
+
+## File format
+
 The file format has new features:
 
 - zdoData that is used to initialize the object data.

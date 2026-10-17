@@ -6,7 +6,7 @@ Drop tables define what items are dropped when creatures or objects are destroye
 
 The file `expand_drops.yaml` is created automatically when loading a world. The reference file `ref_expand_drops.yaml` is also generated automatically with examples of all droppable objects. Enable or disable drops from the config using the `Drop data` setting.
 
-Custom drops can be attached to most objects that drop or contain items by setting the `drops` field in [Spawns](spawns.md) or [Vegentation](vegetation.md) or by directly setting the `ews_drops` data as hash or string.
+Custom drops can be attached to most objects that drop or contain items by setting the `drops` field in [Spawns](spawns.md) or [Vegetation](vegetation.md) or by directly setting the `ews_drops` data as hash or string.
 
 Drop tables are saved as references, meaning changes retroactively affect existing objects.
 
@@ -50,7 +50,7 @@ Individual entries within a drop table:
 - biome: List of possible biomes. If the object isn't in a matching biome, this entry is excluded.
 - biomeArea: List of possible biome areas (edge = zones with multiple biomes, median = zones with only a single biome).
 
-### Example
+## Examples
 
 ```yaml
 - name: troll_loot
@@ -77,7 +77,7 @@ Individual entries within a drop table:
       weight: 2
 ```
 
-### Attaching drops to a spawn
+## Attaching drops to a spawn
 
 Drops only applied to Trolls spawned by this spawn configuration.
 
@@ -87,7 +87,7 @@ Drops only applied to Trolls spawned by this spawn configuration.
   drops: troll_loot
 ```
 
-### Attaching drops with Expand World Prefabs mod
+## Attaching drops with Expand World Prefabs mod
 
 Drops only applied to affected Trolls.
 
