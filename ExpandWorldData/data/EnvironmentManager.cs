@@ -66,12 +66,7 @@ public partial class EnvironmentManager
       Apply([.. Originals.Values]);
       return SetResult.Applied;
     }
-    List<EnvSetup> data = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<EnvironmentYaml>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
-      data.AddRange(parsed.Select(d => FromData(d, file.Key)));
-    }
+    if (!Yaml.TryDeserialize<EnvironmentYaml, EnvSetup>(files, FromData, out var data)) return SetResult.Failed;
     if (data.Count == 0)
     {
       Log.Warning($"Failed to load any environment data.");
@@ -99,11 +94,8 @@ public partial class EnvironmentManager
 
   private static bool AddMissingEntries(List<EnvSetup> entries)
   {
-    var missingKeys = Originals.Keys.ToHashSet();
-    foreach (var entry in entries)
-      missingKeys.Remove(entry.m_name);
-    if (missingKeys.Count == 0) return false;
-    var missing = Originals.Values.Where(env => missingKeys.Contains(env.m_name)).ToList();
+    var missing = YamlFiles.GetMissingEntries(Originals.Values, entries.Select(entry => entry.m_name), entry => entry.m_name);
+    if (missing.Count == 0) return false;
     Log.Warning($"Adding {missing.Count} missing environments to the expand_environments.yaml file.");
     Save(missing, true);
     return true;

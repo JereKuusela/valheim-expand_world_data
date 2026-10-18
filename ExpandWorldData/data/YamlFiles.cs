@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Service;
 
 namespace ExpandWorldData;
@@ -8,6 +9,12 @@ namespace ExpandWorldData;
 /// <summary>File writing shared by the yaml data managers.</summary>
 public static class YamlFiles
 {
+  public static List<T> GetMissingEntries<T, TKey>(IEnumerable<T> defaults, IEnumerable<TKey> presentKeys, Func<T, TKey> key)
+  {
+    var present = new HashSet<TKey>(presentKeys);
+    return defaults.Where(item => !present.Contains(key(item))).ToList();
+  }
+
   /// <summary>Writes items to expand_{name}[mod].yaml files. Defaults skip existing files, otherwise (log) items are appended.</summary>
   public static void SavePerMod<T>(string name, IEnumerable<T> items, Func<T, string> prefab, bool log)
   {

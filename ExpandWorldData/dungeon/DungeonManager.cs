@@ -65,16 +65,8 @@ public partial class DungeonManager
       Log.Info("Reloading default dungeon data.");
       return SetResult.Applied;
     }
-    Dictionary<string, FakeDungeonGenerator> data = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<DungeonYaml>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
-      foreach (var entry in parsed)
-      {
-        var generator = From(entry, file.Key);
-        data.Add(generator.name, generator);
-      }
-    }
+    if (!Yaml.TryDeserialize<DungeonYaml, FakeDungeonGenerator>(files, From, out var parsed)) return SetResult.Failed;
+    var data = parsed.ToDictionary(generator => generator.name);
     if (data.Count == 0)
     {
       Log.Warning("Failed to load any dungeon data.");
@@ -90,12 +82,10 @@ public partial class DungeonManager
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>
   private static bool AddMissingEntries(Dictionary<string, FakeDungeonGenerator> entries)
   {
-    var missingKeys = DefaultGenerators.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-    foreach (var kvp in entries)
-      missingKeys.Remove(kvp.Key);
-    if (missingKeys.Count == 0) return false;
-    Log.Warning($"Adding {missingKeys.Count} missing dungeon generators to the expand_dungeons.yaml file.");
-    var missingData = missingKeys.Values.Select(To).ToList();
+    var missing = YamlFiles.GetMissingEntries(DefaultGenerators.Values, entries.Keys, entry => entry.name);
+    if (missing.Count == 0) return false;
+    Log.Warning($"Adding {missing.Count} missing dungeon generators to the expand_dungeons.yaml file.");
+    var missingData = missing.Select(To).ToList();
     Save(missingData, true);
     return true;
   }

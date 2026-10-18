@@ -66,12 +66,12 @@ public partial class ClutterManager
       data = DefaultEntries;
       return SetResult.Applied;
     }
-    data = [];
-    foreach (var file in files)
+    if (!Yaml.TryDeserialize<ClutterYaml, ClutterSystem.Clutter>(files, FromData, out var parsed))
     {
-      if (!Yaml.TryDeserialize<ClutterYaml>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
-      data.AddRange(parsed.Select(d => FromData(d, file.Key)).Where(clutter => clutter.m_prefab));
+      data = [];
+      return SetResult.Failed;
     }
+    data = parsed.Where(clutter => clutter.m_prefab).ToList();
 
     if (data.Count == 0)
     {
@@ -85,11 +85,8 @@ public partial class ClutterManager
   }
   private static bool AddMissingEntries(List<ClutterSystem.Clutter> entries)
   {
-    var missingKeys = DefaultEntries.Select(s => s.m_prefab.name).Distinct().ToHashSet();
-    foreach (var entry in entries)
-      missingKeys.Remove(entry.m_prefab.name);
-    if (missingKeys.Count == 0) return false;
-    var missing = DefaultEntries.Where(clutter => missingKeys.Contains(clutter.m_prefab.name)).Select(ToData).ToList();
+    var missing = YamlFiles.GetMissingEntries(DefaultEntries, entries.Select(entry => entry.m_prefab.name), entry => entry.m_prefab.name).Select(ToData).ToList();
+    if (missing.Count == 0) return false;
     Log.Warning($"Adding {missing.Count} missing clutters to the expand_clutter.yaml file.");
     Save(missing, true);
     return true;

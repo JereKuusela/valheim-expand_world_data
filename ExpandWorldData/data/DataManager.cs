@@ -361,18 +361,6 @@ public class DataManager : MonoBehaviour
       ZNetScene.instance.m_instances.Remove(zdo);
     }
   }
-  public static List<U> ReadData<T, U>(string pattern, Func<T, string, U> converter)
-  {
-    if (!Directory.Exists(Yaml.BaseDirectory))
-      Directory.CreateDirectory(Yaml.BaseDirectory);
-    var data = Directory.GetFiles(Yaml.BaseDirectory, pattern, SearchOption.AllDirectories).Reverse().SelectMany(name =>
-    {
-      var fileName = Path.GetFileNameWithoutExtension(name);
-      return Yaml.Deserialize<T>(File.ReadAllText(name), fileName).Select(d => converter(d, fileName));
-    }).ToList();
-
-    return data;
-  }
   public static Dictionary<string, string>? Read(string pattern)
   {
     if (!Directory.Exists(Yaml.BaseDirectory))

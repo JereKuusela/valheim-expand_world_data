@@ -69,12 +69,7 @@ public static partial class AltBiomeManager
       Apply(Original, true);
       return SetResult.Applied;
     }
-    List<AltBiome> data = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<AltBiomeYaml>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
-      data.AddRange(parsed.Select(item => FromData(item, file.Key)));
-    }
+    if (!Yaml.TryDeserialize<AltBiomeYaml, AltBiome>(files, FromData, out var data)) return SetResult.Failed;
     if (data.Count == 0)
     {
       Log.Warning("Failed to load any alt biome data. No changes done.");

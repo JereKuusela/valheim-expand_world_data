@@ -73,12 +73,7 @@ public class EventManager
       Restore();
       return SetResult.Applied;
     }
-    List<RandomEvent> data = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
-      data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)));
-    }
+    if (!Yaml.TryDeserialize<Data, RandomEvent>(files, Loader.FromData, out var data)) return SetResult.Failed;
     if (data.Count == 0) return SetResult.Failed;
     if (YamlDataManager.BackfillEnabled && AddMissingEntries(data)) return SetResult.Rewritten;
     Log.Info($"Reloading event data ({data.Count} entries).");
@@ -96,10 +91,8 @@ public class EventManager
 
   private static bool AddMissingEntries(List<RandomEvent> entries)
   {
-    var missingKeys = Originals.Select(entry => entry.m_name).Distinct().ToHashSet();
-    foreach (var entry in entries) missingKeys.Remove(entry.m_name);
-    if (missingKeys.Count == 0 || !File.Exists(FilePath)) return false;
-    var missing = Originals.Where(entry => missingKeys.Contains(entry.m_name)).ToList();
+    var missing = YamlFiles.GetMissingEntries(Originals, entries.Select(entry => entry.m_name), entry => entry.m_name);
+    if (missing.Count == 0 || !File.Exists(FilePath)) return false;
     Log.Warning($"Adding {missing.Count} missing events to the expand_events.yaml file.");
     File.AppendAllText(FilePath, "\n" + Yaml.Serializer().Serialize(missing.Select(Loader.ToData)));
     return true;

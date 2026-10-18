@@ -36,8 +36,8 @@ Client side fields:
 - forceEnvironment: Event environment/weather to use.
 - radius (default: `96` meters): Event area radius.
 - spawnerDelay (default: `0` seconds): Delay before the event starts spawning.
-- requiredPlayerKeys (list): Event becomes available if the player has the keys. Rows are AND, commas inside a row are OR. The vanilla event system supports only one row with multiple entries, the rest must be single keys.
-- forbiddenPlayerKeys (list): Event is not available if the player has any of these keys. Only a single row is supported.
+- requiredPlayerKeys ([list](requirement-lists.md#list)): Event becomes available if the player has the keys. The vanilla event system supports only one row with multiple entries, the rest must be single keys.
+- forbiddenPlayerKeys ([list](requirement-lists.md#list)): Event is not available if the player has any of these keys. Only a single row is supported.
 - requiredKnownItems: Event becomes available if the player knows any of these items.
 - forbiddenKnownItems: Event is not available if the player knows any of these items.
 
@@ -53,10 +53,10 @@ Server side fields:
 - pauseIfNoPlayerInArea (default: `true`): The event timer pauses if no player in the area.
 - biome: List of required biomes (default: any biome).
 - random (default: `true`): The event can happen randomly (unlike boss events which happen when near a boss).
-- requiredEnvironments (list): Valid environments/weathers.
-- forbiddenEnvironments (list): The event is not available if the environment/weather matches.
-- requiredGlobalKeys (list): Event becomes available if the world has the keys. Rows are AND, commas inside a row are OR.
-- forbiddenGlobalKeys (list): Event is not available if the world has the keys. Rows are AND, commas inside a row are OR (single row: any key blocks).
+- requiredEnvironments ([list](requirement-lists.md#list)): Valid environments/weathers.
+- forbiddenEnvironments ([list](requirement-lists.md#list)): The event is not available if the environment/weather matches.
+- requiredGlobalKeys ([list](requirement-lists.md#list)): Event becomes available if the world has the keys.
+- forbiddenGlobalKeys ([list](requirement-lists.md#list)): Event is not available if the world has the keys.
 - playerLimit: Amount of required players in the area (`min-max`). Used to trigger stronger events with more players.
 - playerDistance (default: `100` meters): Distance from the triggering player.
 - eventLimit: Amount of required events in the area (`min-max`). Requires the `Multiple events` setting to be enabled.

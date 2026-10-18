@@ -47,12 +47,8 @@ public class DropManager
       DataByName.Clear();
       return true;
     }
-    List<Data> data = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return false;
-      data.AddRange(parsed.Select(d => Loader.FromData(d, file.Key)).Where(Loader.IsValid));
-    }
+    if (!Yaml.TryDeserialize<Data, Data>(files, Loader.FromData, out var parsed)) return false;
+    var data = parsed.Where(Loader.IsValid).ToList();
     DataByHash.Clear();
     DataByName.Clear();
     foreach (var entry in data)

@@ -115,13 +115,7 @@ public class WorldManager
       Refresh.Request(Regen.World);
       return SetResult.Applied;
     }
-    List<WorldYaml> data = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<WorldYaml>(file.Value, file.Key, out var parsed))
-        return SetResult.Failed;
-      data.AddRange(parsed);
-    }
+    if (!Yaml.TryDeserialize<WorldYaml>(files, out var data)) return SetResult.Failed;
     if (data.Count == 0)
     {
       Log.Warning($"Failed to load any world data.");

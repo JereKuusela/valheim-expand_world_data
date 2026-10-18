@@ -160,9 +160,10 @@ public class BiomeManager
   public static void NamesFromFile()
   {
     if (!Configuration.DataBiome) return;
-    LoadNames(DataManager.ReadData<BiomeYaml, BiomeYaml>(Pattern, From));
+    var files = DataManager.Read(Pattern);
+    if (files != null && Yaml.TryDeserialize<BiomeYaml>(files, out var data))
+      LoadNames(data);
   }
-  private static BiomeYaml From(BiomeYaml data, string file) => data;
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
   public static bool BiomeForestMultiplier = false;
 

@@ -110,12 +110,8 @@ public partial class LocationManager
       Log.Info($"Reloading default location data ({DefaultEntries.Count} entries).");
       return SetResult.Applied;
     }
-    List<ZoneSystem.ZoneLocation> parsed = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<LocationYaml>(file.Value, file.Key, out var items)) return SetResult.Failed;
-      parsed.AddRange(items.Select(item => FromData(item, file.Key)).Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name)));
-    }
+    if (!Yaml.TryDeserialize<LocationYaml, ZoneSystem.ZoneLocation>(files, FromData, out var items)) return SetResult.Failed;
+    var parsed = items.Where(loc => !string.IsNullOrWhiteSpace(loc.m_prefab.Name)).ToList();
     if (parsed.Count == 0)
     {
       Log.Warning($"Failed to load any location data.");
@@ -155,11 +151,8 @@ public partial class LocationManager
   internal static Dictionary<string, ZoneSystem.ZoneLocation> Locations = [];
   private static bool AddMissingEntries(List<ZoneSystem.ZoneLocation> items)
   {
-    var missingKeys = Locations.Keys.ToHashSet();
-    foreach (var item in items)
-      missingKeys.Remove(item.m_prefab.Name);
-    if (missingKeys.Count == 0) return false;
-    var missing = DefaultEntries.Where(loc => missingKeys.Contains(loc.m_prefab.Name)).Select(ToData).ToList();
+    var missing = YamlFiles.GetMissingEntries(DefaultEntries, items.Select(item => item.m_prefab.Name), item => item.m_prefab.Name).Select(ToData).ToList();
+    if (missing.Count == 0) return false;
     Log.Warning($"Adding {missing.Count} missing locations to the expand_locations.yaml file.");
     Save(missing, true);
     return true;

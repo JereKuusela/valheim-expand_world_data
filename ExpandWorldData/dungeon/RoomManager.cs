@@ -152,11 +152,8 @@ public class RoomManager
     }
     else
     {
-      foreach (var file in files)
-      {
-        if (!Yaml.TryDeserialize<RoomYaml>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
-        data.AddRange(parsed.Select(item => FromData(item, file.Key)).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)));
-      }
+      if (!Yaml.TryDeserialize<RoomYaml, DungeonDB.RoomData>(files, FromData, out var parsed)) return SetResult.Failed;
+      data = parsed.Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
     }
     if (data.Count == 0)
     {
@@ -335,11 +332,9 @@ public class RoomManager
   }
   private static bool AddMissingEntries(List<DungeonDB.RoomData> entries)
   {
-    var missingKeys = DefaultEntries.Select(entry => entry.m_prefab.Name).Distinct().ToHashSet();
-    foreach (var entry in entries)
-      missingKeys.Remove(entry.m_prefab.Name);
-    if (missingKeys.Count == 0) return false;
-    var missing = DefaultEntries.Where(entry => missingKeys.Contains(entry.m_prefab.Name)).Select(ToData).Where(d => d != null).ToList();
+    var missingEntries = YamlFiles.GetMissingEntries(DefaultEntries, entries.Select(entry => entry.m_prefab.Name), entry => entry.m_prefab.Name);
+    if (missingEntries.Count == 0) return false;
+    var missing = missingEntries.Select(ToData).Where(d => d != null).ToList();
     Log.Warning($"Adding {missing.Count} missing rooms to the expand_rooms.yaml file.");
     Save(missing, true);
     return true;

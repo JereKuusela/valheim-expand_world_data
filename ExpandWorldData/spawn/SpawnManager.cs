@@ -57,12 +57,8 @@ public class SpawnManager
 
   private static SetResult LoadAndApply(Dictionary<string, string> files)
   {
-    List<SpawnSystem.SpawnData> data = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<Data>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
-      data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)).Where(IsValid));
-    }
+    if (!Yaml.TryDeserialize<Data, SpawnSystem.SpawnData>(files, Loader.FromData, out var parsed)) return SetResult.Failed;
+    var data = parsed.Where(IsValid).ToList();
     if (files.Count > 0 && data.Count == 0) return SetResult.Failed;
     if (files.Count == 0)
     {

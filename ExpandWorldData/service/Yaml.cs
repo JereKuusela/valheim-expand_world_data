@@ -228,13 +228,16 @@ public class Yaml
     }
   }
   public static bool TryDeserialize<T>(Dictionary<string, string> files, out List<T> result)
+    => TryDeserialize<T, T>(files, (item, fileName) => item, out result);
+
+  public static bool TryDeserialize<T, TEntry>(Dictionary<string, string> files, Func<T, string, TEntry> converter, out List<TEntry> result)
   {
     result = [];
     foreach (var file in files)
     {
       if (!TryDeserialize<T>(file.Value, file.Key, out var parsed))
         return false;
-      result.AddRange(parsed);
+      result.AddRange(parsed.Select(item => converter(item, file.Key)));
     }
     return true;
   }

@@ -30,7 +30,6 @@ public partial class VegetationManager
   public static void Initialize()
   {
     DefaultEntries.Clear();
-    DefaultKeys.Clear();
     Customized = false;
     if (Helper.IsServer())
       SetDefaultEntries();
@@ -94,12 +93,8 @@ public partial class VegetationManager
       Log.Info($"Reloading default vegetation data ({DefaultEntries.Count} entries).");
       return SetResult.Applied;
     }
-    List<ZoneSystem.ZoneVegetation> parsed = [];
-    foreach (var file in files)
-    {
-      if (!Yaml.TryDeserialize<VegetationYaml>(file.Value, file.Key, out var items)) return SetResult.Failed;
-      parsed.AddRange(items.Select(item => FromData(item, file.Key)).Where(veg => veg.m_prefab));
-    }
+    if (!Yaml.TryDeserialize<VegetationYaml, ZoneSystem.ZoneVegetation>(files, FromData, out var items)) return SetResult.Failed;
+    var parsed = items.Where(veg => veg.m_prefab).ToList();
     if (parsed.Count == 0)
     {
       Log.Warning($"Failed to load any vegetation data.");
@@ -126,26 +121,22 @@ public partial class VegetationManager
       .Where(veg => ZNetScene.instance.m_namedPrefabs.ContainsKey(veg.m_prefab.name.GetStableHashCode()))
       .Where(veg => veg.m_enable && veg.m_max > 0f).ToList();
     DefaultEntries = ZoneSystem.instance.m_vegetation;
-    DefaultKeys = Helper.ToSet(DefaultEntries, veg => veg.m_prefab.name);
   }
-  // Used to optimize missing entries check (to avoid n^2 loop).
-  private static HashSet<string> DefaultKeys = [];
 
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>
   // Note: This is needed people add new content mods and then complain that Expand World doesn't spawn them.
   private static bool AddMissingEntries(List<ZoneSystem.ZoneVegetation> entries)
   {
-    var missingKeys = DefaultKeys.ToHashSet();
+    var presentKeys = entries.Select(entry => entry.m_name).ToHashSet();
     // Some mods override prefabs so the m_prefab.name is not reliable.
     foreach (var entry in entries)
     {
-      missingKeys.Remove(entry.m_name);
       if (VegetationSpawning.Prefabs.TryGetValue(entry, out var prefabs))
-        missingKeys.RemoveWhere(key => prefabs.Any(prefab => prefab.name == key));
+        presentKeys.UnionWith(prefabs.Select(prefab => prefab.name));
     }
-    if (missingKeys.Count == 0) return false;
     // But don't use m_name because it can be anything for original items.
-    var missing = DefaultEntries.Where(veg => missingKeys.Contains(veg.m_prefab.name)).Select(ToData).ToList();
+    var missing = YamlFiles.GetMissingEntries(DefaultEntries, presentKeys, entry => entry.m_prefab.name).Select(ToData).ToList();
+    if (missing.Count == 0) return false;
     Log.Warning($"Adding {missing.Count} missing vegetation to the expand_vegetation.yaml file.");
     Save(missing, true);
     return true;
