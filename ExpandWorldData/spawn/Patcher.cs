@@ -10,12 +10,20 @@ public static class Patcher
 {
   public static void Patch(Harmony harmony)
   {
-    var enabled = SpawnManager.HasData || Event.EventManager.HasData;
-    var active = enabled ? ActiveSpawns().ToHashSet() : [];
+    var active = ActiveSpawns().ToHashSet();
     PatchLifecycle(harmony);
     PatchData(harmony, active.Any(Loader.Data.ContainsKey));
     PatchObjects(harmony, active.Any(Loader.Objects.ContainsKey));
-    PatchGlobalKeys(harmony, SpawnManager.Override?.Any(UsesNumericGlobalKey) == true);
+    PatchRequirements(harmony, active.Select(spawn => Loader.Requirements.TryGetValue(spawn, out var requirements) ? requirements : null).Where(requirements => requirements != null).ToList()!);
+    PatchGlobalKeys(harmony, SpawnManager.Override?.Any(UsesNumericGlobalKey) == true || active.Any(spawn => Loader.Requirements.TryGetValue(spawn, out var requirements) && Requirements.UsesNumericKey(requirements)));
+  }
+
+  private static void PatchRequirements(Harmony harmony, List<Requirements> requirements)
+  {
+    ExpandWorldData.Patches.Transpiler(harmony, requirements.Any(item => item.HasKeys), typeof(SpawnSystem), nameof(SpawnSystem.UpdateSpawnList), typeof(Requirements), nameof(Requirements.TranspileKeys));
+    ExpandWorldData.Patches.Transpiler(harmony, requirements.Any(item => item.HasEnvironments), typeof(SpawnSystem), nameof(SpawnSystem.UpdateSpawnList), typeof(Requirements), nameof(Requirements.TranspileEnvironments));
+    ExpandWorldData.Patches.Postfix(harmony, requirements.Any(item => item.HasLocations), typeof(SpawnSystem), nameof(SpawnSystem.IsSpawnPointGood), typeof(Requirements), nameof(Requirements.CheckLocations));
+    ExpandWorldData.Patches.Postfix(harmony, requirements.Any(item => item.HasObjects), typeof(SpawnSystem), nameof(SpawnSystem.IsSpawnPointGood), typeof(Requirements), nameof(Requirements.CheckObjects));
   }
 
   private static IEnumerable<SpawnSystem.SpawnData> ActiveSpawns()
@@ -24,6 +32,7 @@ public static class Patcher
       foreach (var spawn in SpawnManager.Override) yield return spawn;
     if (Event.EventManager.HasData && RandEventSystem.instance != null)
       foreach (var spawn in RandEventSystem.instance.m_events.SelectMany(entry => entry.m_spawn)) yield return spawn;
+    foreach (var spawn in AltBiomeManager.ActiveSpawns) yield return spawn;
   }
 
   private static bool UsesNumericGlobalKey(SpawnSystem.SpawnData spawn)

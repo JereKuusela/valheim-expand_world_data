@@ -86,10 +86,10 @@ public class VegetationYaml
   public bool clearArea = false;
   [DefaultValue(0f)]
   public float clearRadius = 0f;
-  [DefaultValue("")]
-  public string requiredGlobalKey = "";
-  [DefaultValue("")]
-  public string forbiddenGlobalKey = "";
+  [DefaultValue(null)]
+  public StringList? requiredGlobalKey = null;
+  [DefaultValue(null)]
+  public StringList? forbiddenGlobalKey = null;
   [DefaultValue(null)]
   public DataField? data = null;
   [DefaultValue(false)]
@@ -114,8 +114,8 @@ public class VegetationYaml
 
 public class VegetationExtra
 {
-  public List<string>? requiredGlobalKeys;
-  public List<string>? forbiddenGlobalKeys;
+  public List<string[]>? requiredGlobalKeys;
+  public List<string[]>? forbiddenGlobalKeys;
   public DataEntry? data;
   public ValueRange<Vector3>? scale;
   public float clearRadius = 0;

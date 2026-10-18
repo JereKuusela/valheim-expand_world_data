@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Service;
 using UnityEngine;
 namespace ExpandWorldData;
 
@@ -13,14 +14,14 @@ public class BiomeEnvironment
   public bool ashlandsOverride;
   [DefaultValue(false)]
   public bool deepNorthOverride;
-  [DefaultValue("")]
-  public string requiredGlobalKeys = "";
-  [DefaultValue("")]
-  public string forbiddenGlobalKeys = "";
-  [DefaultValue("")]
-  public string requiredPlayerKeys = "";
-  [DefaultValue("")]
-  public string forbiddenPlayerKeys = "";
+  [DefaultValue(null)]
+  public StringList? requiredGlobalKeys = null;
+  [DefaultValue(null)]
+  public StringList? forbiddenGlobalKeys = null;
+  [DefaultValue(null)]
+  public StringList? requiredPlayerKeys = null;
+  [DefaultValue(null)]
+  public StringList? forbiddenPlayerKeys = null;
 
 }
 
@@ -161,18 +162,18 @@ public class BiomeData
 
 public class EnvEntryKeys(BiomeEnvironment data)
 {
-  public List<string> requiredGlobalKeys = DataManager.ToList(data.requiredGlobalKeys);
-  public List<string> forbiddenGlobalKeys = DataManager.ToList(data.forbiddenGlobalKeys);
-  public List<string> requiredPlayerKeys = DataManager.ToList(data.requiredPlayerKeys);
-  public List<string> forbiddenPlayerKeys = DataManager.ToList(data.forbiddenPlayerKeys);
+  public List<string[]> requiredGlobalKeys = StringList.ToRows(data.requiredGlobalKeys) ?? [];
+  public List<string[]> forbiddenGlobalKeys = StringList.ToRows(data.forbiddenGlobalKeys) ?? [];
+  public List<string[]> requiredPlayerKeys = StringList.ToRows(data.requiredPlayerKeys) ?? [];
+  public List<string[]> forbiddenPlayerKeys = StringList.ToRows(data.forbiddenPlayerKeys) ?? [];
 
   public bool CheckKeys()
   {
-    if (requiredGlobalKeys.Any(k => !ZoneSystem.instance.GetGlobalKey(k))) return false;
-    if (forbiddenGlobalKeys.Any(ZoneSystem.instance.GetGlobalKey)) return false;
+    if (!StringList.Pass(requiredGlobalKeys, ZoneSystem.instance.GetGlobalKey)) return false;
+    if (StringList.Forbids(forbiddenGlobalKeys, ZoneSystem.instance.GetGlobalKey)) return false;
     var player = Player.m_localPlayer;
-    if (player && requiredPlayerKeys.Any(k => !player.HaveUniqueKey(k))) return false;
-    if (player && forbiddenPlayerKeys.Any(player.HaveUniqueKey)) return false;
+    if (player && !StringList.Pass(requiredPlayerKeys, player.HaveUniqueKey)) return false;
+    if (player && StringList.Forbids(forbiddenPlayerKeys, player.HaveUniqueKey)) return false;
     return true;
   }
   public bool HasKeys() => requiredGlobalKeys.Count > 0 || forbiddenGlobalKeys.Count > 0 || requiredPlayerKeys.Count > 0 || forbiddenPlayerKeys.Count > 0;

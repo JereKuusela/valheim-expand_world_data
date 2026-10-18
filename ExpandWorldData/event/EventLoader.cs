@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ExpandWorldData;
 using HarmonyLib;
+using Service;
 
 namespace ExpandWorld.Event;
 
@@ -11,6 +12,17 @@ public class Loader
 
   public static RandomEvent FromData(Data data, string fileName)
   {
+    var keyRows = StringList.ToRows(data.requiredGlobalKeys) ?? [];
+    var playerRows = StringList.ToRows(data.requiredPlayerKeys) ?? [];
+    // Vanilla has "any of" and "all of" lists, which covers all single entry rows and one multi entry row.
+    var anyRow = playerRows.FirstOrDefault(row => row.Length > 1);
+    if (playerRows.Count(row => row.Length > 1) > 1)
+      Log.Warning($"{fileName}: Event '{data.name}' has multiple requiredPlayerKeys rows with multiple entries. Only the first is used.");
+    var forbiddenKeyRows = StringList.ToRows(data.forbiddenGlobalKeys);
+    var forbiddenPlayerRows = StringList.ToRows(data.forbiddenPlayerKeys);
+    // Vanilla forbidden lists are a single "any of" row.
+    if (forbiddenPlayerRows is { Count: > 1 })
+      Log.Warning($"{fileName}: Event '{data.name}' has multiple forbiddenPlayerKeys rows. Only the first is used.");
     RandomEvent random = new()
     {
       m_name = data.name,
@@ -21,13 +33,13 @@ public class Loader
       m_nearBaseOnly = data.nearBaseOnly != "false",
       m_pauseIfNoPlayerInArea = data.pauseIfNoPlayerInArea,
       m_biome = DataManager.ToBiomes(data.biome, fileName),
-      m_requiredGlobalKeys = DataManager.ToList(data.requiredGlobalKeys),
-      m_notRequiredGlobalKeys = DataManager.ToList(data.notRequiredGlobalKeys),
-      m_altRequiredPlayerKeysAny = DataManager.ToList(data.requiredPlayerKeys),
-      m_altRequiredPlayerKeysAll = DataManager.ToList(data.requiredPlayerKeysAll),
-      m_altNotRequiredPlayerKeys = DataManager.ToList(data.notRequiredPlayerKeys),
+      m_requiredGlobalKeys = [.. keyRows.Where(row => row.Length == 1).Select(row => row[0])],
+      m_notRequiredGlobalKeys = forbiddenKeyRows is { Count: 1 } ? [.. forbiddenKeyRows[0]] : [],
+      m_altRequiredPlayerKeysAny = anyRow == null ? [] : [.. anyRow],
+      m_altRequiredPlayerKeysAll = [.. playerRows.Where(row => row.Length == 1).Select(row => row[0])],
+      m_altNotRequiredPlayerKeys = forbiddenPlayerRows == null ? [] : [.. forbiddenPlayerRows[0]],
       m_altRequiredKnownItems = DataManager.ToItemList(data.requiredKnownItems),
-      m_altRequiredNotKnownItems = DataManager.ToItemList(data.notRequiredKnownItems),
+      m_altRequiredNotKnownItems = DataManager.ToItemList(data.forbiddenKnownItems),
       m_startMessage = data.startMessage,
       m_endMessage = data.endMessage,
       m_forceMusic = data.forceMusic,
@@ -51,13 +63,12 @@ public class Loader
     nearBaseOnly = random.m_nearBaseOnly ? "true" : "false",
     pauseIfNoPlayerInArea = random.m_pauseIfNoPlayerInArea,
     biome = DataManager.FromBiomes(random.m_biome),
-    requiredGlobalKeys = DataManager.FromList(random.m_requiredGlobalKeys),
-    notRequiredGlobalKeys = DataManager.FromList(random.m_notRequiredGlobalKeys),
-    requiredPlayerKeys = DataManager.FromList(random.m_altRequiredPlayerKeysAny),
-    requiredPlayerKeysAll = DataManager.FromList(random.m_altRequiredPlayerKeysAll),
-    notRequiredPlayerKeys = DataManager.FromList(random.m_altNotRequiredPlayerKeys),
+    requiredGlobalKeys = StringList.FromRows(random.m_requiredGlobalKeys),
+    forbiddenGlobalKeys = StringList.FromRows([DataManager.FromList(random.m_notRequiredGlobalKeys)]),
+    requiredPlayerKeys = StringList.FromRows([DataManager.FromList(random.m_altRequiredPlayerKeysAny), .. random.m_altRequiredPlayerKeysAll]),
+    forbiddenPlayerKeys = StringList.FromRows([DataManager.FromList(random.m_altNotRequiredPlayerKeys)]),
     requiredKnownItems = DataManager.FromList(random.m_altRequiredKnownItems),
-    notRequiredKnownItems = DataManager.FromList(random.m_altRequiredNotKnownItems),
+    forbiddenKnownItems = DataManager.FromList(random.m_altRequiredNotKnownItems),
     startMessage = random.m_startMessage,
     endMessage = random.m_endMessage,
     forceMusic = random.m_forceMusic,

@@ -116,10 +116,10 @@ public class StatusManager
   private static readonly int SpiritHash = "Spirit".GetStableHashCode();
   private static void Add(Player player, Status es)
   {
-    if (es.requiredGlobalKeys.Any(k => !ZoneSystem.instance.GetGlobalKey(k))) return;
-    if (es.forbiddenGlobalKeys.Any(ZoneSystem.instance.GetGlobalKey)) return;
-    if (es.requiredPlayerKeys.Any(k => !player.HaveUniqueKey(k))) return;
-    if (es.forbiddenPlayerKeys.Any(player.HaveUniqueKey)) return;
+    if (!StringList.Pass(es.requiredGlobalKeys, ZoneSystem.instance.GetGlobalKey)) return;
+    if (StringList.Forbids(es.forbiddenGlobalKeys, ZoneSystem.instance.GetGlobalKey)) return;
+    if (!StringList.Pass(es.requiredPlayerKeys, player.HaveUniqueKey)) return;
+    if (StringList.Forbids(es.forbiddenPlayerKeys, player.HaveUniqueKey)) return;
     var seman = player.GetSEMan();
     if (es.reset)
     {
@@ -247,10 +247,10 @@ public class StatusManager
 public class StatusData
 {
   public string name = "";
-  public string requiredGlobalKeys = "";
-  public string forbiddenGlobalKeys = "";
-  public string requiredPlayerKeys = "";
-  public string forbiddenPlayerKeys = "";
+  [System.ComponentModel.DefaultValue(null)] public StringList? requiredGlobalKeys = null;
+  [System.ComponentModel.DefaultValue(null)] public StringList? forbiddenGlobalKeys = null;
+  [System.ComponentModel.DefaultValue(null)] public StringList? requiredPlayerKeys = null;
+  [System.ComponentModel.DefaultValue(null)] public StringList? forbiddenPlayerKeys = null;
   public bool day = false;
   public bool night = false;
   public bool immuneWithResist = false;
@@ -271,10 +271,10 @@ public class Status
   public bool day;
   public bool night;
   public bool immuneWithResist;
-  public List<string> requiredGlobalKeys = [];
-  public List<string> forbiddenGlobalKeys = [];
-  public List<string> requiredPlayerKeys = [];
-  public List<string> forbiddenPlayerKeys = [];
+  public List<string[]> requiredGlobalKeys = [];
+  public List<string[]> forbiddenGlobalKeys = [];
+  public List<string[]> requiredPlayerKeys = [];
+  public List<string[]> forbiddenPlayerKeys = [];
   public Status(StatusData status)
   {
     hash = status.name.GetStableHashCode();
@@ -292,10 +292,10 @@ public class Status
       night = true;
     }
     immuneWithResist = status.immuneWithResist;
-    requiredGlobalKeys = DataManager.ToList(status.requiredGlobalKeys);
-    forbiddenGlobalKeys = DataManager.ToList(status.forbiddenGlobalKeys);
-    requiredPlayerKeys = DataManager.ToList(status.requiredPlayerKeys);
-    forbiddenPlayerKeys = DataManager.ToList(status.forbiddenPlayerKeys);
+    requiredGlobalKeys = StringList.ToRows(status.requiredGlobalKeys) ?? [];
+    forbiddenGlobalKeys = StringList.ToRows(status.forbiddenGlobalKeys) ?? [];
+    requiredPlayerKeys = StringList.ToRows(status.requiredPlayerKeys) ?? [];
+    forbiddenPlayerKeys = StringList.ToRows(status.forbiddenPlayerKeys) ?? [];
 
     // Custom duration is handled manually.
     // Also damage effects shouldn't be reseted (since it messed up the damage calculation).

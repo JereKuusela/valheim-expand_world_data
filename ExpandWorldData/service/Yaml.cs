@@ -177,11 +177,11 @@ public class Yaml
   }
 
   public static IDeserializer Deserializer() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
-  .WithTypeConverter(new global::Data.DataFieldConverter()).WithYamlFormatter(formatter).Build();
+  .WithTypeConverter(new global::Data.DataFieldConverter()).WithTypeConverter(new StringListConverter()).WithYamlFormatter(formatter).Build();
   public static IDeserializer DeserializerUnSafe() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
-  .WithTypeConverter(new global::Data.DataFieldConverter()).WithYamlFormatter(formatter).IgnoreUnmatchedProperties().Build();
+  .WithTypeConverter(new global::Data.DataFieldConverter()).WithTypeConverter(new StringListConverter()).WithYamlFormatter(formatter).IgnoreUnmatchedProperties().Build();
   public static ISerializer Serializer() => new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).DisableAliases()
-    .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults).WithTypeConverter(new global::Data.DataFieldConverter()).WithYamlFormatter(formatter)
+    .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults).WithTypeConverter(new Data.DataFieldConverter()).WithTypeConverter(new StringListConverter()).WithYamlFormatter(formatter)
       .Build();
   private static readonly YamlFormatter formatter = new() { NumberFormat = NumberFormatInfo.InvariantInfo };
 
@@ -248,9 +248,13 @@ public class Yaml
   public static bool HasField(string pattern, string field)
   {
     if (!System.IO.Directory.Exists(BaseDirectory)) return false;
+    return HasField(System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories), field);
+  }
+
+  public static bool HasField(IEnumerable<string> files, string field)
+  {
     var prefix = $"{field}:";
-    return System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories)
-      .Any(file => File.ReadLines(file).Any(line => line.TrimStart().TrimStart('-', ' ').StartsWith(prefix)));
+    return files.Any(file => File.ReadLines(file).Any(line => line.TrimStart().TrimStart('-', ' ').StartsWith(prefix)));
   }
 
   ///<summary>Removes the given fields (including nested blocks) from list entries in matching yaml files. Returns true if any file was changed.</summary>
@@ -302,9 +306,14 @@ public class Yaml
   public static bool InsertMissingField(string pattern, string keyField, string targetField, Dictionary<string, string> valuesByKey)
   {
     if (!System.IO.Directory.Exists(BaseDirectory)) return false;
+    return InsertMissingField(System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories), keyField, targetField, valuesByKey);
+  }
+
+  public static bool InsertMissingField(IEnumerable<string> files, string keyField, string targetField, Dictionary<string, string> valuesByKey)
+  {
     var changedAny = false;
     var targetPrefix = $"{targetField}:";
-    foreach (var file in System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories))
+    foreach (var file in files)
     {
       var lines = File.ReadAllLines(file).ToList();
       var changed = false;

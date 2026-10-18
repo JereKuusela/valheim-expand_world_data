@@ -23,14 +23,16 @@ internal static class LocationMigration
   ];
 
   ///<summary>Returns true if any file was changed.</summary>
-  public static bool Migrate(List<ZoneSystem.ZoneLocation> data, Dictionary<string, ZoneSystem.ZoneLocation> originals, string pattern)
+  public static void Run() =>
+    Migrations.Finish(LocationManager.Pattern, Migrate(Migrations.Read<LocationYaml>(LocationManager.Pattern), LocationManager.Locations, LocationManager.Pattern));
+
+  private static bool Migrate(List<LocationYaml> data, Dictionary<string, ZoneSystem.ZoneLocation> originals, string pattern)
   {
-    // One-shot, otherwise intentionally removed values would be restored.
     if (Fields.Any(field => Yaml.HasField(pattern, field.Field))) return false;
     Dictionary<string, LocationYaml> vanilla = [];
-    foreach (var loc in data)
+    foreach (var item in data)
     {
-      var name = loc.m_prefab.Name;
+      var name = item.prefab;
       if (vanilla.ContainsKey(name)) continue;
       // Blueprints are not found.
       if (!originals.TryGetValue(Parse.Name(name), out var original) || !original.m_prefab.IsValid) continue;
@@ -54,8 +56,7 @@ internal static class LocationMigration
       changed = true;
       Log.Warning($"Added {field} to {pattern} files.");
     }
-    // Omitting noBuild used to keep the prefab value, now it disables it.
-    if (changed)
+    if (changed && !Yaml.HasField(pattern, "noBuild"))
     {
       var noBuilds = vanilla.Where(kvp => kvp.Value.noBuild != "").ToDictionary(kvp => kvp.Key, kvp => kvp.Value.noBuild);
       if (noBuilds.Count > 0 && Yaml.InsertMissingField(pattern, "prefab", "noBuild", noBuilds))

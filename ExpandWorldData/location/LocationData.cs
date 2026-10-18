@@ -42,9 +42,9 @@ public class LocationYaml
   [DefaultValue("")]
   public string groupMax = "";
   [DefaultValue(null)]
-  public string[]? awayFrom = null;
+  public Service.StringList? awayFrom = null;
   [DefaultValue(null)]
-  public string[]? closeTo = null;
+  public Service.StringList? closeTo = null;
   [DefaultValue(0f)]
   public float minDistanceFromSimilar = 0f;
   [DefaultValue(0f)]

@@ -273,7 +273,7 @@ public class BiomeManager
     MissingEnvironments = vanilla.Count > 0 && vanilla.All(d => d.environments == null);
     Environments = [.. rawData.Select(d => FromData(d, EnvKeys, "Biomes"))];
     UsedGlobalKeys = [.. EnvKeys.Values
-      .SelectMany(data => data.requiredGlobalKeys.Concat(data.forbiddenGlobalKeys))
+      .SelectMany(data => data.requiredGlobalKeys.Concat(data.forbiddenGlobalKeys).SelectMany(row => row))
       .Where(key => key != null && key != "")
       .Select(NormalizeKey)];
   }

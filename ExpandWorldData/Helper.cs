@@ -123,8 +123,6 @@ public static class Helper
     return items.Select(key).Distinct().ToHashSet();
   }
 
-  public static bool HasAnyGlobalKey(List<string> keys) => keys.Any(ZoneSystem.instance.m_globalKeys.Contains);
-  public static bool HasEveryGlobalKey(List<string> keys) => keys.All(ZoneSystem.instance.m_globalKeys.Contains);
 
   public static bool IsZero(float a) => Mathf.Abs(a) < 0.001f;
   public static bool Approx(float a, float b) => Mathf.Abs(a - b) < 0.001f;

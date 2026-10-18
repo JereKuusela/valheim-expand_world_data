@@ -91,12 +91,11 @@ public class SpawnManager
     if (Defaults == null)
     {
       Defaults = [.. __instance.m_spawnLists.Select(list => (list, list.m_spawners))];
-      if (Helper.IsServer())
-      {
-        if (Configuration.DataMigration && Configuration.DataSpawns)
-          MigratePersistentEvents(Defaults.SelectMany(entry => entry.Spawners));
-        CreateConfigs();
-      }
+    }
+    if (Helper.IsServer())
+    {
+      Migrations.RunSpawns(() => MigratePersistentEvents(Defaults.SelectMany(entry => entry.Spawners)));
+      CreateConfigs();
     }
     ApplySpawnData(__instance);
   }
@@ -104,21 +103,25 @@ public class SpawnManager
   ///<summary>Backfills requiredPersistentEvent for yaml files saved before the field existed, by pulling values from vanilla data.</summary>
   private static void MigratePersistentEvents(IEnumerable<SpawnSystem.SpawnData> vanilla)
   {
-    if (!File.Exists(FilePath)) return;
-    if (!Yaml.TryDeserialize<Data>(File.ReadAllText(FilePath), FilePath, out var existing)) return;
-    // Any entry with the field set means the file is up to date.
-    if (existing.Any(entry => !string.IsNullOrEmpty(entry.requiredPersistentEvent))) return;
+    var files = Migrations.ReadFiles<Data>(Pattern);
+    var eligible = files.Keys.Where(file => !Yaml.HasField([file], "requiredPersistentEvent")).ToList();
+    if (!BackfillPersistentEvents(vanilla, eligible)) return;
+    Yaml.IgnoreWrites(Pattern);
+    ReadConfigs();
+  }
+
+  private static bool BackfillPersistentEvents(IEnumerable<SpawnSystem.SpawnData> vanilla, List<string> files)
+  {
     // Only prefabs whose vanilla entries all agree on one event can be keyed safely.
     var migrations = vanilla
       .Where(spawn => spawn.m_prefab)
       .GroupBy(spawn => spawn.m_prefab.name)
       .Where(group => group.Select(spawn => spawn.m_requiredPersistentEvent).Distinct().Count() == 1 && !string.IsNullOrEmpty(group.First().m_requiredPersistentEvent))
       .ToDictionary(group => group.Key, group => group.First().m_requiredPersistentEvent);
-    if (migrations.Count == 0) return;
-    if (!Yaml.InsertMissingField(Pattern, "prefab", "requiredPersistentEvent", migrations)) return;
+    if (migrations.Count == 0) return false;
+    if (!Yaml.InsertMissingField(files, "prefab", "requiredPersistentEvent", migrations)) return false;
     Log.Warning($"Added requiredPersistentEvent to {migrations.Count} prefabs in {Pattern} files.");
-    Yaml.IgnoreWrites(Pattern);
-    ReadConfigs();
+    return true;
   }
 
   public static void ApplySpawnData(SpawnSystem system)

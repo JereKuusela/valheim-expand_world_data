@@ -14,7 +14,7 @@ public partial class EnvironmentManager
   public static string FileName = "expand_environments.yaml";
   public static string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
   public static string Pattern = "expand_environments*.yaml";
-  private static Dictionary<string, EnvSetup> Originals = [];
+  internal static Dictionary<string, EnvSetup> Originals = [];
   public static Dictionary<string, EnvironmentData> Extra = [];
   public static bool HasStatusEffects => Extra.Values.Any(data => data.statusEffects.Count > 0);
 
@@ -42,6 +42,7 @@ public partial class EnvironmentManager
   public static void CreateConfigs() => Instance.CreateConfigs();
   public static void ReadConfigs() => Instance.ReadConfigs();
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
+
   private static SetResult Set(Dictionary<string, string> files)
   {
     var previousExtra = Extra;
@@ -66,11 +67,9 @@ public partial class EnvironmentManager
       return SetResult.Applied;
     }
     List<EnvSetup> data = [];
-    List<EnvironmentYaml> yamls = [];
     foreach (var file in files)
     {
       if (!Yaml.TryDeserialize<EnvironmentYaml>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
-      yamls.AddRange(parsed);
       data.AddRange(parsed.Select(d => FromData(d, file.Key)));
     }
     if (data.Count == 0)
@@ -78,7 +77,7 @@ public partial class EnvironmentManager
       Log.Warning($"Failed to load any environment data.");
       return SetResult.Failed;
     }
-    if (YamlDataManager.MigrationEnabled && (EnvironmentMigration.Migrate(yamls, Originals, Pattern) || AddMissingEntries(data)))
+    if (YamlDataManager.BackfillEnabled && AddMissingEntries(data))
       return SetResult.Rewritten;
     Log.Info($"Reloading environment data ({data.Count} entries).");
     Apply(data);

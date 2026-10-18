@@ -8,6 +8,28 @@ The file `expand_spawns.yaml` is created automatically when loading a world. Ena
 
 Note: All distances are in meters, and don't scale up with the world size. For bigger worlds you may need to increase some of the values.
 
+### Requirement Lists
+
+Fields marked as `list` accept either a single string or an array of strings (one per row):
+
+- Rows are combined with AND (all rows must pass).
+- Entries inside a row are separated with a comma and are combined with OR (any entry passes).
+- `forbidden` fields use the same logic, but fail when the whole condition is true. A single row means that any of its entries blocks.
+
+`requiredLocation`, `forbiddenLocation`, `requiredObject` and `forbiddenObject` also need a distance. Format is `nameA, nameB, distance, nameC, distance`. The distance applies to all names before it. Names without a distance are ignored with a warning.
+
+```yaml
+- prefab: Skeleton
+  # Within 50 meters of a Crypt or a Runestone, and not within 30 meters of a workbench.
+  requiredLocation:
+  - Crypt2, Runestone_Boars, 50
+  forbiddenObject: piece_workbench, 30
+  forbiddenGlobalKey: defeated_bonemass
+  requiredEnvironments:
+  - Rain, ThunderStorm
+  - Night
+```
+
 ### Spawn Fields
 
 - prefab: Name of the object to spawn. Any [object](https://valheim.wiki/Item_IDs) is valid, not just creatures.
@@ -26,12 +48,18 @@ Note: All distances are in meters, and don't scale up with the world size. For b
 - maxDistance (default: `0` meters): Maximum distance from the world center (0 = disabled).
 - spawnAtDay (default: `true`): Enabled during the day time.
 - spawnAtNight (default: `true`): Enabled during the night time.
-- requiredGlobalKey: Which [global keys](https://valheim.wiki/Global_Keys) must be set to enable this entry.
+- requiredGlobalKey (list): Which [global keys](https://valheim.wiki/Global_Keys) must be set to enable this entry.
   - When using format `key value`, the key must have at least this amount of value.
-  - After spawning, the key value is reduced by the required value.
+  - After spawning, the key value is reduced by the required value. Each row consumes the first matching key with a value.
   - This can be used to create limited spawns.
   - Creature deaths can be changed to increase the key value by using the `defeatSetGlobalKey` field.
-- requiredEnvironments: List of valid environments/weathers.
+- forbiddenGlobalKey (list): The entry is disabled if any of these global keys is set.
+- requiredEnvironments (list): Valid environments/weathers.
+- forbiddenEnvironments (list): The entry is disabled if any of these environments/weathers is active.
+- requiredLocation (list with distance): Location (prefab name or location group) must be near the spawn point. Uses the location proxy objects, so only loaded areas are checked.
+- forbiddenLocation (list with distance): Spawn point can't be near any of these locations.
+- requiredObject (list with distance): Object (prefab name, wildcards and value groups supported) must be near the spawn point. Only loaded objects are checked.
+- forbiddenObject (list with distance): Spawn point can't be near any of these objects.
 - requiredPersistentEvent: Name of the persistent event that must be active at the spawn point.
 - spawnDistance (default: `10` meters): Distance to suppress similar spawns.
 - spawnRadiusMin (default: `40` meters): Minimum distance from every player.

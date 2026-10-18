@@ -1,5 +1,9 @@
 - v1.79
   - BREAKING CHANGE: Drop entries now automatically apply to the same prefab as the drop entry name.
+  - Adds AND/OR support for "required" and "forbidden" fields. Within row, one requirement must be met. Across rows, all rows must be satisfied. Existing configurations are automatically migrated.
+  - Adds new fields `forbiddenEnvironments`, `forbiddenGlobalKey`,`requiredLocation`, `forbiddenLocation`, `requiredObject` and `forbiddenObject` to spawns.
+  - Adds new field `forbiddenEnvironments` to events.
+  - Renames event required fields to match new naming convention. Existing configurations are automatically migrated.
   - Adds new field `levelOnlyChance` to drop entries.
   - Adds data support to drop entries.
   - Adds shorthand (`type, key, value`) and inline data support to data fields of vegetation, spawns, locations and drops.

@@ -97,6 +97,7 @@ public partial class Configuration
   public static bool DataWorld => configDataWorld.Value;
   public static ConfigEntry<bool> configDataMigration;
   public static bool DataMigration => configDataMigration.Value;
+  public static ConfigEntry<int> configDataRevision;
   public static ConfigEntry<bool> configDataReload;
   public static bool DataReload => configDataReload.Value;
 
@@ -145,6 +146,7 @@ public partial class Configuration
     configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.", synchronizedSetting: false);
     configSplitDataPerMod = wrapper.Bind(section, "Split data per mod", true, false, "If true, created data is saved to multiple files. If false, all data is saved in one file.", synchronizedSetting: false);
     configDataMigration = wrapper.Bind(section, "Automatic data migration", true, false, "Automatically add missing location, rooms and vegetation entries.", synchronizedSetting: false);
+    configDataRevision = wrapper.BindHidden(section, "Data revision", Migrations.Latest, 0);
     configDataEnvironments = wrapper.Bind(section, "Environment data", false, false, "Use environment data", synchronizedSetting: false);
     configDataEnvironments.SettingChanged += (s, e) => EnvironmentManager.ReadConfigs();
     configDataBiome = wrapper.Bind(section, "Biome data", false, true, "Use biome data", synchronizedSetting: false);

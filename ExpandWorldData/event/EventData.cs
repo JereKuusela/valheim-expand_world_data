@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
-using ExpandWorldData;
+using System.Linq;
 using Service;
 using YamlDotNet.Serialization;
 using Common;
@@ -19,14 +19,14 @@ public class Data
   [DefaultValue("false")] public string outsideBaseOnly = "false";
   [DefaultValue("true")] public string nearBaseOnly = "true";
   [DefaultValue("")] public string biome = "";
-  [DefaultValue("")] public string requiredGlobalKeys = "";
-  [DefaultValue("")] public string notRequiredGlobalKeys = "";
-  [DefaultValue("")] public string requiredPlayerKeys = "";
-  [DefaultValue("")] public string requiredPlayerKeysAll = "";
-  [DefaultValue("")] public string notRequiredPlayerKeys = "";
+  [DefaultValue(null)] public StringList? requiredGlobalKeys = null;
+  [DefaultValue(null)] public StringList? forbiddenGlobalKeys = null;
+  [DefaultValue(null)] public StringList? requiredPlayerKeys = null;
+  [DefaultValue(null)] public StringList? forbiddenPlayerKeys = null;
   [DefaultValue("")] public string requiredKnownItems = "";
-  [DefaultValue("")] public string notRequiredKnownItems = "";
-  [DefaultValue("")] public string requiredEnvironments = "";
+  [DefaultValue("")] public string forbiddenKnownItems = "";
+  [DefaultValue(null)] public StringList? requiredEnvironments = null;
+  [DefaultValue(null)] public StringList? forbiddenEnvironments = null;
   [DefaultValue("")] public string startMessage = "";
   [DefaultValue("")] public string endMessage = "";
   [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
@@ -45,7 +45,13 @@ public class Data
 
 public class ExtraData
 {
-  public List<string> RequiredEnvironments = [];
+  // Lowercase, because the selected environment name is lowercased for the comparison.
+  public List<string[]>? RequiredEnvironments;
+  public List<string[]>? ForbiddenEnvironments;
+  // Rows with multiple entries, single entries use the vanilla list.
+  public List<string[]>? RequiredKeyRows;
+  // Vanilla can only forbid a single row.
+  public List<string[]>? ForbiddenKeyRows;
   public float PlayerDistance = 100f;
   public ValueRange<int>? PlayerLimit;
   public int MinBaseValue = 3;
@@ -56,7 +62,12 @@ public class ExtraData
 
   public ExtraData(Data data)
   {
-    RequiredEnvironments = DataManager.ToList(data.requiredEnvironments);
+    RequiredEnvironments = Lowercase(data.requiredEnvironments);
+    ForbiddenEnvironments = Lowercase(data.forbiddenEnvironments);
+    RequiredKeyRows = StringList.ToRows(data.requiredGlobalKeys)?.Where(row => row.Length > 1).ToList();
+    if (RequiredKeyRows is { Count: 0 }) RequiredKeyRows = null;
+    var forbiddenRows = StringList.ToRows(data.forbiddenGlobalKeys);
+    ForbiddenKeyRows = forbiddenRows is { Count: > 1 } ? forbiddenRows : null;
     PlayerDistance = data.playerDistance;
     if (data.playerLimit != "") PlayerLimit = Parse.IntRange(data.playerLimit);
     if (data.eventLimit != "") EventLimit = Parse.IntRange(data.eventLimit);
@@ -65,4 +76,7 @@ public class ExtraData
     StartCommands = data.startCommands;
     EndCommands = data.endCommands;
   }
+
+  private static List<string[]>? Lowercase(StringList? list) =>
+    StringList.ToRows(list)?.Select(row => row.Select(name => name.ToLower()).ToArray()).ToList();
 }

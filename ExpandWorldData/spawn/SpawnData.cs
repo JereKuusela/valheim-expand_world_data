@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using Service;
 using YamlDotNet.Serialization;
 
 namespace ExpandWorld.Spawn;
@@ -24,8 +25,14 @@ public class Data
   [DefaultValue(10000f)] public float maxAltitude = 10000f;
   [DefaultValue(true)] public bool spawnAtDay = true;
   [DefaultValue(true)] public bool spawnAtNight = true;
-  [DefaultValue("")] public string requiredGlobalKey = "";
-  [DefaultValue("")] public string requiredEnvironments = "";
+  [DefaultValue(null)] public StringList? requiredGlobalKey = null;
+  [DefaultValue(null)] public StringList? forbiddenGlobalKey = null;
+  [DefaultValue(null)] public StringList? requiredEnvironments = null;
+  [DefaultValue(null)] public StringList? forbiddenEnvironments = null;
+  [DefaultValue(null)] public StringList? requiredLocation = null;
+  [DefaultValue(null)] public StringList? forbiddenLocation = null;
+  [DefaultValue(null)] public StringList? requiredObject = null;
+  [DefaultValue(null)] public StringList? forbiddenObject = null;
   [DefaultValue("")] public string requiredPersistentEvent = "";
   [YamlMember(DefaultValuesHandling = DefaultValuesHandling.Preserve)]
   public float spawnDistance = 10f;

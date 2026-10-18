@@ -15,6 +15,7 @@ public static partial class AltBiomeManager
   private static List<AltBiome> Original = [];
   private static List<AltBiome> Active = [];
 
+  public static IEnumerable<SpawnSystem.SpawnData> ActiveSpawns => Active.SelectMany(alt => alt.m_spawn);
   public static void Initialize()
   {
     Original = [.. AltBiomeList.m_altBiomes];
@@ -28,6 +29,7 @@ public static partial class AltBiomeManager
     {
       Loader.Data.Remove(spawn);
       Loader.Objects.Remove(spawn);
+      Loader.Requirements.Remove(spawn);
     }
     Active = [];
     AltBiomeList.m_altBiomes.Clear();
@@ -41,12 +43,6 @@ public static partial class AltBiomeManager
     protected override string ConfigValue { get => Configuration.valueAltBiomeData.Value; set => Configuration.valueAltBiomeData.Value = value; }
     protected override SetResult Set(Dictionary<string, string> files) => AltBiomeManager.Set(files);
     protected override void WriteDefaultConfig() => File.WriteAllText(FilePath, Yaml.Serializer().Serialize(Original.Select(ToData).ToList()));
-    protected override bool Migrate()
-    {
-      if (!Yaml.RemoveFields(Pattern, ["addVegetation", "addLocations"])) return false;
-      Log.Warning($"Removed obsolete addVegetation and addLocations from {Pattern} files. These are handled by the vegetation and location files.");
-      return true;
-    }
   }
   private static readonly Sync Instance = new();
 

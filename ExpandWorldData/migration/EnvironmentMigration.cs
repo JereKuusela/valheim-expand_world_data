@@ -36,7 +36,10 @@ internal static class EnvironmentMigration
   ];
 
   ///<summary>Returns true if any file was changed.</summary>
-  public static bool Migrate(List<EnvironmentYaml> yamls, Dictionary<string, EnvSetup> originals, string pattern)
+  public static void Run() =>
+    Migrations.Finish(EnvironmentManager.Pattern, Migrate(Migrations.Read<EnvironmentYaml>(EnvironmentManager.Pattern), EnvironmentManager.Originals, EnvironmentManager.Pattern));
+
+  private static bool Migrate(List<EnvironmentYaml> yamls, Dictionary<string, EnvSetup> originals, string pattern)
   {
     var changed = false;
     foreach (var (field, get, def) in Fields)

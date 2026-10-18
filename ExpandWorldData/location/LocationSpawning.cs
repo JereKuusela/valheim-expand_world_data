@@ -335,25 +335,31 @@ public class HaveLocationInRange
     return rules;
   }
 
-  private static bool InRange(ZoneSystem zs, Vector3 p, List<System.Tuple<string, float>>? rules)
+  private static bool InRange(ZoneSystem zs, Vector3 p, List<List<System.Tuple<string, float>>>? rules)
   {
     if (rules == null || rules.Count == 0) return false;
 
+    var matched = new bool[rules.Count];
+    var remaining = rules.Count;
     foreach (var locationInstance in zs.m_locationInstances.Values)
     {
       var loc = locationInstance.m_location;
       if (loc == null)
         continue;
 
-      foreach (var rule in rules)
+      for (var i = 0; i < rules.Count; i++)
       {
-        var matches = LocationExtra.MatchesTarget(loc, rule.Item1);
-        if (!matches)
-          continue;
-        var distance = Vector3.Distance(locationInstance.m_position, p);
-        if (distance < rule.Item2)
-          return true;
+        if (matched[i]) continue;
+        foreach (var rule in rules[i])
+        {
+          if (!LocationExtra.MatchesTarget(loc, rule.Item1)) continue;
+          if (Vector3.Distance(locationInstance.m_position, p) >= rule.Item2) continue;
+          matched[i] = true;
+          remaining--;
+          break;
+        }
       }
+      if (remaining == 0) return true;
     }
     return false;
   }

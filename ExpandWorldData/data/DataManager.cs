@@ -59,6 +59,8 @@ public class InitializeWorld
   static void Postfix(WorldGenerator __instance)
   {
     if (__instance.m_world.m_menu) return;
+    // Before anything reads the files.
+    Migrations.RunFiles();
     // No-ops on clients, which get the data from the server.
     BiomeManager.ReadConfigs();
     TerritoryManager.ReadConfigs();
@@ -98,6 +100,7 @@ public class InitializeContent
       BiomeManager.CompleteDefaultConfig();
 
       DataLoading.LoadEntries();
+      Migrations.RunVanilla();
       EnvironmentManager.ReadConfigs();
       ClutterManager.ReadConfigs();
       VegetationManager.ReadConfigs();
@@ -149,6 +152,7 @@ public class CleanupOnShutdown
   {
     Yaml.WorldLoading = false;
     Yaml.WorldLoadedAt = DateTime.MinValue;
+    Migrations.Reset();
     NoBuildManager.CleanUp();
     LocationClientData.CleanUp();
     LocationManager.CleanUp();

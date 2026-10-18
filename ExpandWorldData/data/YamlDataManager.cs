@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Common;
 using Service;
 
@@ -28,8 +27,8 @@ public abstract class YamlDataManager
   protected abstract void WriteDefaultConfig();
   /// <summary>Migrations rewrite files, so only the server with the setting enabled may run them.</summary>
   public static bool MigrationEnabled => Configuration.DataMigration && Helper.IsServer();
-  /// <summary>Upgrades yaml files on disk before they are read. Only called when migrations are enabled. Returns true if anything was written.</summary>
-  protected virtual bool Migrate() => false;
+  public static bool BackfillEnabled => MigrationEnabled && AllowBackfill;
+  private static bool AllowBackfill = true;
   /// <summary>Runs after files were applied (or defaults restored when disabled).</summary>
   protected virtual void OnApplied(Dictionary<string, string> files) { }
   // Disabled data must not touch anything unless custom data was previously applied.
@@ -52,29 +51,29 @@ public abstract class YamlDataManager
       if (Apply([]) == SetResult.Applied) OnApplied([]);
       return;
     }
-    if (MigrationEnabled && Migrate()) Yaml.IgnoreWrites(Pattern);
     // Rewrites are read right away so the watcher doesn't cause a second load.
-    List<Dictionary<string, string>> previousReads = [];
-    for (var attempt = 0; attempt < 16; attempt++)
+    var files = DataManager.Read(Pattern);
+    if (files == null) return;
+    var result = Apply(files);
+    if (result == SetResult.Rewritten)
     {
-      var files = DataManager.Read(Pattern);
-      if (files == null) return;
-      if (previousReads.Any(previous => previous.Count == files.Count && files.All(file => previous.TryGetValue(file.Key, out var value) && value == file.Value)))
-      {
-        Log.Warning($"{Pattern}: Migration repeated previously read contents. Skipped.");
-        return;
-      }
-      previousReads.Add(files);
-      var result = Apply(files);
-      if (result == SetResult.Applied)
-      {
-        OnApplied(files);
-        return;
-      }
-      if (result == SetResult.Failed) return;
       Yaml.IgnoreWrites(Pattern);
+      files = DataManager.Read(Pattern);
+      if (files == null) return;
+      var previousBackfill = AllowBackfill;
+      AllowBackfill = false;
+      try
+      {
+        result = Apply(files);
+      }
+      finally
+      {
+        AllowBackfill = previousBackfill;
+      }
     }
-    Log.Warning($"{Pattern}: Files keep changing while loading. Skipped.");
+    if (result == SetResult.Applied) OnApplied(files);
+    else if (result == SetResult.Rewritten)
+      Log.Warning($"{Pattern}: Files were rewritten again while loading. Skipped.");
   }
 
   protected SetResult Apply(Dictionary<string, string> files)

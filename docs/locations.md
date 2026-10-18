@@ -120,12 +120,10 @@ EWD system is one way, which means that a location can be "attracted" to another
 Keep in mind that locations are processed in load order. This means that if a location relies on another location, the other location must appear first. If multiple `expand_locations*.yaml` files are used, their relative load order also matters.
 
 - groups: List of groups names for `awayFrom` and `closeTo` checks.
-- awayFrom: Array of requirements. Format is `name,distance`.
-  - Name can be either group or location prefab name.
-  - If any are found, the place is not valid.
-- closeTo: Array of requirements. Format is `name,distance`.
-  - Name can be either group or location prefab name.
-  - If none are found, the place is not valid.
+- awayFrom (list with distance): Format is `nameA, nameB, distance, nameC, distance`. Name can be either group or location prefab name.
+  - If any are found within the distance, the place is not valid.
+- closeTo (list with distance): Same format as `awayFrom`.
+  - Rows are AND and entries inside a row (commas) are OR. Every row must have a match, otherwise the place is not valid.
 
 ```yaml
 # Must be at least 1000 meters away from each other.

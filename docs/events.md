@@ -36,11 +36,10 @@ Client side fields:
 - forceEnvironment: Event environment/weather to use.
 - radius (default: `96` meters): Event area radius.
 - spawnerDelay (default: `0` seconds): Delay before the event starts spawning.
-- requiredPlayerKeys: Event becomes available if the player has any of these keys.
-- requiredPlayerKeysAll: Event becomes available if the player has all of these keys.
-- notRequiredPlayerKeys: Event is not available if the player has any of these keys.
+- requiredPlayerKeys (list): Event becomes available if the player has the keys. Rows are AND, commas inside a row are OR. The vanilla event system supports only one row with multiple entries, the rest must be single keys.
+- forbiddenPlayerKeys (list): Event is not available if the player has any of these keys. Only a single row is supported.
 - requiredKnownItems: Event becomes available if the player knows any of these items.
-- notRequiredKnownItems: Event is not available if the player knows any of these items.
+- forbiddenKnownItems: Event is not available if the player knows any of these items.
 
 Server side fields:
 
@@ -54,9 +53,10 @@ Server side fields:
 - pauseIfNoPlayerInArea (default: `true`): The event timer pauses if no player in the area.
 - biome: List of required biomes (default: any biome).
 - random (default: `true`): The event can happen randomly (unlike boss events which happen when near a boss).
-- requiredEnvironments: List of valid environments/weathers.
-- requiredGlobalKeys: Event becomes available if the world has any of these keys.
-- notRequiredGlobalKeys: Event is not available if the world has any of these keys.
+- requiredEnvironments (list): Valid environments/weathers.
+- forbiddenEnvironments (list): The event is not available if the environment/weather matches.
+- requiredGlobalKeys (list): Event becomes available if the world has the keys. Rows are AND, commas inside a row are OR.
+- forbiddenGlobalKeys (list): Event is not available if the world has the keys. Rows are AND, commas inside a row are OR (single row: any key blocks).
 - playerLimit: Amount of required players in the area (`min-max`). Used to trigger stronger events with more players.
 - playerDistance (default: `100` meters): Distance from the triggering player.
 - eventLimit: Amount of required events in the area (`min-max`). Requires the `Multiple events` setting to be enabled.
@@ -95,5 +95,5 @@ Changing an existing event to last longer and to be available only in the Meadow
   customChance: 100
   duration: 180
   biome: Meadows
-  notRequiredGlobalKeys: defeated_eikthyr
+  forbiddenGlobalKeys: defeated_eikthyr
 ```

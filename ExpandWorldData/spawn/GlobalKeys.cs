@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace ExpandWorld.Spawn;
 
@@ -21,8 +22,26 @@ public class GlobalKeys
   }
   internal static void Consume(SpawnSystem.SpawnData critter)
   {
-    if (string.IsNullOrEmpty(critter.m_requiredGlobalKey)) return;
-    var split = critter.m_requiredGlobalKey.Trim().Split(' ');
+    if (!string.IsNullOrEmpty(critter.m_requiredGlobalKey))
+      ConsumeKey(critter.m_requiredGlobalKey);
+    if (Loader.Requirements.TryGetValue(critter, out var requirements) && requirements.Keys != null)
+    {
+      // Pick the keys first, so that rows sharing a key don't see each other's consumption.
+      var picked = requirements.Keys.Select(row => row.FirstOrDefault(key => IsNumeric(key) && ZoneSystem.instance.GetGlobalKey(key))).ToList();
+      foreach (var key in picked)
+        if (key != null) ConsumeKey(key);
+    }
+  }
+
+  private static bool IsNumeric(string key)
+  {
+    var split = key.Trim().Split(' ');
+    return split.Length > 1 && int.TryParse(split[1], out _);
+  }
+
+  private static void ConsumeKey(string key)
+  {
+    var split = key.Trim().Split(' ');
     if (split.Length > 1 && int.TryParse(split[1], out var amount)) ZoneSystem.instance.SetGlobalKey($"{split[0]} --{amount}");
   }
 }

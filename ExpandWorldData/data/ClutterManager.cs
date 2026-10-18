@@ -78,7 +78,7 @@ public partial class ClutterManager
       Log.Warning($"Failed to load any clutter data.");
       return SetResult.Failed;
     }
-    if (YamlDataManager.MigrationEnabled && AddMissingEntries(data))
+    if (YamlDataManager.BackfillEnabled && AddMissingEntries(data))
       return SetResult.Rewritten;
     Log.Info($"Reloading clutter data ({data.Count} entries).");
     return SetResult.Applied;

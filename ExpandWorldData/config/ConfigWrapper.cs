@@ -1,21 +1,30 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using BepInEx.Configuration;
 using ServerSync;
 
 namespace Service;
 
+internal class HiddenAttributes
+{
+  public bool? Browsable = false;
+}
+
 public class ConfigWrapper
 {
 
   private readonly ConfigFile ConfigFile;
+  private readonly ConfigFile? OriginalConfig;
   private readonly ConfigSync ConfigSync;
   private readonly Action Regenerate;
   public ConfigWrapper(string command, ConfigFile configFile, ConfigSync configSync, Action regenerate)
   {
     ConfigFile = configFile;
+    if (File.Exists(configFile.ConfigFilePath))
+      OriginalConfig = new ConfigFile(configFile.ConfigFilePath, false) { SaveOnConfigSet = false };
     ConfigSync = configSync;
     Regenerate = regenerate;
 
@@ -43,6 +52,15 @@ public class ConfigWrapper
     }, optionsFetcher: () => SettingHandlers.Keys.ToList());
   }
   public CustomSyncedValue<string> AddValue(string identifier) => new(ConfigSync, identifier);
+  // Internal state: not shown in config managers and not synced.
+  public ConfigEntry<T> BindHidden<T>(string group, string name, T value) => ConfigFile.Bind(group, name, value, new ConfigDescription("Internal state, don't edit.", null, new HiddenAttributes()));
+  public ConfigEntry<T> BindHidden<T>(string group, string name, T value, T legacyValue)
+  {
+    var entry = BindHidden(group, name, value);
+    if (OriginalConfig != null)
+      entry.Value = OriginalConfig.Bind(group, name, legacyValue).Value;
+    return entry;
+  }
   public ConfigEntry<bool> BindLocking(string group, string name, bool value, ConfigDescription description)
   {
     var configEntry = ConfigFile.Bind(group, name, value, description);

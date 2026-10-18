@@ -16,6 +16,16 @@ public class RoomManager
   public static string Pattern = "expand_rooms*.yaml";
   private static readonly List<RoomYaml> ExtraRoomYamls = [];
 
+  private class Config : YamlDataManager
+  {
+    protected override string FilePath => RoomManager.FilePath;
+    protected override string Pattern => RoomManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataRooms;
+    protected override SetResult Set(Dictionary<string, string> files) => RoomManager.Set(files);
+    protected override void WriteDefaultConfig() => ToFile();
+  }
+  private static readonly Config Instance = new();
+
   public static void AddRoom(RoomYaml yaml)
   {
     ExtraRoomYamls.Add(yaml);
@@ -32,7 +42,8 @@ public class RoomManager
   {
     DefaultEntries.Clear();
     RoomSpawning.Prefabs.Clear();
-    RoomSpawning.RoomSizes.Clear();
+    CreatedObjects.ForEach(UnityEngine.Object.Destroy);
+    ClearData();
     if (Helper.IsServer())
       SetDefaultEntries();
     ReadConfigs();
@@ -79,47 +90,89 @@ public class RoomManager
   public static Dictionary<Room.Theme, string> ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
   public static bool TryGetTheme(string name, out Room.Theme theme) => NameToTheme.TryGetValue(name.ToLowerInvariant(), out theme);
 
-  public static void ReadConfigs()
+  public static void ReadConfigs() => Instance.ReadConfigs();
+
+  private static void ClearData()
   {
-    RoomSpawning.Data.Clear();
-    RoomSpawning.Blueprints.Clear();
-    DungeonObjects.Objects.Clear();
-    DungeonObjects.ObjectSwaps.Clear();
-    DungeonObjects.ObjectData.Clear();
-    CreatedObjects.ForEach(UnityEngine.Object.Destroy);
-    CreatedObjects.Clear();
+    RoomSpawning.Data = [];
+    RoomSpawning.Blueprints = [];
+    RoomSpawning.RoomSizes = [];
+    DungeonObjects.Objects = [];
+    DungeonObjects.ObjectSwaps = [];
+    DungeonObjects.ObjectData = [];
+    CreatedObjects = [];
     NameToTheme = CreateNameToTheme();
     ThemeToName = DefaultNameToTheme.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-    if (Helper.IsClient()) return;
-    if (!Configuration.DataRooms)
+  }
+
+  private static SetResult Set(Dictionary<string, string> files)
+  {
+    var previousData = RoomSpawning.Data;
+    var previousBlueprints = RoomSpawning.Blueprints;
+    var previousSizes = RoomSpawning.RoomSizes;
+    var previousObjects = DungeonObjects.Objects;
+    var previousSwaps = DungeonObjects.ObjectSwaps;
+    var previousObjectData = DungeonObjects.ObjectData;
+    var previousCreated = CreatedObjects;
+    var previousNameToTheme = NameToTheme;
+    var previousThemeToName = ThemeToName;
+    ClearData();
+    var result = SetResult.Failed;
+    try
     {
+      return result = LoadAndApply(files);
+    }
+    finally
+    {
+      if (result == SetResult.Applied)
+        previousCreated.ForEach(UnityEngine.Object.Destroy);
+      else
+      {
+        CreatedObjects.ForEach(UnityEngine.Object.Destroy);
+        RoomSpawning.Data = previousData;
+        RoomSpawning.Blueprints = previousBlueprints;
+        RoomSpawning.RoomSizes = previousSizes;
+        DungeonObjects.Objects = previousObjects;
+        DungeonObjects.ObjectSwaps = previousSwaps;
+        DungeonObjects.ObjectData = previousObjectData;
+        CreatedObjects = previousCreated;
+        NameToTheme = previousNameToTheme;
+        ThemeToName = previousThemeToName;
+      }
+    }
+  }
+
+  private static SetResult LoadAndApply(Dictionary<string, string> files)
+  {
+    List<DungeonDB.RoomData> data = [];
+    if (files.Count == 0)
+    {
+      data = DefaultEntries;
       Log.Info($"Reloading default room data ({DefaultEntries.Count} entries).");
-      return;
     }
-    if (!File.Exists(FilePath))
+    else
     {
-      ToFile();
-      return; // Watcher triggers reload.
+      foreach (var file in files)
+      {
+        if (!Yaml.TryDeserialize<RoomYaml>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
+        data.AddRange(parsed.Select(item => FromData(item, file.Key)).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)));
+      }
     }
-    var data = FromFile();
     if (data.Count == 0)
     {
-      Log.Warning($"Failed to load any room data.");
-      Log.Info($"Reloading default room data ({DefaultEntries.Count} entries).");
-      return;
+      Log.Warning("Failed to load any room data.");
+      return SetResult.Failed;
     }
-    if (Configuration.DataMigration && AddMissingEntries(data))
-    {
-      // Watcher triggers reload.
-      return;
-    }
+    if (files.Count > 0 && YamlDataManager.BackfillEnabled && AddMissingEntries(data))
+      return SetResult.Rewritten;
     Log.Info($"Reloading room themes ({NameToTheme.Count} entries).");
     Log.Info($"Reloading room data ({data.Count} entries).");
 
     RoomNames = Helper.ToDict(data, item => item.m_prefab.Name.ToLowerInvariant(), item => item.m_prefab.Name);
     DungeonDB.instance.m_rooms = data;
+    return SetResult.Applied;
   }
-  private static readonly List<GameObject> CreatedObjects = [];
+  private static List<GameObject> CreatedObjects = [];
   public static DungeonDB.RoomData CreateRoomData(string name, string[] snapPieces)
   {
     DungeonDB.RoomData roomData = new();
@@ -275,19 +328,6 @@ public class RoomManager
     return data;
   }
 
-  private static List<DungeonDB.RoomData> FromFile()
-  {
-    try
-    {
-      return DataManager.ReadData<RoomYaml, DungeonDB.RoomData>(Pattern, FromData).Where(room => room != null && room.m_prefab != null && !string.IsNullOrWhiteSpace(room.m_prefab.m_name)).ToList();
-    }
-    catch (Exception e)
-    {
-      Log.Error(e.Message);
-      Log.Error(e.StackTrace);
-    }
-    return [];
-  }
   private static void SetDefaultEntries()
   {
     DefaultEntries = DungeonDB.instance.m_rooms.Where(room => room.m_prefab.IsValid).ToList();
@@ -306,26 +346,7 @@ public class RoomManager
   }
   private static void Save(List<RoomYaml> data, bool log)
   {
-    Dictionary<string, List<RoomYaml>> perFile = [];
-    foreach (var item in data)
-    {
-      var mod = AssetTracker.GetModFromPrefab(item.name);
-      var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
-      if (!perFile.ContainsKey(file))
-        perFile[file] = [];
-      perFile[file].Add(item);
-
-      if (log)
-        Log.Warning($"{mod}: {item.name}");
-    }
-    foreach (var kvp in perFile)
-    {
-      var file = Path.Combine(Yaml.BaseDirectory, $"expand_rooms{kvp.Key}.yaml");
-      var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
-      // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value);
-      File.WriteAllText(file, yaml);
-    }
+    YamlFiles.SavePerMod("rooms", data, item => item.name, log);
   }
   public static void SetupWatcher()
   {

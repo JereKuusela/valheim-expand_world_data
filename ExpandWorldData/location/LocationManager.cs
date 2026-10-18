@@ -121,10 +121,7 @@ public partial class LocationManager
       Log.Warning($"Failed to load any location data.");
       return SetResult.Failed;
     }
-    if (YamlDataManager.MigrationEnabled &&
-      (AltBiomeMigration.MigrateLocations(parsed, DefaultEntries, Pattern)
-      || LocationMigration.Migrate(parsed, Locations, Pattern)
-      || AddMissingEntries(parsed)))
+    if (YamlDataManager.BackfillEnabled && AddMissingEntries(parsed))
       return SetResult.Rewritten;
     data = parsed;
     Log.Info($"Reloading location data ({parsed.Count} entries).");
@@ -152,10 +149,10 @@ public partial class LocationManager
     }
   }
   // Dictionary can't be used because some mods might have multiple entries for the same location.
-  private static List<ZoneSystem.ZoneLocation> DefaultEntries = [];
+  internal static List<ZoneSystem.ZoneLocation> DefaultEntries = [];
   // Used to optimize missing entries check (to avoid n^2 loop).
   // Also used to quickly check if a location is blueprint or not.
-  private static Dictionary<string, ZoneSystem.ZoneLocation> Locations = [];
+  internal static Dictionary<string, ZoneSystem.ZoneLocation> Locations = [];
   private static bool AddMissingEntries(List<ZoneSystem.ZoneLocation> items)
   {
     var missingKeys = Locations.Keys.ToHashSet();

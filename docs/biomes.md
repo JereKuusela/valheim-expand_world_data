@@ -26,10 +26,10 @@ Note: The game assigns a number for each biome. If some mods don't recognize new
   - ashlandsOverride (default: `false`): This weather will be used in the Ashlands area instead of the normal weather.
   - deepNorthOverride (default: `false`): This weather will be used in the Deep North area instead of the normal weather.
   - Note: For weather Ashlands_SeaStorm, the default value of `ashlandsOverride` is `true` to keep old configurations working.
-  - requiredGlobalKeys: Active if all of these world keys are set.
-  - forbiddenGlobalKeys: Active if none of these world keys are set.
-  - requiredPlayerKeys: Active if all of these player keys are set.
-  - forbiddenPlayerKeys: Active if none of these player keys are set.
+  - requiredGlobalKeys (list): Active if the world keys are set. Rows are AND, commas inside a row are OR.
+  - forbiddenGlobalKeys (list): Not active if the world keys match. Same logic as the required fields (single row: any key blocks).
+  - requiredPlayerKeys (list): Active if the player keys are set. Rows are AND, commas inside a row are OR.
+  - forbiddenPlayerKeys (list): Not active if the player keys match. Same logic as the required fields (single row: any key blocks).
 - maximumAltitude (default: `10000` meters): Maximum altitude.
 - minimumAltitude (default: `-1000` meters): Minimum altitude.
 - excessFactor (default: `0.5`): How strongly the altitude is reduced if over the maximum or minimum limit. For example 0.5 square roots the excess altitude.

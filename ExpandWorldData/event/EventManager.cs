@@ -80,7 +80,7 @@ public class EventManager
       data.AddRange(parsed.Select(entry => Loader.FromData(entry, file.Key)));
     }
     if (data.Count == 0) return SetResult.Failed;
-    if (YamlDataManager.MigrationEnabled && AddMissingEntries(data)) return SetResult.Rewritten;
+    if (YamlDataManager.BackfillEnabled && AddMissingEntries(data)) return SetResult.Rewritten;
     Log.Info($"Reloading event data ({data.Count} entries).");
     RandEventSystem.instance.m_events = data;
     HasData = true;

@@ -122,8 +122,6 @@ public class WorldManager
         return SetResult.Failed;
       data.AddRange(parsed);
     }
-    if (YamlDataManager.MigrationEnabled && MigrateOldDefault(data))
-      return SetResult.Rewritten;
     if (data.Count == 0)
     {
       Log.Warning($"Failed to load any world data.");
@@ -138,8 +136,9 @@ public class WorldManager
     Refresh.Request(Regen.World);
     return SetResult.Applied;
   }
-  private static bool MigrateOldDefault(List<WorldYaml> data)
+  public static bool MigrateOldDefault()
   {
+    var data = Migrations.Read<WorldYaml>(Pattern);
     if (data.Count != OldData.Count || Yaml.Serializer().Serialize(data) != Yaml.Serializer().Serialize(OldData)) return false;
     Log.Info("Detected old default world data with swapped deepnorth and mountain. Using fixed default.");
     if (File.Exists(FilePath))

@@ -10,7 +10,7 @@ namespace ExpandWorldData;
 public class LocationExtra
 {
   public static Dictionary<ZoneSystem.ZoneLocation, LocationExtraInfo> ExtraInfo = [];
-  public static Dictionary<string, List<Tuple<string, float>>> ExtraInfoByVirtualId = [];
+  public static Dictionary<string, List<List<Tuple<string, float>>>> ExtraInfoByVirtualId = [];
 
   public static void AddInfo(ZoneSystem.ZoneLocation loc, LocationYaml data, string fileName)
   {
@@ -23,11 +23,11 @@ public class LocationExtra
     loc.m_group = data.group;
     loc.m_groupMax = data.groupMax;
     ExtraInfo[loc] = extra;
-    AddVirtualRules(loc.m_group, extra.AwayFrom);
-    AddVirtualRules(loc.m_groupMax, extra.CloseTo);
+    AddVirtualRules(loc.m_group, extra.AwayFrom == null ? null : [extra.AwayFrom]);
+    AddVirtualRules(loc.m_groupMax, extra.CloseToRows);
   }
 
-  private static void AddVirtualRules(string group, List<Tuple<string, float>>? rules)
+  private static void AddVirtualRules(string group, List<List<Tuple<string, float>>>? rules)
   {
     if (!IsVirtualGroupId(group)) return;
     if (rules == null || rules.Count == 0) return;
@@ -52,7 +52,8 @@ public class LocationExtra
     return int.TryParse(group.Substring(1), out _);
   }
 
-  public static List<Tuple<string, float>>? GetDistanceRules(string group)
+  // Rows are combined with AND, rules inside a row with OR.
+  public static List<List<Tuple<string, float>>>? GetDistanceRules(string group)
   {
     if (string.IsNullOrEmpty(group)) return null;
     if (!ExtraInfoByVirtualId.TryGetValue(group, out var rules)) return null;
@@ -173,7 +174,8 @@ public class LocationExtraInfo
   public string? Dungeon;
   public HashSet<string> Groups;
   public List<Tuple<string, float>>? AwayFrom;
-  public List<Tuple<string, float>>? CloseTo;
+  public List<List<Tuple<string, float>>>? CloseToRows;
+  public List<Tuple<string, float>>? CloseTo => CloseToRows?.SelectMany(row => row).ToList();
   public Dictionary<string, List<Tuple<float, string>>>? ObjectSwaps;
   public Dictionary<string, List<Tuple<float, string>>>? DungeonObjectSwaps;
   public Dictionary<string, List<Tuple<float, DataEntry?>>>? ObjectData;
@@ -211,30 +213,8 @@ public class LocationExtraInfo
       Scale = scale;
   }
 
-  private static List<Tuple<string, float>>? ParseDistanceRules(string[]? rules, string fieldName, string fileName)
-  {
-    if (rules == null) return null;
-    var parsed = new List<Tuple<string, float>>();
-    foreach (var entry in rules)
-    {
-      var kvp = Parse.Kvp(entry);
-      var target = kvp.Key.Trim();
-      if (target == "") continue;
-      if (kvp.Value == "")
-      {
-        Log.Warning($"{fileName}: Invalid {fieldName} value '{entry}', expected 'target,distance'.");
-        continue;
-      }
-      if (!Parse.TryFloat(kvp.Value, out var distance))
-      {
-        Log.Warning($"{fileName}: Invalid {fieldName} distance '{kvp.Value}' in value '{entry}'.");
-        continue;
-      }
-      parsed.Add(new(target, distance));
-    }
-    if (parsed.Count == 0) return null;
-    return parsed;
-  }
+  private static List<List<Tuple<string, float>>>? ParseDistanceRules(StringList? rules, string fieldName, string fileName) =>
+    DistanceRules.Parse(rules, fieldName, fileName)?.Select(row => row.SelectMany(group => group.Names.Select(name => new Tuple<string, float>(name, group.Distance))).ToList()).ToList();
 
   private static HashSet<string> ParseMembership(string groups)
   {
@@ -262,12 +242,12 @@ public class LocationExtraInfo
       Data.group = CreateVirtualGroupName();
       Data.minDistanceFromSimilar = 1f;
     }
-    if (CloseTo == null && Data.maxDistanceFromSimilar > 0f)
+    if (CloseToRows == null && Data.maxDistanceFromSimilar > 0f)
     {
       var distance = Data.maxDistanceFromSimilar;
-      CloseTo = [new(name, distance)];
+      CloseToRows = [[new(name, distance)]];
       if (Data.groupMax != "")
-        CloseTo.Add(new(Data.groupMax, distance));
+        CloseToRows[0].Add(new(Data.groupMax, distance));
       Data.groupMax = CreateVirtualGroupName();
       Data.maxDistanceFromSimilar = 1f;
     }
@@ -284,14 +264,15 @@ public class LocationExtraInfo
       data.group = CreateVirtualGroupName();
       // Must be greater than zero to be considered.
       data.minDistanceFromSimilar = 1f;
-      AwayFrom = awayFrom;
+      // Any match is enough, so rows don't matter.
+      AwayFrom = [.. awayFrom.SelectMany(row => row)];
     }
     if (closeTo != null)
     {
       data.groupMax = CreateVirtualGroupName();
       // Must be greater than zero to be considered.
       data.maxDistanceFromSimilar = 1f;
-      CloseTo = closeTo;
+      CloseToRows = closeTo;
     }
   }
 

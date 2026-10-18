@@ -111,8 +111,8 @@ public class VegetationSpawning
       if (extra.forbiddenGlobalKeys == null && extra.requiredGlobalKeys == null) continue;
       // Spawn condition only for enabled vegs.
       veg.m_enable = true;
-      if (extra.forbiddenGlobalKeys != null && Helper.HasAnyGlobalKey(extra.forbiddenGlobalKeys)) veg.m_enable = false;
-      if (extra.requiredGlobalKeys != null && !Helper.HasEveryGlobalKey(extra.requiredGlobalKeys)) veg.m_enable = false;
+      if (Service.StringList.Forbids(extra.forbiddenGlobalKeys, ZoneSystem.instance.GetGlobalKey)) veg.m_enable = false;
+      if (extra.requiredGlobalKeys != null && !Service.StringList.Pass(extra.requiredGlobalKeys, ZoneSystem.instance.GetGlobalKey)) veg.m_enable = false;
     }
   }
 

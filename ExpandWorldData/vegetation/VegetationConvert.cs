@@ -95,10 +95,8 @@ public partial class VegetationManager
 
     if (veg.m_enable)
     {
-      if (data.requiredGlobalKey != "")
-        extra.requiredGlobalKeys = DataManager.ToList(data.requiredGlobalKey);
-      if (data.forbiddenGlobalKey != "")
-        extra.forbiddenGlobalKeys = DataManager.ToList(data.forbiddenGlobalKey);
+      extra.requiredGlobalKeys = Service.StringList.ToRows(data.requiredGlobalKey);
+      extra.forbiddenGlobalKeys = Service.StringList.ToRows(data.forbiddenGlobalKey);
       if (data.centerX != 0f || data.centerY != 0f)
       {
         // Center is not supported in the original game, so to have to fallback to the custom check.

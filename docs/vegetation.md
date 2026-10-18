@@ -78,9 +78,9 @@ Note: Missing vegetation are automatically added to the file. To disable, set `e
   - When using this, it's important to put the vegetation at top of the file so that it's generated before other vegetation.
   - Unlike locations, the clear area can't cross zone borders. If the vegetation spawns near the border, it may have a smaller clear area.
   - Use `groupRadius` to move the vegetation away from the zone borders.
-- requiredGlobalKey: List of [global keys](https://valheim.wiki/Global_Keys). If all are set, the vegetation is placed.
+- requiredGlobalKey (list): [Global keys](https://valheim.wiki/Global_Keys) that must be set for the vegetation to be placed. Rows are AND, commas inside a row are OR.
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
-- forbiddenGlobalKey: List of [global keys](https://valheim.wiki/Global_Keys). If any is set, the vegetation is not placed.
+- forbiddenGlobalKey (list): [Global keys](https://valheim.wiki/Global_Keys). Same logic as `requiredGlobalKey`, but the vegetation is not placed when it matches (single row: any key blocks).
   - Note: This doesn't affect already generated zones. Intended to be used with Upgrade World + Cron Job mods.
 - data: ZDO data override. For example to create hidden stashes with Spawner Tweaks mod (`object copy` from World Edit Commands). Can be a data entry name, base64 string, shorthand `type, key, value` (for example `int, level, 3`) or an inline data mapping.
 - drops: Custom drops from Expand World Spawns mod.

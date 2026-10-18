@@ -32,6 +32,9 @@ public class LocationClientYaml
   public string enemyLevelExcludeGroups = "";
   [DefaultValue("")]
   public string blockSpawnGroups = "";
+  // Used by spawn requirements to resolve group names.
+  [DefaultValue("")]
+  public string groups = "";
 }
 
 ///<summary>Synced table (by location name) of Location component values. Applied when the location prefab is instantiated.</summary>
@@ -71,36 +74,52 @@ public static class LocationClientData
       var name = kvp.Key.m_prefab.Name;
       // Blueprints have no Location component. The first entry wins like in ZoneSystem.GetLocation.
       if (BlueprintManager.Has(name) || !names.Add(name)) continue;
-      list.Add(ToClient(name, kvp.Value.Data));
+      list.Add(ToClient(name, kvp.Value));
     }
     Configuration.valueLocationClientData.Value = list.Count == 0 ? "" : Yaml.Serializer().Serialize(list);
     SetTable(list);
     Refresh.Request(Regen.Patches);
   }
 
-  private static LocationClientYaml ToClient(string name, LocationYaml data) => new()
+  private static LocationClientYaml ToClient(string name, LocationExtraInfo extra)
   {
-    name = name,
-    discoverLabel = data.discoverLabel,
-    noBuild = data.noBuild == "false" ? "" : data.noBuild,
-    exteriorRadius = data.exteriorRadius,
-    interiorRadius = data.interiorRadius,
-    interiorEnvironment = data.interiorEnvironment,
-    enemyMinLevel = data.enemyMinLevel,
-    enemyMaxLevel = data.enemyMaxLevel,
-    enemyLevelUpChance = data.enemyLevelUpChance,
-    enemyLevelExcludeGroups = data.enemyLevelExcludeGroups,
-    blockSpawnGroups = data.blockSpawnGroups,
-  };
+    var data = extra.Data;
+    return new()
+    {
+      name = name,
+      discoverLabel = data.discoverLabel,
+      noBuild = data.noBuild == "false" ? "" : data.noBuild,
+      exteriorRadius = data.exteriorRadius,
+      interiorRadius = data.interiorRadius,
+      interiorEnvironment = data.interiorEnvironment,
+      enemyMinLevel = data.enemyMinLevel,
+      enemyMaxLevel = data.enemyMaxLevel,
+      enemyLevelUpChance = data.enemyLevelUpChance,
+      enemyLevelExcludeGroups = data.enemyLevelExcludeGroups,
+      blockSpawnGroups = data.blockSpawnGroups,
+      groups = string.Join(", ", extra.Groups.Where(group => !LocationExtra.IsVirtualGroupId(group))),
+    };
+  }
+
+  private static readonly Dictionary<string, List<int>> GroupHashes = [];
+
+  public static IEnumerable<int> GetGroupHashes(string group) => GroupHashes.TryGetValue(group, out var hashes) ? hashes : [];
 
   private static void SetTable(List<LocationClientYaml> list)
   {
     Table = [];
+    GroupHashes.Clear();
     foreach (var item in list)
     {
       var hash = item.name.GetStableHashCode();
       if (!Table.ContainsKey(hash)) Table[hash] = item;
+      foreach (var group in Parse.Split(item.groups))
+      {
+        if (!GroupHashes.TryGetValue(group, out var hashes)) GroupHashes[group] = hashes = [];
+        if (!hashes.Contains(hash)) hashes.Add(hash);
+      }
     }
+    ExpandWorld.Spawn.Requirements.Version++;
     foreach (var location in Location.s_allLocations)
     {
       if (location && GetLocationData(location.GetComponentInParent<LocationProxy>()) != null)

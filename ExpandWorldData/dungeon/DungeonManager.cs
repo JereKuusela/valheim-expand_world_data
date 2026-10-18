@@ -9,7 +9,6 @@ namespace ExpandWorldData.Dungeon;
 
 // Dungeons don't have configuration and appear as part of locations.
 // So compared to other data,  the default dungeon generators are never removed.
-// So handling missing entries isn't very important but can be added later.
 [HarmonyPatch]
 public partial class DungeonManager
 {
@@ -19,6 +18,16 @@ public partial class DungeonManager
   private static readonly List<DungeonYaml> ExtraDungeonYamls = [];
 
   private static Dictionary<string, DungeonGenerator> DefaultGenerators = [];
+  private class Config : YamlDataManager
+  {
+    protected override string FilePath => DungeonManager.FilePath;
+    protected override string Pattern => DungeonManager.Pattern;
+    protected override bool DataEnabled => Configuration.DataDungeons;
+    protected override SetResult Set(Dictionary<string, string> files) => DungeonManager.Set(files);
+    protected override void WriteDefaultConfig() => ToFile();
+  }
+  private static readonly Config Instance = new();
+
   public static void AddDungeon(DungeonYaml yaml)
   {
     ExtraDungeonYamls.Add(yaml);
@@ -27,12 +36,14 @@ public partial class DungeonManager
   public static void Initialize()
   {
     EnvironmentBox.Cache.Clear();
+    DungeonObjects.Generators = [];
     DefaultGenerators.Clear();
     if (Helper.IsServer())
     {
       DefaultGenerators = ZNetScene.instance.m_namedPrefabs.Values.Where(prefab => prefab.GetComponent<DungeonGenerator>())
         .Select(prefab => prefab.GetComponent<DungeonGenerator>()).ToDictionary(kvp => kvp.name, kvp => kvp);
     }
+    Migrations.RunDungeons(DefaultGenerators);
     ReadConfigs();
   }
 
@@ -44,61 +55,36 @@ public partial class DungeonManager
     Save(data, false);
   }
 
-  private static Dictionary<string, FakeDungeonGenerator> FromFile()
-  {
-    try
-    {
-      var data = DataManager.ReadData<DungeonYaml, FakeDungeonGenerator>(Pattern, From);
-      return data.ToDictionary(data => data.name);
-    }
-    catch (Exception e)
-    {
-      Log.Error(e.Message);
-      Log.Error(e.StackTrace);
-    }
-    return [];
-  }
+  public static void ReadConfigs() => Instance.ReadConfigs();
 
-  public static void ReadConfigs()
+  private static SetResult Set(Dictionary<string, string> files)
   {
-    if (Helper.IsClient()) return;
-    DungeonObjects.Generators.Clear();
-    if (!Configuration.DataDungeons)
+    if (files.Count == 0)
     {
-      Log.Info($"Reloading default dungeon entries).");
-      return;
+      DungeonObjects.Generators = [];
+      Log.Info("Reloading default dungeon data.");
+      return SetResult.Applied;
     }
-    if (!File.Exists(FilePath))
+    Dictionary<string, FakeDungeonGenerator> data = [];
+    foreach (var file in files)
     {
-      ToFile();
-      return; // Watcher triggers reload.
+      if (!Yaml.TryDeserialize<DungeonYaml>(file.Value, file.Key, out var parsed)) return SetResult.Failed;
+      foreach (var entry in parsed)
+      {
+        var generator = From(entry, file.Key);
+        data.Add(generator.name, generator);
+      }
     }
-
-    var data = FromFile();
     if (data.Count == 0)
     {
-      Log.Warning($"Failed to load any dungeon data.");
-      Log.Info($"Reloading default dungeon data.");
-      return;
+      Log.Warning("Failed to load any dungeon data.");
+      return SetResult.Failed;
     }
-    if (Configuration.DataMigration && (MigrateBaseSeed() || AddMissingEntries(data)))
-    {
-      // Watcher triggers reload.
-      return;
-    }
+    if (YamlDataManager.BackfillEnabled && AddMissingEntries(data))
+      return SetResult.Rewritten;
     Log.Info($"Reloading dungeon data ({data.Count} entries).");
     DungeonObjects.Generators = data;
-  }
-
-  ///<summary>Backfills addBaseSeedToRandomSpawn for yaml files saved before the field existed. Returns true if any file was changed.</summary>
-  private static bool MigrateBaseSeed()
-  {
-    if (Yaml.HasField(Pattern, "addBaseSeedToRandomSpawn")) return false;
-    var migrations = DefaultGenerators.Where(kvp => kvp.Value.m_addBaseSeedToRandomSpawn).ToDictionary(kvp => kvp.Key, _ => "true");
-    if (migrations.Count == 0) return false;
-    var changed = Yaml.InsertMissingField(Pattern, "name", "addBaseSeedToRandomSpawn", migrations);
-    if (changed) Log.Warning($"Added addBaseSeedToRandomSpawn to {Pattern} files.");
-    return changed;
+    return SetResult.Applied;
   }
 
   ///<summary>Detects missing entries and adds them back to the main yaml file. Returns true if anything was added.</summary>
@@ -115,26 +101,7 @@ public partial class DungeonManager
   }
   private static void Save(List<DungeonYaml> data, bool log)
   {
-    Dictionary<string, List<DungeonYaml>> perFile = [];
-    foreach (var item in data)
-    {
-      var mod = AssetTracker.GetModFromPrefab(item.name);
-      var file = Configuration.SplitDataPerMod ? AssetTracker.GetFileNameFromMod(mod) : "";
-      if (!perFile.ContainsKey(file))
-        perFile[file] = [];
-      perFile[file].Add(item);
-
-      if (log)
-        Log.Warning($"{mod}: {item.name}");
-    }
-    foreach (var kvp in perFile)
-    {
-      var file = Path.Combine(Yaml.BaseDirectory, $"expand_dungeons{kvp.Key}.yaml");
-      var yaml = File.Exists(file) ? File.ReadAllText(file) + "\n" : "";
-      // Directly appending is risky but necessary to keep comments, etc.
-      yaml += Yaml.Serializer().Serialize(kvp.Value);
-      File.WriteAllText(file, yaml);
-    }
+    YamlFiles.SavePerMod("dungeons", data, item => item.name, log);
   }
 
   public static void SetupWatcher()

@@ -14,7 +14,7 @@ public static class Patcher
     PatchCheckPerPlayer(harmony, isServer && Configuration.CheckPerPlayer);
     PatchLifecycle(harmony, isServer, hasData);
     PatchExtraChecks(harmony, hasData && Loader.ExtraData.Values.Any(data =>
-      data.RequiredEnvironments.Count > 0 || data.PlayerLimit != null || data.EventLimit != null));
+      data.RequiredEnvironments != null || data.ForbiddenEnvironments != null || data.RequiredKeyRows != null || data.ForbiddenKeyRows != null || data.PlayerLimit != null || data.EventLimit != null));
     PatchCheckBase(harmony, hasData && Loader.ExtraData.Values.Any(data =>
       data.MinBaseValue != 3 || data.MaxBaseValue != int.MaxValue));
     PatchCommands(harmony, isServer && hasData && Loader.ExtraData.Values.Any(data =>

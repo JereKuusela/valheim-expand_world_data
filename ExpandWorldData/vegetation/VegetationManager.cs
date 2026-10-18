@@ -14,7 +14,7 @@ public partial class VegetationManager
 {
   private static readonly string FileName = "expand_vegetation.yaml";
   private static readonly string FilePath = Path.Combine(Yaml.BaseDirectory, FileName);
-  private static readonly string Pattern = "expand_vegetation*.yaml";
+  public static readonly string Pattern = "expand_vegetation*.yaml";
   public static readonly int HashDrop = "ews_drops".GetStableHashCode();
   private static readonly List<VegetationYaml> ExtraVegetationYamls = [];
 
@@ -25,7 +25,7 @@ public partial class VegetationManager
 
 
   // Default items are stored to track missing entries.
-  private static List<ZoneSystem.ZoneVegetation> DefaultEntries = [];
+  internal static List<ZoneSystem.ZoneVegetation> DefaultEntries = [];
   public static bool Customized { get; private set; }
   public static void Initialize()
   {
@@ -49,6 +49,7 @@ public partial class VegetationManager
   public static void CreateConfigs() => Instance.CreateConfigs();
 
   public static void ReadConfigs() => Instance.ReadConfigs();
+
 
   public static void CleanUp()
   {
@@ -104,8 +105,7 @@ public partial class VegetationManager
       Log.Warning($"Failed to load any vegetation data.");
       return SetResult.Failed;
     }
-    if (YamlDataManager.MigrationEnabled &&
-      (AltBiomeMigration.MigrateVegetation(parsed, DefaultEntries, Pattern) || AddMissingEntries(parsed)))
+    if (YamlDataManager.BackfillEnabled && AddMissingEntries(parsed))
       return SetResult.Rewritten;
     Log.Info($"Reloading vegetation data ({parsed.Count} entries).");
     data = parsed;

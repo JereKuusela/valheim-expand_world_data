@@ -9,10 +9,10 @@ Status effects are set with the `statusEffects` field in [Biomes](biomes.md), [E
 ### Status Effect Fields
 
 - name: Name of the effect.
-- requiredGlobalKeys: Active if all of these world keys are set.
-- forbiddenGlobalKeys: Active if none of these world keys are set.
-- requiredPlayerKeys: Active if all of these player keys are set.
-- forbiddenPlayerKeys: Active if none of these player keys are set.
+- requiredGlobalKeys (list): Active if the world keys are set. Rows are AND, commas inside a row are OR.
+- forbiddenGlobalKeys (list): Not active if the world keys match. Same logic as the required fields (single row: any key blocks).
+- requiredPlayerKeys (list): Active if the player keys are set. Rows are AND, commas inside a row are OR.
+- forbiddenPlayerKeys (list): Not active if the player keys match. Same logic as the required fields (single row: any key blocks).
 - day: Active during the day.
 - night: Active during the night.
 - duration: Duration in seconds. 0 is "permanent". If not given, uses the default duration of the status effect.
