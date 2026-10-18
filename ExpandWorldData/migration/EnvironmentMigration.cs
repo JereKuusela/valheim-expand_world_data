@@ -22,7 +22,7 @@ internal static class EnvironmentMigration
     ("auroraIntensityMorning", e => F(e.m_auroraIntensityMorning), "0"),
     ("auroraIntensityDay", e => F(e.m_auroraIntensityDay), "0"),
     ("auroraIntensityEvening", e => F(e.m_auroraIntensityEvening), "0"),
-    ("auroraColors", e => IsBlack(e.m_auroraColors) ? "" : $"[{string.Join(", ", EnvironmentManager.FromGradient(e.m_auroraColors)!.Select(k => $"\"{k}\""))}]", ""),
+    ("auroraColors", e => IsBlack(e.m_auroraColors) ? "" : Yaml.Serializer().Serialize(EnvironmentManager.FromGradient(e.m_auroraColors)!).TrimEnd('\r', '\n'), ""),
     ("cloudOpacityNight", e => F(e.m_cloudOpacityNight), "8.53"),
     ("cloudOpacityMorning", e => F(e.m_cloudOpacityMorning), "8.53"),
     ("cloudOpacityDay", e => F(e.m_cloudOpacityDay), "8.53"),

@@ -299,6 +299,7 @@ public class Yaml
         i--;
       }
       if (!changed) continue;
+      ExpandWorldData.Migrations.BackupFile(file);
       File.WriteAllLines(file, lines);
       changedAny = true;
     }
@@ -344,10 +345,17 @@ public class Yaml
           end++;
         }
         if (hasField) continue;
-        lines.Insert(i + 1, $"{new string(' ', indent + 2)}{targetField}: {newValue}");
+        var prefix = new string(' ', indent + 2);
+        if (newValue.Contains("\n") || newValue.StartsWith("- "))
+        {
+          var rows = newValue.Replace("\r\n", "\n").Split('\n');
+          lines.InsertRange(i + 1, new[] { $"{prefix}{targetField}:" }.Concat(rows.Select(row => $"{prefix}  {row}")));
+        }
+        else lines.Insert(i + 1, $"{prefix}{targetField}: {newValue}");
         changed = true;
       }
       if (!changed) continue;
+      ExpandWorldData.Migrations.BackupFile(file);
       File.WriteAllLines(file, lines);
       changedAny = true;
     }

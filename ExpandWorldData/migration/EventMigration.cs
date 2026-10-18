@@ -26,6 +26,7 @@ public static class EventMigration
       var lines = File.ReadAllLines(file).ToList();
       var migrated = MigrateLines(lines);
       if (lines.SequenceEqual(migrated)) continue;
+      ExpandWorldData.Migrations.BackupFile(file);
       File.WriteAllLines(file, migrated);
       changedAny = true;
     }
@@ -77,8 +78,9 @@ public static class EventMigration
     // Only simple one line values can be rewritten safely.
     var all = allIndex >= 0 ? Value(result[allIndex]) : "";
     var any = anyIndex >= 0 ? Value(result[anyIndex]) : "";
-    if (keysIndex >= 0 && !Value(result[keysIndex]).StartsWith("["))
-      result[keysIndex] = Replace(result[keysIndex], "requiredGlobalKeys", Rows(Value(result[keysIndex]).Split(',')));
+    var keys = keysIndex >= 0 ? Value(result[keysIndex]) : "";
+    if (keys != "" && !keys.StartsWith("["))
+      result[keysIndex] = Replace(result[keysIndex], "requiredGlobalKeys", Rows(keys.Split(',')));
     if (all != "")
     {
       List<string> rows = [];
@@ -108,8 +110,9 @@ public static class EventMigration
 
   private static string Rows(IEnumerable<string> items)
   {
-    var quoted = items.Select(item => item.Trim()).Where(item => item != "").Select(item => $"\"{item}\"");
-    return $"[{string.Join(", ", quoted)}]";
+    var serializer = Yaml.Serializer();
+    var rows = items.Select(item => item.Trim()).Where(item => item != "").Select(item => $"- {serializer.Serialize(item).TrimEnd('\r', '\n')}").ToList();
+    return rows.Count == 0 ? "[]" : string.Join(Environment.NewLine, rows);
   }
 
   private static string Replace(string line, string key, string value)
@@ -117,6 +120,8 @@ public static class EventMigration
     var trimmed = line.TrimStart();
     var prefix = line.Substring(0, line.Length - trimmed.Length);
     if (trimmed.StartsWith("- ")) prefix += "- ";
-    return $"{prefix}{key}: {value}";
+    if (value == "[]") return $"{prefix}{key}: {value}";
+    var indent = new string(' ', prefix.Length + 2);
+    return $"{prefix}{key}:{Environment.NewLine}{indent}{value.Replace(Environment.NewLine, Environment.NewLine + indent)}";
   }
 }

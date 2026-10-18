@@ -106,7 +106,7 @@ public partial class Configuration
   public static string BlueprintLocalFolder => Path.Combine(Paths.ConfigPath, configBlueprintFolder.Value);
 #nullable enable
 
-  public static void Init(ConfigWrapper wrapper)
+  public static void Init(ConfigWrapper wrapper, int initialRevision)
   {
     var section = "1. General";
     configServerOnly = wrapper.Bind(section, "Server only", false, false, "If true, enables server side only mode and clients can't have the mod installed.");
@@ -146,7 +146,7 @@ public partial class Configuration
     configDataReload = wrapper.Bind(section, "Automatic data reload", true, false, "Data is loaded automatically on file changes. Requires restart to take effect.", synchronizedSetting: false);
     configSplitDataPerMod = wrapper.Bind(section, "Split data per mod", true, false, "If true, created data is saved to multiple files. If false, all data is saved in one file.", synchronizedSetting: false);
     configDataMigration = wrapper.Bind(section, "Automatic data migration", true, false, "Automatically add missing location, rooms and vegetation entries.", synchronizedSetting: false);
-    configDataRevision = wrapper.BindHidden(section, "Data revision", Migrations.Latest, 0);
+    configDataRevision = wrapper.BindHidden(section, "Data revision", initialRevision);
     configDataEnvironments = wrapper.Bind(section, "Environment data", false, false, "Use environment data", synchronizedSetting: false);
     configDataEnvironments.SettingChanged += (s, e) => EnvironmentManager.ReadConfigs();
     configDataBiome = wrapper.Bind(section, "Biome data", false, true, "Use biome data", synchronizedSetting: false);

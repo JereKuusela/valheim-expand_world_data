@@ -136,7 +136,10 @@ public class WorldManager
     if (data.Count != OldData.Count || Yaml.Serializer().Serialize(data) != Yaml.Serializer().Serialize(OldData)) return false;
     Log.Info("Detected old default world data with swapped deepnorth and mountain. Using fixed default.");
     if (File.Exists(FilePath))
+    {
+      Migrations.BackupFile(FilePath);
       File.Delete(FilePath);
+    }
     CreateConfigs();
     return true;
   }

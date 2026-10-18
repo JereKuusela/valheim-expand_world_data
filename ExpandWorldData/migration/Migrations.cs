@@ -12,6 +12,27 @@ public static class Migrations
   // Increase when adding a step, and give the step a check for the new revision. Steps must also be safe to repeat.
   public const int Latest = 1;
 
+  public static int ReadRevision(string path)
+  {
+    if (!File.Exists(path)) return Latest;
+    var section = "";
+    foreach (var line in File.ReadLines(path))
+    {
+      var text = line.Trim();
+      if (text.Length == 0 || text.StartsWith("#")) continue;
+      if (text.StartsWith("[") && text.EndsWith("]"))
+      {
+        section = text.Substring(1, text.Length - 2).Trim();
+        continue;
+      }
+      if (section != "3. Data") continue;
+      var separator = text.IndexOf('=');
+      if (separator < 0 || text.Substring(0, separator).Trim() != "Data revision") continue;
+      return int.TryParse(text.Substring(separator + 1).Trim(), out var revision) ? revision : 0;
+    }
+    return 0;
+  }
+
   public static bool Pending => YamlDataManager.MigrationEnabled && Configuration.configDataRevision.Value < Latest;
 
   [Flags]
@@ -19,6 +40,18 @@ public static class Migrations
   private static Stage Completed;
 
   public static void Reset() => Completed = 0;
+
+  public static void BackupFile(string file)
+  {
+    Directory.CreateDirectory(Yaml.BackupDirectory);
+    var name = $"{Path.GetFileName(file)}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+    var backup = Path.Combine(Yaml.BackupDirectory, $"{name}.bak");
+    var suffix = 1;
+    while (File.Exists(backup))
+      backup = Path.Combine(Yaml.BackupDirectory, $"{name}_{suffix++}.bak");
+    File.Copy(file, backup);
+    Log.Info($"Backed up {file} to {backup} before migration.");
+  }
 
   private static void Run(Stage stage, Action migrate)
   {
@@ -56,9 +89,9 @@ public static class Migrations
   {
     Finish(AltBiomeManager.Pattern, Yaml.RemoveFields(AltBiomeManager.Pattern, ["addVegetation", "addLocations"]),
       "Removed obsolete addVegetation and addLocations from alt biome files. These are handled by the vegetation and location files.");
-    Read<ExpandWorld.Event.Data>(ExpandWorld.Event.EventManager.Pattern);
     Finish(ExpandWorld.Event.EventManager.Pattern, ExpandWorld.Event.EventMigration.Migrate(ExpandWorld.Event.EventManager.Pattern),
       "Migrated event keys to the new row format (notRequired* is now forbidden*, requiredPlayerKeysAll merged to requiredPlayerKeys).");
+    Read<ExpandWorld.Event.Data>(ExpandWorld.Event.EventManager.Pattern);
     Finish(WorldManager.Pattern, WorldManager.MigrateOldDefault(), null);
   });
 
