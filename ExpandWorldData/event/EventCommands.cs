@@ -1,7 +1,7 @@
-using ExpandWorldData;
+using ExpandWorldData.Data;
 using UnityEngine;
 
-namespace ExpandWorld.Event;
+namespace ExpandWorldData.Event;
 
 public class Commands
 {

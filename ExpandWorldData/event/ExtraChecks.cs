@@ -1,11 +1,9 @@
-using System.Collections.Generic;
 using System.Linq;
-using ExpandWorldData;
 using Service;
 using UnityEngine;
 using Common;
 
-namespace ExpandWorld.Event;
+namespace ExpandWorldData.Event;
 
 public class ExtraChecks
 {

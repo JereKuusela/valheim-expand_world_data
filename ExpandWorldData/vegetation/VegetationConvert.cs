@@ -3,9 +3,11 @@ using System.Globalization;
 using System.Linq;
 using Common;
 using Data;
+using ExpandWorldData.Data;
+using ExpandWorldData.World;
 using UnityEngine;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Vegetation;
 
 public partial class VegetationManager
 {

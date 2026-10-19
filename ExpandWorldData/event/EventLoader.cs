@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using ExpandWorldData;
-using HarmonyLib;
+using ExpandWorldData.Data;
 using Service;
 
-namespace ExpandWorld.Event;
+namespace ExpandWorldData.Event;
 
 public class Loader
 {

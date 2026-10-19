@@ -1,7 +1,9 @@
 using System.Collections.Generic;
-using HarmonyLib;
+using ExpandWorldData.Biome;
+using ExpandWorldData.World;
 using UnityEngine;
-namespace ExpandWorldData;
+
+namespace ExpandWorldData.Features;
 
 
 public class HeightmapPatches

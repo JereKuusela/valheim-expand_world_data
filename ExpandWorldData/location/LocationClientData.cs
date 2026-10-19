@@ -5,8 +5,9 @@ using System.Linq;
 using HarmonyLib;
 using Service;
 using Common;
+using ExpandWorldData.Data;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Locations;
 
 // Subset of the location data that is needed by clients (and by whoever owns the spawners).
 public class LocationClientYaml
@@ -119,7 +120,7 @@ public static class LocationClientData
         if (!hashes.Contains(hash)) hashes.Add(hash);
       }
     }
-    ExpandWorld.Spawn.Requirements.Version++;
+    Spawn.Requirements.Version++;
     foreach (var location in Location.s_allLocations)
     {
       if (location && GetLocationData(location.GetComponentInParent<LocationProxy>()) != null)

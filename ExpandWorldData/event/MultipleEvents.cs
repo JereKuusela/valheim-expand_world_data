@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using ExpandWorldData;
 using UnityEngine;
 
-namespace ExpandWorld.Event;
+namespace ExpandWorldData.Event;
 
 public class MultiEvent(RandomEvent ev, int count)
 {

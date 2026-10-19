@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
-using Service;
 using Common;
+using ExpandWorldData.Data;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Dungeon;
 
 // Note: 
 // Ghost init is already set by ZoneSystem.SpawnObject.

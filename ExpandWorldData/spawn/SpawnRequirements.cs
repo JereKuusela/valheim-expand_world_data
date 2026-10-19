@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using ExpandWorldData;
+using ExpandWorldData.Locations;
 using HarmonyLib;
 using Service;
 using UnityEngine;
 
-namespace ExpandWorld.Spawn;
+namespace ExpandWorldData.Spawn;
 
 public sealed class NearGroup(DistanceGroup source, bool locations)
 {

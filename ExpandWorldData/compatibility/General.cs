@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Dungeon;
 using HarmonyLib;
-namespace ExpandWorldData;
+namespace ExpandWorldData.Compatibility;
 
 #pragma warning disable IDE0051
 [HarmonyPatch]

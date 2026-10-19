@@ -3,7 +3,7 @@ using System.Linq;
 using Service;
 using UnityEngine;
 
-namespace ExpandWorld.Drops;
+namespace ExpandWorldData.Drop;
 
 public static class ReferenceFileGenerator
 {

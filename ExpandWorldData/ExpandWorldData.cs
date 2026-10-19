@@ -6,6 +6,18 @@ using HarmonyLib;
 using Service;
 using Common;
 using UnityEngine;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Clutter;
+using ExpandWorldData.Features;
+using ExpandWorldData.Dungeon;
+using ExpandWorldData.Environment;
+using ExpandWorldData.Territory;
+using ExpandWorldData.World;
+using ExpandWorldData.Data;
+using ExpandWorldData.Locations;
+using ExpandWorldData.AltBiomes;
+using ExpandWorldData.Vegetation;
+using ExpandWorldData.Migration;
 namespace ExpandWorldData;
 
 [BepInPlugin(GUID, NAME, VERSION)]
@@ -56,11 +68,11 @@ public class EWD : BaseUnityPlugin
       ClutterManager.SetupWatcher();
       EnvironmentManager.SetupWatcher();
       AltBiomeManager.SetupWatcher();
-      Dungeon.DungeonManager.SetupWatcher();
+      DungeonManager.SetupWatcher();
       RoomManager.SetupWatcher();
-      ExpandWorld.Spawn.SpawnManager.SetupWatcher();
-      ExpandWorld.Event.EventManager.SetupWatcher();
-      ExpandWorld.Drops.DropManager.SetupWatcher();
+      Spawn.SpawnManager.SetupWatcher();
+      Event.EventManager.SetupWatcher();
+      Drop.DropManager.SetupWatcher();
     }
     catch (Exception e)
     {

@@ -4,8 +4,9 @@ using System.Globalization;
 using System.Linq;
 using Service;
 using Common;
+using ExpandWorldData.Locations;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Migration;
 
 ///<summary>Backfills location fields added after the yaml was saved, so that omitted values (which mean off) don't change behavior.</summary>
 internal static class LocationMigration

@@ -1,5 +1,4 @@
 using HarmonyLib;
-using ExpandWorldData;
 
 namespace ExpandWorldData.Vegetation;
 

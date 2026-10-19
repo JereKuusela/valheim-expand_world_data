@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using ExpandWorldData.Features;
 using HarmonyLib;
 using Service;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.AltBiomes;
 
 public static class AltBiomePlacement
 {

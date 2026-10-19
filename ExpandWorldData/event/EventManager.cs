@@ -1,11 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ExpandWorldData;
+using ExpandWorldData.Data;
 using Service;
 
-namespace ExpandWorld.Event;
+namespace ExpandWorldData.Event;
 
 public class EventManager
 {
@@ -46,7 +45,7 @@ public class EventManager
   {
     var system = RandEventSystem.instance;
     if (system == null) return SetResult.Failed;
-    using var metadata = new Spawn.Loader.MetadataLoad();
+    using var metadata = new Spawn.MetadataLoad();
     var previousSpawns = system.m_events.SelectMany(entry => entry.m_spawn);
     var previousExtra = Loader.ExtraData;
     Loader.ExtraData = [];

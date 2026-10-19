@@ -1,8 +1,9 @@
 using System.ComponentModel;
-using SpawnData = ExpandWorld.Spawn.Data;
+using SpawnData = ExpandWorldData.Spawn.Data;
 using YamlDotNet.Serialization;
+using ExpandWorldData.Biome;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.AltBiomes;
 
 public class AltBiomeYaml
 {

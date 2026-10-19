@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using ExpandWorldData;
 using UnityEngine;
 
-namespace ExpandWorld.Event;
+namespace ExpandWorldData.Event;
 
 public class CheckPerPlayer
 {

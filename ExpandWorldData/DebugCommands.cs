@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Common;
+using ExpandWorldData.Compatibility;
+using ExpandWorldData.Data;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -61,11 +63,11 @@ public class DebugCommands
     }, true);
     new Terminal.ConsoleCommand("ew_drops", "Forces drop reference file creation.", (args) =>
     {
-      ExpandWorld.Drops.ReferenceFileGenerator.Save();
+      Drop.ReferenceFileGenerator.Save();
     }, true);
     new Terminal.ConsoleCommand("ew_spawns", "Forces spawn file creation.", (args) =>
     {
-      ExpandWorld.Spawn.SpawnManager.Save();
+      Spawn.SpawnManager.Save();
     }, true);
     new Terminal.ConsoleCommand("ew_test_spawn", "[name] - Spawns a creature from spawn system by entry name.", (args) =>
     {

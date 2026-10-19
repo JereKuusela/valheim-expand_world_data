@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using Service;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Data;
 
 /// <summary>Adds client sync of the yaml contents to the shared create/read lifecycle.</summary>
 public abstract class SyncedDataManager : YamlDataManager

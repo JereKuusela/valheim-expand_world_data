@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using YamlDotNet.Serialization;
-namespace ExpandWorldData;
+
+namespace ExpandWorldData.Locations;
 
 public class LocationYaml
 {

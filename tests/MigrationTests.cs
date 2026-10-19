@@ -4,8 +4,7 @@ using System.IO;
 using System.Linq;
 using BepInEx;
 using BepInEx.Logging;
-using ExpandWorld.Event;
-using ExpandWorldData;
+using ExpandWorldData.Migration;
 using NUnit.Framework;
 using Service;
 
@@ -203,8 +202,8 @@ public class YamlMigrationTests
     Directory.Delete(DirectoryPath, true);
   }
 
-  private List<ExpandWorld.Event.Data> ReadEvents()
-    => Yaml.Deserializer().Deserialize<List<ExpandWorld.Event.Data>>(File.ReadAllText(FilePath));
+  private List<Event.Data> ReadEvents()
+    => Yaml.Deserializer().Deserialize<List<Event.Data>>(File.ReadAllText(FilePath));
 
   [Test]
   public void LegacyEventFieldsMigrateBeforeStrictDeserialization()

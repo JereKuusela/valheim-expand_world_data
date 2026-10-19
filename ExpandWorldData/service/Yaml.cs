@@ -8,6 +8,7 @@ using BepInEx.Configuration;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Common;
+using ExpandWorldData.Migration;
 
 namespace Service;
 
@@ -299,7 +300,7 @@ public class Yaml
         i--;
       }
       if (!changed) continue;
-      ExpandWorldData.Migrations.BackupFile(file);
+      Migrations.BackupFile(file);
       File.WriteAllLines(file, lines);
       changedAny = true;
     }
@@ -355,7 +356,7 @@ public class Yaml
         changed = true;
       }
       if (!changed) continue;
-      ExpandWorldData.Migrations.BackupFile(file);
+      Migrations.BackupFile(file);
       File.WriteAllLines(file, lines);
       changedAny = true;
     }

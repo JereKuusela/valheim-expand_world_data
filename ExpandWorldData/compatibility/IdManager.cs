@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
-using Service;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Compatibility;
 
 
 // Base game has a way to execute commands on the server, but there is no admin check on it.

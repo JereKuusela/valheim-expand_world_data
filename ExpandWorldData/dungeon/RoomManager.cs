@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ExpandWorldData.Dungeon;
 using Service;
 using UnityEngine;
 using Common;
+using ExpandWorldData.Data;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Dungeon;
 
 public class RoomManager
 {
@@ -288,9 +288,9 @@ public class RoomManager
     if (data.objects != null)
       DungeonObjects.Objects[roomData] = Helper.ParseObjects(data.objects, fileName);
     if (data.objectSwap != null)
-      DungeonObjects.ObjectSwaps[roomData] = Spawn.LoadSwaps(data.objectSwap);
+      DungeonObjects.ObjectSwaps[roomData] = Create.LoadSwaps(data.objectSwap);
     if (data.objectData != null)
-      DungeonObjects.ObjectData[roomData] = Spawn.LoadData(data.objectData, fileName);
+      DungeonObjects.ObjectData[roomData] = Create.LoadData(data.objectData, fileName);
     return roomData;
   }
   private static RoomYaml ToData(DungeonDB.RoomData roomData)

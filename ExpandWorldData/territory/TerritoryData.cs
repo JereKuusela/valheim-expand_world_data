@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using ExpandWorldData.Data;
 using UnityEngine;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Territory;
 
 public class TerritoryYaml
 {
@@ -61,8 +62,8 @@ public class TerritoryData
     altitudeMultiplier = data.altitudeMultiplier;
     waterDepthMultiplier = data.waterDepthMultiplier;
     altitudeDelta = data.altitudeDelta;
-    excessFactor = UnityEngine.Mathf.Abs(data.excessFactor);
-    excessSign = UnityEngine.Mathf.Sign(data.excessFactor);
+    excessFactor = Mathf.Abs(data.excessFactor);
+    excessSign = Mathf.Sign(data.excessFactor);
     minimumAltitude = data.minimumAltitude;
     maximumAltitude = data.maximumAltitude;
     forestMultiplier = data.forestMultiplier;

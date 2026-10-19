@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Locations;
 
 public static class ZoneSystemPatches
 {

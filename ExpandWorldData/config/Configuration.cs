@@ -4,6 +4,19 @@ using BepInEx.Configuration;
 using ServerSync;
 using Service;
 using Common;
+using ExpandWorldData.Biome;
+using ExpandWorldData.AltBiomes;
+using ExpandWorldData.Clutter;
+using ExpandWorldData.Environment;
+using ExpandWorldData.Territory;
+using ExpandWorldData.World;
+using ExpandWorldData.Data;
+using ExpandWorldData.Locations;
+using ExpandWorldData.Vegetation;
+using ExpandWorldData.Dungeon;
+using ExpandWorldData.Event;
+using ExpandWorldData.Spawn;
+using ExpandWorldData.Drop;
 
 namespace ExpandWorldData;
 
@@ -156,7 +169,7 @@ public partial class Configuration
     configDataClutter = wrapper.Bind(section, "Clutter data", false, false, "Use clutter data", synchronizedSetting: false);
     configDataClutter.SettingChanged += (s, e) => ClutterManager.ReadConfigs();
     configDataDungeons = wrapper.Bind(section, "Dungeon data", false, false, "Use dungeon data", synchronizedSetting: false);
-    configDataDungeons.SettingChanged += (s, e) => Dungeon.DungeonManager.ReadConfigs();
+    configDataDungeons.SettingChanged += (s, e) => DungeonManager.ReadConfigs();
     configDataRooms = wrapper.Bind(section, "Room data", false, false, "Use dungeon room data", synchronizedSetting: false);
     configDataRooms.SettingChanged += (s, e) => RoomManager.ReadConfigs();
     configDataWorld = wrapper.Bind(section, "World data", false, true, "Use world data", synchronizedSetting: false);
@@ -168,11 +181,11 @@ public partial class Configuration
     configDataAltBiomes = wrapper.Bind(section, "Alt biome data", false, false, "Use alternative biome data", synchronizedSetting: false);
     configDataAltBiomes.SettingChanged += (s, e) => AltBiomeManager.ReadConfigs();
     configDataEvents = wrapper.Bind(section, "Event data", false, false, "Use event data.", synchronizedSetting: false);
-    configDataEvents.SettingChanged += (s, e) => ExpandWorld.Event.EventManager.ReadConfigs();
+    configDataEvents.SettingChanged += (s, e) => EventManager.ReadConfigs();
     configDataSpawns = wrapper.Bind(section, "Spawn data", false, false, "Use spawn data.", synchronizedSetting: false);
-    configDataSpawns.SettingChanged += (s, e) => ExpandWorld.Spawn.SpawnManager.ReadConfigs();
+    configDataSpawns.SettingChanged += (s, e) => SpawnManager.ReadConfigs();
     configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.", synchronizedSetting: false);
-    configDataDrops.SettingChanged += (s, e) => ExpandWorld.Drops.DropManager.ReadConfigs();
+    configDataDrops.SettingChanged += (s, e) => DropManager.ReadConfigs();
     configBlueprintFolder = wrapper.Bind(section, "Blueprint folder", "PlanBuild", false, "Folder relative to the config folder.");
 
     valueNoBuildData = wrapper.AddValue("no_build_data");
@@ -190,13 +203,13 @@ public partial class Configuration
     valueWorldData = wrapper.AddValue("world_data");
     valueWorldData.ValueChanged += () => WorldManager.FromSetting(valueWorldData.Value);
     valueSpawnData = wrapper.AddValue("spawn_data");
-    valueSpawnData.ValueChanged += () => ExpandWorld.Spawn.SpawnManager.FromSetting(valueSpawnData.Value);
+    valueSpawnData.ValueChanged += () => Spawn.SpawnManager.FromSetting(valueSpawnData.Value);
     valueAltBiomeData = wrapper.AddValue("altbiome_data");
     valueAltBiomeData.ValueChanged += () => AltBiomeManager.FromSetting(valueAltBiomeData.Value);
     valueEventData = wrapper.AddValue("event_data");
-    valueEventData.ValueChanged += () => ExpandWorld.Event.EventManager.FromSetting(valueEventData.Value);
+    valueEventData.ValueChanged += () => Event.EventManager.FromSetting(valueEventData.Value);
     valueDropData = wrapper.AddValue("drop_data");
-    valueDropData.ValueChanged += () => ExpandWorld.Drops.DropManager.FromSetting(valueDropData.Value);
+    valueDropData.ValueChanged += () => Drop.DropManager.FromSetting(valueDropData.Value);
 
     section = "4. Poles";
     configRestrictAshlands = wrapper.Bind(section, "Restrict Ashlands position", true, true, "If true, restricts Ashlands biome position.");

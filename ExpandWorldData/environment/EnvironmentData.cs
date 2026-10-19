@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using ExpandWorldData.Data;
 using UnityEngine;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Environment;
 
 public class EnvironmentYaml
 {

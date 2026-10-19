@@ -4,6 +4,7 @@ using System.Linq;
 using Service;
 using UnityEngine;
 using Common;
+using ExpandWorldData.Data;
 namespace ExpandWorldData;
 
 using Operation = Action<int, float>;

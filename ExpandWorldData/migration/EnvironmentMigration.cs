@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using ExpandWorldData.Data;
+using ExpandWorldData.Environment;
 using Service;
 using UnityEngine;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Migration;
 
 ///<summary>Backfills environment fields added after the yaml was saved, so that omitted values (which mean off) don't change the look.</summary>
 internal static class EnvironmentMigration

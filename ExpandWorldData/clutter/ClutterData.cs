@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using YamlDotNet.Serialization;
-namespace ExpandWorldData;
+namespace ExpandWorldData.Clutter;
 
 public class ClutterYaml
 {

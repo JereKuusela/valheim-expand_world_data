@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using ExpandWorldData.Biome;
+using ExpandWorldData.World;
 using HarmonyLib;
 using UnityEngine;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Features;
 
 [HarmonyPatch(typeof(Character), nameof(Character.UpdateLava))]
 public class FixLavaHeatReset

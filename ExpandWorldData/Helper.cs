@@ -6,6 +6,8 @@ using Data;
 using Service;
 using UnityEngine;
 using Common;
+using ExpandWorldData.Data;
+using ExpandWorldData.Compatibility;
 
 namespace ExpandWorldData;
 

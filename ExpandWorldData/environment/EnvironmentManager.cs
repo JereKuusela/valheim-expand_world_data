@@ -1,13 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Globalization;
 using System.Linq;
+using ExpandWorldData.Data;
 using Service;
-using UnityEngine;
-using Common;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Environment;
 
 public partial class EnvironmentManager
 {

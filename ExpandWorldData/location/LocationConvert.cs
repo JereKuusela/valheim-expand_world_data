@@ -1,10 +1,8 @@
 using System.Globalization;
-using System.Linq;
-using Common;
-using Service;
-using UnityEngine;
+using ExpandWorldData.Data;
+using ExpandWorldData.World;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Locations;
 
 public partial class LocationManager
 {

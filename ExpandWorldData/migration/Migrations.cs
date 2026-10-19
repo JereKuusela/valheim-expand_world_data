@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ExpandWorldData.AltBiomes;
+using ExpandWorldData.Data;
+using ExpandWorldData.Dungeon;
+using ExpandWorldData.World;
 using Service;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Migration;
 
 ///<summary>One-time yaml upgrades, done separately from data loading. The hidden revision tells which upgrades have been done.</summary>
 public static class Migrations
@@ -89,9 +93,9 @@ public static class Migrations
   {
     Finish(AltBiomeManager.Pattern, Yaml.RemoveFields(AltBiomeManager.Pattern, ["addVegetation", "addLocations"]),
       "Removed obsolete addVegetation and addLocations from alt biome files. These are handled by the vegetation and location files.");
-    Finish(ExpandWorld.Event.EventManager.Pattern, ExpandWorld.Event.EventMigration.Migrate(ExpandWorld.Event.EventManager.Pattern),
+    Finish(Event.EventManager.Pattern, EventMigration.Migrate(Event.EventManager.Pattern),
       "Migrated event keys to the new row format (notRequired* is now forbidden*, requiredPlayerKeysAll merged to requiredPlayerKeys).");
-    Read<ExpandWorld.Event.Data>(ExpandWorld.Event.EventManager.Pattern);
+    Read<Event.Data>(Event.EventManager.Pattern);
     Finish(WorldManager.Pattern, WorldManager.MigrateOldDefault(), null);
   });
 
@@ -105,14 +109,15 @@ public static class Migrations
 
   public static void RunDungeons(Dictionary<string, DungeonGenerator> originals) => Run(Stage.Dungeons, () =>
   {
-    var pattern = Dungeon.DungeonManager.Pattern;
+    var pattern = DungeonManager.Pattern;
     Read<DungeonYaml>(pattern);
     if (Yaml.HasField(pattern, "addBaseSeedToRandomSpawn")) return;
     var values = originals.Where(entry => entry.Value.m_addBaseSeedToRandomSpawn).ToDictionary(entry => entry.Key, _ => "true");
     Finish(pattern, Yaml.InsertMissingField(pattern, "name", "addBaseSeedToRandomSpawn", values),
       $"Added addBaseSeedToRandomSpawn to {pattern} files.");
   });
-  public static void RunSpawns(Action migrate) => Run(Stage.Spawns, migrate);
+  public static void RunSpawns(List<(SpawnSystemList List, List<SpawnSystem.SpawnData> Spawners)> defaults, Action reload) =>
+    Run(Stage.Spawns, () => SpawnMigration.MigratePersistentEvents(defaults.SelectMany(entry => entry.Spawners), reload));
 
   // Called once everything is migrated.
   public static void Complete()

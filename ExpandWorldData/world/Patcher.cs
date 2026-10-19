@@ -1,4 +1,6 @@
 using HarmonyLib;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Territory;
 
 namespace ExpandWorldData.World;
 

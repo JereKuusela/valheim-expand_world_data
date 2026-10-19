@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
-using Service;
 using UnityEngine;
 using Common;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Locations;
 
 public class MinimapIcon
 {

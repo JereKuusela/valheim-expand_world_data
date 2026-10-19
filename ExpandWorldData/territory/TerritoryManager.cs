@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using Service;
 using Common;
+using ExpandWorldData.Data;
+using ExpandWorldData.World;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Territory;
 
 public class TerritoryManager
 {

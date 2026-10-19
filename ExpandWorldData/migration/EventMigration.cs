@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Service;
 
-namespace ExpandWorld.Event;
+namespace ExpandWorldData.Migration;
 
 // Older files used comma separated AND lists and separate "all" player keys.
 public static class EventMigration
@@ -26,7 +26,7 @@ public static class EventMigration
       var lines = File.ReadAllLines(file).ToList();
       var migrated = MigrateLines(lines);
       if (lines.SequenceEqual(migrated)) continue;
-      ExpandWorldData.Migrations.BackupFile(file);
+      Migrations.BackupFile(file);
       File.WriteAllLines(file, migrated);
       changedAny = true;
     }
@@ -112,7 +112,7 @@ public static class EventMigration
   {
     var serializer = Yaml.Serializer();
     var rows = items.Select(item => item.Trim()).Where(item => item != "").Select(item => $"- {serializer.Serialize(item).TrimEnd('\r', '\n')}").ToList();
-    return rows.Count == 0 ? "[]" : string.Join(Environment.NewLine, rows);
+    return rows.Count == 0 ? "[]" : string.Join(System.Environment.NewLine, rows);
   }
 
   private static string Replace(string line, string key, string value)
@@ -122,6 +122,6 @@ public static class EventMigration
     if (trimmed.StartsWith("- ")) prefix += "- ";
     if (value == "[]") return $"{prefix}{key}: {value}";
     var indent = new string(' ', prefix.Length + 2);
-    return $"{prefix}{key}:{Environment.NewLine}{indent}{value.Replace(Environment.NewLine, Environment.NewLine + indent)}";
+    return $"{prefix}{key}:{System.Environment.NewLine}{indent}{value.Replace(System.Environment.NewLine, System.Environment.NewLine + indent)}";
   }
 }

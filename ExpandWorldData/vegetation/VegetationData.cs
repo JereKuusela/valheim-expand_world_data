@@ -6,7 +6,7 @@ using UnityEngine;
 using YamlDotNet.Serialization;
 using Common;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Vegetation;
 
 public class VegetationYaml
 {

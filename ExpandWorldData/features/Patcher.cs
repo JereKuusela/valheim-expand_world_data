@@ -1,3 +1,7 @@
+using ExpandWorldData.AltBiomes;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Territory;
+using ExpandWorldData.World;
 using HarmonyLib;
 
 namespace ExpandWorldData.Features;

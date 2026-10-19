@@ -9,8 +9,18 @@ using UnityEngine;
 using Data;
 using SoftReferenceableAssets;
 using Common;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Clutter;
+using ExpandWorldData.AltBiomes;
+using ExpandWorldData.Vegetation;
+using ExpandWorldData.Locations;
+using ExpandWorldData.Migration;
+using ExpandWorldData.Environment;
+using ExpandWorldData.Territory;
+using ExpandWorldData.World;
+using ExpandWorldData.Dungeon;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Data;
 
 // Load order (vanilla calls, with EWD hooks).
 // Server:
@@ -80,7 +90,7 @@ public class InitializeContent
     // 1) Initialize managers (both client and server; snapshots + arms client sync gate).
     EnvironmentManager.Initialize();
     BiomeManager.Initialize();
-    ExpandWorld.Event.EventManager.Initialize();
+    Event.EventManager.Initialize();
     AltBiomeManager.Initialize();
     // Clutter must be here because since SetupLocations adds prefabs to the list.
     ClutterManager.Initialize();

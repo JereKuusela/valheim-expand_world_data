@@ -4,6 +4,8 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using Service;
 using UnityEngine;
+using ExpandWorldData.Data;
+using ExpandWorldData.Locations;
 
 namespace ExpandWorldData.Dungeon;
 
@@ -17,7 +19,7 @@ public class Spawner
     // Revert to the default behaviour as a fail safe.
     if (DungeonObjects.CurrentRoom == null) return TrackerWrapper(Object.Instantiate(prefab, pos, rot));
     BlueprintObject bpo = new(Utils.GetPrefabName(prefab), pos, rot, prefab.transform.localScale, null, 1f);
-    var obj = Spawn.BPO(bpo, 0, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
+    var obj = Create.BPO(bpo, 0, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
     return TrackerWrapper(obj ?? LocationSpawning.DummySpawn);
   }
 
@@ -107,7 +109,7 @@ public class Spawner
       return;
 
     if (BlueprintManager.TryGet(bpName, out var bp))
-      Spawn.Blueprint(bp, pos, rot, Vector3.one, 0, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
+      Create.Blueprint(bp, pos, rot, Vector3.one, 0, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
   }
 
 
@@ -125,7 +127,7 @@ public class Spawner
       foreach (var obj in objects)
       {
         if (obj.Chance < 1f && Random.value > obj.Chance) continue;
-        Spawn.BPO(obj, pos, rot, Vector3.one, 0, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
+        Create.BPO(obj, pos, rot, Vector3.one, 0, DungeonObjects.DataOverride, DungeonObjects.PrefabOverride, null);
       }
       Random.state = state;
     }

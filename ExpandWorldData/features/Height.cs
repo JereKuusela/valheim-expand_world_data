@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Territory;
+using ExpandWorldData.World;
+using ExpandWorldData.Compatibility;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Features;
 
 public class BiomeHeight
 {

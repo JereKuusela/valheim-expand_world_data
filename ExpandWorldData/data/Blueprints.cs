@@ -8,7 +8,7 @@ using Service;
 using UnityEngine;
 using Data;
 using Common;
-namespace ExpandWorldData;
+namespace ExpandWorldData.Data;
 
 public class BlueprintObject
 {

@@ -6,7 +6,7 @@ using System.Linq;
 using Service;
 using UnityEngine;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Data;
 
 public class PlayerInfo
 {

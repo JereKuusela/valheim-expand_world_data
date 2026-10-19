@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Service;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Data;
 
 /// <summary>File writing shared by the yaml data managers.</summary>
 public static class YamlFiles

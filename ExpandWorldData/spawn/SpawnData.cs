@@ -3,7 +3,7 @@ using System.ComponentModel;
 using Service;
 using YamlDotNet.Serialization;
 
-namespace ExpandWorld.Spawn;
+namespace ExpandWorldData.Spawn;
 
 public class Data
 {

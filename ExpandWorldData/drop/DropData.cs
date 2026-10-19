@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using UnityEngine;
-using DataEntry = global::Data.DataEntry;
-using DataField = global::Data.DataField;
+using DataEntry = Data.DataEntry;
+using DataField = Data.DataField;
 
-namespace ExpandWorld.Drops;
+namespace ExpandWorldData.Drop;
 
 public class Data
 {

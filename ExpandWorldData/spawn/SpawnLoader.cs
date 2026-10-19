@@ -1,66 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using Data;
-using ExpandWorldData;
 using Service;
 using UnityEngine;
 using Common;
+using ExpandWorldData.Data;
 
-namespace ExpandWorld.Spawn;
+namespace ExpandWorldData.Spawn;
 
 public class Loader
 {
   public static Dictionary<SpawnSystem.SpawnData, DataEntry?> Data = [];
   public static Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>> Objects = [];
   public static Dictionary<SpawnSystem.SpawnData, Requirements> Requirements = [];
-
-  public sealed class MetadataLoad : System.IDisposable
-  {
-    private readonly Dictionary<SpawnSystem.SpawnData, DataEntry?> PreviousData = Data;
-    private readonly Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>> PreviousObjects = Objects;
-    private readonly Dictionary<SpawnSystem.SpawnData, Requirements> PreviousRequirements = Requirements;
-    private bool Committed;
-
-    public MetadataLoad()
-    {
-      Data = [];
-      Objects = [];
-      Requirements = [];
-    }
-
-    public void Commit(IEnumerable<SpawnSystem.SpawnData> previous, IEnumerable<SpawnSystem.SpawnData> current)
-    {
-      var retained = new HashSet<SpawnSystem.SpawnData>(current);
-      var data = new Dictionary<SpawnSystem.SpawnData, DataEntry?>(PreviousData);
-      var objects = new Dictionary<SpawnSystem.SpawnData, List<BlueprintObject>>(PreviousObjects);
-      var requirements = new Dictionary<SpawnSystem.SpawnData, Requirements>(PreviousRequirements);
-      foreach (var spawn in previous)
-      {
-        if (retained.Contains(spawn)) continue;
-        data.Remove(spawn);
-        objects.Remove(spawn);
-        requirements.Remove(spawn);
-      }
-      foreach (var spawn in retained)
-      {
-        if (Data.TryGetValue(spawn, out var entry)) data[spawn] = entry;
-        if (Objects.TryGetValue(spawn, out var entries)) objects[spawn] = entries;
-        if (Requirements.TryGetValue(spawn, out var extra)) requirements[spawn] = extra;
-      }
-      Data = data;
-      Objects = objects;
-      Requirements = requirements;
-      Committed = true;
-    }
-
-    public void Dispose()
-    {
-      if (Committed) return;
-      Data = PreviousData;
-      Objects = PreviousObjects;
-      Requirements = PreviousRequirements;
-    }
-  }
 
   public static SpawnSystem.SpawnData FromData(Data data, string fileName)
   {
@@ -174,17 +126,17 @@ public class Loader
 
   internal static void ApplyData(SpawnSystem.SpawnData critter, Vector3 spawnPoint)
   {
-    if (Loader.Data.TryGetValue(critter, out var data))
+    if (Data.TryGetValue(critter, out var data))
       DataHelper.Init(critter.m_prefab, spawnPoint, Quaternion.identity, null, data);
   }
 
   internal static void SpawnObjects(SpawnSystem.SpawnData critter, Vector3 spawnPoint)
   {
-    if (!Loader.Objects.TryGetValue(critter, out var objects)) return;
+    if (!Objects.TryGetValue(critter, out var objects)) return;
     foreach (var obj in objects)
     {
       if (obj.Chance < 1f && Random.value > obj.Chance) continue;
-      ExpandWorldData.Spawn.BPO(obj, spawnPoint, Quaternion.identity, Vector3.one, (data, prefab) => data, prefab => prefab, null);
+      Create.BPO(obj, spawnPoint, Quaternion.identity, Vector3.one, (data, prefab) => data, prefab => prefab, null);
     }
   }
 }

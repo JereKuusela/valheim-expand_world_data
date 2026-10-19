@@ -1,12 +1,11 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ExpandWorldData;
+using ExpandWorldData.Data;
 using Service;
 using UnityEngine;
 
-namespace ExpandWorld.Drops;
+namespace ExpandWorldData.Drop;
 
 public class DropManager
 {

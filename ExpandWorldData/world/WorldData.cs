@@ -1,7 +1,10 @@
 using System.ComponentModel;
-using Service;
 using Common;
-namespace ExpandWorldData;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Compatibility;
+using ExpandWorldData.Data;
+
+namespace ExpandWorldData.World;
 
 public class WorldYaml
 {

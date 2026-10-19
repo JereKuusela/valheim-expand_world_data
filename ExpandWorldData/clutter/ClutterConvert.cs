@@ -1,6 +1,7 @@
 using Service;
+using ExpandWorldData.Data;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Clutter;
 
 public partial class ClutterManager
 {

@@ -5,7 +5,7 @@ using Service;
 using YamlDotNet.Serialization;
 using Common;
 
-namespace ExpandWorld.Event;
+namespace ExpandWorldData.Event;
 
 public class Data
 {

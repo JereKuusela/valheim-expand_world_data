@@ -1,14 +1,11 @@
-using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using Data;
+using ExpandWorldData.Compatibility;
+using ExpandWorldData.Data;
 using Service;
-using UnityEngine;
-using Common;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Vegetation;
 
 public partial class VegetationManager
 {

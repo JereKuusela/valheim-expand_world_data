@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
-using Service;
 using UnityEngine;
 using Data;
-using System.Diagnostics;
 using Common;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Data;
+using ExpandWorldData.World;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Locations;
 
 public class LocationSpawning
 {
@@ -33,7 +34,7 @@ public class LocationSpawning
   public static GameObject Object(GameObject prefab, Vector3 pos, Quaternion rot, int seed, List<GameObject> spawnedGhostObjects)
   {
     BlueprintObject bpo = new(Utils.GetPrefabName(prefab), pos, rot, prefab.transform.localScale, null, 1f);
-    var obj = Spawn.BPO(bpo, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
+    var obj = Create.BPO(bpo, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
     return obj ?? DummySpawn;
   }
 
@@ -45,8 +46,8 @@ public class LocationSpawning
     //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefab.Name}");
     foreach (var obj in objects)
     {
-      if (obj.Chance < 1f && UnityEngine.Random.value > obj.Chance) continue;
-      Spawn.BPO(obj, pos, rot, scale, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
+      if (obj.Chance < 1f && Random.value > obj.Chance) continue;
+      Create.BPO(obj, pos, rot, scale, seed, DataOverride, PrefabOverride, spawnedGhostObjects);
     }
   }
 
@@ -98,7 +99,7 @@ public class LocationObjectDataAndSwap
       LocationSpawning.CurrentLocation = location;
       if (LocationExtra.TryGetData(location, out var data))
       {
-        Spawn.IgnoreHealth = data.randomDamage == "all";
+        Create.IgnoreHealth = data.randomDamage == "all";
         pos.y += data.offset ?? data.groundOffset;
         if (Configuration.RandomLocations || data.randomSeed) seed = System.DateTime.Now.Ticks.GetHashCode();
 
@@ -195,7 +196,7 @@ public class LocationObjectDataAndSwap
     var scale = LocationExtra.GetScale(location);
     if (blueprint != null)
     {
-      Spawn.Blueprint(blueprint, pos, rot, scale, seed, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
+      Create.Blueprint(blueprint, pos, rot, scale, seed, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
     }
     LocationSpawning.CustomObjects(location, pos, rot, scale, seed, spawnedGhostObjects);
 
@@ -203,7 +204,7 @@ public class LocationObjectDataAndSwap
     SnapToGround.SnappAll();
     if (mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.FinishGhostInit();
-    Spawn.IgnoreHealth = false;
+    Create.IgnoreHealth = false;
     LocationExtra.RunCommand(location, pos, rot);
     LocationSpawning.CurrentLocation = null;
   }

@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using ExpandWorldData.Compatibility;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Territory;
+using ExpandWorldData.World;
 using HarmonyLib;
 using UnityEngine;
-namespace ExpandWorldData;
 
+namespace ExpandWorldData.Features;
 
 public class WorldAngle
 {

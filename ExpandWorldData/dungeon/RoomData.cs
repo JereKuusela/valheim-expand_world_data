@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Dungeon;
 
 public class RoomConnectionYaml
 {

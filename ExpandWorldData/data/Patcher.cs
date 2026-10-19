@@ -1,7 +1,12 @@
 using System.Diagnostics;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Environment;
+using ExpandWorldData.Locations;
+using ExpandWorldData.Territory;
+using ExpandWorldData.World;
 using HarmonyLib;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Data;
 
 public static class DataPatcher
 {

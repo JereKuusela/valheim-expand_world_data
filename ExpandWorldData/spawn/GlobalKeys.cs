@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace ExpandWorld.Spawn;
+namespace ExpandWorldData.Spawn;
 
 public class GlobalKeys
 {

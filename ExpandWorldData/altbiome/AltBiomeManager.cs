@@ -1,12 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ExpandWorld.Spawn;
+using ExpandWorldData.Spawn;
 using Service;
 using Common;
+using ExpandWorldData.Data;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.AltBiomes;
 
 public static partial class AltBiomeManager
 {
@@ -54,7 +54,7 @@ public static partial class AltBiomeManager
 
   private static SetResult Set(Dictionary<string, string> files)
   {
-    using var metadata = new Loader.MetadataLoad();
+    using var metadata = new MetadataLoad();
     var previous = Active;
     var result = LoadAndApply(files);
     if (result == SetResult.Applied)

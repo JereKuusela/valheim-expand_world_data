@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Data;
-using ExpandWorldData;
-using Service;
 using UnityEngine;
 
-namespace ExpandWorld.Spawn;
+namespace ExpandWorldData.Spawn;
 
 public class LoaderFields
 {

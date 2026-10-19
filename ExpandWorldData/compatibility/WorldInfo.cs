@@ -1,8 +1,8 @@
 
+using ExpandWorldData.World;
 using HarmonyLib;
-using Service;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Compatibility;
 
 public class WorldInfo
 {

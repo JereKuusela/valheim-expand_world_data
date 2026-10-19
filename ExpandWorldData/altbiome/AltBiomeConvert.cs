@@ -1,7 +1,9 @@
 using System.Linq;
-using ExpandWorld.Spawn;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Data;
+using ExpandWorldData.Spawn;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.AltBiomes;
 
 public static partial class AltBiomeManager
 {

@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using HarmonyLib;
 using Service;
 using UnityEngine;
 using Common;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Features;
+using ExpandWorldData.Locations;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Data;
 
 public class NoBuildData
 {

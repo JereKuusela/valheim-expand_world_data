@@ -1,14 +1,12 @@
-using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using HarmonyLib;
 using Service;
-using UnityEngine;
-using Data;
 using Common;
-namespace ExpandWorldData;
+using ExpandWorldData.Data;
+using ExpandWorldData.Compatibility;
+
+namespace ExpandWorldData.Locations;
 
 public partial class LocationManager
 {

@@ -5,7 +5,7 @@ using UnityEngine;
 using Data;
 using YamlDotNet.Serialization;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Dungeon;
 
 public class DungeonDoorYaml
 {

@@ -1,4 +1,4 @@
-namespace ExpandWorldData;
+namespace ExpandWorldData.Features;
 
 public class BeehiveCheckBiome
 {

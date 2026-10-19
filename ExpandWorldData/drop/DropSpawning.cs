@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
-using ExpandWorldData;
+using ExpandWorldData.Data;
 using HarmonyLib;
 using UnityEngine;
 using DataEntry = global::Data.DataEntry;
 
-namespace ExpandWorld.Drops;
+namespace ExpandWorldData.Drop;
 
 // Applies custom object data to spawned drops, logs and stumps.
 public static class DropSpawning

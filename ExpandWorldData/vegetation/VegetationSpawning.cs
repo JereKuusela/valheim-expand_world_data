@@ -3,8 +3,9 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using Data;
+using ExpandWorldData.Data;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Vegetation;
 
 public class VegetationSpawning
 {
@@ -54,7 +55,7 @@ public class VegetationSpawning
     var scale = Vector3.one;
     if (Extra.TryGetValue(CurrentVegetation, out var extra) && extra.scale != null)
       scale = Helper.RandomValue(extra.scale);
-    Spawn.Blueprint(prefab.name, position, rotation, scale, 0, DataOverride, PrefabOverride, SpawnedObjects);
+    Create.Blueprint(prefab.name, position, rotation, scale, 0, DataOverride, PrefabOverride, SpawnedObjects);
     if (Mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.FinishGhostInit();
     // Blueprints spawn a dummy non-ZNetView object, so no extra stuff is needed.

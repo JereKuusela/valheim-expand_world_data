@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using ExpandWorldData.Data;
 using Service;
 using UnityEngine;
-namespace ExpandWorldData;
+
+namespace ExpandWorldData.Biome;
 
 public class BiomeEnvironment
 {

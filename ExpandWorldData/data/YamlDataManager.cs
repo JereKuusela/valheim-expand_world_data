@@ -3,7 +3,7 @@ using System.IO;
 using Common;
 using Service;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Data;
 
 public enum SetResult
 {

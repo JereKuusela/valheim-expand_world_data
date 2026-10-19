@@ -5,7 +5,9 @@ using UnityEngine;
 using Data;
 using System.Linq;
 using Common;
-namespace ExpandWorldData;
+using ExpandWorldData.Data;
+
+namespace ExpandWorldData.Locations;
 
 public class LocationExtra
 {
@@ -81,7 +83,7 @@ public class LocationExtra
   {
     var objectData = dungeon ? extra.DungeonObjectData : extra.ObjectData;
     if (objectData == null) return null;
-    return Spawn.GetData(objectData, prefab);
+    return Create.GetData(objectData, prefab);
   }
 
   private static string ResolvePrefabOverride(LocationExtraInfo extra, string prefab, bool dungeon)
@@ -89,13 +91,13 @@ public class LocationExtra
     var objectSwaps = dungeon ? extra.DungeonObjectSwaps : extra.ObjectSwaps;
     if (objectSwaps == null) return prefab;
     if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
-    return Spawn.RandomizeSwap(swaps);
+    return Create.RandomizeSwap(swaps);
   }
 
   private static void ExecuteCommands(LocationExtraInfo extra, Vector3 pos, Quaternion rot)
   {
     if (extra.Commands == null) return;
-    CommandManager.Run(extra.Commands, pos, rot.eulerAngles);
+    Data.CommandManager.Run(extra.Commands, pos, rot.eulerAngles);
   }
 
   private static Vector3 ResolveScale(LocationExtraInfo extra)
@@ -283,12 +285,12 @@ public class LocationExtraInfo
 
     if (data.objectData != null)
     {
-      locationobjectData = Spawn.LoadData(data.objectData, fileName);
-      dungeonobjectData = Spawn.LoadData(data.objectData, fileName);
+      locationobjectData = Create.LoadData(data.objectData, fileName);
+      dungeonobjectData = Create.LoadData(data.objectData, fileName);
     }
     if (data.locationObjectData != null)
     {
-      var objectData = Spawn.LoadData(data.locationObjectData, fileName);
+      var objectData = Create.LoadData(data.locationObjectData, fileName);
       if (locationobjectData == null)
       {
         locationobjectData = objectData;
@@ -301,7 +303,7 @@ public class LocationExtraInfo
     }
     if (data.dungeonObjectData != null)
     {
-      var objectData = Spawn.LoadData(data.dungeonObjectData, fileName);
+      var objectData = Create.LoadData(data.dungeonObjectData, fileName);
       if (dungeonobjectData == null)
       {
         dungeonobjectData = objectData;
@@ -325,12 +327,12 @@ public class LocationExtraInfo
 
     if (data.objectSwap != null)
     {
-      locationobjectSwaps = Spawn.LoadSwaps(data.objectSwap);
-      dungeonobjectSwaps = Spawn.LoadSwaps(data.objectSwap);
+      locationobjectSwaps = Create.LoadSwaps(data.objectSwap);
+      dungeonobjectSwaps = Create.LoadSwaps(data.objectSwap);
     }
     if (data.locationObjectSwap != null)
     {
-      var objectSwap = Spawn.LoadSwaps(data.locationObjectSwap);
+      var objectSwap = Create.LoadSwaps(data.locationObjectSwap);
       if (locationobjectSwaps == null)
       {
         locationobjectSwaps = objectSwap;
@@ -343,7 +345,7 @@ public class LocationExtraInfo
     }
     if (data.dungeonObjectSwap != null)
     {
-      var objectSwap = Spawn.LoadSwaps(data.dungeonObjectSwap);
+      var objectSwap = Create.LoadSwaps(data.dungeonObjectSwap);
       if (dungeonobjectSwaps == null)
       {
         dungeonobjectSwaps = objectSwap;

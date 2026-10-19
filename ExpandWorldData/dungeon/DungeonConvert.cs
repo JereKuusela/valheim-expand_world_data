@@ -5,6 +5,7 @@ using System.Linq;
 using Service;
 using UnityEngine;
 using Common;
+using ExpandWorldData.Data;
 
 namespace ExpandWorldData.Dungeon;
 
@@ -54,11 +55,11 @@ public partial class DungeonManager
     dg.m_randomSeed = data.randomSeed;
     if (data.objectSwap != null)
     {
-      dg.m_objectSwaps = Spawn.LoadSwaps(data.objectSwap);
+      dg.m_objectSwaps = Create.LoadSwaps(data.objectSwap);
       //ExpandWorldData.Log.Debug($"Loaded {dg.m_objectSwaps.Count} object swaps for {dg.name}.");
     }
     if (data.objectData != null)
-      dg.m_objectData = Spawn.LoadData(data.objectData, fileName);
+      dg.m_objectData = Create.LoadData(data.objectData, fileName);
     return dg;
   }
   public static DungeonYaml To(DungeonGenerator dg)

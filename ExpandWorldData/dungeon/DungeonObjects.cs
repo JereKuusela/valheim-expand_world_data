@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 using Data;
+using ExpandWorldData.Data;
+using ExpandWorldData.Locations;
 
 namespace ExpandWorldData.Dungeon;
 
@@ -32,13 +34,13 @@ public static class DungeonObjects
   {
     if (!Generators.TryGetValue(CurrentDungeon, out var gen)) return prefab;
     if (!gen.m_objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
-    return Spawn.RandomizeSwap(swaps);
+    return Create.RandomizeSwap(swaps);
   }
   public static string PrefabRoomOverride(string prefab)
   {
     if (!ObjectSwaps.TryGetValue(CurrentRoom!, out var objectSwaps)) return prefab;
     if (!objectSwaps.TryGetValue(prefab, out var swaps)) return prefab;
-    return Spawn.RandomizeSwap(swaps);
+    return Create.RandomizeSwap(swaps);
   }
 
   public static DataEntry? DataOverride(DataEntry? pgk, string prefab)
@@ -53,12 +55,12 @@ public static class DungeonObjects
   private static DataEntry? DataDungeonOverride(string prefab)
   {
     if (!Generators.TryGetValue(CurrentDungeon, out var gen)) return null;
-    return Spawn.GetData(gen.m_objectData, prefab);
+    return Create.GetData(gen.m_objectData, prefab);
   }
   public static DataEntry? DataRoomOverride(string prefab)
   {
     if (!ObjectData.TryGetValue(CurrentRoom!, out var objectData)) return null;
-    return Spawn.GetData(objectData, prefab);
+    return Create.GetData(objectData, prefab);
   }
 
 }

@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 
-namespace ExpandWorld.Drops;
+namespace ExpandWorldData.Drop;
 
 public static class CharacterDropPatches
 {

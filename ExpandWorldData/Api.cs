@@ -2,6 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ExpandWorldData.Biome;
+using ExpandWorldData.Clutter;
+using ExpandWorldData.Compatibility;
+using ExpandWorldData.Dungeon;
+using ExpandWorldData.Locations;
+using ExpandWorldData.Territory;
+using ExpandWorldData.Vegetation;
+using ExpandWorldData.World;
 using UnityEngine;
 
 namespace ExpandWorldData;
@@ -11,7 +19,7 @@ public static class Api
   public static RandomEvent? GetCurrentRandomEvent(Vector3 position)
   {
     if (Configuration.DataEvents && Configuration.MultipleEvents)
-      return ExpandWorld.Event.MultipleEvents.Events.OrderBy(entry => Utils.DistanceXZ(entry.Event.m_pos, position)).FirstOrDefault()?.Event;
+      return Event.MultipleEvents.Events.OrderBy(entry => Utils.DistanceXZ(entry.Event.m_pos, position)).FirstOrDefault()?.Event;
     return RandEventSystem.instance?.GetCurrentRandomEvent();
   }
 
@@ -21,35 +29,35 @@ public static class Api
     if (height < WorldInfo.WaterLevel) return height;
     return (height - WorldInfo.WaterLevel) * data.mapColorMultiplier + WorldInfo.WaterLevel;
   }
-  public static void AddBiome(BiomeYaml data)
+  public static void AddBiome(Biome.BiomeYaml data)
   {
     BiomeManager.AddBiome(data);
   }
-  public static void AddTerritory(TerritoryYaml data)
+  public static void AddTerritory(Territory.TerritoryYaml data)
   {
     TerritoryManager.AddTerritory(data);
   }
-  public static void AddClutter(ClutterYaml data)
+  public static void AddClutter(Clutter.ClutterYaml data)
   {
     ClutterManager.AddClutter(data);
   }
-  public static void AddDungeon(DungeonYaml data)
+  public static void AddDungeon(Dungeon.DungeonYaml data)
   {
-    Dungeon.DungeonManager.AddDungeon(data);
+    DungeonManager.AddDungeon(data);
   }
-  public static void AddLocation(LocationYaml data)
+  public static void AddLocation(Locations.LocationYaml data)
   {
     LocationManager.AddLocation(data);
   }
-  public static void AddRoom(RoomYaml data)
+  public static void AddRoom(Dungeon.RoomYaml data)
   {
     RoomManager.AddRoom(data);
   }
-  public static void AddVegetation(VegetationYaml data)
+  public static void AddVegetation(Vegetation.VegetationYaml data)
   {
     VegetationManager.AddVegetation(data);
   }
-  public static void ChangeWorld(WorldYaml data, int index)
+  public static void ChangeWorld(World.WorldYaml data, int index)
   {
     WorldManager.AddWorld(data, index);
   }

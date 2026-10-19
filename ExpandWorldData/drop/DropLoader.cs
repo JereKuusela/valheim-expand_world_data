@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
-using ExpandWorldData;
-using DataHelper = global::Data.DataHelper;
+using ExpandWorldData.Data;
+using DataHelper = Data.DataHelper;
 
-namespace ExpandWorld.Drops;
+namespace ExpandWorldData.Drop;
 
 public static class Loader
 {

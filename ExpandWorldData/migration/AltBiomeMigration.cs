@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Service;
 using Common;
+using ExpandWorldData.Locations;
+using ExpandWorldData.Vegetation;
+using ExpandWorldData.Data;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Migration;
 
 ///<summary>Backfills altBiome for yaml files saved before the field existed, by pulling values from vanilla data.</summary>
 internal static class AltBiomeMigration

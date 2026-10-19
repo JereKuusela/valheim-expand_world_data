@@ -1,11 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Service;
 using Common;
 using UnityEngine;
-namespace ExpandWorldData;
+using ExpandWorldData.Data;
+
+namespace ExpandWorldData.Clutter;
 
 public partial class ClutterManager
 {

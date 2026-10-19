@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using ExpandWorldData.Locations;
 using HarmonyLib;
 using Service;
 using UnityEngine;
 
-namespace ExpandWorldData;
+namespace ExpandWorldData.Features;
 
 [HarmonyPatch(typeof(LoadingIndicator), nameof(LoadingIndicator.SetShowProgress))]
 public class GuaranteeLocations

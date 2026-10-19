@@ -1,5 +1,8 @@
 using UnityEngine;
-namespace ExpandWorldData;
+using ExpandWorldData.Biome;
+using ExpandWorldData.World;
+
+namespace ExpandWorldData.Features;
 
 public class WaterColor
 {
