@@ -97,7 +97,7 @@ public class LocationExtra
   private static void ExecuteCommands(LocationExtraInfo extra, Vector3 pos, Quaternion rot)
   {
     if (extra.Commands == null) return;
-    Data.CommandManager.Run(extra.Commands, pos, rot.eulerAngles);
+    CommandManager.RunCommand(extra.Commands, pos, rot.eulerAngles);
   }
 
   private static Vector3 ResolveScale(LocationExtraInfo extra)

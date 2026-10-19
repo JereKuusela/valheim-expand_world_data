@@ -12,7 +12,7 @@ namespace ExpandWorldData.Migration;
 ///<summary>Backfills altBiome for yaml files saved before the field existed, by pulling values from vanilla data.</summary>
 internal static class AltBiomeMigration
 {
-  public static void Run()
+  public static void Apply()
   {
     var locations = MigrateLocations(Migrations.Read<LocationYaml>(LocationManager.Pattern), LocationManager.DefaultEntries, LocationManager.Pattern);
     Migrations.Finish(LocationManager.Pattern, locations);

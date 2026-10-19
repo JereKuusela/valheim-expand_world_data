@@ -24,7 +24,7 @@ internal static class LocationMigration
   ];
 
   ///<summary>Returns true if any file was changed.</summary>
-  public static void Run() =>
+  public static void Apply() =>
     Migrations.Finish(LocationManager.Pattern, Migrate(Migrations.Read<LocationYaml>(LocationManager.Pattern), LocationManager.Locations, LocationManager.Pattern));
 
   private static bool Migrate(List<LocationYaml> data, Dictionary<string, ZoneSystem.ZoneLocation> originals, string pattern)

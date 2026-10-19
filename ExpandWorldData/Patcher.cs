@@ -40,5 +40,5 @@ public static class Patcher
 [HarmonyPatch(typeof(ZNet), nameof(ZNet.Awake))]
 public class UpdatePatchesForRole
 {
-  static void Postfix() => Refresh.Run(Regen.Patches);
+  static void Postfix() => Refresh.Apply(Regen.Patches);
 }

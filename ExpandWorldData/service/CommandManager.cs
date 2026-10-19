@@ -47,10 +47,12 @@ public class PlayerInfo
 
 public class CommandManager
 {
-  public static void Run(IEnumerable<string> commands) => Run(commands, (PlayerInfo?)null);
-  public static void Run(IEnumerable<string> commands, PlayerInfo? player)
+  public static void RunCommand(IEnumerable<string> commands) => RunCommand(commands, (PlayerInfo?)null);
+  public static void RunCommand(IEnumerable<string> commands, Vector3 center, Vector3 rot) => RunCommand(commands, center, rot, null);
+  public static void RunCommand(IEnumerable<string> commands, PlayerInfo? player) => RunCommand(commands, null, null, player);
+  private static void RunCommand(IEnumerable<string> commands, Vector3? center, Vector3? rot, PlayerInfo? player)
   {
-    var parsed = commands.Select(c => Parse(c, player)).ToArray();
+    var parsed = commands.Select(c => Parse(c, center, rot, player)).ToArray();
     foreach (var cmd in parsed)
     {
       try
@@ -63,14 +65,27 @@ public class CommandManager
       }
     }
   }
-  public static void Run(IEnumerable<string> commands, List<PlayerInfo> players)
+  public static void RunCommand(IEnumerable<string> commands, List<PlayerInfo> players)
   {
     foreach (var peer in players)
-      Run(commands, peer);
+      RunCommand(commands, peer);
   }
-  private static string Parse(string command, PlayerInfo? player)
+  private static string Parse(string command, Vector3? center, Vector3? rot, PlayerInfo? player)
   {
     var cmd = command;
+    if (center.HasValue)
+    {
+      var c = center.Value;
+      var zone = ZoneSystem.GetZone(c);
+      cmd = cmd
+        .Replace("<x>", c.x.ToString("0.#####", NumberFormatInfo.InvariantInfo))
+        .Replace("<y>", c.y.ToString("0.#####", NumberFormatInfo.InvariantInfo))
+        .Replace("<z>", c.z.ToString("0.#####", NumberFormatInfo.InvariantInfo))
+        .Replace("<i>", zone.x.ToString())
+        .Replace("<j>", zone.y.ToString());
+    }
+    if (rot.HasValue)
+      cmd = cmd.Replace("<a>", rot.Value.y.ToString("0.#####", NumberFormatInfo.InvariantInfo));
     if (player != null)
     {
       cmd = cmd

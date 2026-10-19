@@ -65,22 +65,22 @@ public static class Refresh
   public static bool IsPending(Regen flag) => Remote?.IsPending(flag) ?? Pending.HasFlag(flag);
 
   // Runs the flags now even if they are not pending.
-  public static void Run(Regen flags)
+  public static void Apply(Regen flags)
   {
     if (Remote != null)
     {
-      Remote.Run(flags);
+      Remote.Apply(flags);
       return;
     }
     Pending |= flags;
     Flush(flags);
   }
 
-  public static void Run()
+  public static void Apply()
   {
     if (Remote != null)
     {
-      Remote.Run();
+      Remote.Apply();
       return;
     }
     Flush(All);
@@ -234,8 +234,8 @@ public static class Refresh
     private MethodInfo RequestMethod = null!;
     private MethodInfo RegisterMethod = null!;
     private MethodInfo IsPendingMethod = null!;
-    private MethodInfo RunFlagsMethod = null!;
-    private MethodInfo RunMethod = null!;
+    private MethodInfo ApplyFlagsMethod = null!;
+    private MethodInfo ApplyMethod = null!;
     private MethodInfo ClearMethod = null!;
 
     public static Host? Resolve(Assembly assembly)
@@ -247,15 +247,15 @@ public static class Refresh
       var request = type.GetMethod("Request", [regen]);
       var register = type.GetMethod("Register", [regen, typeof(Action)]);
       var isPending = type.GetMethod("IsPending", [regen]);
-      var runFlags = type.GetMethod("Run", [regen]);
-      var run = type.GetMethod("Run", Type.EmptyTypes);
+      var applyFlags = type.GetMethod("Apply", [regen]);
+      var apply = type.GetMethod("Apply", Type.EmptyTypes);
       var clear = type.GetMethod("Clear", Type.EmptyTypes);
-      if (request == null || register == null || isPending == null || runFlags == null || run == null || clear == null) return null;
+      if (request == null || register == null || isPending == null || applyFlags == null || apply == null || clear == null) return null;
       host.RequestMethod = request;
       host.RegisterMethod = register;
       host.IsPendingMethod = isPending;
-      host.RunFlagsMethod = runFlags;
-      host.RunMethod = run;
+      host.ApplyFlagsMethod = applyFlags;
+      host.ApplyMethod = apply;
       host.ClearMethod = clear;
       return host;
     }
@@ -264,8 +264,8 @@ public static class Refresh
     public void Request(Regen flags) => RequestMethod.Invoke(null, [Convert(flags)]);
     public void Register(Regen flag, Action hook) => RegisterMethod.Invoke(null, [Convert(flag), hook]);
     public bool IsPending(Regen flag) => (bool)IsPendingMethod.Invoke(null, [Convert(flag)]);
-    public void Run(Regen flags) => RunFlagsMethod.Invoke(null, [Convert(flags)]);
-    public void Run() => RunMethod.Invoke(null, null);
+    public void Apply(Regen flags) => ApplyFlagsMethod.Invoke(null, [Convert(flags)]);
+    public void Apply() => ApplyMethod.Invoke(null, null);
     public void Clear() => ClearMethod.Invoke(null, null);
   }
 }
@@ -274,4 +274,14 @@ public static class Refresh
 public class RefreshWorldInitialize
 {
   static void Postfix() => Refresh.OnWorldInitialize();
+}
+
+[HarmonyPatch(typeof(AltBiomeWorldData), nameof(AltBiomeWorldData.GenerateAltBiomes)), HarmonyPriority(Priority.VeryHigh)]
+public class ClearAltBiomeSectors
+{
+  static void Prefix()
+  {
+    foreach (var alt in AltBiomeList.m_altBiomes)
+      alt.Sectors.Clear();
+  }
 }

@@ -38,7 +38,7 @@ internal static class EnvironmentMigration
   ];
 
   ///<summary>Returns true if any file was changed.</summary>
-  public static void Run() =>
+  public static void Apply() =>
     Migrations.Finish(EnvironmentManager.Pattern, Migrate(Migrations.Read<EnvironmentYaml>(EnvironmentManager.Pattern), EnvironmentManager.Originals, EnvironmentManager.Pattern));
 
   private static bool Migrate(List<EnvironmentYaml> yamls, Dictionary<string, EnvSetup> originals, string pattern)

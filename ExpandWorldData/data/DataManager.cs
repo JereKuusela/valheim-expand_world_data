@@ -76,7 +76,7 @@ public class InitializeWorld
     TerritoryManager.ReadConfigs();
     WorldManager.ReadConfigs();
     // Pregenerate runs right after this.
-    Refresh.Run(Regen.Patches);
+    Refresh.Apply(Regen.Patches);
   }
 }
 
@@ -124,7 +124,7 @@ public class InitializeContent
     }
     // Alt biomes not generated yet, so refresh not needed.
     Refresh.Clear();
-    Refresh.Run(Regen.Patches);
+    Refresh.Apply(Regen.Patches);
     Yaml.WorldLoadedAt = DateTime.UtcNow;
   }
 

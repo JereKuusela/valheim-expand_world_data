@@ -59,7 +59,7 @@ public class DebugCommands
   {
     new Terminal.ConsoleCommand("ew_map", "Refreshes the world map.", (args) =>
     {
-      Refresh.Run(Regen.Minimap);
+      Refresh.Apply(Regen.Minimap);
     }, true);
     new Terminal.ConsoleCommand("ew_drops", "Forces drop reference file creation.", (args) =>
     {

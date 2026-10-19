@@ -57,7 +57,7 @@ public static class Migrations
     Log.Info($"Backed up {file} to {backup} before migration.");
   }
 
-  private static void Run(Stage stage, Action migrate)
+  private static void Apply(Stage stage, Action migrate)
   {
     if (!Pending || (Completed & stage) != 0) return;
     try
@@ -89,7 +89,7 @@ public static class Migrations
   public static List<T> Read<T>(string pattern) => ReadFiles<T>(pattern).Values.SelectMany(data => data).ToList();
 
   // Steps that only need the files, so they can run before anything is loaded.
-  public static void RunFiles() => Run(Stage.Files, () =>
+  public static void RunFiles() => Apply(Stage.Files, () =>
   {
     Finish(AltBiomeManager.Pattern, Yaml.RemoveFields(AltBiomeManager.Pattern, ["addVegetation", "addLocations"]),
       "Removed obsolete addVegetation and addLocations from alt biome files. These are handled by the vegetation and location files.");
@@ -104,14 +104,14 @@ public static class Migrations
   });
 
   // Steps that backfill values from the vanilla data. Must run after the vanilla data is known and before the files are read.
-  public static void RunVanilla() => Run(Stage.Vanilla, () =>
+  public static void RunVanilla() => Apply(Stage.Vanilla, () =>
   {
-    EnvironmentMigration.Run();
-    AltBiomeMigration.Run();
-    LocationMigration.Run();
+    EnvironmentMigration.Apply();
+    AltBiomeMigration.Apply();
+    LocationMigration.Apply();
   });
 
-  public static void RunDungeons(Dictionary<string, DungeonGenerator> originals) => Run(Stage.Dungeons, () =>
+  public static void RunDungeons(Dictionary<string, DungeonGenerator> originals) => Apply(Stage.Dungeons, () =>
   {
     var pattern = DungeonManager.Pattern;
     Read<DungeonYaml>(pattern);
@@ -121,7 +121,7 @@ public static class Migrations
       $"Added addBaseSeedToRandomSpawn to {pattern} files.");
   });
   public static void RunSpawns(List<(SpawnSystemList List, List<SpawnSystem.SpawnData> Spawners)> defaults, Action reload) =>
-    Run(Stage.Spawns, () => SpawnMigration.MigratePersistentEvents(defaults.SelectMany(entry => entry.Spawners), reload));
+    Apply(Stage.Spawns, () => SpawnMigration.MigratePersistentEvents(defaults.SelectMany(entry => entry.Spawners), reload));
 
   // Called once everything is migrated.
   public static void Complete()
