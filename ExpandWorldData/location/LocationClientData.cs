@@ -120,7 +120,7 @@ public static class LocationClientData
         if (!hashes.Contains(hash)) hashes.Add(hash);
       }
     }
-    Spawn.Requirements.Version++;
+    Spawn.Requirements.RefreshLocations();
     foreach (var location in Location.s_allLocations)
     {
       if (location && GetLocationData(location.GetComponentInParent<LocationProxy>()) != null)

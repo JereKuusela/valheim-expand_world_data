@@ -43,7 +43,6 @@ public static class Patcher
 
   private static void PatchLifecycle(Harmony harmony)
   {
-    Patches.Postfix(harmony, true, typeof(ZoneSystem), nameof(ZoneSystem.Start), typeof(SpawnManager), nameof(SpawnManager.InitializeData), priority: Priority.VeryLow);
     Patches.Postfix(harmony, true, typeof(SpawnSystem), nameof(SpawnSystem.Awake), typeof(SpawnManager), nameof(SpawnManager.InitializeSpawnSystem));
   }
 

@@ -26,18 +26,18 @@ Note: All distances are in meters, and don't scale up with the world size. For b
 - maxDistance (default: `0` meters): Maximum distance from the world center (0 = disabled).
 - spawnAtDay (default: `true`): Enabled during the day time.
 - spawnAtNight (default: `true`): Enabled during the night time.
-- requiredGlobalKey ([list](requirement-lists.md#list)): Which [global keys](https://valheim.wiki/Global_Keys) must be set to enable this entry.
+- requiredGlobalKeys ([list](requirement-lists.md#list)): Which [global keys](https://valheim.wiki/Global_Keys) must be set to enable this entry.
   - When using format `key value`, the key must have at least this amount of value.
   - After spawning, the key value is reduced by the required value. Each row consumes the first matching key with a value.
   - This can be used to create limited spawns.
   - Creature deaths can be changed to increase the key value by using the `defeatSetGlobalKey` field.
-- forbiddenGlobalKey ([list](requirement-lists.md#list)): The entry is disabled if any of these global keys is set.
+- forbiddenGlobalKeys ([list](requirement-lists.md#list)): The entry is disabled if any of these global keys is set.
 - requiredEnvironments ([list](requirement-lists.md#list)): Valid environments/weathers.
 - forbiddenEnvironments ([list](requirement-lists.md#list)): The entry is disabled if any of these environments/weathers is active.
-- requiredLocation ([distance list](requirement-lists.md#distance-list)): Location (prefab name or location group) must be near the spawn point. Uses the location proxy objects, so only loaded areas are checked.
-- forbiddenLocation ([distance list](requirement-lists.md#distance-list)): Spawn point can't be near any of these locations.
-- requiredObject ([distance list](requirement-lists.md#distance-list)): Object (prefab name, wildcards and value groups supported) must be near the spawn point. Only loaded objects are checked.
-- forbiddenObject ([distance list](requirement-lists.md#distance-list)): Spawn point can't be near any of these objects.
+- requiredLocations ([distance list](requirement-lists.md#distance-list)): Location (prefab name or location group) must be near the spawn point. Uses the location proxy objects, so only loaded areas are checked.
+- forbiddenLocations ([distance list](requirement-lists.md#distance-list)): Spawn point can't be near any of these locations.
+- requiredObjects ([distance list](requirement-lists.md#distance-list)): Object (prefab name, wildcards and value groups supported) must be near the spawn point. Only loaded objects are checked.
+- forbiddenObjects ([distance list](requirement-lists.md#distance-list)): Spawn point can't be near any of these objects.
 - requiredPersistentEvent: Name of the persistent event that must be active at the spawn point.
 - spawnDistance (default: `10` meters): Distance to suppress similar spawns.
 - spawnRadiusMin (default: `40` meters): Minimum distance from every player.
@@ -77,7 +77,7 @@ Fields can be used to override prefab properties. You can hover a creature and u
     defeatSetGlobalKey: killedtroll ++1
 - prefab: Troll
   # Spawning consumes 10 troll kills.
-  requiredGlobalKey: killedtroll 10
+  requiredGlobalKeys: killedtroll 10
   fields:
     boss: true
     name: Troll King

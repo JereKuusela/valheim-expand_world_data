@@ -8,10 +8,20 @@ namespace ExpandWorldData.Migration;
 
 internal static class SpawnMigration
 {
+  public static readonly Dictionary<string, string> Renames = new()
+  {
+    ["requiredGlobalKey"] = "requiredGlobalKeys",
+    ["forbiddenGlobalKey"] = "forbiddenGlobalKeys",
+    ["requiredLocation"] = "requiredLocations",
+    ["forbiddenLocation"] = "forbiddenLocations",
+    ["requiredObject"] = "requiredObjects",
+    ["forbiddenObject"] = "forbiddenObjects",
+  };
+
   ///<summary>Backfills requiredPersistentEvent for yaml files saved before the field existed, by pulling values from vanilla data.</summary>
   public static void MigratePersistentEvents(IEnumerable<SpawnSystem.SpawnData> vanilla, Action reload)
   {
-    var files = Migrations.ReadFiles<ExpandWorldData.Spawn.Data>(SpawnManager.Pattern);
+    var files = Migrations.ReadFiles<Spawn.Data>(SpawnManager.Pattern);
     var eligible = files.Keys.Where(file => !Yaml.HasField([file], "requiredPersistentEvent")).ToList();
     if (!BackfillPersistentEvents(vanilla, eligible)) return;
     Yaml.IgnoreWrites(SpawnManager.Pattern);

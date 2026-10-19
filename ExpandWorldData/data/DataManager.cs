@@ -49,7 +49,7 @@ public class InitializeRooms
   {
     RoomManager.Initialize();
     // Dungeons require room names to be loaded.
-    Dungeon.DungeonManager.Initialize();
+    DungeonManager.Initialize();
   }
 }
 
@@ -116,6 +116,8 @@ public class InitializeContent
       VegetationManager.ReadConfigs();
       LocationManager.ReadConfigs();
       AltBiomeManager.ReadConfigs();
+      // After locations so that location groups are known.
+      Spawn.SpawnManager.ReadConfigs();
       BiomeManager.LoadEnvironments();
 
       // Dungeon and room data is handled elsewhere.

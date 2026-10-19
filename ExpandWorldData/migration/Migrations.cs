@@ -14,7 +14,7 @@ namespace ExpandWorldData.Migration;
 public static class Migrations
 {
   // Increase when adding a step, and give the step a check for the new revision. Steps must also be safe to repeat.
-  public const int Latest = 1;
+  public const int Latest = 2;
 
   public static int ReadRevision(string path)
   {
@@ -96,6 +96,10 @@ public static class Migrations
     Finish(Event.EventManager.Pattern, EventMigration.Migrate(Event.EventManager.Pattern),
       "Migrated event keys to the new row format (notRequired* is now forbidden*, requiredPlayerKeysAll merged to requiredPlayerKeys).");
     Read<Event.Data>(Event.EventManager.Pattern);
+    Finish(Spawn.SpawnManager.Pattern, Yaml.RenameFields(Spawn.SpawnManager.Pattern, SpawnMigration.Renames),
+      "Renamed spawn requirement fields to plural (for example requiredGlobalKey is now requiredGlobalKeys).");
+    Finish(Vegetation.VegetationManager.Pattern, Yaml.RenameFields(Vegetation.VegetationManager.Pattern, VegetationMigration.Renames),
+      "Renamed vegetation requiredGlobalKey and forbiddenGlobalKey to plural.");
     Finish(WorldManager.Pattern, WorldManager.MigrateOldDefault(), null);
   });
 

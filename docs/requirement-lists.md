@@ -13,17 +13,17 @@ Lists without distances use the format `nameA, nameB` for each row.
 
 ```yaml
 # Requires either key.
-requiredGlobalKey: defeated_eikthyr, defeated_gdking
+requiredGlobalKeys: defeated_eikthyr, defeated_gdking
 ```
 
 ```yaml
 # Requires defeated_bonemass AND either defeated_eikthyr OR defeated_gdking.
-requiredGlobalKey:
+requiredGlobalKeys:
 - defeated_eikthyr, defeated_gdking
 - defeated_bonemass
 
 # Blocks when either key is set.
-forbiddenGlobalKey: defeated_moder, defeated_goblinking
+forbiddenGlobalKeys: defeated_moder, defeated_goblinking
 ```
 
 ## Distance List
@@ -32,19 +32,19 @@ Distance lists use the format `nameA, nameB, distance, nameC, distance` for each
 
 ```yaml
 # Within 50 meters of a Crypt or a Runestone, or within 100 meters of a Troll Cave.
-requiredLocation: Crypt2, Runestone_Boars, 50, TrollCave02, 100
+requiredLocations: Crypt2, Runestone_Boars, 50, TrollCave02, 100
 ```
 
 ```yaml
 # Within 50 meters of a Crypt AND within 100 meters of a Troll Cave.
-requiredLocation:
+requiredLocations:
 - Crypt2, 50
 - TrollCave02, 100
 ```
 
 ```yaml
 # Not within 30 meters of a workbench or a stonecutter.
-forbiddenObject: piece_workbench, piece_stonecutter, 30
+forbiddenObjects: piece_workbench, piece_stonecutter, 30
 ```
 
 The accepted names and how nearby locations or objects are checked depend on the field.

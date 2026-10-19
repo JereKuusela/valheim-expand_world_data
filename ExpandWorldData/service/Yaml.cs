@@ -178,9 +178,9 @@ public class Yaml
   }
 
   public static IDeserializer Deserializer() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
-  .WithTypeConverter(new global::Data.DataFieldConverter()).WithTypeConverter(new StringListConverter()).WithYamlFormatter(formatter).Build();
+  .WithTypeConverter(new Data.DataFieldConverter()).WithTypeConverter(new StringListConverter()).WithYamlFormatter(formatter).Build();
   public static IDeserializer DeserializerUnSafe() => new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance)
-  .WithTypeConverter(new global::Data.DataFieldConverter()).WithTypeConverter(new StringListConverter()).WithYamlFormatter(formatter).IgnoreUnmatchedProperties().Build();
+  .WithTypeConverter(new Data.DataFieldConverter()).WithTypeConverter(new StringListConverter()).WithYamlFormatter(formatter).IgnoreUnmatchedProperties().Build();
   public static ISerializer Serializer() => new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).DisableAliases()
     .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults).WithTypeConverter(new Data.DataFieldConverter()).WithTypeConverter(new StringListConverter()).WithYamlFormatter(formatter)
       .Build();
@@ -259,6 +259,38 @@ public class Yaml
   {
     var prefix = $"{field}:";
     return files.Any(file => File.ReadLines(file).Any(line => line.TrimStart().TrimStart('-', ' ').StartsWith(prefix)));
+  }
+
+  ///<summary>Renames fields (old name to new name) in matching yaml files. Returns true if any file was changed.</summary>
+  public static bool RenameFields(string pattern, Dictionary<string, string> renames)
+  {
+    if (!System.IO.Directory.Exists(BaseDirectory)) return false;
+    var changedAny = false;
+    foreach (var file in System.IO.Directory.GetFiles(BaseDirectory, pattern, SearchOption.AllDirectories))
+    {
+      var lines = File.ReadAllLines(file);
+      var changed = false;
+      for (var i = 0; i < lines.Length; i++)
+      {
+        var trimmed = lines[i].TrimStart();
+        var offset = lines[i].Length - trimmed.Length;
+        if (trimmed.StartsWith("- "))
+        {
+          var inner = trimmed.Substring(2).TrimStart();
+          offset = lines[i].Length - inner.Length;
+          trimmed = inner;
+        }
+        var separator = trimmed.IndexOf(':');
+        if (separator < 0 || !renames.TryGetValue(trimmed.Substring(0, separator).Trim(), out var renamed)) continue;
+        lines[i] = lines[i].Substring(0, offset) + renamed + trimmed.Substring(separator);
+        changed = true;
+      }
+      if (!changed) continue;
+      Migrations.BackupFile(file);
+      File.WriteAllLines(file, lines);
+      changedAny = true;
+    }
+    return changedAny;
   }
 
   ///<summary>Removes the given fields (including nested blocks) from list entries in matching yaml files. Returns true if any file was changed.</summary>

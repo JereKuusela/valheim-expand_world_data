@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 using ExpandWorldData.Data;
 using HarmonyLib;
 using UnityEngine;
-using DataEntry = global::Data.DataEntry;
+using DataEntry = Data.DataEntry;
 
 namespace ExpandWorldData.Drop;
 

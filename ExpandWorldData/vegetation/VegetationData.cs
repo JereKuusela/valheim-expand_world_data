@@ -87,9 +87,9 @@ public class VegetationYaml
   [DefaultValue(0f)]
   public float clearRadius = 0f;
   [DefaultValue(null)]
-  public StringList? requiredGlobalKey = null;
+  public StringList? requiredGlobalKeys = null;
   [DefaultValue(null)]
-  public StringList? forbiddenGlobalKey = null;
+  public StringList? forbiddenGlobalKeys = null;
   [DefaultValue(null)]
   public DataField? data = null;
   [DefaultValue(false)]

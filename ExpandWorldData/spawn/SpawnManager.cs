@@ -76,11 +76,6 @@ public class SpawnManager
     return SetResult.Applied;
   }
 
-  internal static void InitializeData()
-  {
-    if (Helper.IsServer()) ReadConfigs();
-  }
-
   internal static void InitializeSpawnSystem(SpawnSystem __instance)
   {
     // Lists are still vanilla until ApplySpawnData runs for the first time.

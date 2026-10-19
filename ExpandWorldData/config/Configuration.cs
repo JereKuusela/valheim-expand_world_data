@@ -130,14 +130,6 @@ public partial class Configuration
     configRandomLocations = wrapper.Bind(section, "Random locations", false, false, "If true, all locations have a random generation instead of depending on the location coordinates.");
 
     section = "2. Features";
-    configMultipleEvents = wrapper.Bind(section, "Multiple events", false, false, "If enabled, multiple events can be active at the same time.");
-    configMultipleEvents.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
-    configCheckPerPlayer = wrapper.Bind(section, "Check per player", false, false, "If enabled, the event check is done separately for each player.");
-    configCheckPerPlayer.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
-    configEventMinimumDistance = wrapper.BindFloat(section, "Minimum distance between events", 100f, false, "The minimum distance between events.");
-    configEventChance = wrapper.BindFloat(section, "Random event chance", 20f, false, "The chance to try starting a random event.");
-    configEventInterval = wrapper.BindFloat(section, "Random event interval", 46f, false, "How often the random events are checked (minutes).");
-
     configDistanceWiggleLength = wrapper.BindFloat(section, "Distance wiggle length", 500f, false);
     configDistanceWiggleLength.SettingChanged += (s, e) => WorldManager.Reload();
     configDistanceWiggleWidth = wrapper.BindFloat(section, "Distance wiggle width", 0.01f, false);
@@ -203,13 +195,13 @@ public partial class Configuration
     valueWorldData = wrapper.AddValue("world_data");
     valueWorldData.ValueChanged += () => WorldManager.FromSetting(valueWorldData.Value);
     valueSpawnData = wrapper.AddValue("spawn_data");
-    valueSpawnData.ValueChanged += () => Spawn.SpawnManager.FromSetting(valueSpawnData.Value);
+    valueSpawnData.ValueChanged += () => SpawnManager.FromSetting(valueSpawnData.Value);
     valueAltBiomeData = wrapper.AddValue("altbiome_data");
     valueAltBiomeData.ValueChanged += () => AltBiomeManager.FromSetting(valueAltBiomeData.Value);
     valueEventData = wrapper.AddValue("event_data");
-    valueEventData.ValueChanged += () => Event.EventManager.FromSetting(valueEventData.Value);
+    valueEventData.ValueChanged += () => EventManager.FromSetting(valueEventData.Value);
     valueDropData = wrapper.AddValue("drop_data");
-    valueDropData.ValueChanged += () => Drop.DropManager.FromSetting(valueDropData.Value);
+    valueDropData.ValueChanged += () => DropManager.FromSetting(valueDropData.Value);
 
     section = "4. Poles";
     configRestrictAshlands = wrapper.Bind(section, "Restrict Ashlands position", true, true, "If true, restricts Ashlands biome position.");
@@ -217,5 +209,14 @@ public partial class Configuration
     configAshlandsLengthRestriction = wrapper.BindFloat(section, "Ashlands length restriction", 1000f, true, "How long/deep is the Ashlands biome (meters).");
     configAshlandsGap = wrapper.Bind(section, "Ashlands gap", true, true, "If true, Ashlands biome has an Ocean gap above it.");
     configDeepNorthGap = wrapper.Bind(section, "Deep North gap", true, true, "If true, Deep North biome has an Ocean gap below it.");
+
+    section = ConfigMoves.EventSection;
+    configMultipleEvents = wrapper.Bind(section, "Multiple events", false, false, "If enabled, multiple events can be active at the same time.");
+    configMultipleEvents.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
+    configCheckPerPlayer = wrapper.Bind(section, "Check per player", false, false, "If enabled, the event check is done separately for each player.");
+    configCheckPerPlayer.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
+    configEventMinimumDistance = wrapper.BindFloat(section, "Minimum distance between events", 100f, false, "The minimum distance between events.");
+    configEventChance = wrapper.BindFloat(section, "Random event chance", 20f, false, "The chance to try starting a random event.");
+    configEventInterval = wrapper.BindFloat(section, "Random event interval", 46f, false, "How often the random events are checked (minutes).");
   }
 }

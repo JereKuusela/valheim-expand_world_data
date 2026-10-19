@@ -16,7 +16,7 @@ public class Loader
 
   public static SpawnSystem.SpawnData FromData(Data data, string fileName)
   {
-    var keyRows = StringList.ToRows(data.requiredGlobalKey);
+    var keyRows = StringList.ToRows(data.requiredGlobalKeys);
     var environmentRows = StringList.ToRows(data.requiredEnvironments);
     // Single entries stay in the vanilla fields, so other mods reading them keep working.
     var vanillaKey = keyRows is { Count: 1 } && keyRows[0].Length == 1;
@@ -93,7 +93,7 @@ public class Loader
     spawnDistance = spawn.m_spawnDistance,
     spawnRadiusMin = spawn.m_spawnRadiusMin,
     spawnRadiusMax = spawn.m_spawnRadiusMax,
-    requiredGlobalKey = StringList.FromRows([spawn.m_requiredGlobalKey]),
+    requiredGlobalKeys = StringList.FromRows([spawn.m_requiredGlobalKey]),
     requiredEnvironments = StringList.FromRows([DataManager.FromList(spawn.m_requiredEnvironments)]),
     requiredPersistentEvent = spawn.m_requiredPersistentEvent,
     spawnAtDay = spawn.m_spawnAtDay,

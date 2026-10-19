@@ -13,36 +13,32 @@ public sealed class NearGroup(DistanceGroup source, bool locations)
   public readonly bool Locations = locations;
   public readonly string[] Names = source.Names;
   public readonly float Distance = source.Distance;
-  private HashSet<int>? Hashes;
-  private int HashVersion = -1;
+  public HashSet<int> Hashes = Resolve(source.Names, locations);
 
-  // Resolved lazily because location groups and prefabs are not available when the data is loaded.
-  public HashSet<int> Resolve()
+  public void Refresh() => Hashes = Resolve(Names, Locations);
+
+  private static HashSet<int> Resolve(string[] names, bool locations)
   {
-    if (Hashes != null && HashVersion == Requirements.Version) return Hashes;
-    Hashes = [];
-    foreach (var name in Names)
+    HashSet<int> hashes = [];
+    foreach (var name in names)
     {
-      if (Locations)
+      if (locations)
       {
-        Hashes.Add(name.GetStableHashCode());
-        foreach (var hash in LocationClientData.GetGroupHashes(name)) Hashes.Add(hash);
+        hashes.Add(name.GetStableHashCode());
+        foreach (var hash in LocationClientData.GetGroupHashes(name)) hashes.Add(hash);
       }
       else
       {
-        foreach (var hash in global::Data.PrefabHelper.GetPrefabs(name, "")) Hashes.Add(hash);
+        foreach (var hash in global::Data.PrefabHelper.GetPrefabs(name, "")) hashes.Add(hash);
       }
     }
-    HashVersion = Requirements.Version;
-    return Hashes;
+    return hashes;
   }
 }
 
 ///<summary>Extra spawn requirements that don't fit the vanilla fields.</summary>
 public sealed class Requirements
 {
-  // Changes when location groups change.
-  public static int Version;
   private const string Never = "ewd_requirement_failed";
   private static readonly List<string> NeverList = [Never];
   private static readonly int ProxyHash = "LocationProxy".GetStableHashCode();
@@ -70,18 +66,28 @@ public sealed class Requirements
     return new()
     {
       Keys = keys,
-      ForbiddenKeys = StringList.ToRows(data.forbiddenGlobalKey),
+      ForbiddenKeys = StringList.ToRows(data.forbiddenGlobalKeys),
       Environments = environments,
       ForbiddenEnvironments = StringList.ToRows(data.forbiddenEnvironments),
-      Locations = ParseNear(data.requiredLocation, nameof(data.requiredLocation), file, true),
-      ForbiddenLocations = ParseNear(data.forbiddenLocation, nameof(data.forbiddenLocation), file, true),
-      Objects = ParseNear(data.requiredObject, nameof(data.requiredObject), file, false),
-      ForbiddenObjects = ParseNear(data.forbiddenObject, nameof(data.forbiddenObject), file, false),
+      Locations = ParseNear(data.requiredLocations, nameof(data.requiredLocations), file, true),
+      ForbiddenLocations = ParseNear(data.forbiddenLocations, nameof(data.forbiddenLocations), file, true),
+      Objects = ParseNear(data.requiredObjects, nameof(data.requiredObjects), file, false),
+      ForbiddenObjects = ParseNear(data.forbiddenObjects, nameof(data.forbiddenObjects), file, false),
     };
   }
 
   private static List<NearGroup[]>? ParseNear(StringList? list, string field, string file, bool locations) =>
     DistanceRules.Parse(list, field, file)?.Select(row => row.Select(group => new NearGroup(group, locations)).ToArray()).ToList();
+
+  // Location groups can change without the spawn data being reloaded.
+  public static void RefreshLocations()
+  {
+    foreach (var requirements in Loader.Requirements.Values)
+    {
+      foreach (var row in (requirements.Locations ?? []).Concat(requirements.ForbiddenLocations ?? []))
+        foreach (var group in row) group.Refresh();
+    }
+  }
 
   public bool KeysPass()
   {
@@ -168,7 +174,7 @@ public sealed class Requirements
 
   private static bool Exists(NearGroup group, Vector3 point)
   {
-    var hashes = group.Resolve();
+    var hashes = group.Hashes;
     if (hashes.Count == 0) return false;
     var zman = ZDOMan.instance;
     var zone = ZoneSystem.GetZone(point);
