@@ -106,6 +106,15 @@ public class WorldManager
   public static void CreateConfigs() => Instance.CreateConfigs();
   public static void ReadConfigs() => Instance.ReadConfigs();
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
+  internal static void ResetSession()
+  {
+    Data = DefaultData;
+    HasData = false;
+    BiomeCalculator.SetData(DefaultEntries);
+    BiomeCalculator.CheckAngles = false;
+    BiomeCalculator.Offsets.Clear();
+    Instance.ResetSession();
+  }
   private static SetResult Set(Dictionary<string, string> files)
   {
     if (files.Count == 0)

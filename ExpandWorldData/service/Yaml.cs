@@ -72,16 +72,38 @@ public class Yaml
     }
     return result;
   }
-  public static void SetupWatcher(ConfigFile config)
+  private sealed class WatcherSpec(string folder, string pattern, Action<string> action)
   {
-    FileSystemWatcher watcher = new(Path.GetDirectoryName(config.ConfigFilePath), Path.GetFileName(config.ConfigFilePath));
-    watcher.Changed += (s, e) => ReadConfigValues(e.FullPath, config);
-    watcher.Created += (s, e) => ReadConfigValues(e.FullPath, config);
-    watcher.Renamed += (s, e) => ReadConfigValues(e.FullPath, config);
-    watcher.IncludeSubdirectories = true;
-    watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-    watcher.EnableRaisingEvents = true;
+    private FileSystemWatcher? active;
+    internal void Start()
+    {
+      if (active != null || !ExpandWorldData.Session.LocalFiles) return;
+      var generation = ExpandWorldData.Session.Generation;
+      var watcher = new FileSystemWatcher(folder, pattern) { IncludeSubdirectories = true, SynchronizingObject = ThreadingHelper.SynchronizingObject };
+      void Dispatch(object sender, FileSystemEventArgs args)
+      {
+        if (!ReferenceEquals(active, watcher) || generation != ExpandWorldData.Session.Generation || !ExpandWorldData.Session.LocalFiles) return;
+        action(args.FullPath);
+      }
+      watcher.Created += Dispatch;
+      watcher.Changed += Dispatch;
+      watcher.Renamed += (sender, args) => Dispatch(sender, args);
+      watcher.Deleted += Dispatch;
+      active = watcher;
+      watcher.EnableRaisingEvents = true;
+    }
+    internal void Stop()
+    {
+      var watcher = active;
+      active = null;
+      watcher?.Dispose();
+    }
   }
+  private static readonly List<WatcherSpec> Watchers = [];
+  public static void SuspendWatchers() { foreach (var watcher in Watchers) watcher.Stop(); }
+  public static void ResumeWatchers() { foreach (var watcher in Watchers) watcher.Start(); }
+  public static void SetupWatcher(ConfigFile config)
+    => SetupWatcher(Path.GetDirectoryName(config.ConfigFilePath), Path.GetFileName(config.ConfigFilePath), path => ReadConfigValues(path, config));
   private static void ReadConfigValues(string path, ConfigFile config)
   {
     if (!File.Exists(path)) return;
@@ -99,26 +121,11 @@ public class Yaml
   public static void SetupWatcher(string pattern, Action<string> action) => SetupWatcher(Paths.ConfigPath, pattern, action);
   public static void SetupWatcher(string folder, string pattern, Action<string> action)
   {
-    FileSystemWatcher watcher = new(folder, pattern);
-    watcher.Created += (s, e) => action(e.FullPath);
-    watcher.Changed += (s, e) => action(e.FullPath);
-    watcher.Renamed += (s, e) => action(e.FullPath);
-    watcher.Deleted += (s, e) => action(e.FullPath);
-    watcher.IncludeSubdirectories = true;
-    watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-    watcher.EnableRaisingEvents = true;
+    var watcher = new WatcherSpec(folder, pattern, action);
+    Watchers.Add(watcher);
+    watcher.Start();
   }
-  public static void SetupWatcher(string folder, string pattern, Action action)
-  {
-    FileSystemWatcher watcher = new(folder, pattern);
-    watcher.Created += (s, e) => action();
-    watcher.Changed += (s, e) => action();
-    watcher.Renamed += (s, e) => action();
-    watcher.Deleted += (s, e) => action();
-    watcher.IncludeSubdirectories = true;
-    watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-    watcher.EnableRaisingEvents = true;
-  }
+  public static void SetupWatcher(string folder, string pattern, Action action) => SetupWatcher(folder, pattern, _ => action());
   public static void SetupWatcher(string pattern, Action action) => SetupWatcher(BaseDirectory, pattern, file =>
   {
     BackupFile(file);
@@ -133,8 +140,7 @@ public class Yaml
   }
   public static void SetupDataWatcher(string pattern, ConfigEntry<bool> setting, Action action)
   {
-    FileSystemWatcher watcher = new(BaseDirectory, pattern);
-    void Changed(string path)
+    SetupWatcher(BaseDirectory, pattern, path =>
     {
       if (!File.Exists(path))
       {
@@ -152,14 +158,7 @@ public class Yaml
       }
       else if (ExpandWorldData.Configuration.DataReload)
         action();
-    }
-    watcher.Created += (s, e) => Changed(e.FullPath);
-    watcher.Changed += (s, e) => Changed(e.FullPath);
-    watcher.Renamed += (s, e) => Changed(e.FullPath);
-    watcher.Deleted += (s, e) => Changed(e.FullPath);
-    watcher.IncludeSubdirectories = true;
-    watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-    watcher.EnableRaisingEvents = true;
+    });
   }
   private static void BackupFile(string path)
   {

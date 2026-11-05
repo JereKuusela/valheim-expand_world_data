@@ -300,6 +300,16 @@ namespace ExpandWorldData.Biome
       BiomeToTerrain = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
       BiomeToNature = NameToBiome.ToDictionary(kvp => kvp.Value, kvp => kvp.Value);
     }
+    internal static void ResetSession()
+    {
+      ResetData();
+      HasData = false;
+      MissingEnvironments = EnvironmentsApplied = false;
+      OriginalEnvironments.Clear();
+      Extra.Clear();
+      GetRandomPointByBiome.Warned.Clear();
+      Instance.ResetSession();
+    }
     // Vanilla biome environments, restored when custom data is removed.
     private static List<BiomeEnvSetup> OriginalEnvironments = [];
     private static bool EnvironmentsApplied;
@@ -326,10 +336,11 @@ namespace ExpandWorldData.Biome
     {
       var em = EnvMan.instance;
       foreach (var list in LocationList.m_allLocationLists)
-        list.m_biomeEnvironments.Clear();
-      em.m_biomes.Clear();
-      foreach (var biome in data)
-        em.AppendBiomeSetup(biome);
+        SessionResources.Replace(list.m_biomeEnvironments, new List<BiomeEnvSetup>());
+      SessionResources.ReplaceWith(em.m_biomes, () =>
+      {
+        foreach (var biome in data) em.AppendBiomeSetup(biome);
+      });
       em.m_environmentPeriod = -1;
       em.m_firstEnv = true;
 
@@ -338,7 +349,7 @@ namespace ExpandWorldData.Biome
     {
       var key = "biome_" + biome.ToString().ToLowerInvariant();
       var value = name == "" ? biome.ToString() : name;
-      Localization.instance.m_translations[key] = value;
+      SessionResources.Translate(Localization.instance.m_translations, key, value);
     }
     private static Heightmap.Biome NextBiome(Heightmap.Biome biome)
     {
