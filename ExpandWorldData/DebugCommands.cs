@@ -59,18 +59,22 @@ public class DebugCommands
   {
     new Terminal.ConsoleCommand("ew_map", "Refreshes the world map.", (args) =>
     {
+      if (!Session.Active) { args.Context.AddString("EWD is inactive for this session."); return; }
       Refresh.Apply(Regen.Minimap);
     }, true);
     new Terminal.ConsoleCommand("ew_drops", "Forces drop reference file creation.", (args) =>
     {
+      if (!Session.Active) { args.Context.AddString("EWD is inactive for this session."); return; }
       Drop.ReferenceFileGenerator.Save();
     }, true);
     new Terminal.ConsoleCommand("ew_spawns", "Forces spawn file creation.", (args) =>
     {
+      if (!Session.Active) { args.Context.AddString("EWD is inactive for this session."); return; }
       Spawn.SpawnManager.Save();
     }, true);
     new Terminal.ConsoleCommand("ew_test_spawn", "[name] - Spawns a creature from spawn system by entry name.", (args) =>
     {
+      if (!Session.Active) { args.Context.AddString("EWD is inactive for this session."); return; }
       var ss = GetClosestSpawnSystem(args.Context);
       if (!ss) return;
       ss!.m_nview.ClaimOwnership();
@@ -80,6 +84,7 @@ public class DebugCommands
     }, true, optionsFetcher: GetSpawnNames);
     new Terminal.ConsoleCommand("ew_try_spawn", "[name] - Attempts to spawn a creature from spawn system by entry name.", (args) =>
     {
+      if (!Session.Active) { args.Context.AddString("EWD is inactive for this session."); return; }
       var ss = GetClosestSpawnSystem(args.Context);
       if (!ss) return;
       ss!.m_nview.ClaimOwnership();

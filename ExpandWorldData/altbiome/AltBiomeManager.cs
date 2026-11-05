@@ -14,10 +14,12 @@ public static partial class AltBiomeManager
   public const string Pattern = "expand_altbiomes*.yaml";
   private static List<AltBiome> Original = [];
   private static List<AltBiome> Active = [];
+  private static bool Initialized;
 
   public static IEnumerable<SpawnSystem.SpawnData> ActiveSpawns => Active.SelectMany(alt => alt.m_spawn);
   public static void Initialize()
   {
+    Initialized = true;
     Original = [.. AltBiomeList.m_altBiomes];
     Active = Original;
   }
@@ -32,7 +34,10 @@ public static partial class AltBiomeManager
       Loader.Requirements.Remove(spawn);
     }
     Active = [];
-    AltBiomeList.m_altBiomes.Clear();
+    if (Initialized) AltBiomeList.m_altBiomes.Clear();
+    Initialized = false;
+    Original = [];
+    Instance.ResetSession();
   }
 
   private class Sync : SyncedDataManager

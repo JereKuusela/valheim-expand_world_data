@@ -51,6 +51,9 @@ public partial class VegetationManager
   {
     VegetationSpawning.Extra.Clear();
     VegetationSpawning.Prefabs.Clear();
+    Customized = false;
+    DefaultEntries = [];
+    Instance.ResetSession();
   }
 
   private static SetResult Set(Dictionary<string, string> files)

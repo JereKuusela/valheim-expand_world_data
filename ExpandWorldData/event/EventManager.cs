@@ -18,6 +18,14 @@ public class EventManager
   public static void ReadConfigs() => Instance.ReadConfigs();
 
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
+  internal static void ResetSession()
+  {
+    Originals.Clear();
+    HasData = false;
+    Loader.ExtraData.Clear();
+    MultipleEvents.Events.Clear();
+    Instance.ResetSession();
+  }
 
   private class Sync : SyncedDataManager
   {
@@ -102,8 +110,8 @@ public class EventManager
   internal static void ApplyTiming(RandEventSystem __instance)
   {
     if (__instance == null) return;
-    __instance.m_eventChance = Configuration.EventChance;
-    __instance.m_eventIntervalMin = Configuration.EventInterval;
+    SessionResources.Set(__instance, "chance", () => __instance.m_eventChance, value => __instance.m_eventChance = value, Configuration.EventChance, () => __instance);
+    SessionResources.Set(__instance, "interval", () => __instance.m_eventIntervalMin, value => __instance.m_eventIntervalMin = value, Configuration.EventInterval, () => __instance);
   }
 
   public static void SetupWatcher() => Yaml.SetupDataWatcher(Pattern, Configuration.configDataEvents, ReadConfigs);

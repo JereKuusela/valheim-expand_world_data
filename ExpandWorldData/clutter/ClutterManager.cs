@@ -49,13 +49,17 @@ public partial class ClutterManager
   public static void CreateConfigs() => Instance.CreateConfigs();
   public static void ReadConfigs() => Instance.ReadConfigs();
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
+  internal static void ResetSession()
+  {
+    DefaultEntries.Clear();
+    Prefabs.Clear();
+    Instance.ResetSession();
+  }
   public static SetResult Set(Dictionary<string, string> files)
   {
     var result = TryParseYaml(files, out var data);
     if (result != SetResult.Applied) return result;
-    ClutterSystem.instance.m_clutter.Clear();
-    foreach (var clutter in data)
-      ClutterSystem.instance.m_clutter.Add(clutter);
+    SessionResources.Replace(ClutterSystem.instance.m_clutter, data);
     Refresh.Request(Regen.Clutter);
     return SetResult.Applied;
   }
