@@ -25,7 +25,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.79";
+  public const string VERSION = "1.79.1";
 #nullable disable
   public static EWD Instance;
   public static Harmony Harmony;
@@ -74,6 +74,7 @@ public class EWD : BaseUnityPlugin
       RoomManager.SetupWatcher();
       Spawn.SpawnManager.SetupWatcher();
       Event.EventManager.SetupWatcher();
+      PersistentEvents.PersistentEventManager.SetupWatcher();
       Drop.DropManager.SetupWatcher();
     }
     catch (Exception e)

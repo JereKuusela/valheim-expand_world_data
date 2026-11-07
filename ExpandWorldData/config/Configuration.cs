@@ -33,6 +33,8 @@ public partial class Configuration
   public static bool CustomWaterColor => configCustomWaterColor.Value;
   public static ConfigEntry<bool> configDataEvents;
   public static bool DataEvents => configDataEvents.Value;
+  public static ConfigEntry<bool> configDataPersistentEvents;
+  public static bool DataPersistentEvents => configDataPersistentEvents.Value;
   public static ConfigEntry<bool> configDataSpawns;
   public static bool DataSpawns => configDataSpawns.Value;
   public static ConfigEntry<bool> configDataDrops;
@@ -86,6 +88,7 @@ public partial class Configuration
   public static CustomSyncedValue<string> valueSpawnData;
   public static CustomSyncedValue<string> valueAltBiomeData;
   public static CustomSyncedValue<string> valueEventData;
+  public static CustomSyncedValue<string> valuePersistentEventData;
   public static CustomSyncedValue<string> valueDropData;
   public static ConfigEntry<bool> configDataEnvironments;
   public static bool DataEnvironments => configDataEnvironments.Value;
@@ -174,6 +177,8 @@ public partial class Configuration
     configDataAltBiomes.SettingChanged += (s, e) => AltBiomeManager.ReadConfigs();
     configDataEvents = wrapper.Bind(section, "Event data", false, false, "Use event data.", synchronizedSetting: false);
     configDataEvents.SettingChanged += (s, e) => EventManager.ReadConfigs();
+    configDataPersistentEvents = wrapper.Bind(section, "Persistent event data", false, false, "Use persistent event data.", synchronizedSetting: false);
+    configDataPersistentEvents.SettingChanged += (s, e) => PersistentEvents.PersistentEventManager.ReadConfigs();
     configDataSpawns = wrapper.Bind(section, "Spawn data", false, false, "Use spawn data.", synchronizedSetting: false);
     configDataSpawns.SettingChanged += (s, e) => SpawnManager.ReadConfigs();
     configDataDrops = wrapper.Bind(section, "Drop data", false, false, "Use drop data.", synchronizedSetting: false);
@@ -200,6 +205,8 @@ public partial class Configuration
     valueAltBiomeData.ValueChanged += () => AltBiomeManager.FromSetting(valueAltBiomeData.Value);
     valueEventData = wrapper.AddValue("event_data");
     valueEventData.ValueChanged += () => EventManager.FromSetting(valueEventData.Value);
+    valuePersistentEventData = wrapper.AddValue("persistent_event_data");
+    valuePersistentEventData.ValueChanged += () => PersistentEvents.PersistentEventManager.FromSetting(valuePersistentEventData.Value);
     valueDropData = wrapper.AddValue("drop_data");
     valueDropData.ValueChanged += () => DropManager.FromSetting(valueDropData.Value);
 

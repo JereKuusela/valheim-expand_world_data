@@ -1,3 +1,7 @@
+- v1.80
+  - Adds persistent event support (`expand_persistent_events.yaml`).
+  - Fixes error when environment aurora blending exceeded Unity's limit.
+
 - v1.79
   - BREAKING CHANGE: Drop entries now automatically apply to the same prefab as the drop entry name.
   - Adds AND/OR support for "required" and "forbidden" fields. Within row, one requirement must be met. Across rows, all rows must be satisfied. Existing configurations are automatically migrated.

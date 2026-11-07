@@ -27,6 +27,7 @@ public static class Patcher
   {
     if (harmony == null) return;
     Event.Patcher.Patch(harmony);
+    PersistentEvents.Patcher.Patch(harmony);
     Spawn.Patcher.Patch(harmony);
     Drop.Patcher.Patch(harmony);
     Features.Patcher.Patch(harmony);

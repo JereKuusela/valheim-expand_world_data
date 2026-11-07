@@ -91,6 +91,7 @@ public class InitializeContent
     EnvironmentManager.Initialize();
     BiomeManager.Initialize();
     Event.EventManager.Initialize();
+    PersistentEvents.PersistentEventManager.Initialize();
     AltBiomeManager.Initialize();
     // Clutter must be here because since SetupLocations adds prefabs to the list.
     ClutterManager.Initialize();
@@ -116,6 +117,7 @@ public class InitializeContent
       VegetationManager.ReadConfigs();
       LocationManager.ReadConfigs();
       AltBiomeManager.ReadConfigs();
+      PersistentEvents.PersistentEventManager.ReadConfigs();
       // After locations so that location groups are known.
       Spawn.SpawnManager.ReadConfigs();
       BiomeManager.LoadEnvironments();

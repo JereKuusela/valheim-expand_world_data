@@ -158,6 +158,14 @@ Control events with the `Event data` config setting. Events are disabled by defa
 
 See [Events](docs/events.md) for more info.
 
+### Persistent events
+
+The file `expand_persistent_events.yaml` sets long lasting events that stay in a world area, like Jotun invasions. This is a client side feature.
+
+Control persistent events with the `Persistent event data` config setting. Disabled by default.
+
+See [Persistent events](docs/persistent-events.md) for more info.
+
 ### Drops
 
 The file `expand_drops.yaml` sets custom item drops for creatures and objects. This is a client side feature.
