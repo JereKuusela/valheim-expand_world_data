@@ -157,8 +157,8 @@ public partial class EnvironmentManager
     if (colorKeys.Count == 0)
       colorKeys.Add(new(Color.black, 0f));
     var gradient = new Gradient();
-    // Alpha is ignored because the aurora texture is RGB only.
-    gradient.SetKeys([.. colorKeys], [new GradientAlphaKey(1f, 0f)]);
+    // Alpha is ignored because the aurora texture is RGB only. Shares a color key time so blending adds no extra key.
+    gradient.SetKeys([.. colorKeys], [new GradientAlphaKey(1f, colorKeys[0].time)]);
     return gradient;
   }
 
