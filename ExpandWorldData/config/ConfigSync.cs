@@ -571,6 +571,7 @@ public class ConfigSync
         serverSync.InitialSyncDone = false;
       }
       ProcessingServerUpdate = false;
+      if (!isServer) BiomeManager.NamesFromFile();
     }
   }
 
@@ -813,7 +814,7 @@ public class ConfigSync
     [HarmonyPrefix]
     private static void Prefix(ref Dictionary<Assembly, BufferingSocket>? __state, ZNet __instance, ZRpc rpc)
     {
-      if (Configuration.ServerOnly) return;
+      if (Configuration.ServerOnly && !VersionCheck.IsEwdClient(rpc)) return;
       if (__instance.IsServer())
       {
         BufferingSocket bufferingSocket = new(rpc.GetSocket());
@@ -835,10 +836,9 @@ public class ConfigSync
     }
 
     [HarmonyPostfix]
-    private static void Postfix(Dictionary<Assembly, BufferingSocket> __state, ZNet __instance, ZRpc rpc)
+    private static void Postfix(Dictionary<Assembly, BufferingSocket>? __state, ZNet __instance, ZRpc rpc)
     {
-      if (Configuration.ServerOnly) return;
-      if (!__instance.IsServer())
+      if (__state == null || !__instance.IsServer())
       {
         return;
       }
@@ -889,9 +889,9 @@ public class ConfigSync
 
           MethodInfo? listContainsId = AccessTools.DeclaredMethod(typeof(ZNet), "ListContainsId");
           SyncedList adminList = (SyncedList)AccessTools.DeclaredField(typeof(ZNet), "m_adminList").GetValue(ZNet.instance);
-          entries.Add(new PackageEntry { section = "Internal", key = "lockexempt", type = typeof(bool), value = listContainsId is null ? adminList.Contains(rpc.GetSocket().GetHostName()) : listContainsId.Invoke(ZNet.instance, new object[] { adminList, rpc.GetSocket().GetHostName() }) });
+          entries.Add(new PackageEntry { section = "Internal", key = "lockexempt", type = typeof(bool), value = !Configuration.ServerOnly && (listContainsId is null ? adminList.Contains(rpc.GetSocket().GetHostName()) : (bool)listContainsId.Invoke(ZNet.instance, new object[] { adminList, rpc.GetSocket().GetHostName() })) });
 
-          ZPackage package = ConfigsToPackage(configSync.allConfigs.Select(c => c.BaseConfig), configSync.allCustomValues, entries, false);
+          ZPackage package = ConfigsToPackage(configSync.allConfigs.Select(c => c.BaseConfig), configSync.allCustomValues, entries, false, Configuration.ServerOnly);
 
           yield return __instance.StartCoroutine(configSync.sendZPackage([peer], package));
 
@@ -990,7 +990,7 @@ public class ConfigSync
     }
   }
 
-  private static ZPackage ConfigsToPackage(IEnumerable<ConfigEntryBase>? configs = null, IEnumerable<CustomSyncedValueBase>? customValues = null, IEnumerable<PackageEntry>? packageEntries = null, bool partial = true)
+  private static ZPackage ConfigsToPackage(IEnumerable<ConfigEntryBase>? configs = null, IEnumerable<CustomSyncedValueBase>? customValues = null, IEnumerable<PackageEntry>? packageEntries = null, bool partial = true, bool defaults = false)
   {
     List<ConfigEntryBase> configList = configs?.Where(config => configData(config)!.SynchronizedConfig).ToList() ?? [];
     List<CustomSyncedValueBase> customValueList = customValues?.ToList() ?? [];
@@ -1003,11 +1003,11 @@ public class ConfigSync
     }
     foreach (CustomSyncedValueBase customValue in customValueList)
     {
-      AddEntryToPackage(package, new PackageEntry { section = "Internal", key = customValue.Identifier, type = customValue.Type, value = customValue.BoxedValue });
+      AddEntryToPackage(package, new PackageEntry { section = "Internal", key = customValue.Identifier, type = customValue.Type, value = defaults && customValue.Type == typeof(string) ? "" : customValue.BoxedValue });
     }
     foreach (ConfigEntryBase config in configList)
     {
-      AddEntryToPackage(package, new PackageEntry { section = config.Definition.Section, key = config.Definition.Key, type = configType(config), value = config.BoxedValue });
+      AddEntryToPackage(package, new PackageEntry { section = config.Definition.Section, key = config.Definition.Key, type = configType(config), value = defaults ? config.DefaultValue : config.BoxedValue });
     }
 
     return package;
@@ -1254,6 +1254,8 @@ public class VersionCheck
   // Tracks which clients have passed the version check (only for servers).
   private readonly List<ZRpc> ValidatedClients = [];
 
+  internal static bool IsEwdClient(ZRpc rpc) => versionChecks.Any(check => check.Name == EWD.GUID && check.ValidatedClients.Contains(rpc));
+
   // Optional backing field to use ConfigSync values (will override other fields).
   private readonly ConfigSync? ConfigSync;
 
@@ -1382,6 +1384,8 @@ public class VersionCheck
       {
         check.ValidatedClients.Add(rpc);
       }
+      if (ZNet.instance.IsServer() && Configuration.ServerOnly)
+        check.SendVersion(rpc);
 
       matched = true;
     }
@@ -1416,7 +1420,7 @@ public class VersionCheck
   [HarmonyPatch(typeof(ZNet), "RPC_PeerInfo"), HarmonyPrefix]
   private static bool RPC_PeerInfo(ZRpc rpc, ZNet __instance)
   {
-    // No need to do anything. Client will fail the check.
+    // Clients without EWD are allowed in server-only mode.
     if (ZNet.instance.IsServer() && Configuration.ServerOnly) return true;
 
     VersionCheck[] failedChecks = __instance.IsServer() ? GetFailedServer(rpc) : GetFailedClient();
@@ -1444,8 +1448,6 @@ public class VersionCheck
   [HarmonyPatch(typeof(ZNet), "OnNewConnection"), HarmonyPrefix]
   private static void RegisterAndCheckVersion(ZNetPeer peer, ZNet __instance)
   {
-    // No need to do anything. Client will fail the check.
-    if (ZNet.instance.IsServer() && Configuration.ServerOnly) return;
     notProcessedNames.Clear();
 
     IDictionary rpcFunctions = (IDictionary)typeof(ZRpc).GetField("m_functions", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(peer.m_rpc);
@@ -1463,28 +1465,37 @@ public class VersionCheck
     foreach (VersionCheck check in versionChecks)
     {
       check.Initialize();
+      // Reply only to EWD clients in server-only mode.
+      if (__instance.IsServer() && Configuration.ServerOnly) continue;
       // If the mod is not required, then it's enough for only one side to do the check.
       if (!check.ModRequired && !__instance.IsServer())
       {
         continue;
       }
 
-      Debug.Log($"Sending {check.DisplayName} version {check.CurrentVersion} and minimum version {check.MinimumRequiredVersion} to the {(__instance.IsServer() ? "client" : "server")}.");
-
-      ZPackage zpackage = new();
-      zpackage.Write(check.Name);
-      zpackage.Write(check.MinimumRequiredVersion);
-      zpackage.Write(check.CurrentVersion);
-      if (ZNet.instance.IsServer() && check.SendBiomes)
-      {
-        foreach (var kvp in BiomeManager.BiomeToDisplayName)
-        {
-          zpackage.Write((int)kvp.Key);
-          zpackage.Write(kvp.Value);
-        }
-      }
-      peer.m_rpc.Invoke("ServerSync VersionCheck", zpackage);
+      check.SendVersion(peer.m_rpc);
     }
+  }
+
+  private void SendVersion(ZRpc rpc)
+  {
+    Debug.Log($"Sending {DisplayName} version {CurrentVersion} and minimum version {MinimumRequiredVersion} to the {(ZNet.instance.IsServer() ? "client" : "server")}.");
+    ZPackage package = new();
+    package.Write(Name);
+    package.Write(MinimumRequiredVersion);
+    package.Write(CurrentVersion);
+    if (ZNet.instance.IsServer() && SendBiomes)
+    {
+      var biomes = Configuration.ServerOnly
+        ? BiomeManager.OriginalBiomes.ToDictionary(kvp => kvp.Value, kvp => kvp.Key)
+        : BiomeManager.BiomeToDisplayName;
+      foreach (var kvp in biomes)
+      {
+        package.Write((int)kvp.Key);
+        package.Write(kvp.Value);
+      }
+    }
+    rpc.Invoke("ServerSync VersionCheck", package);
   }
 
   [HarmonyPatch(typeof(ZNet), nameof(ZNet.Disconnect)), HarmonyPrefix]

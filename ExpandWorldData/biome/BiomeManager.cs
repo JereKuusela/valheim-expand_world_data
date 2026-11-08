@@ -59,7 +59,7 @@ namespace ExpandWorldData.Biome
         deepNorthOverride = env.m_deepnorthOverride
       };
     }
-    private static readonly Dictionary<string, Heightmap.Biome> OriginalBiomes = new() {
+    internal static readonly Dictionary<string, Heightmap.Biome> OriginalBiomes = new() {
     { "None", Heightmap.Biome.None},
     { "Meadows", Heightmap.Biome.Meadows},
     { "Swamp", Heightmap.Biome.Swamp},
@@ -165,7 +165,7 @@ namespace ExpandWorldData.Biome
     public static void ReadConfigs() => Instance.ReadConfigs();
     public static void NamesFromFile()
     {
-      if (!Configuration.DataBiome) return;
+      if (!Configuration.DataBiome) { LoadNames([]); return; }
       var files = DataManager.Read(Pattern);
       if (files != null && Yaml.TryDeserialize<BiomeYaml>(files, out var data))
         LoadNames(data);
@@ -334,10 +334,24 @@ namespace ExpandWorldData.Biome
       em.m_firstEnv = true;
 
     }
+    private static readonly Dictionary<string, (string? Original, string Applied)> Translations = [];
+    private static void RestoreTranslations()
+    {
+      foreach (var kvp in Translations)
+      {
+        var translations = Localization.instance.m_translations;
+        if (!translations.TryGetValue(kvp.Key, out var current) || current != kvp.Value.Applied) continue;
+        if (kvp.Value.Original == null) translations.Remove(kvp.Key);
+        else translations[kvp.Key] = kvp.Value.Original;
+      }
+      Translations.Clear();
+    }
     private static void AddTranslation(Heightmap.Biome biome, string name)
     {
       var key = "biome_" + biome.ToString().ToLowerInvariant();
       var value = name == "" ? biome.ToString() : name;
+      Localization.instance.m_translations.TryGetValue(key, out var original);
+      Translations[key] = (original, value);
       Localization.instance.m_translations[key] = value;
     }
     private static Heightmap.Biome NextBiome(Heightmap.Biome biome)
@@ -378,8 +392,11 @@ namespace ExpandWorldData.Biome
       Dictionary<Heightmap.Biome, string> translations = [];
       Load(data, translations);
       LoadEnvironments();
+      var hadTranslations = Translations.Count > 0;
+      RestoreTranslations();
       foreach (var translation in translations)
         AddTranslation(translation.Key, translation.Value);
+      if (hadTranslations || translations.Count > 0) Localization.instance.m_cache.EvictAll();
       Refresh.Request(Regen.Terrain | Regen.Water | Regen.Minimap);
       return SetResult.Applied;
     }
