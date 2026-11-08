@@ -33,18 +33,17 @@ public abstract class YamlDataManager
   protected virtual void OnApplied(Dictionary<string, string> files) { }
   // Disabled data must not touch anything unless custom data was previously applied.
   private bool Customized;
-  internal void ResetSession() => Customized = false;
 
   public void CreateConfigs()
   {
-    if (Helper.IsClient() || !Session.LocalFiles || File.Exists(FilePath)) return;
+    if (Helper.IsClient() || File.Exists(FilePath)) return;
     WriteDefaultConfig();
     Yaml.IgnoreWrites(Pattern);
   }
 
   public void ReadConfigs()
   {
-    if (Helper.IsClient() || !Session.LocalFiles) return;
+    if (Helper.IsClient()) return;
     // Written even when disabled so users have a file to start from.
     CreateConfigs();
     if (!DataEnabled)

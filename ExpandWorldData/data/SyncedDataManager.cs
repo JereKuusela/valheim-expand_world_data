@@ -24,8 +24,8 @@ public abstract class SyncedDataManager : YamlDataManager
 
   public void FromSetting(string yaml)
   {
-    if (!Helper.IsClient() || !Session.Receiving) return;
-    if (!Initialized || !Session.Active) { Pending = true; return; }
+    if (!Helper.IsClient()) return;
+    if (!Initialized) { Pending = true; return; }
     Apply(string.IsNullOrEmpty(yaml) ? [] : new() { ["synchronized"] = yaml });
   }
 
@@ -47,10 +47,6 @@ public abstract class SyncedDataManager : YamlDataManager
   public static void CleanUpAll()
   {
     Initialized = false;
-    foreach (var instance in Instances)
-    {
-      instance.Pending = false;
-      instance.ResetSession();
-    }
+    foreach (var instance in Instances) instance.Pending = false;
   }
 }

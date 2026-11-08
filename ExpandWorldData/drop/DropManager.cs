@@ -37,12 +37,6 @@ public class DropManager
   public static void ReadConfigs() => Instance.ReadConfigs();
 
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
-  internal static void ResetSession()
-  {
-    DataByHash.Clear();
-    DataByName.Clear();
-    Instance.ResetSession();
-  }
 
   private static bool Set(Dictionary<string, string> files)
   {

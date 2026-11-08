@@ -44,7 +44,7 @@ This mod can be used server only, without requiring clients to have it. However 
 - `expand_vegetation.yaml`: All fields.
 - `expand_world.cfg`: Only setting Zone spawners or Random locations.
 
-Enable `Server only` in the server config. Compatible EWD versions on both sides let clients suspend local features while connected and restore them in singleplayer. Restart the server and reconnect clients after changing the setting.
+When doing this, enable `Server only` on the config to remove version check.
 
 ### Ashlands & Deep North
 

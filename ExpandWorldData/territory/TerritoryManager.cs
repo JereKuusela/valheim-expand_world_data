@@ -57,7 +57,6 @@ public class TerritoryManager
   private static TerritoryYaml From(TerritoryYaml data, string file) => data;
 
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
-  internal static void ResetSession() { Data.Clear(); Instance.ResetSession(); }
 
   private static bool Set(Dictionary<string, string> files)
   {

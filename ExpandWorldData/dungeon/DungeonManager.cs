@@ -57,16 +57,6 @@ public partial class DungeonManager
   }
 
   public static void ReadConfigs() => Instance.ReadConfigs();
-  internal static void ResetSession()
-  {
-    DefaultGenerators.Clear();
-    DungeonObjects.Generators.Clear();
-    DungeonObjects.CurrentDungeon = "";
-    DungeonObjects.CurrentRoom = null;
-    DungeonObjects.SpawnedObjects.Clear();
-    EnvironmentBox.Cache.Clear();
-    Instance.ResetSession();
-  }
 
   private static SetResult Set(Dictionary<string, string> files)
   {

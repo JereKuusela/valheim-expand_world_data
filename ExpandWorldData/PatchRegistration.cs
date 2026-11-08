@@ -10,7 +10,6 @@ public static class Patches
 {
   // Value is the state the patch was applied with, so state-dependent transpilers can be re-applied.
   private static readonly Dictionary<(MethodBase Original, MethodInfo Patch), object?> Registered = [];
-  internal static bool HasGameplay => Registered.Count > 0;
 
   public static void Apply(
     Harmony harmony,
@@ -26,7 +25,6 @@ public static class Patches
     object? state = null,
     Action? onUnpatch = null)
   {
-    shouldPatch &= Session.Active;
     try
     {
       var original = ResolveOriginal(originalType, originalName, argumentTypes, enumerator);

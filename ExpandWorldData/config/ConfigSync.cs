@@ -250,16 +250,10 @@ public class ConfigSync
     [HarmonyPostfix]
     private static void Postfix(ZNet __instance)
     {
-      var generation = Session.Generation;
       isServer = __instance.IsServer();
       foreach (ConfigSync configSync in configSyncs)
       {
-        ZRoutedRpc.instance.Register<ZPackage>(configSync.Name + " ConfigSync", (sender, package) =>
-        {
-          if (generation != Session.Generation || !ReferenceEquals(__instance, ZNet.instance)) return;
-          if (configSync.Name == EWD.GUID && (!__instance.IsServer() || !Session.Active || Configuration.ServerOnly)) return;
-          configSync.RPC_FromOtherClientConfigSync(sender, package);
-        });
+        ZRoutedRpc.instance.Register<ZPackage>(configSync.Name + " ConfigSync", configSync.RPC_FromOtherClientConfigSync);
         if (isServer)
         {
           configSync.InitialSyncDone = true;
@@ -275,7 +269,6 @@ public class ConfigSync
         for (; ; )
         {
           yield return new WaitForSeconds(30);
-          if (generation != Session.Generation || !ReferenceEquals(__instance, ZNet.instance)) yield break;
           if (!Configuration.ServerOnly && !adminList.GetList().SequenceEqual(CurrentList))
           {
             CurrentList = [.. adminList.GetList()];
@@ -319,17 +312,11 @@ public class ConfigSync
     [HarmonyPostfix]
     private static void Postfix(ZNet __instance, ZNetPeer peer)
     {
-      var generation = Session.Generation;
       if (!__instance.IsServer())
       {
         foreach (ConfigSync configSync in configSyncs)
         {
-          peer.m_rpc.Register<ZPackage>(configSync.Name + " ConfigSync", (rpc, package) =>
-          {
-            if (generation != Session.Generation || !ReferenceEquals(__instance, ZNet.instance)) return;
-            if (configSync.Name == EWD.GUID && !Session.AcceptsConfig(rpc)) return;
-            configSync.RPC_FromServerConfigSync(rpc, package);
-          });
+          peer.m_rpc.Register<ZPackage>(configSync.Name + " ConfigSync", configSync.RPC_FromServerConfigSync);
         }
       }
     }
@@ -347,22 +334,16 @@ public class ConfigSync
     lockedConfigChanged += serverLockedSettingChanged;
     IsSourceOfTruth = false;
 
-    if (HandleConfigSyncRPC(0, package, false, out var fullUpdate))
+    if (HandleConfigSyncRPC(0, package, false))
     {
       InitialSyncDone = true;
-      if (Name == EWD.GUID && fullUpdate) Session.Synchronized(rpc);
     }
   }
 
   private void RPC_FromOtherClientConfigSync(long sender, ZPackage package) => HandleConfigSyncRPC(sender, package, true);
 
   private bool HandleConfigSyncRPC(long sender, ZPackage package, bool clientUpdate)
-    => HandleConfigSyncRPC(sender, package, clientUpdate, out _);
-
-  private bool HandleConfigSyncRPC(long sender, ZPackage package, bool clientUpdate, out bool fullUpdate)
   {
-    fullUpdate = false;
-    bool previousProcessing = ProcessingServerUpdate;
     try
     {
       if (isServer && IsLocked && SnatchCurrentlyHandlingRPC.currentRpc?.GetSocket()?.GetHostName() is { } client)
@@ -433,32 +414,34 @@ public class ConfigSync
         packageFlags = package.ReadByte();
       }
 
+      if ((packageFlags & PARTIAL_CONFIGS) == 0)
+      {
+        resetConfigsFromServer();
+      }
+
       ParsedConfigs configs = ReadConfigsFromPackage(package);
-      if (!configs.Valid) return false;
-      if ((packageFlags & PARTIAL_CONFIGS) == 0) resetConfigsFromServer();
 
       ConfigFile? configFile = null;
       bool originalSaveOnConfigSet = false;
-      try
+      foreach (KeyValuePair<OwnConfigEntryBase, object?> configKv in configs.configValues)
       {
-        foreach (KeyValuePair<OwnConfigEntryBase, object?> configKv in configs.configValues)
+        if (!isServer && configKv.Key.LocalBaseValue == null)
         {
-          if (!isServer && configKv.Key.LocalBaseValue == null)
-            configKv.Key.LocalBaseValue = configKv.Key.BaseConfig.BoxedValue;
-
-          if (configFile is null)
-          {
-            configFile = configKv.Key.BaseConfig.ConfigFile;
-            originalSaveOnConfigSet = configFile.SaveOnConfigSet;
-            configFile.SaveOnConfigSet = false;
-          }
-          configKv.Key.BaseConfig.BoxedValue = configKv.Value;
+          configKv.Key.LocalBaseValue = configKv.Key.BaseConfig.BoxedValue;
         }
+
+        if (configFile is null)
+        {
+          configFile = configKv.Key.BaseConfig.ConfigFile;
+          originalSaveOnConfigSet = configFile.SaveOnConfigSet;
+          configFile.SaveOnConfigSet = false;
+        }
+        configKv.Key.BaseConfig.BoxedValue = configKv.Value;
       }
-      finally { if (configFile is not null) configFile.SaveOnConfigSet = originalSaveOnConfigSet; }
       if (configFile is not null)
       {
-        if (Name != EWD.GUID || isServer) configFile.Save();
+        configFile.SaveOnConfigSet = originalSaveOnConfigSet;
+        configFile.Save();
       }
 
       foreach (KeyValuePair<CustomSyncedValueBase, object?> configKv in configs.customValues)
@@ -478,18 +461,16 @@ public class ConfigSync
         serverLockedSettingChanged(); // Re-evaluate for intial locking
       }
 
-      fullUpdate = (packageFlags & PARTIAL_CONFIGS) == 0;
       return true;
     }
     finally
     {
-      ProcessingServerUpdate = previousProcessing;
+      ProcessingServerUpdate = false;
     }
   }
 
   private class ParsedConfigs
   {
-    internal bool Valid;
     public readonly Dictionary<OwnConfigEntryBase, object?> configValues = [];
     public readonly Dictionary<CustomSyncedValueBase, object?> customValues = [];
   }
@@ -573,27 +554,24 @@ public class ConfigSync
       }
     }
 
-    configs.Valid = true;
     return configs;
   }
 
-  internal static void RestoreSession()
+  [HarmonyPatch(typeof(ZNet), "Shutdown")]
+  private class ResetConfigsOnShutdown
   {
-    bool previous = ProcessingServerUpdate;
-    ProcessingServerUpdate = true;
-    try
+    [HarmonyPostfix]
+    private static void Postfix()
     {
+      ProcessingServerUpdate = true;
       foreach (ConfigSync serverSync in configSyncs)
       {
         serverSync.resetConfigsFromServer();
         serverSync.IsSourceOfTruth = true;
         serverSync.InitialSyncDone = false;
-        serverSync.configValueCache.Clear();
-        serverSync.cacheExpirations.Clear();
       }
-      lockExempt = false;
+      ProcessingServerUpdate = false;
     }
-    finally { ProcessingServerUpdate = previous; }
   }
 
   private static bool isWritableConfig(OwnConfigEntryBase config)
@@ -616,17 +594,22 @@ public class ConfigSync
 
   private void resetConfigsFromServer()
   {
+    ConfigFile? configFile = null;
+    bool originalSaveOnConfigSet = false;
     foreach (OwnConfigEntryBase config in allConfigs.Where(config => config.LocalBaseValue != null))
     {
-      var file = config.BaseConfig.ConfigFile;
-      bool previous = file.SaveOnConfigSet;
-      file.SaveOnConfigSet = false;
-      try
+      if (configFile is null)
       {
-        config.BaseConfig.BoxedValue = config.LocalBaseValue;
-        config.LocalBaseValue = null;
+        configFile = config.BaseConfig.ConfigFile;
+        originalSaveOnConfigSet = configFile.SaveOnConfigSet;
+        configFile.SaveOnConfigSet = false;
       }
-      finally { file.SaveOnConfigSet = previous; }
+      config.BaseConfig.BoxedValue = config.LocalBaseValue;
+      config.LocalBaseValue = null;
+    }
+    if (configFile is not null)
+    {
+      configFile.SaveOnConfigSet = originalSaveOnConfigSet;
     }
 
     foreach (CustomSyncedValueBase config in allCustomValues.Where(config => config.LocalBaseValue != null))
@@ -643,8 +626,6 @@ public class ConfigSync
 
   private IEnumerator<bool> distributeConfigToPeers(ZNetPeer peer, ZPackage package)
   {
-    var network = ZNet.instance;
-    var generation = Session.Generation;
     if (ZRoutedRpc.instance is not { } rpc)
     {
       yield break;
@@ -655,16 +636,14 @@ public class ConfigSync
 
     IEnumerable<bool> waitForQueue()
     {
-      if (generation != Session.Generation || !ReferenceEquals(network, ZNet.instance)) yield break;
       float timeout = Time.time + 30;
       while (peer.m_socket.GetSendQueueSize() > maximumSendQueueSize)
       {
-        if (generation != Session.Generation || !ReferenceEquals(network, ZNet.instance)) yield break;
         if (Time.time > timeout)
         {
           Debug.Log($"Disconnecting {peer.m_uid} after 30 seconds config sending timeout");
           peer.m_rpc.Invoke("Error", ZNet.ConnectionStatus.ErrorConnectFailed);
-          network.Disconnect(peer);
+          ZNet.instance.Disconnect(peer);
           yield break;
         }
 
@@ -674,7 +653,6 @@ public class ConfigSync
 
     void SendPackage(ZPackage pkg)
     {
-      if (generation != Session.Generation || !ReferenceEquals(network, ZNet.instance)) return;
       string method = Name + " ConfigSync";
       if (isServer)
       {
@@ -936,7 +914,6 @@ public class ConfigSync
 
   private void Broadcast(long target, params ConfigEntryBase[] configs)
   {
-    if (Name == EWD.GUID && !Session.Active) return;
     if (Configuration.ServerOnly) return;
     if (!IsLocked || isServer)
     {
@@ -947,7 +924,6 @@ public class ConfigSync
 
   private void Broadcast(long target, params CustomSyncedValueBase[] customValues)
   {
-    if (Name == EWD.GUID && !Session.Active) return;
     if (Configuration.ServerOnly) return;
     if (!IsLocked || isServer)
     {
@@ -1277,7 +1253,6 @@ public class VersionCheck
 
   // Tracks which clients have passed the version check (only for servers).
   private readonly List<ZRpc> ValidatedClients = [];
-  private bool AcceptedPassive;
 
   // Optional backing field to use ConfigSync values (will override other fields).
   private readonly ConfigSync? ConfigSync;
@@ -1319,7 +1294,6 @@ public class VersionCheck
   {
     ReceivedCurrentVersion = null;
     ReceivedMinimumRequiredVersion = null;
-    AcceptedPassive = false;
     if (ConfigSync == null)
     {
       return;
@@ -1362,17 +1336,14 @@ public class VersionCheck
     return rpc == null ? ErrorClient() : ErrorServer(rpc);
   }
 
-  private static VersionCheck[] GetFailedClient(ZRpc? rpc = null)
+  private static VersionCheck[] GetFailedClient()
   {
-    var passive = Session.Passive(rpc);
-    if (rpc != null && passive)
-      foreach (var check in versionChecks.Where(check => check.Name == EWD.GUID)) check.AcceptedPassive = true;
-    return versionChecks.Where(check => !check.IsVersionOk() && !(check.Name == EWD.GUID && (rpc == null ? check.AcceptedPassive : passive))).ToArray();
+    return versionChecks.Where(check => !check.IsVersionOk()).ToArray();
   }
 
   private static VersionCheck[] GetFailedServer(ZRpc rpc)
   {
-    return versionChecks.Where(check => check.ModRequired && !(check.Name == EWD.GUID && Configuration.ServerOnly) && !check.ValidatedClients.Contains(rpc)).ToArray();
+    return versionChecks.Where(check => check.ModRequired && !check.ValidatedClients.Contains(rpc)).ToArray();
   }
 
   private static void Logout()
@@ -1394,19 +1365,6 @@ public class VersionCheck
     string minimumRequiredVersion = pkg.ReadString();
     string currentVersion = pkg.ReadString();
 
-    if (guid == EWD.GUID && ZNet.instance.IsServer() && Configuration.ServerOnly)
-    {
-      if (pkg.Size() - pkg.GetPos() == 4 && pkg.ReadInt() == Session.ModeProtocol)
-      {
-        ZPackage response = new();
-        response.Write(Session.ModeProtocol);
-        response.Write(true);
-        rpc.Invoke(Session.ModeRpc, response);
-      }
-      return;
-    }
-    if (guid == EWD.GUID && !ZNet.instance.IsServer() && !Session.IsServer(rpc)) return;
-
     bool matched = false;
 
     foreach (VersionCheck check in versionChecks)
@@ -1420,7 +1378,6 @@ public class VersionCheck
 
       check.ReceivedMinimumRequiredVersion = minimumRequiredVersion;
       check.ReceivedCurrentVersion = currentVersion;
-      if (guid == EWD.GUID && !ZNet.instance.IsServer() && check.IsVersionOk()) Session.Full(rpc);
       if (ZNet.instance.IsServer() && check.IsVersionOk())
       {
         check.ValidatedClients.Add(rpc);
@@ -1459,7 +1416,10 @@ public class VersionCheck
   [HarmonyPatch(typeof(ZNet), "RPC_PeerInfo"), HarmonyPrefix]
   private static bool RPC_PeerInfo(ZRpc rpc, ZNet __instance)
   {
-    VersionCheck[] failedChecks = __instance.IsServer() ? GetFailedServer(rpc) : GetFailedClient(rpc);
+    // No need to do anything. Client will fail the check.
+    if (ZNet.instance.IsServer() && Configuration.ServerOnly) return true;
+
+    VersionCheck[] failedChecks = __instance.IsServer() ? GetFailedServer(rpc) : GetFailedClient();
     if (failedChecks.Length == 0)
     {
       return true;
@@ -1484,31 +1444,25 @@ public class VersionCheck
   [HarmonyPatch(typeof(ZNet), "OnNewConnection"), HarmonyPrefix]
   private static void RegisterAndCheckVersion(ZNetPeer peer, ZNet __instance)
   {
+    // No need to do anything. Client will fail the check.
+    if (ZNet.instance.IsServer() && Configuration.ServerOnly) return;
     notProcessedNames.Clear();
-    var generation = Session.Generation;
 
     IDictionary rpcFunctions = (IDictionary)typeof(ZRpc).GetField("m_functions", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(peer.m_rpc);
     if (rpcFunctions.Contains("ServerSync VersionCheck".GetStableHashCode()))
     {
       object function = rpcFunctions["ServerSync VersionCheck".GetStableHashCode()];
       Action<ZRpc, ZPackage> action = (Action<ZRpc, ZPackage>)function.GetType().GetField("m_action", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(function);
-      peer.m_rpc.Register<ZPackage>("ServerSync VersionCheck", (rpc, pkg) =>
-      {
-        if (generation == Session.Generation && ReferenceEquals(__instance, ZNet.instance)) CheckVersion(rpc, pkg, action);
-      });
+      peer.m_rpc.Register<ZPackage>("ServerSync VersionCheck", (rpc, pkg) => CheckVersion(rpc, pkg, action));
     }
     else
     {
-      peer.m_rpc.Register<ZPackage>("ServerSync VersionCheck", (rpc, pkg) =>
-      {
-        if (generation == Session.Generation && ReferenceEquals(__instance, ZNet.instance)) CheckVersion(rpc, pkg);
-      });
+      peer.m_rpc.Register<ZPackage>("ServerSync VersionCheck", CheckVersion);
     }
 
     foreach (VersionCheck check in versionChecks)
     {
       check.Initialize();
-      if (__instance.IsServer() && Configuration.ServerOnly && check.Name == EWD.GUID) continue;
       // If the mod is not required, then it's enough for only one side to do the check.
       if (!check.ModRequired && !__instance.IsServer())
       {
@@ -1521,7 +1475,6 @@ public class VersionCheck
       zpackage.Write(check.Name);
       zpackage.Write(check.MinimumRequiredVersion);
       zpackage.Write(check.CurrentVersion);
-      if (!__instance.IsServer() && check.Name == EWD.GUID) zpackage.Write(Session.ModeProtocol);
       if (ZNet.instance.IsServer() && check.SendBiomes)
       {
         foreach (var kvp in BiomeManager.BiomeToDisplayName)

@@ -19,12 +19,6 @@ public class WaterColor
 
   internal static void StartBiomeTransition(BiomeSector biome) => StartTransition(biome.Biome);
   internal static void ResetTransition() => StopTransition();
-  internal static void ResetSession()
-  {
-    Transitioning = false;
-    InitDone = false;
-    TransitionProgress = 0f;
-  }
 
   public static void Transition(float time)
   {
@@ -135,15 +129,14 @@ public class WaterColor
 
   private static void UpdateColors(Material mat, Color surface, Color top, Color bottom, Color shallow)
   {
-    void Set(string key, Color value) => SessionResources.Set(mat, key, () => mat.GetColor(key), color => mat.SetColor(key, color), value, () => mat);
-    Set("_SurfaceColor", surface);
-    Set("_AshlandsSurfaceColor", surface);
-    Set("_ColorTop", top);
-    Set("_AshlandsColorTop", top);
-    Set("_ColorBottom", bottom);
-    Set("_AshlandsColorBottom", bottom);
-    Set("_ColorBottomShallow", shallow);
-    Set("_AshlandsColorBottomShallow", shallow);
+    mat.SetColor("_SurfaceColor", surface);
+    mat.SetColor("_AshlandsSurfaceColor", surface);
+    mat.SetColor("_ColorTop", top);
+    mat.SetColor("_AshlandsColorTop", top);
+    mat.SetColor("_ColorBottom", bottom);
+    mat.SetColor("_AshlandsColorBottom", bottom);
+    mat.SetColor("_ColorBottomShallow", shallow);
+    mat.SetColor("_AshlandsColorBottomShallow", shallow);
   }
   private static bool InitDone = false;
   private static void InitColors(Material mat)

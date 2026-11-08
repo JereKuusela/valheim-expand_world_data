@@ -18,7 +18,7 @@ public static class Api
 {
   public static RandomEvent? GetCurrentRandomEvent(Vector3 position)
   {
-    if (Session.Active && Configuration.DataEvents && Configuration.MultipleEvents)
+    if (Configuration.DataEvents && Configuration.MultipleEvents)
       return Event.MultipleEvents.Events.OrderBy(entry => Utils.DistanceXZ(entry.Event.m_pos, position)).FirstOrDefault()?.Event;
     return RandEventSystem.instance?.GetCurrentRandomEvent();
   }

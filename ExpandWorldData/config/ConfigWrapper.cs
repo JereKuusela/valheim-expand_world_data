@@ -74,7 +74,7 @@ public class ConfigWrapper
     return configEntry;
   }
   public ConfigEntry<T> Bind<T>(string group, string name, T value, bool forceRegen, string description = "", bool synchronizedSetting = true) => Bind(group, name, value, forceRegen, new ConfigDescription(description), synchronizedSetting);
-  private void ForceRegen(object e, EventArgs s) { if (ExpandWorldData.Session.Active) Regenerate(); }
+  private void ForceRegen(object e, EventArgs s) => Regenerate();
   public static Dictionary<ConfigEntry<string>, float> Floats = [];
   public static Dictionary<ConfigEntry<string>, int?> Ints = [];
   public static Dictionary<ConfigEntry<int>, float> Amounts = [];

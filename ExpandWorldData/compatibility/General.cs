@@ -22,7 +22,6 @@ public class TryParseBiome
 
   static bool Prefix(string value, ref Heightmap.Biome result, ref bool __result)
   {
-    if (!Session.UseNames) return true;
     __result = BiomeManager.TryGetBiome(value, out result);
     return false;
   }
@@ -40,7 +39,6 @@ public class TryParseTheme
   }
   static bool Prefix(string value, ref Room.Theme result, ref bool __result)
   {
-    if (!Session.UseNames) return true;
     __result = RoomManager.TryGetTheme(value, out result);
     return false;
   }
@@ -51,7 +49,6 @@ public class GetValues
 {
   static bool Prefix(Type enumType, ref Array __result)
   {
-    if (!Session.UseNames) return true;
     if (enumType == typeof(Heightmap.Biome))
     {
       __result = BiomeManager.BiomeToDisplayName.Keys.ToArray();
@@ -70,7 +67,6 @@ public class GetNames
 {
   static bool Prefix(Type enumType, ref string[] __result)
   {
-    if (!Session.UseNames) return true;
     if (enumType == typeof(Heightmap.Biome))
     {
       __result = BiomeManager.BiomeToDisplayName.Values.ToArray();
@@ -89,7 +85,6 @@ public class GetName
 {
   static bool Prefix(Type enumType, object value, ref string __result)
   {
-    if (!Session.UseNames) return true;
     if (enumType == typeof(Heightmap.Biome))
     {
       if (BiomeManager.TryGetDisplayName((Heightmap.Biome)value, out var result))
@@ -114,7 +109,6 @@ public class EnumParse
 {
   static bool Prefix(Type enumType, string value, ref object __result)
   {
-    if (!Session.UseNames) return true;
     if (enumType == typeof(Heightmap.Biome))
     {
       if (BiomeManager.TryGetBiome(value, out var biome))
@@ -141,7 +135,6 @@ public class ParseIgnoreCase
 {
   static bool Prefix(Type enumType, string value, ref object __result)
   {
-    if (!Session.UseNames) return true;
     if (enumType == typeof(Heightmap.Biome))
     {
       if (BiomeManager.TryGetBiome(value, out var biome))

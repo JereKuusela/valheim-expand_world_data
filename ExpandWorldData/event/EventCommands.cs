@@ -7,7 +7,6 @@ public class Commands
 {
   internal static void RunStartCommands(RandomEvent __instance)
   {
-    if (!Session.Active) return;
     var baseEvent = RandEventSystem.instance.GetEvent(__instance.m_name);
     if (Loader.ExtraData.TryGetValue(baseEvent, out var data) && data.StartCommands != null)
       CommandManager.RunCommand(data.StartCommands, __instance.m_pos, Quaternion.identity.eulerAngles);
@@ -15,7 +14,6 @@ public class Commands
 
   internal static void RunEndCommands(RandomEvent __instance)
   {
-    if (!Session.Active) return;
     var baseEvent = RandEventSystem.instance.GetEvent(__instance.m_name);
     if (Loader.ExtraData.TryGetValue(baseEvent, out var data) && data.EndCommands != null)
       CommandManager.RunCommand(data.EndCommands, __instance.m_pos, Quaternion.identity.eulerAngles);

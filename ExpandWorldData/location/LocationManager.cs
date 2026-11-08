@@ -60,10 +60,6 @@ public partial class LocationManager
   public static void CleanUp()
   {
     LocationExtra.ClearInfo();
-    Customized = false;
-    Locations.Clear();
-    DefaultEntries = [];
-    Instance.ResetSession();
   }
 
   private static SetResult Set(Dictionary<string, string> files)

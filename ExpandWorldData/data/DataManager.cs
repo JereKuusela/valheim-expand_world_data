@@ -45,8 +45,7 @@ namespace ExpandWorldData.Data;
 [HarmonyPatch(typeof(DungeonDB), nameof(DungeonDB.Start)), HarmonyPriority(Priority.VeryLow)]
 public class InitializeRooms
 {
-  static void Postfix() => Session.RoomsStarted();
-  internal static void Initialize()
+  static void Postfix()
   {
     RoomManager.Initialize();
     // Dungeons require room names to be loaded.
@@ -61,8 +60,6 @@ public class InitializeWorld
   static void Prefix(WorldGenerator __instance)
   {
     if (__instance.m_world.m_menu) return;
-    if (ZNet.instance) Session.Local(ZNet.instance);
-    if (!Session.Active) return;
     Yaml.WorldLoading = true;
     Yaml.WorldLoadedAt = DateTime.MaxValue;
   }
@@ -71,7 +68,7 @@ public class InitializeWorld
   // Saving is done later because that requires environments.
   static void Postfix(WorldGenerator __instance)
   {
-    if (__instance.m_world.m_menu || !Session.Active) return;
+    if (__instance.m_world.m_menu) return;
     // Before anything reads the files.
     Migrations.RunFiles();
     // No-ops on clients, which get the data from the server.
@@ -86,8 +83,7 @@ public class InitializeWorld
 [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.Start)), HarmonyPriority(Priority.VeryLow)]
 public class InitializeContent
 {
-  static void Postfix() => Session.ContentStarted();
-  internal static void Initialize()
+  static void Postfix()
   {
     AddEmptyAssetReference();
 
@@ -102,9 +98,6 @@ public class InitializeContent
     LocationManager.Initialize();
     NoBuildManager.Initialize();
     LocationClientData.Initialize();
-
-    // A client's spawn systems may already exist when the initial settings arrive.
-    if (Helper.IsClient()) SpawnSystem.m_instances.ForEach(Spawn.SpawnManager.InitializeSpawnSystem);
 
     // 1b) All managers are initialized now, so any sync data that arrived early can be replayed.
     SyncedDataManager.PostInitialize();
@@ -164,9 +157,10 @@ public class InitializeContent
   }
 }
 
+[HarmonyPatch(typeof(ZNet), nameof(ZNet.Shutdown))]
 public class CleanupOnShutdown
 {
-  internal static void CleanUp()
+  static void Postfix()
   {
     Yaml.WorldLoading = false;
     Yaml.WorldLoadedAt = DateTime.MinValue;
@@ -177,21 +171,6 @@ public class CleanupOnShutdown
     VegetationManager.CleanUp();
     AltBiomeManager.CleanUp();
     SyncedDataManager.CleanUpAll();
-    BiomeManager.ResetSession();
-    TerritoryManager.ResetSession();
-    WorldManager.ResetSession();
-    EnvironmentManager.ResetSession();
-    ClutterManager.ResetSession();
-    RoomManager.ResetSession();
-    DungeonManager.ResetSession();
-    Spawn.SpawnManager.ResetSession();
-    Event.EventManager.ResetSession();
-    Drop.DropManager.ResetSession();
-    Features.WaterColor.ResetSession();
-    StatusManager.CleanUp();
-    BlueprintManager.BlueprintFiles.Clear();
-    DataLoading.Data.Clear();
-    ValueGroups.Clear();
     DataManager.WarnedObjects.Clear();
   }
 }

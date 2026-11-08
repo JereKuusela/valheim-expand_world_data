@@ -43,7 +43,7 @@ public class EWD : BaseUnityPlugin
     Log.Init(Logger);
     Yaml.Init();
     Refresh.Register(Regen.Patches, () => Patcher.Update(Harmony));
-    Refresh.Register(Regen.Water, () => { if (Session.Active) WaterColor.Regenerate(); });
+    Refresh.Register(Regen.Water, WaterColor.Regenerate);
     var initialRevision = Migrations.ReadRevision(Config.ConfigFilePath);
     var movedSettings = ConfigMoves.Read(Config);
     ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, () => Refresh.Request(Regen.World));
@@ -106,13 +106,13 @@ public class EWD : BaseUnityPlugin
       Yaml.WorldLoading = false;
     }
     Refresh.Tick(Time.deltaTime);
-    if (Session.Active) WaterColor.Transition(Time.deltaTime);
+    WaterColor.Transition(Time.deltaTime);
   }
 
 #pragma warning disable IDE0051
   private void OnDestroy()
   {
-    if (Session.LocalFiles) Config.Save();
+    Config.Save();
   }
 #pragma warning restore IDE0051
 

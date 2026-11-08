@@ -39,12 +39,6 @@ public partial class EnvironmentManager
   public static void CreateConfigs() => Instance.CreateConfigs();
   public static void ReadConfigs() => Instance.ReadConfigs();
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
-  internal static void ResetSession()
-  {
-    Originals.Clear();
-    Extra.Clear();
-    Instance.ResetSession();
-  }
 
   private static SetResult Set(Dictionary<string, string> files)
   {
@@ -84,12 +78,11 @@ public partial class EnvironmentManager
   private static void Apply(List<EnvSetup> data)
   {
     foreach (var list in LocationList.m_allLocationLists)
-      SessionResources.Replace(list.m_environments, new List<EnvSetup>());
+      list.m_environments.Clear();
     var em = EnvMan.instance;
-    SessionResources.ReplaceWith(em.m_environments, () =>
-    {
-      foreach (var env in data) em.AppendEnvironment(env);
-    });
+    em.m_environments.Clear();
+    foreach (var env in data)
+      em.AppendEnvironment(env);
     em.m_environmentPeriod = -1;
     em.m_firstEnv = true;
     foreach (var biome in em.m_biomes)

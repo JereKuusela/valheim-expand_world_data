@@ -91,15 +91,6 @@ public class RoomManager
   public static bool TryGetTheme(string name, out Room.Theme theme) => NameToTheme.TryGetValue(name.ToLowerInvariant(), out theme);
 
   public static void ReadConfigs() => Instance.ReadConfigs();
-  internal static void ResetSession()
-  {
-    CreatedObjects.ForEach(UnityEngine.Object.Destroy);
-    ClearData();
-    RoomSpawning.Prefabs.Clear();
-    DefaultEntries.Clear();
-    RoomNames.Clear();
-    Instance.ResetSession();
-  }
 
   private static void ClearData()
   {

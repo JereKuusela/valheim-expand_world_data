@@ -42,7 +42,6 @@ public class NoBuildManager
     Initialized = false;
     Pending = false;
     NoBuild.Clear();
-    Customized = false;
   }
 
   public static void UpdateData()

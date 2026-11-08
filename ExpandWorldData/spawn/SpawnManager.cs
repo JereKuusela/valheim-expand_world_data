@@ -33,16 +33,6 @@ public class SpawnManager
   public static void ReadConfigs() => Instance.ReadConfigs();
 
   public static void FromSetting(string yaml) => Instance.FromSetting(yaml);
-  internal static void ResetSession()
-  {
-    Override = null;
-    Defaults = null;
-    Modified = false;
-    Loader.Data.Clear();
-    Loader.Objects.Clear();
-    Loader.Requirements.Clear();
-    Instance.ResetSession();
-  }
 
   private class Sync : SyncedDataManager
   {
@@ -107,15 +97,13 @@ public class SpawnManager
     {
       while (system.m_spawnLists.Count > 1) system.m_spawnLists.RemoveAt(system.m_spawnLists.Count - 1);
       // Reference is kept to improve compatibility with other mods.
-      var list = system.m_spawnLists[0];
-      SessionResources.Set(list, "spawners", () => list.m_spawners, value => list.m_spawners = value, Override);
+      system.m_spawnLists[0].m_spawners = Override;
       Modified = true;
     }
     else if (Modified && Defaults != null)
     {
       system.m_spawnLists = [.. Defaults.Select(entry => entry.List)];
-      foreach (var entry in Defaults)
-        SessionResources.Set(entry.List, "spawners", () => entry.List.m_spawners, value => entry.List.m_spawners = value, entry.Spawners);
+      foreach (var entry in Defaults) entry.List.m_spawners = entry.Spawners;
     }
   }
 
