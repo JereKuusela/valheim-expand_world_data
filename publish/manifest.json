@@ -1,10 +1,10 @@
 {
   "name": "Expand_World_Data",
-  "version_number": "1.79.1",
+  "version_number": "1.80.0",
   "website_url": "https://discord.gg/VFRJcPwUdm",
   "description": "Allows adding new biomes, changing world generation, and configuring spawns, events, and drops.",
   "dependencies": [
-    "denikson-BepInExPack_Valheim-5.4.2351",
+    "denikson-BepInExPack_Valheim-5.4.2360",
     "ValheimModding-YamlDotNet-16.3.1"
   ]
 }

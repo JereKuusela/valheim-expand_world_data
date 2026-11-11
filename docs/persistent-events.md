@@ -28,7 +28,9 @@ Active events are saved to the world by their position in the file. Removing or 
 - minDistanceFromSimilar (default: `400`): Minimum distance to other active events of the same type.
 - environment (default: empty): Environment forced inside the event area.
 - perBiomeEnvironments (default: `false`): If true, the biome name is added to the environment (for example `Storm_Meadows`).
-- graphicalEffects (default: empty): Visual effects, currently only `Snow`.
+- graphicalEffects (default: empty): Visual effects.
+  - Use `All` to enable every effect.
+  - Currently only `Snow` is available.
 - customChance (default: `0`): Chance in percent to start the event on each roll.
 - customInterval (default: `0`): Seconds between rolls. If 0, the event is never started automatically.
 - requiredGlobalKeys, forbiddenGlobalKeys (default: empty): Global keys that must be set / must not be set for an automatic start. See [Requirement lists](requirement-lists.md).

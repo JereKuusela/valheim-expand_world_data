@@ -1,6 +1,7 @@
 - v1.80
   - Adds persistent event support (`expand_persistent_events.yaml`).
   - Fixes error when environment aurora blending exceeded Unity's limit.
+  - Improves compatibility with other mods. Thanks Warp!
 
 - v1.79
   - BREAKING CHANGE: Drop entries now automatically apply to the same prefab as the drop entry name.
@@ -28,12 +29,3 @@
 - v1.76
   - Fixes error when trying to override container inventory.
   - Removes obsolete fields `addLocations` and `addVegetation` from altbiomes yaml.
-
-- v1.75
-  - Fixes custom location icons not working. Thanks sighsorry!
-  - Fixes custom location group system not working.
-  - Fixes error on CleanGhostInit (now should how warning instead).
-  - Fixes commands `ew_spawns`, `ew_test_spawn` and `ew_try_spawn` missing.
-  - Fixes changes to non-world data like clutter triggering full refresh.
-  - Reworks data system to match Expand World Prefabs mod.
-  - Reworks the world refresh system to be shared with Expand World Size mod (no double refresh).

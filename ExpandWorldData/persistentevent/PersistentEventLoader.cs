@@ -64,6 +64,7 @@ public class PersistentEventLoader
   private static PersistentEventSystem.EventGraphicalEffects ParseEffects(string value, string fileName)
   {
     if (value == "") return 0;
+    if (value.Equals("All", StringComparison.OrdinalIgnoreCase)) return (PersistentEventSystem.EventGraphicalEffects)(-1);
     if (Enum.TryParse<PersistentEventSystem.EventGraphicalEffects>(value, true, out var result)) return result;
     Log.Warning($"{fileName}: Invalid graphicalEffects {value}.");
     return 0;
@@ -95,7 +96,7 @@ public class PersistentEventLoader
     minDistanceFromSimilar = ev.minDistanceFromSimilar,
     environment = ev.environmentOverride ?? "",
     perBiomeEnvironments = ev.perBiomeEnvironments,
-    graphicalEffects = ev.graphicalEffects == 0 ? "" : ev.graphicalEffects.ToString(),
+    graphicalEffects = ev.graphicalEffects == 0 ? "" : (int)ev.graphicalEffects == -1 ? "All" : ev.graphicalEffects.ToString(),
     objects = [.. ev.objectsToSpawn.Select(ToObjectData)],
   };
 
