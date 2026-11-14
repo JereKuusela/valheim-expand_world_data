@@ -125,7 +125,7 @@ public partial class Configuration
   public static void Init(ConfigWrapper wrapper, int initialRevision)
   {
     var section = "1. General";
-    configServerOnly = wrapper.Bind(section, "Server only", false, false, "If true, enables server side only mode and clients can't have the mod installed.");
+    configServerOnly = wrapper.Bind(section, "Server only", false, false, "Use server-side features without requiring EWD on clients. Client customizations are inactive until logout. Reconnect clients after changing this.");
     configLegacyGeneration = wrapper.Bind(section, "Legacy generation", false, true, "Old Expand World had a bug that cause incorrect generation near biome borders. Set this true for older worlds.");
     configLegacyGeneration.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
     configZoneSpawners = wrapper.Bind(section, "Zone spawners", true, false, "If disabled, zone spawners are not generated.");

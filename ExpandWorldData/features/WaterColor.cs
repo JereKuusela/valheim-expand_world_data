@@ -97,17 +97,29 @@ public class WaterColor
     CurrentShallowColor = TargetShallowColor;
     CurrentSurfaceColor = TargetSurfaceColor;
   }
-  private static void UpdateTransitions()
+  private static void UpdateTransitions(bool restore = false)
   {
     foreach (var water in WaterVolume.Instances)
-      UpdateTransition(water.m_waterSurface.sharedMaterial);
+      UpdateTransition(water.m_waterSurface.sharedMaterial, restore);
     var globalWater = EnvMan.instance?.transform.Find("WaterPlane").Find("watersurface");
     if (globalWater != null)
-      UpdateTransition(globalWater.GetComponent<MeshRenderer>().sharedMaterial);
+      UpdateTransition(globalWater.GetComponent<MeshRenderer>().sharedMaterial, restore);
   }
-  private static void UpdateTransition(Material mat)
+  private static void UpdateTransition(Material mat, bool restore = false)
   {
     InitColors(mat);
+    if (restore)
+    {
+      mat.SetColor("_SurfaceColor", WaterSurface);
+      mat.SetColor("_AshlandsSurfaceColor", AshlandsSurface);
+      mat.SetColor("_ColorTop", WaterTop);
+      mat.SetColor("_AshlandsColorTop", AshlandsTop);
+      mat.SetColor("_ColorBottom", WaterBottom);
+      mat.SetColor("_AshlandsColorBottom", AshlandsBottom);
+      mat.SetColor("_ColorBottomShallow", WaterShallow);
+      mat.SetColor("_AshlandsColorBottomShallow", AshlandsShallow);
+      return;
+    }
     var surfaceColor = Color.Lerp(CurrentSurfaceColor, TargetSurfaceColor, TransitionProgress);
     var topColor = Color.Lerp(CurrentTopColor, TargetTopColor, TransitionProgress);
     var bottomColor = Color.Lerp(CurrentBottomColor, TargetBottomColor, TransitionProgress);
@@ -121,6 +133,14 @@ public class WaterColor
   }
   public static void Regenerate()
   {
+    if (!Configuration.CustomWaterColor)
+    {
+      StopTransition();
+      if (!InitDone) return;
+      UpdateTransitions(true);
+      InitDone = false;
+      return;
+    }
     if (Player.m_localPlayer)
       StartTransition(Player.m_localPlayer.GetCurrentBiome());
     StopTransition();
