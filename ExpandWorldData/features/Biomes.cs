@@ -256,6 +256,9 @@ public class BiomeCalculator
     return Heightmap.Biome.Ocean;
   }
 
+  public static bool IsBoiling(WorldGenerator obj, float wx, float wy) =>
+    GetEntry(obj, GetBiomeData(), wx, wy, Mathf.Atan2(wx, wy))?.boiling > 0f;
+
   public static float GetBoiling(WorldGenerator obj, float wx, float wy)
   {
     var angle = Mathf.Atan2(wx, wy);

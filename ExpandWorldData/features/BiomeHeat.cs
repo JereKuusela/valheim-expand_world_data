@@ -13,11 +13,18 @@ public class FixLavaHeatReset
   // Vanilla code has bug that heat doesn't reset when not in hot biome.
   static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => new CodeMatcher(instructions)
     .MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.IsAshlands))))
-    .Advance(2)
+    .SetAndAdvance(OpCodes.Pop, null)
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Pop))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_lastBiome))))
+    .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FixLavaHeatReset), nameof(HasLavaHeat))))
+    .Advance(1)
     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, 0f))
     .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(Character), nameof(Character.m_lavaHeatLevel))))
     .InstructionEnumeration();
+
+  private static bool HasLavaHeat(Heightmap.Biome biome) => (biome & BiomeManager.LavaBiomes) != 0;
 }
 
 public class BiomeHeat
@@ -73,12 +80,6 @@ public class BiomeHeat
     .SetOpcodeAndAdvance(OpCodes.Brfalse)
     .InstructionEnumeration();
 
-
-  /*
-    [HarmonyPatch(typeof(CinderSpawner), nameof(CinderSpawner.CanSpawnCinder), typeof(Transform), typeof(Heightmap.Biome)), HarmonyTranspiler]
-    static IEnumerable<CodeInstruction> CanSpawnCinder(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat2(instructions);
-    */
-
   internal static IEnumerable<CodeInstruction> IsLavaPreHeightmap(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat2(instructions);
 
   private static IEnumerable<CodeInstruction> PatchBiomeHeat2(IEnumerable<CodeInstruction> instructions) =>
@@ -96,8 +97,7 @@ public class BiomeHeat
   {
     var wg = WorldGenerator.instance;
     if (wg == null || wg.m_world.m_menu) return true;
-    var boiling = BiomeCalculator.GetBoiling(wg, x, y);
-    __result = boiling > 0f;
+    __result = BiomeCalculator.IsBoiling(wg, x, y);
     return false;
   }
 }

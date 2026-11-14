@@ -1,5 +1,7 @@
 - v1.81
   - Fixes compatibility issue with Location Placement Accelerator mod.
+  - Fixes lava damage being based on water boiling, now only depends on the biome lava field.
+  - Improves performance of water boiling and lava checks.
 
 - v1.80
   - Adds persistent event support (`expand_persistent_events.yaml`).
