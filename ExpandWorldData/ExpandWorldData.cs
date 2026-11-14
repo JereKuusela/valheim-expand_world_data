@@ -34,6 +34,7 @@ public class EWD : BaseUnityPlugin
   {
     DisplayName = NAME,
     CurrentVersion = VERSION,
+    MinimumRequiredVersion = VERSION,
     ModRequired = true,
     IsLocked = true
   };
