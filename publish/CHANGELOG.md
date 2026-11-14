@@ -1,3 +1,6 @@
+- v1.81
+  - Fixes compatibility issue with Location Placement Accelerator mod.
+
 - v1.80
   - Adds persistent event support (`expand_persistent_events.yaml`).
   - Fixes error when environment aurora blending exceeded Unity's limit.
@@ -25,7 +28,3 @@
 - v1.77
   - Fixes blueprint locations being in the same group for location "distance from similar" checks.
   - Fixes environments not resetting after changes.
-
-- v1.76
-  - Fixes error when trying to override container inventory.
-  - Removes obsolete fields `addLocations` and `addVegetation` from altbiomes yaml.

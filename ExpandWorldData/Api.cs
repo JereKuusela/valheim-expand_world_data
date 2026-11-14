@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using ExpandWorldData.Biome;
 using ExpandWorldData.Clutter;
-using ExpandWorldData.Compatibility;
 using ExpandWorldData.Dungeon;
 using ExpandWorldData.Locations;
 using ExpandWorldData.Territory;
@@ -29,6 +28,11 @@ public static class Api
     if (height < WorldInfo.WaterLevel) return height;
     return (height - WorldInfo.WaterLevel) * data.mapColorMultiplier + WorldInfo.WaterLevel;
   }
+  public static float GetWaterLevel() => WorldInfo.WaterLevel;
+  public static float GetWorldRadius() => WorldInfo.Radius;
+  public static float GetTotalRadius() => WorldInfo.TotalRadius;
+  public static float GetStretch() => WorldInfo.Stretch;
+  public static float GetBiomeStretch() => WorldInfo.BiomeStretch;
   public static void AddBiome(Biome.BiomeYaml data)
   {
     BiomeManager.AddBiome(data);
