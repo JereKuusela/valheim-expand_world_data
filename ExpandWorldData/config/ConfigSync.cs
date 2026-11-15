@@ -814,7 +814,6 @@ public class ConfigSync
     [HarmonyPrefix]
     private static void Prefix(ref Dictionary<Assembly, BufferingSocket>? __state, ZNet __instance, ZRpc rpc)
     {
-      if (Configuration.ServerOnly && !VersionCheck.IsEwdClient(rpc)) return;
       if (__instance.IsServer())
       {
         BufferingSocket bufferingSocket = new(rpc.GetSocket());
@@ -881,6 +880,11 @@ public class ConfigSync
       {
         foreach (ConfigSync configSync in configSyncs)
         {
+          if (!VersionCheck.IsClientValidated(rpc, configSync.Name))
+          {
+            continue;
+          }
+
           List<PackageEntry> entries = [];
           if (configSync.CurrentVersion != null)
           {
@@ -1245,7 +1249,9 @@ public class VersionCheck
     set => minimumRequiredVersion = value;
   }
 
-  public bool ModRequired = true;
+  private bool modRequired = true;
+  private bool ServerOnly => Configuration.ServerOnly && Name == EWD.GUID && ZNet.instance.IsServer();
+  public bool ModRequired => modRequired && !ServerOnly;
 
   private string? ReceivedCurrentVersion;
 
@@ -1254,7 +1260,7 @@ public class VersionCheck
   // Tracks which clients have passed the version check (only for servers).
   private readonly List<ZRpc> ValidatedClients = [];
 
-  internal static bool IsEwdClient(ZRpc rpc) => versionChecks.Any(check => check.Name == EWD.GUID && check.ValidatedClients.Contains(rpc));
+  internal static bool IsClientValidated(ZRpc rpc, string name) => versionChecks.Any(check => check.Name == name && check.ValidatedClients.Contains(rpc));
 
   // Optional backing field to use ConfigSync values (will override other fields).
   private readonly ConfigSync? ConfigSync;
@@ -1281,7 +1287,7 @@ public class VersionCheck
   public VersionCheck(string name)
   {
     Name = name;
-    ModRequired = true;
+    modRequired = true;
     versionChecks.Add(this);
   }
 
@@ -1304,7 +1310,7 @@ public class VersionCheck
     DisplayName = ConfigSync.DisplayName!;
     CurrentVersion = ConfigSync.CurrentVersion!;
     MinimumRequiredVersion = ConfigSync.MinimumRequiredVersion!;
-    ModRequired = ConfigSync.ModRequired;
+    modRequired = ConfigSync.ModRequired;
   }
 
   private bool IsVersionOk()
@@ -1385,8 +1391,6 @@ public class VersionCheck
         bool compatible = check.IsVersionOk();
         if (compatible)
           check.ValidatedClients.Add(rpc);
-        if (Configuration.ServerOnly && check.Name == EWD.GUID)
-          check.SendVersion(rpc, compatible);
       }
 
       matched = true;
@@ -1445,7 +1449,7 @@ public class VersionCheck
   }
 
   [HarmonyPatch(typeof(ZNet), "OnNewConnection"), HarmonyPrefix]
-  private static void RegisterAndCheckVersion(ZNetPeer peer, ZNet __instance)
+  private static void RegisterAndCheckVersion(ZNetPeer peer)
   {
     notProcessedNames.Clear();
 
@@ -1464,18 +1468,7 @@ public class VersionCheck
     foreach (VersionCheck check in versionChecks)
     {
       check.Initialize();
-      // Reply only to EWD clients in server-only mode.
-      if (__instance.IsServer() && Configuration.ServerOnly && check.Name == EWD.GUID)
-      {
-        check.ModRequired = false;
-        continue;
-      }
-      // If the mod is not required, then it's enough for only one side to do the check.
-      if (!check.ModRequired && !__instance.IsServer())
-      {
-        continue;
-      }
-
+      // Both sides send their version; the server decides whether client validation is required.
       check.SendVersion(peer.m_rpc);
     }
   }
