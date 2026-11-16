@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -63,10 +64,7 @@ public class DataLoading
     var prev = Data;
     Data = [];
     ValueGroups.Clear();
-    var files = Directory.GetFiles(GamePath, "*.yaml", SearchOption.AllDirectories)
-      .Concat(Directory.GetFiles(ProfilePath, "*.yaml", SearchOption.AllDirectories))
-      .Concat(Directory.GetFiles(Yaml.BaseDirectory, Pattern, SearchOption.AllDirectories))
-      .Select(Path.GetFullPath).Distinct().ToList();
+    var files = GetSourceFiles(GamePath, ProfilePath, Yaml.BaseDirectory, Pattern);
     var data = Yaml.Read<DataYaml>(files);
     foreach (var d in data)
       ValueGroups.Add(d);
@@ -81,6 +79,25 @@ public class DataLoading
     Log.Info($"Loaded {Data.Count} data entries.");
   }
 
+  private static List<string> GetSourceFiles(string gamePath, string profilePath, string baseDirectory, string pattern) =>
+    new[] { gamePath, profilePath }.Distinct()
+      .SelectMany(path => GetFilesOrEmpty(path, "*.yaml"))
+      .Concat(GetFilesOrEmpty(baseDirectory, pattern))
+      .Select(Path.GetFullPath).Distinct().ToList();
+
+  private static string[] GetFilesOrEmpty(string path, string pattern)
+  {
+    try
+    {
+      return Directory.GetFiles(path, pattern, SearchOption.AllDirectories);
+    }
+    catch (Exception ex)
+    {
+      Log.Warning($"Unable to read data directory '{path}': {ex.GetType().Name}: {ex.Message}");
+      return [];
+    }
+  }
+
   private static void LoadEntry(DataYaml data, Dictionary<int, DataEntry> oldData)
   {
     if (data.name != null)
@@ -93,18 +110,43 @@ public class DataLoading
   }
 
   public static string Pattern = "expand_data*.yaml";
+  public static void EnsureDirectories()
+  {
+    foreach (var path in new[] { GamePath, ProfilePath, Yaml.BaseDirectory }.Distinct())
+      EnsureDirectory(path);
+  }
+
+  private static void EnsureDirectory(string path)
+  {
+    try
+    {
+      Directory.CreateDirectory(path);
+    }
+    catch (Exception ex)
+    {
+      // The read attempt reports a warning if this source remains inaccessible.
+      Log.Debug($"Unable to create data directory '{path}': {ex.GetType().Name}: {ex.Message}");
+    }
+  }
+
   public static void SetupWatcher()
   {
-    if (!Directory.Exists(GamePath))
-      Directory.CreateDirectory(GamePath);
-    if (!Directory.Exists(ProfilePath))
-      Directory.CreateDirectory(ProfilePath);
-    if (!Directory.Exists(Yaml.BaseDirectory))
-      Directory.CreateDirectory(Yaml.BaseDirectory);
-    Yaml.SetupWatcher(GamePath, "*", LoadEntries);
+    TryWatch(GamePath, () => Yaml.SetupWatcher(GamePath, "*", LoadEntries));
     if (GamePath != ProfilePath)
-      Yaml.SetupWatcher(ProfilePath, "*", LoadEntries);
-    Yaml.SetupWatcher(Pattern, LoadEntries);
+      TryWatch(ProfilePath, () => Yaml.SetupWatcher(ProfilePath, "*", LoadEntries));
+    TryWatch(Yaml.BaseDirectory, () => Yaml.SetupWatcher(Pattern, LoadEntries));
+  }
+
+  private static void TryWatch(string path, Action setup)
+  {
+    try
+    {
+      setup();
+    }
+    catch (Exception ex)
+    {
+      Log.Warning($"Unable to watch data directory '{path}': {ex.GetType().Name}: {ex.Message}");
+    }
   }
 
 }

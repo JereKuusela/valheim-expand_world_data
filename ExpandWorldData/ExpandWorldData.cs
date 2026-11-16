@@ -55,8 +55,7 @@ public class EWD : BaseUnityPlugin
     Patcher.Initialize(Harmony);
     try
     {
-      if (!System.IO.Directory.Exists(Yaml.BaseDirectory))
-        System.IO.Directory.CreateDirectory(Yaml.BaseDirectory);
+      DataLoading.EnsureDirectories();
       if (Configuration.DataReload)
       {
         Yaml.SetupWatcher(Config);
@@ -80,7 +79,7 @@ public class EWD : BaseUnityPlugin
     }
     catch (Exception e)
     {
-      Log.Error(e.StackTrace);
+      Log.Error(e.ToString());
     }
   }
   public void Start()
