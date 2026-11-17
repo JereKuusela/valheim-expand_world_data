@@ -2,17 +2,21 @@
 
 Locations are the points of interest in the world, like structures and dungeons.
 
+See the [wiki](https://valheim.wiki/Point_of_Interest) for more info.
+
+Locations are pregenerated at world generation. This means that console commands must be used to apply changes to existing worlds. Vanilla command `genloc` can be used to redistribute them on unexplored areas. Recommended to use Upgrade World mod for more options.
+
 ## Configuration
+
+The file `expand_locations.yaml` is created automatically when loading a world. Changes are **only** loaded when `Location data` is enabled in the main config (expand_world_data.cfg).
 
 The file `expand_locations.yaml` is created automatically when loading a world. Enable or disable locations from the config using the `Location data` setting. This is mostly a server side feature. Only fields marked with (synced) are sent to clients.
 
 Note: Missing locations are automatically added to the file. To disable, set `enabled` to `false` instead of removing anything.
 
-Note: Each zone (64m x 64m) can only have one size.
+Note: Each zone (64m x 64m) can only have one location.
 
 See the [wiki](https://valheim.wiki/Point_of_Interest) for more info.
-
-Locations are pregenerated at world generation. You must use `genloc` command to redistribute them on unexplored areas after making any changes. For already explored areas, you need to use Upgrade World mod.
 
 ### Location Fields
 
