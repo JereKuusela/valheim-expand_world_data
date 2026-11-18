@@ -7,6 +7,7 @@ public class Pregenerate
 {
   static void Prefix(WorldGenerator __instance)
   {
+    if (Configuration.ServerOnly) return;
     // River points must at least be cleaned.
     // But better clean up everything.
     __instance.m_riverCacheLock.EnterWriteLock();

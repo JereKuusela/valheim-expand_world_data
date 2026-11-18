@@ -152,7 +152,7 @@ public static class LocationClientData
 
   public static void Patch(Harmony harmony)
   {
-    var shouldPatch = HasData;
+    var shouldPatch = !Configuration.ServerOnly && HasData;
     Patches.Prefix(harmony, shouldPatch, typeof(LocationProxy), nameof(LocationProxy.SpawnLocation), typeof(LocationClientData), nameof(SetContext));
     Patches.Finalizer(harmony, shouldPatch, typeof(LocationProxy), nameof(LocationProxy.SpawnLocation), typeof(LocationClientData), nameof(ClearContext));
     Patches.Prefix(harmony, shouldPatch, typeof(Location), nameof(Location.Awake), typeof(LocationClientData), nameof(ApplyToLocation));

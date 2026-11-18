@@ -12,7 +12,7 @@ public static class DataPatcher
 {
   public static void Patch(Harmony harmony)
   {
-    PatchNoBuild(harmony, NoBuildManager.HasData || BiomeManager.NoBuildBiomes != 0 || TerritoryManager.HasNoBuild);
+    PatchNoBuild(harmony, !Configuration.ServerOnly && (NoBuildManager.HasData || BiomeManager.NoBuildBiomes != 0 || TerritoryManager.HasNoBuild));
     PatchStatusEffects(harmony, BiomeManager.HasStatusEffects || TerritoryManager.HasStatusEffects || EnvironmentManager.HasStatusEffects);
     LocationClientData.Patch(harmony);
     PatchLocationIcons(harmony);

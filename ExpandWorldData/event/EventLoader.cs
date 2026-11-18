@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using ExpandWorldData.Data;
 using Service;
@@ -11,6 +12,11 @@ public class Loader
 
   public static RandomEvent FromData(Data data, string fileName)
   {
+    // Vanilla values are used with ServerOnly
+    var original = Configuration.ServerOnly
+      ? EventManager.Originals.Find(ev => ev.m_name == data.name)
+        ?? throw new InvalidOperationException($"{fileName}: Server-only events must use an existing event name: '{data.name}'.")
+      : null!;
     var keyRows = StringList.ToRows(data.requiredGlobalKeys) ?? [];
     var playerRows = StringList.ToRows(data.requiredPlayerKeys) ?? [];
     // Vanilla has "any of" and "all of" lists, which covers all single entry rows and one multi entry row.
@@ -25,12 +31,12 @@ public class Loader
     RandomEvent random = new()
     {
       m_name = data.name,
-      m_spawn = data.spawns.Select(entry => Spawn.Loader.FromData(entry, fileName)).Where(spawn => spawn.m_prefab).ToList(),
+      m_spawn = Configuration.ServerOnly ? original.m_spawn : data.spawns.Select(entry => Spawn.Loader.FromData(entry, fileName)).Where(spawn => spawn.m_prefab).ToList(),
       m_enabled = data.enabled,
       m_random = data.random,
-      m_duration = data.duration,
+      m_duration = Configuration.ServerOnly ? original.m_duration : data.duration,
       m_nearBaseOnly = data.nearBaseOnly != "false",
-      m_pauseIfNoPlayerInArea = data.pauseIfNoPlayerInArea,
+      m_pauseIfNoPlayerInArea = Configuration.ServerOnly ? original.m_pauseIfNoPlayerInArea : data.pauseIfNoPlayerInArea,
       m_biome = DataManager.ToBiomes(data.biome, fileName),
       m_requiredGlobalKeys = [.. keyRows.Where(row => row.Length == 1).Select(row => row[0])],
       m_notRequiredGlobalKeys = forbiddenKeyRows is { Count: 1 } ? [.. forbiddenKeyRows[0]] : [],
@@ -39,14 +45,14 @@ public class Loader
       m_altNotRequiredPlayerKeys = forbiddenPlayerRows == null ? [] : [.. forbiddenPlayerRows[0]],
       m_altRequiredKnownItems = DataManager.ToItemList(data.requiredKnownItems),
       m_altRequiredNotKnownItems = DataManager.ToItemList(data.forbiddenKnownItems),
-      m_startMessage = data.startMessage,
-      m_endMessage = data.endMessage,
-      m_forceMusic = data.forceMusic,
-      m_forceEnvironment = data.forceEnvironment,
-      m_eventRange = data.radius,
+      m_startMessage = Configuration.ServerOnly ? original.m_startMessage : data.startMessage,
+      m_endMessage = Configuration.ServerOnly ? original.m_endMessage : data.endMessage,
+      m_forceMusic = Configuration.ServerOnly ? original.m_forceMusic : data.forceMusic,
+      m_forceEnvironment = Configuration.ServerOnly ? original.m_forceEnvironment : data.forceEnvironment,
+      m_eventRange = Configuration.ServerOnly ? original.m_eventRange : data.radius,
       m_standaloneChance = data.customChance,
       m_standaloneInterval = data.customInterval,
-      m_spawnerDelay = data.spawnerDelay,
+      m_spawnerDelay = Configuration.ServerOnly ? original.m_spawnerDelay : data.spawnerDelay,
     };
     ExtraData[random] = new(data);
     return random;

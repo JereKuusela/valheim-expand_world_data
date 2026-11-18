@@ -136,6 +136,7 @@ public class Yaml
     FileSystemWatcher watcher = new(BaseDirectory, pattern);
     void Changed(string path)
     {
+      if (!ExpandWorldData.Configuration.IsDataAllowed(setting)) return;
       if (!File.Exists(path))
       {
         // Reading also recreates a deleted main file, even if the data is disabled.

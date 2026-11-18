@@ -30,7 +30,7 @@ public static class ZoneSystemPatches
       var loc = kvp.Value.m_location;
       var pos = kvp.Value.m_position;
       if (loc == null) continue;
-      if (LocationExtra.TryGetData(loc, out var data))
+      if (!Configuration.ServerOnly && LocationExtra.TryGetData(loc, out var data))
       {
         var placed = data.iconPlaced == "true" ? loc.m_prefab.Name : data.iconPlaced == "false" ? "" : data.iconPlaced;
         if (kvp.Value.m_placed && placed != "")
