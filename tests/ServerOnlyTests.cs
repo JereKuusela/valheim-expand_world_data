@@ -83,7 +83,8 @@ public class ServerOnlyTests
     // Only the serialized name is needed; no Unity GameObject or asset loading.
     var prefabField = locationType.GetField("m_prefab")!;
     var prefab = FormatterServices.GetUninitializedObject(prefabField.FieldType);
-    prefabField.FieldType.GetField("m_name")!.SetValue(prefab, name);
+    prefabField.FieldType.GetField("m_name", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!
+      .SetValue(prefab, name);
     prefabField.SetValue(location, prefab);
     return location;
   }
