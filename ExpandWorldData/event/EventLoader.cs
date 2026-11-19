@@ -15,7 +15,7 @@ public class Loader
     // Vanilla values are used with ServerOnly
     var original = Configuration.ServerOnly
       ? EventManager.Originals.Find(ev => ev.m_name == data.name)
-        ?? throw new InvalidOperationException($"{fileName}: Server-only events must use an existing event name: '{data.name}'.")
+        ?? throw new InvalidOperationException($"{fileName}: With 'Server only' enabled, events must use an existing vanilla event name: '{data.name}'.")
       : null!;
     var keyRows = StringList.ToRows(data.requiredGlobalKeys) ?? [];
     var playerRows = StringList.ToRows(data.requiredPlayerKeys) ?? [];

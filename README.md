@@ -47,7 +47,7 @@ The following files and settings remain configurable:
 - `expand_events.yaml`: Selection rules and server-side commands for existing event names.
 - `expand_world_data.cfg`: `Zone spawners`, `Random locations`, event timing, multiple events and per-player checks. File reload, migration, data splitting and blueprint folder settings also remain available.
 
-Use prefabs available to the clients. Custom discovery labels, building restrictions, interior environments and custom map icons require client support. Non-networked location visuals use the client's original prefab.
+Use prefabs available to the clients. Custom discovery labels, building restrictions, interior environments and custom map icons require client support. **Location** icons (StartTemple, Vendor_BlackForest, Hildir_camp, BogWitch_Camp and AncientUpgradeStation) are still supported. Non-networked location visuals use the client's original prefab.
 
 The following customizations are ignored:
 
@@ -57,8 +57,6 @@ The following customizations are ignored:
 - Ashlands and Deep North terrain restrictions and gaps.
 - Custom map and water colors, lava behavior and location altitude scaling.
 - Event spawns, duration, radius, pause behavior, spawner delay, messages, music and forced environment. These retain their original values.
-
-Unknown event names reject the event reload. The previous valid event configuration remains active.
 
 Saved settings are preserved. Clients with a compatible EWD version can join; their local EWD customizations are suspended until logout.
 
