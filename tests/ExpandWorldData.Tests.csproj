@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <ManagedDir Condition="'$(ManagedDir)' == ''">..\..\Libs</ManagedDir>
   </PropertyGroup>
   <ItemGroup>
     <!-- BepInEx.Paths uses MonoMod.Utils during test fixture setup. -->
@@ -19,5 +20,9 @@
     <Reference Include="YamlDotNet">
       <HintPath>$(LibsDir)\YamlDotNet.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Valheim assemblies load this facade at runtime when reflecting over game types. -->
+    <None Include="$(ManagedDir)\netstandard.dll" Link="netstandard.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
