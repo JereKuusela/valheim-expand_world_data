@@ -12,17 +12,17 @@ public static class Patcher
 
   public static void Patch(Harmony harmony)
   {
-    var worldData = WorldManager.HasData;
-    var restrictionsChanged = Configuration.AshlandsWidthRestriction != GetAshlandsHeight.DefaultWidthRestriction || Configuration.AshlandsLengthRestriction != GetAshlandsHeight.DefaultLengthRestriction;
+    var worldData = !Configuration.ServerOnly && WorldManager.HasData;
+    var restrictionsChanged = !Configuration.ServerOnly && (Configuration.AshlandsWidthRestriction != GetAshlandsHeight.DefaultWidthRestriction || Configuration.AshlandsLengthRestriction != GetAshlandsHeight.DefaultLengthRestriction);
     Patches.Transpiler(harmony, restrictionsChanged, typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsHeight), typeof(GetAshlandsHeight), nameof(GetAshlandsHeight.ReplaceRestrictions), state: (Configuration.AshlandsWidthRestriction, Configuration.AshlandsLengthRestriction));
-    Patches.Prefix(harmony, !Configuration.AshlandsGap, typeof(WorldGenerator), nameof(WorldGenerator.CreateAshlandsGap), typeof(DisableGap), nameof(DisableGap.SkipGap));
-    Patches.Prefix(harmony, !Configuration.DeepNorthGap, typeof(WorldGenerator), nameof(WorldGenerator.CreateDeepNorthGap), typeof(DisableGap), nameof(DisableGap.SkipGap));
+    Patches.Prefix(harmony, !Configuration.ServerOnly && !Configuration.AshlandsGap, typeof(WorldGenerator), nameof(WorldGenerator.CreateAshlandsGap), typeof(DisableGap), nameof(DisableGap.SkipGap));
+    Patches.Prefix(harmony, !Configuration.ServerOnly && !Configuration.DeepNorthGap, typeof(WorldGenerator), nameof(WorldGenerator.CreateDeepNorthGap), typeof(DisableGap), nameof(DisableGap.SkipGap));
     Patches.Prefix(harmony, !Configuration.ZoneSpawners, typeof(ZoneSystem), nameof(ZoneSystem.PlaceZoneCtrl), typeof(PlaceZoneCtrl), nameof(PlaceZoneCtrl.SkipZoneControlPlacement));
     Patches.Prefix(harmony, worldData && !Configuration.LegacyGeneration, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateBiome), argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
     Patches.Prefix(harmony, worldData && Configuration.LegacyGeneration, typeof(WorldGenerator), nameof(WorldGenerator.GetBiome), typeof(GetBiomeWG), nameof(GetBiomeWG.CalculateLegacyBiome), argumentTypes: [typeof(float), typeof(float), typeof(float), typeof(bool)]);
     Patches.Prefix(harmony, worldData, typeof(WorldGenerator), nameof(WorldGenerator.GetAshlandsOceanGradient), typeof(GetAshlandsOceanGradient), nameof(GetAshlandsOceanGradient.CalculateGradient), argumentTypes: [typeof(float), typeof(float)]);
     Patches.Prefix(harmony, worldData, typeof(WorldGenerator), nameof(WorldGenerator.IsAshlands), typeof(BiomeHeat), nameof(BiomeHeat.IsAshlands));
-    Patches.Prefix(harmony, Configuration.WiggleFrequency != DefaultWiggleFrequency, typeof(WorldGenerator), nameof(WorldGenerator.WorldAngle), typeof(WorldAngle), nameof(WorldAngle.CalculateAngle), argumentTypes: [typeof(float), typeof(float)]);
+    Patches.Prefix(harmony, !Configuration.ServerOnly && Configuration.WiggleFrequency != DefaultWiggleFrequency, typeof(WorldGenerator), nameof(WorldGenerator.WorldAngle), typeof(WorldAngle), nameof(WorldAngle.CalculateAngle), argumentTypes: [typeof(float), typeof(float)]);
     PatchAltBiomes(harmony, worldData);
     PatchNature(harmony);
     PatchLava(harmony);
@@ -40,7 +40,7 @@ public static class Patcher
 
   private static void PatchNature(Harmony harmony)
   {
-    var shouldPatch = BiomeManager.HasData && BiomeManager.HasNatureOverrides;
+    var shouldPatch = !Configuration.ServerOnly && BiomeManager.HasData && BiomeManager.HasNatureOverrides;
     Patches.Prefix(harmony, shouldPatch, typeof(Beehive), nameof(Beehive.CheckBiome), typeof(BeehiveCheckBiome), nameof(BeehiveCheckBiome.BeginNatureBiomeCheck));
     Patches.Finalizer(harmony, shouldPatch, typeof(Beehive), nameof(Beehive.CheckBiome), typeof(BeehiveCheckBiome), nameof(BeehiveCheckBiome.EndNatureBiomeCheck));
     Patches.Prefix(harmony, shouldPatch, typeof(Player), nameof(Player.UpdatePlacementGhost), typeof(PlayerUpdatePlacementGhost), nameof(PlayerUpdatePlacementGhost.BeginNatureBiomeCheck));
@@ -55,7 +55,7 @@ public static class Patcher
 
   private static void PatchLava(Harmony harmony)
   {
-    var shouldPatch = BiomeManager.HasLavaOverrides;
+    var shouldPatch = !Configuration.ServerOnly && BiomeManager.HasLavaOverrides;
     Patches.Transpiler(harmony, shouldPatch, typeof(Character), nameof(Character.UpdateLava), typeof(BiomeHeat), nameof(BiomeHeat.UpdateLava));
     Patches.Prefix(harmony, shouldPatch, typeof(Heightmap), nameof(Heightmap.GetLava), typeof(BiomeHeat), nameof(BiomeHeat.ReplaceGetLava));
     Patches.Prefix(harmony, shouldPatch, typeof(Heightmap), nameof(Heightmap.IsLava), typeof(BiomeHeat), nameof(BiomeHeat.ReplaceIsLava));
@@ -68,8 +68,8 @@ public static class Patcher
 
   private static void PatchTerrain(Harmony harmony)
   {
-    var biomeData = BiomeManager.HasData;
-    var territoryData = TerritoryManager.HasData;
+    var biomeData = !Configuration.ServerOnly && BiomeManager.HasData;
+    var territoryData = !Configuration.ServerOnly && TerritoryManager.HasData;
     var anyData = biomeData || territoryData;
     Patches.Prefix(harmony, anyData, typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight), typeof(BiomeHeight), nameof(BiomeHeight.ReplaceTerrain));
     Patches.Postfix(harmony, anyData, typeof(WorldGenerator), nameof(WorldGenerator.GetBiomeHeight), typeof(BiomeHeight), nameof(BiomeHeight.ModifyHeight));

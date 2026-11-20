@@ -24,21 +24,27 @@ public partial class Configuration
 {
 #nullable disable
   public static ConfigEntry<bool> configServerOnly;
-  public static bool ServerOnly => configServerOnly.Value;
+  public static bool ServerOnly { get; private set; }
+  public static bool IsDataAllowed(ConfigEntry<bool> setting) => !ServerOnly
+    || ReferenceEquals(setting, configDataDungeons)
+    || ReferenceEquals(setting, configDataRooms)
+    || ReferenceEquals(setting, configDataLocation)
+    || ReferenceEquals(setting, configDataVegetation)
+    || ReferenceEquals(setting, configDataEvents);
   public static ConfigEntry<bool> configSplitDataPerMod;
   public static bool SplitDataPerMod => configSplitDataPerMod.Value;
   public static ConfigEntry<bool> configLegacyGeneration;
-  public static bool LegacyGeneration => configLegacyGeneration.Value;
+  public static bool LegacyGeneration => !ServerOnly && configLegacyGeneration.Value;
   public static ConfigEntry<bool> configCustomWaterColor;
-  public static bool CustomWaterColor => configCustomWaterColor.Value;
+  public static bool CustomWaterColor => !ServerOnly && configCustomWaterColor.Value;
   public static ConfigEntry<bool> configDataEvents;
   public static bool DataEvents => configDataEvents.Value;
   public static ConfigEntry<bool> configDataPersistentEvents;
-  public static bool DataPersistentEvents => configDataPersistentEvents.Value;
+  public static bool DataPersistentEvents => !ServerOnly && configDataPersistentEvents.Value;
   public static ConfigEntry<bool> configDataSpawns;
-  public static bool DataSpawns => configDataSpawns.Value;
+  public static bool DataSpawns => !ServerOnly && configDataSpawns.Value;
   public static ConfigEntry<bool> configDataDrops;
-  public static bool DataDrops => configDataDrops.Value;
+  public static bool DataDrops => !ServerOnly && configDataDrops.Value;
   public static ConfigEntry<bool> configMultipleEvents;
   public static bool MultipleEvents => configMultipleEvents.Value;
   public static ConfigEntry<bool> configCheckPerPlayer;
@@ -55,7 +61,7 @@ public partial class Configuration
   public static ConfigEntry<bool> configRandomLocations;
   public static bool RandomLocations => configRandomLocations.Value;
   public static ConfigEntry<bool> configScaleLocationAltitudeRequirement;
-  public static bool ScaleLocationAltitudeRequirement => configScaleLocationAltitudeRequirement.Value;
+  public static bool ScaleLocationAltitudeRequirement => !ServerOnly && configScaleLocationAltitudeRequirement.Value;
 
   public static ConfigEntry<string> configDistanceWiggleLength;
   public static float DistanceWiggleLength => ConfigWrapper.Floats[configDistanceWiggleLength];
@@ -91,13 +97,13 @@ public partial class Configuration
   public static CustomSyncedValue<string> valuePersistentEventData;
   public static CustomSyncedValue<string> valueDropData;
   public static ConfigEntry<bool> configDataEnvironments;
-  public static bool DataEnvironments => configDataEnvironments.Value;
+  public static bool DataEnvironments => !ServerOnly && configDataEnvironments.Value;
   public static ConfigEntry<bool> configDataVegetation;
   public static bool DataVegetation => configDataVegetation.Value;
   public static ConfigEntry<bool> configDataAltBiomes;
-  public static bool DataAltBiomes => configDataAltBiomes.Value;
+  public static bool DataAltBiomes => !ServerOnly && configDataAltBiomes.Value;
   public static ConfigEntry<bool> configDataClutter;
-  public static bool DataClutter => configDataClutter.Value;
+  public static bool DataClutter => !ServerOnly && configDataClutter.Value;
   public static ConfigEntry<bool> configDataDungeons;
   public static bool DataDungeons => configDataDungeons.Value;
   public static ConfigEntry<bool> configDataRooms;
@@ -106,11 +112,11 @@ public partial class Configuration
   public static ConfigEntry<bool> configDataLocation;
   public static bool DataLocation => configDataLocation.Value;
   public static ConfigEntry<bool> configDataBiome;
-  public static bool DataBiome => configDataBiome.Value;
+  public static bool DataBiome => !ServerOnly && configDataBiome.Value;
   public static ConfigEntry<bool> configDataTerritory;
-  public static bool DataTerritory => configDataTerritory.Value;
+  public static bool DataTerritory => !ServerOnly && configDataTerritory.Value;
   public static ConfigEntry<bool> configDataWorld;
-  public static bool DataWorld => configDataWorld.Value;
+  public static bool DataWorld => !ServerOnly && configDataWorld.Value;
   public static ConfigEntry<bool> configDataMigration;
   public static bool DataMigration => configDataMigration.Value;
   public static ConfigEntry<int> configDataRevision;
@@ -125,7 +131,15 @@ public partial class Configuration
   public static void Init(ConfigWrapper wrapper, int initialRevision)
   {
     var section = "1. General";
-    configServerOnly = wrapper.Bind(section, "Server only", false, false, "Allow clients without EWD. Clients with EWD ignore their local configs.");
+    configServerOnly = wrapper.Bind(section, "Server only", false, false, "Allow clients without EWD. Clients with EWD ignore their local configs. Requires restart to take effect.");
+    // Keep the active mode unchanged until restart, including during config reloads.
+    ServerOnly = configServerOnly.Value;
+    configServerOnly.SettingChanged += (s, e) =>
+    {
+      // Connected clients use the server's value and restore their own on logout.
+      if (ServerSync.ConfigSync.ProcessingServerUpdate && ZNet.instance && !ZNet.instance.IsServer())
+        ServerOnly = configServerOnly.Value;
+    };
     configLegacyGeneration = wrapper.Bind(section, "Legacy generation", false, true, "Old Expand World had a bug that cause incorrect generation near biome borders. Set this true for older worlds.");
     configLegacyGeneration.SettingChanged += (s, e) => Refresh.Request(Regen.Patches);
     configZoneSpawners = wrapper.Bind(section, "Zone spawners", true, false, "If disabled, zone spawners are not generated.");

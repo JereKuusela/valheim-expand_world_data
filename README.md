@@ -1,4 +1,4 @@
-﻿# Expand World Data
+# Expand World Data
 
 Allows adding new biomes and changing most of the world generation.
 
@@ -36,15 +36,31 @@ Note: Pay extra attention when loading old worlds. Certain configurations can ca
 
 ### Server side
 
-This mod can be used server only, without requiring clients to have it. However only following files can be configured:
+Enable `Server only` to allow clients without EWD. **Restart the server after changing this setting.**
 
-- `expand_dungeons.yaml`: All fields.
-- `expand_locations.yaml`: All fields.
-- `expand_rooms.yaml`: All fields.
-- `expand_vegetation.yaml`: All fields.
-- `expand_world.cfg`: Only setting Zone spawners or Random locations.
+The following files and settings remain configurable:
 
-When `Server only` is enabled, clients without the mod can join the server. If clients have the mod installed, their local configs are ignored while in the server.
+- `expand_dungeons.yaml`: Server-generated dungeon content.
+- `expand_locations.yaml`: Server-generated location content.
+- `expand_rooms.yaml`: Server-generated room content.
+- `expand_vegetation.yaml`: Server-generated vegetation and pickables.
+- `expand_events.yaml`: Selection rules and server-side commands for existing event names.
+- `expand_world_data.cfg`: `Zone spawners`, `Random locations`, event timing, multiple events and per-player checks. File reload, migration, data splitting and blueprint folder settings also remain available.
+
+Use prefabs available to the clients. Custom discovery labels, building restrictions, interior environments and custom map icons require client support. **Location** icons (StartTemple, Vendor_BlackForest, Hildir_camp, BogWitch_Camp and AncientUpgradeStation) are still supported. Non-networked location visuals use the client's original prefab.
+
+The following customizations are ignored:
+
+- World, biome, territory, environment, clutter and alternative biome data.
+- Spawn, drop and persistent event data.
+- Terrain generation, biome placement and nature rules.
+- Ashlands and Deep North terrain restrictions and gaps.
+- Custom map and water colors, lava behavior and location altitude scaling.
+- Event spawns, duration, radius, pause behavior, spawner delay, messages, music and forced environment. These retain their original values.
+
+Saved settings are preserved. Clients with a compatible EWD version can join; their local EWD customizations are suspended until logout.
+
+**Back up existing customized worlds before enabling this mode.** Returning to vanilla world generation can change terrain beneath existing buildings.
 
 ### Ashlands & Deep North
 

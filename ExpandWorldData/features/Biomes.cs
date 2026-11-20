@@ -97,7 +97,7 @@ public class SetBiomeOffsets
   [HarmonyPriority(Priority.VeryHigh)]
   static void Prefix(WorldGenerator __instance)
   {
-    if (BiomeCalculator.Offsets.Count > 0) return;
+    if (Configuration.ServerOnly || BiomeCalculator.Offsets.Count > 0) return;
     BiomeCalculator.Offsets[Heightmap.Biome.Swamp] = __instance.m_offset0;
     BiomeCalculator.Offsets[Heightmap.Biome.Plains] = __instance.m_offset1;
     BiomeCalculator.Offsets[Heightmap.Biome.BlackForest] = __instance.m_offset2;

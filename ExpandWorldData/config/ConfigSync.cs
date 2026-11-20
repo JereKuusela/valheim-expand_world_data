@@ -1011,7 +1011,11 @@ public class ConfigSync
     }
     foreach (ConfigEntryBase config in configList)
     {
-      AddEntryToPackage(package, new PackageEntry { section = config.Definition.Section, key = config.Definition.Key, type = configType(config), value = defaults ? config.DefaultValue : config.BoxedValue });
+      // Clients need the active mode even when all customizations are reset to defaults.
+      var value = ReferenceEquals(config, Configuration.configServerOnly)
+        ? Configuration.ServerOnly
+        : defaults ? config.DefaultValue : config.BoxedValue;
+      AddEntryToPackage(package, new PackageEntry { section = config.Definition.Section, key = config.Definition.Key, type = configType(config), value = value });
     }
 
     return package;
