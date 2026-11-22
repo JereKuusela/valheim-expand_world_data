@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Service;
 using UnityEngine;
 using Common;
 using ExpandWorldData.Data;
+using Data;
 namespace ExpandWorldData;
 
 using Operation = Action<int, float>;
@@ -106,19 +107,19 @@ public partial class Terrain
     hm.Poke();
   }
 
-  public static void ApplyBlueprint(Blueprint blueprint, Vector3 position, Quaternion rotation, ZoneSystem.SpawnMode mode, List<GameObject> spawnedGhostObjects)
+  public static void ApplyBlueprint(string blueprintName, BlueprintTerrain<float>? heightData, BlueprintTerrain<Color>? paintData, Vector3 position, Quaternion rotation, ZoneSystem.SpawnMode mode, List<GameObject> spawnedGhostObjects)
   {
     if (!Helper.IsServer()) return;
     var isGhost = mode == ZoneSystem.SpawnMode.Ghost;
     try
     {
-      ApplyBlueprintSnapshot(blueprint, position, rotation, isGhost, spawnedGhostObjects);
+      ApplyBlueprintSnapshot(blueprintName, heightData, paintData, position, rotation, isGhost, spawnedGhostObjects);
     }
     catch (Exception e)
     {
       // Location generation must keep unwinding normally so vanilla can clean
       // its temporary zone root and spawned ghost objects.
-      Log.Warning($"Blueprint {blueprint.Name}: Terrain snapshot was not applied completely: {e.Message}");
+      Log.Warning($"Blueprint {blueprintName}: Terrain snapshot was not applied completely: {e.Message}");
     }
   }
 
@@ -184,17 +185,17 @@ public partial class Terrain
     }
   }
 
-  private static void ApplyBlueprintSnapshot(Blueprint blueprint, Vector3 position, Quaternion rotation, bool isGhost, List<GameObject> spawnedGhostObjects)
+  private static void ApplyBlueprintSnapshot(string blueprintName, BlueprintTerrain<float>? heightData, BlueprintTerrain<Color>? paintData, Vector3 position, Quaternion rotation, bool isGhost, List<GameObject> spawnedGhostObjects)
   {
     if (!IsValidZonePosition(position, 0f) || !IsFinite(rotation) || QuaternionMagnitudeSquared(rotation) <= 0.0001f)
       throw new InvalidOperationException("Terrain snapshot placement contains an invalid position or rotation.");
-    var hasHeight = blueprint.TerrainHeight?.HasValues == true;
-    var hasPaint = blueprint.TerrainPaint?.HasValues == true;
+    var hasHeight = heightData?.HasValues == true;
+    var hasPaint = paintData?.HasValues == true;
     if (!hasHeight && !hasPaint) return;
-    if (hasHeight && (!IsValidTerrainTransform(blueprint.TerrainHeight!) || !blueprint.TerrainHeight!.AllValues(IsFinite)) ||
-        hasPaint && (!IsValidTerrainTransform(blueprint.TerrainPaint!) || !blueprint.TerrainPaint!.AllValues(IsFinite)))
+    if (hasHeight && (!IsValidTerrainTransform(heightData!) || !heightData!.AllValues(IsFinite)) ||
+        hasPaint && (!IsValidTerrainTransform(paintData!) || !paintData!.AllValues(IsFinite)))
       throw new InvalidOperationException("Terrain snapshot reference contains invalid transformed values.");
-    var radius = Mathf.Max(blueprint.TerrainHeight?.GetRadius() ?? 0f, blueprint.TerrainPaint?.GetRadius() ?? 0f);
+    var radius = Mathf.Max(heightData?.GetRadius() ?? 0f, paintData?.GetRadius() ?? 0f);
     if (!IsFinite(radius) || radius < 0f)
       throw new InvalidOperationException("Terrain snapshot radius is invalid.");
 
@@ -202,7 +203,7 @@ public partial class Terrain
     if (!template || template.IsDistantLod || template.m_width <= 0 || !IsFinite(template.m_scale) || template.m_scale <= 0f ||
         HeightmapBuilder.instance == null || WorldGenerator.instance == null)
     {
-      Log.Warning($"Blueprint {blueprint.Name}: Terrain template is not ready for the terrain snapshot.");
+      Log.Warning($"Blueprint {blueprintName}: Terrain template is not ready for the terrain snapshot.");
       return;
     }
     var scene = ZNetScene.instance;
@@ -210,12 +211,12 @@ public partial class Terrain
     var registeredCompiler = scene ? scene.GetPrefab(TerrainHash) : null;
     if (!scene || !templateView || !registeredCompiler || !registeredCompiler.GetComponent<TerrainComp>())
     {
-      Log.Warning($"Blueprint {blueprint.Name}: Terrain compiler prefab is not ready for the terrain snapshot.");
+      Log.Warning($"Blueprint {blueprintName}: Terrain compiler prefab is not ready for the terrain snapshot.");
       return;
     }
 
-    var heightMargin = hasHeight ? Mathf.Max(0.001f, blueprint.TerrainHeight!.DistanceBetweenNodes) : 0f;
-    var paintMargin = hasPaint ? Mathf.Max(0.001f, blueprint.TerrainPaint!.DistanceBetweenNodes) : 0f;
+    var heightMargin = hasHeight ? Mathf.Max(0.001f, heightData!.DistanceBetweenNodes) : 0f;
+    var paintMargin = hasPaint ? Mathf.Max(0.001f, paintData!.DistanceBetweenNodes) : 0f;
     var applicationRadius = radius + Mathf.Max(template.m_scale, heightMargin, paintMargin);
     if (!IsFinite(applicationRadius) || applicationRadius <= 0f)
       throw new InvalidOperationException("Terrain snapshot application radius is invalid.");
@@ -230,7 +231,7 @@ public partial class Terrain
     var zoneCount = spanX > 0L && spanZ > 0L && spanX <= 64L && spanZ <= 64L ? spanX * spanZ : long.MaxValue;
     if (zoneCount <= 0 || zoneCount > 64)
     {
-      Log.Warning($"Blueprint {blueprint.Name}: Terrain snapshot covers an unsupported number of zones ({zoneCount}).");
+      Log.Warning($"Blueprint {blueprintName}: Terrain snapshot covers an unsupported number of zones ({zoneCount}).");
       return;
     }
 
@@ -256,8 +257,8 @@ public partial class Terrain
             for (var x = 0; x < max; ++x)
             {
               var nodePosition = BlueprintVertexToWorld(center, width, scale, x, z);
-              if (blueprint.TerrainHeight?.FindNearest(nodePosition, position, rotation).HasValue == true ||
-                  blueprint.TerrainPaint?.FindNearest(nodePosition, position, rotation).HasValue == true)
+              if (heightData?.FindNearest(nodePosition, position, rotation).HasValue == true ||
+                  paintData?.FindNearest(nodePosition, position, rotation).HasValue == true)
               {
                 hasSnapshotValues = true;
                 break;
@@ -267,48 +268,27 @@ public partial class Terrain
           if (!hasSnapshotValues) continue;
 
           var buildData = HeightmapBuilder.instance.RequestTerrainSync(center, width, scale, template.IsDistantLod, WorldGenerator.instance);
-          if (buildData?.m_baseHeights == null || buildData.m_baseHeights.Count != count)
+          if (buildData?.m_baseHeights == null || buildData.m_baseHeights.Count != count || buildData.m_baseMask == null || buildData.m_baseMask.Length != count)
             throw new InvalidOperationException($"Base terrain at zone {zone} is not ready.");
           if (buildData.m_baseHeights.Any(value => !IsFinite(value)))
             throw new InvalidOperationException($"Base terrain at zone {zone} contains invalid heights.");
 
           var zdo = FindSingleCompiler(zone);
-          var data = new TerrainFakeData(width, zdo?.GetByteArray(ZDOVars.s_TCData), true);
-          var changes = 0;
-          for (var z = 0; z < max; ++z)
-          {
-            for (var x = 0; x < max; ++x)
-            {
-              var index = z * max + x;
-              var nodePosition = BlueprintVertexToWorld(center, width, scale, x, z);
-              var height = blueprint.TerrainHeight?.FindNearest(nodePosition, position, rotation);
-              if (height.HasValue)
-              {
-                var targetLocalHeight = height.Value + position.y - center.y;
-                var levelDelta = targetLocalHeight - buildData.m_baseHeights[index];
-                if (!IsFinite(targetLocalHeight) || !IsFinite(levelDelta))
-                  throw new InvalidOperationException($"Terrain height at zone {zone} is not finite.");
-                if (data.SetHeight(index, levelDelta))
-                  changes += 1;
-              }
-              var paint = blueprint.TerrainPaint?.FindNearest(nodePosition, position, rotation);
-              if (paint.HasValue)
-              {
-                if (!IsFinite(paint.Value))
-                  throw new InvalidOperationException($"Terrain paint at zone {zone} is not finite.");
-                if (data.SetPaint(index, paint.Value))
-                  changes += 1;
-              }
-            }
-          }
+          var state = TerrainState.Load(zdo?.GetByteArray(ZDOVars.s_TCData), buildData.m_baseHeights, buildData.m_baseMask, center, width, scale);
+          var changes = state.ApplySnapshot(
+            heightData == null ? null : node => heightData.FindNearest(node, position, rotation),
+            paintData == null ? null : node => paintData.FindNearest(node, position, rotation),
+            position.y);
           if (changes > 0 && zdo != null && zdo.HasOwner() && zdo.GetOwner() != ZDOMan.GetSessionID())
             throw new InvalidOperationException($"TerrainCompiler at zone {zone} is owned by an active peer.");
 
           byte[]? payload = null;
           if (changes > 0)
           {
-            data.MarkOperation(position, applicationRadius);
-            payload = data.Serialize();
+            state.Operations += 1;
+            state.LastOperationPoint = position;
+            state.LastOperationRadius = applicationRadius;
+            payload = Utils.Compress(state.Save());
           }
 
           var loadedHeightmap = FindLoadedHeightmap(center);
@@ -344,7 +324,7 @@ public partial class Terrain
     {
       // Nothing has been saved yet, so malformed or unavailable terrain cannot
       // leave only part of a multi-heightmap snapshot applied.
-      Log.Warning($"Blueprint {blueprint.Name}: Terrain snapshot was not applied: {e.Message}");
+      Log.Warning($"Blueprint {blueprintName}: Terrain snapshot was not applied: {e.Message}");
       return;
     }
 
@@ -365,7 +345,7 @@ public partial class Terrain
     }
     catch (Exception e)
     {
-      Log.Warning($"Blueprint {blueprint.Name}: Terrain snapshot commit failed: {e.Message}");
+      Log.Warning($"Blueprint {blueprintName}: Terrain snapshot commit failed: {e.Message}");
       return;
     }
 
@@ -419,13 +399,13 @@ public partial class Terrain
           compiler && item.Heightmap && ReferenceEquals(compiler.m_hmap, item.Heightmap);
         if (createdCompilerObject || isCurrentGhostCompiler)
           CleanupCompilerInstance(scene, compiler, spawnedGhostObjects, createdCompilerObject);
-        Log.Warning($"Blueprint {blueprint.Name}: Terrain snapshot at zone {ZoneSystem.GetZone(item.Center)} was saved but could not refresh its loaded Heightmap: {e.Message}");
+        Log.Warning($"Blueprint {blueprintName}: Terrain snapshot at zone {ZoneSystem.GetZone(item.Center)} was saved but could not refresh its loaded Heightmap: {e.Message}");
       }
     }
     if (changedHeightmaps > 0)
     {
       ClutterSystem.instance?.ResetGrass(position, applicationRadius);
-      Log.Debug($"Blueprint {blueprint.Name}: Applied terrain snapshot to {changedNodes} nodes on {changedHeightmaps} heightmaps.");
+      Log.Debug($"Blueprint {blueprintName}: Applied terrain snapshot to {changedNodes} nodes on {changedHeightmaps} heightmaps.");
     }
   }
 

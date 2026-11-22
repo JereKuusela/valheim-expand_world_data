@@ -13,7 +13,6 @@ using ExpandWorldData.Dungeon;
 using ExpandWorldData.Environment;
 using ExpandWorldData.Territory;
 using ExpandWorldData.World;
-using ExpandWorldData.Data;
 using ExpandWorldData.Locations;
 using ExpandWorldData.AltBiomes;
 using ExpandWorldData.Vegetation;
@@ -25,7 +24,7 @@ public class EWD : BaseUnityPlugin
 {
   public const string GUID = "expand_world_data";
   public const string NAME = "Expand World Data";
-  public const string VERSION = "1.80.1";
+  public const string VERSION = "1.81";
 #nullable disable
   public static EWD Instance;
   public static Harmony Harmony;
@@ -60,7 +59,7 @@ public class EWD : BaseUnityPlugin
       {
         Yaml.SetupWatcher(Config);
         DataLoading.SetupWatcher();
-        BlueprintManager.SetupBlueprintWatcher();
+        BlueprintWatcher.Start();
       }
       BiomeManager.SetupWatcher();
       TerritoryManager.SetupWatcher();

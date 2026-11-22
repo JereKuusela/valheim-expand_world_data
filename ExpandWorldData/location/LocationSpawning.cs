@@ -186,18 +186,23 @@ public class LocationObjectDataAndSwap
       var surface = pos with { y = pos.y - (data.offset ?? data.groundOffset) };
       HandleTerrain(surface, location.m_exteriorRadius, useDefaultBlueprintLeveling, data);
     }
+    var scale = LocationExtra.GetScale(location);
+    BlueprintPlan? plan = null;
     if (blueprint != null)
-      Terrain.ApplyBlueprint(blueprint, pos, rot, mode, spawnedGhostObjects);
+    {
+      // Chance and swaps are rolled before the terrain, so terrain of nested blueprints matches what spawns.
+      Random.InitState(seed);
+      plan = Create.Plan(blueprint, pos, rot, scale, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride);
+      var (height, paint) = plan.GetTerrain(pos, rot);
+      Terrain.ApplyBlueprint(blueprint.Name, height, paint, pos, rot, mode, spawnedGhostObjects);
+    }
     if (mode == ZoneSystem.SpawnMode.Ghost)
       Terrain.FinalizeGhostTerrain(pos, spawnedGhostObjects, location.m_prefab.Name);
     Random.InitState(seed);
     if (mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.StartGhostInit();
-    var scale = LocationExtra.GetScale(location);
-    if (blueprint != null)
-    {
-      Create.Blueprint(blueprint, pos, rot, scale, seed, LocationSpawning.DataOverride, LocationSpawning.PrefabOverride, spawnedGhostObjects);
-    }
+    if (plan != null)
+      Create.Spawn(plan, seed, spawnedGhostObjects);
     LocationSpawning.CustomObjects(location, pos, rot, scale, seed, spawnedGhostObjects);
 
     WearNTear.m_randomInitialDamage = false;

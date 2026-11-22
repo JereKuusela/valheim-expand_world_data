@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using Service;
 using UnityEngine;
+using Data;
 using ExpandWorldData.Data;
 using ExpandWorldData.Locations;
 

@@ -14,10 +14,22 @@ public class VegetationSpawning
   private static ZoneSystem.ZoneVegetation CurrentVegetation = new();
   private static ZoneSystem.SpawnMode Mode = ZoneSystem.SpawnMode.Client;
   private static List<GameObject> SpawnedObjects = [];
+  // Vegetation terrain is applied once per zone, after all placements. Locations are placed before vegetation and apply theirs immediately.
+  private static readonly List<PlannedTerrain> ZoneTerrains = [];
   internal static void InitializePlacement(ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
   {
     Mode = mode;
     SpawnedObjects = spawnedObjects;
+    ZoneTerrains.Clear();
+  }
+  internal static void ApplyZoneTerrain(Vector3 zonePos, ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
+  {
+    if (ZoneTerrains.Count == 0) return;
+    var (height, paint) = BlueprintPlan.GetTerrain(ZoneTerrains, zonePos, Quaternion.identity);
+    ZoneTerrains.Clear();
+    Terrain.ApplyBlueprint("vegetation", height, paint, zonePos, Quaternion.identity, mode, spawnedObjects);
+    if (mode == ZoneSystem.SpawnMode.Ghost)
+      Terrain.FinalizeGhostTerrain(zonePos, spawnedObjects, "vegetation");
   }
   static ZoneSystem.ZoneVegetation SetVeg(ZoneSystem.ZoneVegetation veg)
   {
@@ -50,14 +62,19 @@ public class VegetationSpawning
   }
   static GameObject InstantiateBlueprint(GameObject prefab, Vector3 position, Quaternion rotation, List<ZoneSystem.ClearArea> clearAreas)
   {
-    if (Mode == ZoneSystem.SpawnMode.Ghost)
-      ZNetView.StartGhostInit();
     var scale = Vector3.one;
     if (Extra.TryGetValue(CurrentVegetation, out var extra) && extra.scale != null)
       scale = Helper.RandomValue(extra.scale);
-    Create.Blueprint(prefab.name, position, rotation, scale, 0, DataOverride, PrefabOverride, SpawnedObjects);
-    if (Mode == ZoneSystem.SpawnMode.Ghost)
-      ZNetView.FinishGhostInit();
+    if (BlueprintManager.TryGet(prefab.name, out var blueprint))
+    {
+      var plan = Create.Plan(blueprint, position, rotation, scale, DataOverride, PrefabOverride);
+      ZoneTerrains.AddRange(plan.Terrains);
+      if (Mode == ZoneSystem.SpawnMode.Ghost)
+        ZNetView.StartGhostInit();
+      Create.Spawn(plan, 0, SpawnedObjects);
+      if (Mode == ZoneSystem.SpawnMode.Ghost)
+        ZNetView.FinishGhostInit();
+    }
     // Blueprints spawn a dummy non-ZNetView object, so no extra stuff is needed.
     return Object.Instantiate(prefab, position, rotation);
   }

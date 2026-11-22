@@ -1,5 +1,8 @@
 - v1.81
   - Adds support for clients having the mod installed even if the server does not require it. Thanks JPValheim!
+  - Adds support for weights in blueprints. Similar to chance, but only one object of the group appears.
+  - Fixes blueprint terrain not working from nested blueprints.
+  - Fixes blueprint terrain not working for vegetation.
   - Fixes compatibility issue with Location Placement Accelerator mod.
   - Fixes lava damage being based on water boiling, now only depends on the biome lava field.
   - Improves performance of water boiling and lava checks.

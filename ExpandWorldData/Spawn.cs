@@ -23,13 +23,28 @@ public class Create
       Blueprint(bp, pos, rot, scale, seed, dataOverride, prefabOverride, spawned);
   }
   public static void Blueprint(Blueprint bp, Vector3 pos, Quaternion rot, Vector3 scale, int seed, DataOverride dataOverride, Func<string, string> prefabOverride, List<GameObject>? spawned)
+    => Spawn(Plan(bp, pos, rot, scale, dataOverride, prefabOverride), seed, spawned);
+
+  // Chance, swaps and data overrides are rolled here, so terrain can be applied before anything spawns.
+  public static BlueprintPlan Plan(Blueprint bp, Vector3 pos, Quaternion rot, Vector3 scale, DataOverride dataOverride, Func<string, string> prefabOverride)
+    => BlueprintPlan.Create(bp, pos, rot, scale, dataOverride, prefabOverride, name => BlueprintManager.TryGet(name, out var nested) ? nested : null);
+
+  public static void Spawn(BlueprintPlan plan, int seed, List<GameObject>? spawned)
   {
-    foreach (var obj in bp.Objects)
+    foreach (var obj in plan.Objects)
     {
-      if (obj.Chance < 1f && UnityEngine.Random.value > obj.Chance) continue;
-      BPO(obj, pos, rot, scale, seed, dataOverride, prefabOverride, spawned);
+      var prefab = ZNetScene.instance.GetPrefab(obj.Prefab);
+      var pos = obj.Pos;
+      if (obj.SnapToGround)
+        pos.y = GetGroundHeight(pos);
+      var go = Place(prefab, pos, obj.Rot, obj.Scale, seed, obj.Data, spawned);
+      if (go.TryGetComponent<DungeonGenerator>(out var dg))
+        dg.Generate(ZNetView.m_ghostInit ? ZoneSystem.SpawnMode.Ghost : ZoneSystem.SpawnMode.Full);
     }
   }
+
+  private static float GetGroundHeight(Vector3 pos)
+    => ZoneSystem.instance.GetGroundHeight(pos, out var height) ? height : WorldGenerator.instance.GetHeight(pos.x, pos.z);
   private static void SetData(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 scale, int seed, DataEntry? data = null)
   {
     // No override needed.
@@ -82,12 +97,7 @@ public class Create
   {
     pos += rot * obj.Pos;
     if (obj.SnapToGround)
-    {
-      if (ZoneSystem.instance.GetGroundHeight(pos, out var height))
-        pos.y = height;
-      else
-        pos.y = WorldGenerator.instance.GetHeight(pos.x, pos.z);
-    }
+      pos.y = GetGroundHeight(pos);
     rot *= obj.Rot;
     var sc = scale;
     if (obj.Scale.HasValue)
@@ -112,6 +122,11 @@ public class Create
       return null;
     }
     var data = dataOverride(obj.Data, prefabName);
+    return Place(prefab, pos, rot, sc, seed, data, spawned);
+  }
+
+  private static GameObject Place(GameObject prefab, Vector3 pos, Quaternion rot, Vector3 sc, int seed, DataEntry? data, List<GameObject>? spawned)
+  {
     SetData(prefab, pos, rot, sc, seed, data);
 
     //ExpandWorldData.Log.Debug($"Spawning {prefabName} at {Helper.Print(pos)} {source}");
