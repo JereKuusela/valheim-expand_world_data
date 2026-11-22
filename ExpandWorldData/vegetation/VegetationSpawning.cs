@@ -22,14 +22,14 @@ public class VegetationSpawning
     SpawnedObjects = spawnedObjects;
     ZoneTerrains.Clear();
   }
-  internal static void ApplyZoneTerrain(Vector3 zonePos, ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
+  internal static void ApplyZoneTerrain(Vector3 zoneCenterPos, ZoneSystem.SpawnMode mode, List<GameObject> spawnedObjects)
   {
     if (ZoneTerrains.Count == 0) return;
-    var (height, paint) = BlueprintPlan.GetTerrain(ZoneTerrains, zonePos, Quaternion.identity);
+    var (height, paint) = BlueprintPlan.GetTerrain(ZoneTerrains, zoneCenterPos, Quaternion.identity);
     ZoneTerrains.Clear();
-    Terrain.ApplyBlueprint("vegetation", height, paint, zonePos, Quaternion.identity, mode, spawnedObjects);
+    Terrain.ApplyBlueprint("vegetation", height, paint, zoneCenterPos, Quaternion.identity, mode, spawnedObjects);
     if (mode == ZoneSystem.SpawnMode.Ghost)
-      Terrain.FinalizeGhostTerrain(zonePos, spawnedObjects, "vegetation");
+      Terrain.FinalizeGhostTerrain(zoneCenterPos, spawnedObjects, "vegetation");
   }
   static ZoneSystem.ZoneVegetation SetVeg(ZoneSystem.ZoneVegetation veg)
   {
