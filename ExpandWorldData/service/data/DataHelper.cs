@@ -7,6 +7,14 @@ namespace Data;
 
 public class DataHelper
 {
+  public static GameObject GetSpawnPrefab(GameObject prefab, Vector3 position, DataEntry? data)
+  {
+    if (data?.Prefab == null || !prefab) return prefab!;
+    var name = Utils.GetPrefabName(prefab);
+    var replacement = data.GetPrefabOverride(new Functions(name, [], position), name.GetStableHashCode());
+    return replacement.HasValue ? ZNetScene.instance.GetPrefab(replacement.Value) : prefab;
+  }
+
   public static ZDO? Init(GameObject obj, Vector3 pos, Quaternion rot, Vector3? scale, DataEntry? data)
   {
     if (data == null && scale == null) return null;

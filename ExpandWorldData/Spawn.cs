@@ -127,6 +127,7 @@ public class Create
 
   private static GameObject Place(GameObject prefab, Vector3 pos, Quaternion rot, Vector3 sc, int seed, DataEntry? data, List<GameObject>? spawned)
   {
+    prefab = DataHelper.GetSpawnPrefab(prefab, pos, data);
     SetData(prefab, pos, rot, sc, seed, data);
 
     //ExpandWorldData.Log.Debug($"Spawning {prefabName} at {Helper.Print(pos)} {source}");

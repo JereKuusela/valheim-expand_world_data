@@ -5,6 +5,7 @@
   - Fixes blueprint terrain not working for vegetation.
   - Fixes compatibility issue with Location Placement Accelerator mod.
   - Fixes lava damage being based on water boiling, now only depends on the biome lava field.
+  - Fixes alternative biome location block not working. Thanks Maxime!
   - Improves performance of water boiling and lava checks.
   - Improves handling of missing or inaccessible directories. Thanks Maxime!
 
