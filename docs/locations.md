@@ -97,7 +97,10 @@ See the [wiki](https://valheim.wiki/Point_of_Interest) for more info.
   - Use `<x>`, `<y>` and `<z>` in the command to use the location center point.
   - Use `<a>` in the command to use the location rotation.
   - Basic arithmetic is supported. For example `<x>+10` would add 10 meters to the x coordinate.
-- clearArea (default: `false`): If true, vegetation is not placed within `exteriorRadius`.
+- clearArea (default: `false`): Sets the vegetation clearing behavior for the location.
+  - `true` prevents vegetation placement within `exteriorRadius`.
+  - A number, such as `clearArea: 25.5`, uses that radius in meters instead without changing `exteriorRadius`.
+  - `false` or `0` disables clearing.
 - noBuild (synced, default: `false`): If true, players can't build within `exteriorRadius`. If number, player can't build within the given radius. If omitted, building is allowed (even if the original location blocks it).
 - noBuildDungeon (default: `false`): If true, players can't build inside dungeons within the whole zone. If number, player can't build inside dungeons within the given radius.
   - Note: For bigger dungeons, the number should be set manually (dungeon `bounds` divided by sqrt 2).

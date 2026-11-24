@@ -33,6 +33,7 @@ public static class Patcher
     Features.Patcher.Patch(harmony);
     World.Patcher.Patch(harmony);
     Vegetation.Patcher.Patch(harmony);
+    Locations.Patcher.Patch(harmony);
     DataPatcher.Patch(harmony);
   }
 }

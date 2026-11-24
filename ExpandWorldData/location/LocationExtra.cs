@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Service;
 using UnityEngine;
 using Data;
@@ -186,10 +187,21 @@ public class LocationExtraInfo
   public ValueRange<Vector3>? Scale;
   public string[]? Commands;
   public LocationYaml Data;
+  public readonly bool ClearArea;
+  public readonly float? ClearAreaRadius;
 
   public LocationExtraInfo(LocationYaml data, string fileName)
   {
     Data = data;
+    if (bool.TryParse(data.clearArea, out var clearArea))
+      ClearArea = clearArea;
+    else if (float.TryParse(data.clearArea, NumberStyles.Float, CultureInfo.InvariantCulture, out var radius) && radius >= 0f && !float.IsInfinity(radius))
+    {
+      ClearArea = radius > 0f;
+      ClearAreaRadius = radius;
+    }
+    else
+      throw new FormatException($"clearArea for {data.prefab} in {fileName} must be true, false, or a non-negative radius.");
     Groups = ParseMembership(data.groups);
     if (data.group != "")
       Groups.Add(data.group);

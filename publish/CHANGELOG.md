@@ -1,3 +1,6 @@
+- v1.82
+  - Adds support for numeric `clearArea` in locations yaml.
+
 - v1.81
   - Adds support for clients having the mod installed even if the server does not require it. Thanks JPValheim!
   - Adds support for weights in blueprints. Similar to chance, but only one object of the group appears.

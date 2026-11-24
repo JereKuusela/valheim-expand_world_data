@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using ExpandWorldData.Locations;
 using HarmonyLib;
 using Service;
@@ -54,11 +55,30 @@ public class ClearAreasFromAdjacentZones
         if (item.m_location == null) continue;
         // No clear area in the location.
         if (!item.m_location.m_clearArea) continue;
-        // If fits inside the zone, no need to add it.
-        if (item.m_location.m_exteriorRadius < 32f) continue;
-        clearAreas.Add(new(item.m_position, item.m_location.m_exteriorRadius));
+        var radius = LocationClearArea.GetRadius(item.m_location);
+        if (radius < 32f && !LocationClearArea.HasOverride(item.m_location)) continue;
+        clearAreas.Add(new(item.m_position, radius));
       }
     }
+  }
+}
+
+public static class LocationClearArea
+{
+  internal static bool HasOverride(ZoneSystem.ZoneLocation location) =>
+    LocationExtra.TryGet(location, out var extra) && extra.ClearAreaRadius.HasValue;
+
+  internal static float GetRadius(ZoneSystem.ZoneLocation location) =>
+    LocationExtra.TryGet(location, out var extra) ? extra.ClearAreaRadius ?? location.m_exteriorRadius : location.m_exteriorRadius;
+
+  internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+  {
+    var radius = AccessTools.Field(typeof(ZoneSystem.ZoneLocation), nameof(ZoneSystem.ZoneLocation.m_exteriorRadius));
+    var constructor = AccessTools.Constructor(typeof(ZoneSystem.ClearArea), [typeof(Vector3), typeof(float)]);
+    return new CodeMatcher(instructions)
+      .MatchForward(false, new CodeMatch(OpCodes.Ldfld, radius), new CodeMatch(OpCodes.Newobj, constructor))
+      .Set(OpCodes.Call, AccessTools.Method(typeof(LocationClearArea), nameof(GetRadius)))
+      .InstructionEnumeration();
   }
 }
 

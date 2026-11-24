@@ -112,8 +112,8 @@ public class LocationYaml
   public string enemyLevelExcludeGroups = "";
   [DefaultValue("")]
   public string blockSpawnGroups = "";
-  [DefaultValue(false)]
-  public bool clearArea = false;
+  [DefaultValue("false")]
+  public string clearArea = "false";
   [DefaultValue("")]
   public string randomDamage = "";
   [DefaultValue("")]

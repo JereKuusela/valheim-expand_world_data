@@ -95,7 +95,7 @@ public partial class LocationManager
     LocationClientData.UpdateData();
     MinimapIcon.Clear();
     // Refresh.Request is deferred; update icon patches before broadcasting the new configuration.
-    DataPatcher.PatchLocationIcons(EWD.Harmony);
+    Patcher.PatchIcons(EWD.Harmony);
     ZoneSystem.instance.SendLocationIcons(ZRoutedRpc.Everybody);
     IdManager.SendLocationIds();
     return SetResult.Applied;
@@ -162,7 +162,9 @@ public partial class LocationManager
 
   private static void ApplyLocationData(ZoneSystem.ZoneLocation item, float? radius = null)
   {
-    if (!LocationExtra.TryGetData(item, out var data)) return;
+    if (!LocationExtra.TryGet(item, out var extra)) return;
+    var data = extra.Data;
+    item.m_clearArea = extra.ClearArea;
     // Zero means that the vanilla value is used.
     if (data.interiorRadius > 0f) item.m_interiorRadius = data.interiorRadius;
     // Old config won't have exterior radius so don't set anything.
@@ -170,7 +172,6 @@ public partial class LocationManager
     item.m_exteriorRadius = data.exteriorRadius;
     if (radius.HasValue && item.m_exteriorRadius == 0)
       item.m_exteriorRadius = radius.Value;
-    item.m_clearArea = data.clearArea;
   }
 
 

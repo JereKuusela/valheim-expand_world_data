@@ -56,7 +56,8 @@ public partial class LocationManager
   {
     LocationYaml data = new();
     // For migrations, ensures that old data is preserved.
-    if (LocationExtra.TryGetData(loc, out var extra))
+    var hasExtra = LocationExtra.TryGetData(loc, out var extra);
+    if (hasExtra)
       data = extra;
     // Original game has two fields for min/max distance from center. This merges the implementations.
     if (loc.m_minDistanceFromCenter != 0f && (loc.m_minDistance == 0f || loc.m_minDistanceFromCenter > loc.m_minDistance))
@@ -107,7 +108,8 @@ public partial class LocationManager
     {
       data.randomDamage = prefab.m_applyRandomDamage ? "true" : "";
       data.exteriorRadius = prefab.m_exteriorRadius;
-      data.clearArea = prefab.m_clearArea;
+      // If had extra, already applied.
+      if (!hasExtra) data.clearArea = prefab.m_clearArea ? "true" : "false";
       data.discoverLabel = prefab.m_discoverLabel;
       FillClientFields(data, prefab);
     }
