@@ -10,6 +10,7 @@ public partial class LocationManager
   {
     var loc = new ZoneSystem.ZoneLocation
     {
+      m_name = data.prefab,
       m_prefabName = data.prefab,
 
       m_enable = data.enabled,
