@@ -40,10 +40,12 @@ See the [wiki](https://valheim.wiki/Point_of_Interest) for more info.
   - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
   - Putting anything on the third value causes the icon to pulse. This is not supported with meters.
   - Icon name StartTemple is used as the default spawn point for players. This can be used to spawn players on some other location.
+  - Vanilla clients display only **location** icons; With `Server only` enabled, warnings will be displayed for non-location icons.
 - iconPlaced: Location icon to show when the location is generated. Use `ew_icons` to see what is available.
   - Format is `icon,size,pulse`.
   - Size 5 or more is considered as meters. These icons scale up and down with the zoom level.
   - Putting anything on the third value causes the icon to pulse. This is not supported with meters.
+  - Vanilla clients display only **location** icons; With `Server only` enabled, warnings will be displayed for non-location icons.
 - randomRotation (default: `false`): Randomly rotates the location (unaffected by world seed).
 - randomCardinal (default: `false`): Randomly rotates the location in cardinal directions (0, 90, 180, 270 degrees).
 - randomSeed (default: `false`): If true, the generation result is always different instead of depending on the location coordinates.

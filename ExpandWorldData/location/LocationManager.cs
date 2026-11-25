@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -115,12 +116,53 @@ public partial class LocationManager
       Log.Warning($"Failed to load any location data.");
       return SetResult.Failed;
     }
+    if (Configuration.ServerOnly) WarnUnsupportedLocationIcons(parsed);
     if (YamlDataManager.BackfillEnabled && AddMissingEntries(parsed))
       return SetResult.Rewritten;
     data = parsed;
     Log.Info($"Reloading location data ({parsed.Count} entries).");
     return SetResult.Applied;
   }
+
+  private static void WarnUnsupportedLocationIcons(List<ZoneSystem.ZoneLocation> locations)
+  {
+    var vanillaIcons = GetVanillaLocationIconNames();
+    var unrecognized = 0;
+    foreach (var loc in locations)
+    {
+      if (!LocationExtra.TryGetData(loc, out var extra)) continue;
+      var name = loc.m_prefab.Name;
+      if (!IsVanillaLocationIcon(extra.iconAlways, name, vanillaIcons))
+      {
+        unrecognized++;
+        Log.Warning($"Location '{name}': iconAlways '{extra.iconAlways}' is not a vanilla location icon.");
+      }
+      if (!IsVanillaLocationIcon(extra.iconPlaced, name, vanillaIcons))
+      {
+        unrecognized++;
+        Log.Warning($"Location '{name}': iconPlaced '{extra.iconPlaced}' is not a vanilla location icon.");
+      }
+    }
+    if (unrecognized > 0)
+      Log.Warning($"{unrecognized} non-vanilla location icons. Unmodded clients may not display those. Use EWP RPC_DiscoverLocationResponse to set them as discovery pins.");
+  }
+
+  internal static ISet<string> GetVanillaLocationIconNames() => new HashSet<string>(
+    DefaultEntries.Where(loc => loc.m_iconAlways || loc.m_iconPlaced).Select(loc => loc.m_prefab.Name),
+    StringComparer.Ordinal);
+
+  internal static bool IsVanillaLocationIcon(string icon, string prefabName, ISet<string> vanillaIcons)
+  {
+    if (icon == "" || icon == "false") return true;
+    return vanillaIcons.Contains(icon == "true" ? prefabName : icon);
+  }
+
+  internal static string ResolveLocationIcon(string icon, string prefabName)
+  {
+    if (icon == "" || icon == "false") return "";
+    return icon == "true" ? prefabName : icon;
+  }
+
   private static void UpdateHashes()
   {
     var zs = ZoneSystem.instance;

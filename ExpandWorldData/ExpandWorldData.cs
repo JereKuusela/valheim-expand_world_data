@@ -46,7 +46,10 @@ public class EWD : BaseUnityPlugin
     Refresh.Register(Regen.Water, WaterColor.Regenerate);
     var initialRevision = Migrations.ReadRevision(Config.ConfigFilePath);
     var movedSettings = ConfigMoves.Read(Config);
-    ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, () => Refresh.Request(Regen.World));
+    ConfigWrapper wrapper = new("expand_config", Config, ConfigSync, () =>
+    {
+      if (!Configuration.ServerOnly) Refresh.Request(Regen.World);
+    });
     Configuration.Init(wrapper, initialRevision);
     ConfigMoves.Apply(Config, movedSettings);
     LegacyEventsConfiguration.Migrate(Config);
