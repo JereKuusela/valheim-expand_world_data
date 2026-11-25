@@ -5,17 +5,24 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <ManagedDir Condition="'$(ManagedDir)' == ''">..\..\Libs</ManagedDir>
   </PropertyGroup>
   <ItemGroup>
+    <!-- BepInEx.Paths uses MonoMod.Utils during test fixture setup. -->
+    <PackageReference Include="MonoMod.Utils" Version="22.1.29.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
     <ProjectReference Include="..\ExpandWorldData\ExpandWorldData.csproj" />
     <Reference Include="BepInEx">
-      <HintPath>..\..\Libs\BepInEx.dll</HintPath>
+      <HintPath>$(BepInExDir)\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="YamlDotNet">
-      <HintPath>..\..\Libs\YamlDotNet.dll</HintPath>
+      <HintPath>$(LibsDir)\YamlDotNet.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Valheim assemblies load this facade at runtime when reflecting over game types. -->
+    <None Include="$(ManagedDir)\netstandard.dll" Link="netstandard.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
