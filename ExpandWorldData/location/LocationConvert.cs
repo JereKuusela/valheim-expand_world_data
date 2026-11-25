@@ -64,7 +64,7 @@ public partial class LocationManager
       loc.m_minDistance = loc.m_minDistanceFromCenter;
     if (loc.m_maxDistanceFromCenter != 0f && (loc.m_maxDistance == 0f || loc.m_maxDistanceFromCenter < loc.m_maxDistance))
       loc.m_maxDistance = loc.m_maxDistanceFromCenter;
-    data.prefab = loc.m_prefab.Name;
+    data.prefab = loc.m_prefab.name;
     data.enabled = loc.m_enable;
     data.biome = DataManager.FromBiomes(loc.m_biome);
     data.biomeArea = DataManager.FromBiomeAreas(loc.m_biomeArea);
@@ -75,8 +75,8 @@ public partial class LocationManager
     data.unique = loc.m_unique;
     data.group = loc.m_group;
     data.minDistanceFromSimilar = loc.m_minDistanceFromSimilar;
-    data.iconAlways = loc.m_iconAlways ? loc.m_prefab.Name : "";
-    data.iconPlaced = loc.m_iconPlaced ? loc.m_prefab.Name : "";
+    data.iconAlways = loc.m_iconAlways ? loc.m_prefab.name : "";
+    data.iconPlaced = loc.m_iconPlaced ? loc.m_prefab.name : "";
     data.randomRotation = loc.m_randomRotation;
     data.slopeRotation = loc.m_slopeRotation;
     data.snapToWater = loc.m_snapToWater;

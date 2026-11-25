@@ -31,7 +31,7 @@ public static class Helper
     }
     catch
     {
-      Log.Warning($"Failed to load room {room.m_prefab.Name}. This is most likely issue with the mod adding the room.");
+      Log.Warning($"Failed to load room {room.m_prefab.name}. This is most likely issue with the mod adding the room.");
       room.m_prefab.Release();
       return null;
     }
@@ -45,7 +45,7 @@ public static class Helper
     }
     catch
     {
-      Log.Warning($"Failed to load location {loc.m_prefab.Name}. This is most likely issue with the mod adding the location.");
+      Log.Warning($"Failed to load location {loc.m_prefab.name}. This is most likely issue with the mod adding the location.");
       loc.m_prefab.Release();
       return null;
     }

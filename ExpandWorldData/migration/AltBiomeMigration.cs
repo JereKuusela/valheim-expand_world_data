@@ -21,7 +21,7 @@ internal static class AltBiomeMigration
   }
 
   private static bool MigrateLocations(List<LocationYaml> data, List<ZoneSystem.ZoneLocation> defaults, string pattern) =>
-    Migrate(data, defaults, yaml => yaml.prefab, yaml => yaml.biome, location => location.m_altBiomeParent, location => Parse.Name(location.m_prefab.Name), location => location.m_biome, pattern);
+    Migrate(data, defaults, yaml => yaml.prefab, yaml => yaml.biome, location => location.m_altBiomeParent, location => Parse.Name(location.m_prefab.name), location => location.m_biome, pattern);
 
   private static bool MigrateVegetation(List<VegetationYaml> data, List<ZoneSystem.ZoneVegetation> defaults, string pattern) =>
     Migrate(data, defaults, yaml => yaml.prefab, yaml => yaml.biome, vegetation => vegetation.m_altBiomeParent, vegetation => Parse.Name(vegetation.m_prefab.name), vegetation => vegetation.m_biome, pattern);

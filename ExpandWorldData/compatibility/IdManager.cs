@@ -43,7 +43,7 @@ public class IdManager
       }
     }
   }
-  private static string LocationIds() => string.Join("|", [.. ZoneSystem.instance.m_locations.Where(IsValid).Select(l => l.m_prefab.Name).Distinct()]);
+  private static string LocationIds() => string.Join("|", [.. ZoneSystem.instance.m_locations.Where(IsValid).Select(l => l.m_prefab.name).Distinct()]);
   private static bool IsValid(ZoneSystem.ZoneLocation loc) => loc != null && loc.m_prefab != null && (loc.m_prefab.IsValid || loc.m_prefab.m_name != null);
 
   public static void SendVegetationIds()

@@ -18,8 +18,8 @@ public class LocationExtra
   public static void AddInfo(ZoneSystem.ZoneLocation loc, LocationYaml data, string fileName)
   {
     var extra = new LocationExtraInfo(data, fileName);
-    if (BlueprintManager.Has(loc.m_prefab.Name))
-      extra.UseNameForSimilar(loc.m_prefab.Name);
+    if (BlueprintManager.Has(loc.m_prefab.name))
+      extra.UseNameForSimilar(loc.m_prefab.name);
     // Distance rules may update these for compatibility.
     loc.m_minDistanceFromSimilar = data.minDistanceFromSimilar;
     loc.m_maxDistanceFromSimilar = data.maxDistanceFromSimilar;
@@ -66,7 +66,7 @@ public class LocationExtra
   public static bool MatchesTarget(ZoneSystem.ZoneLocation? location, string target)
   {
     if (location == null) return false;
-    if (location.m_prefab.Name == target) return true;
+    if (location.m_prefab.name == target) return true;
     if (!TryGet(location, out var extra)) return false;
     if (extra.Groups == null) return false;
     return extra.Groups.Contains(target);

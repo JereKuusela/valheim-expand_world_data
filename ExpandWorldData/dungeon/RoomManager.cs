@@ -165,7 +165,7 @@ public class RoomManager
     Log.Info($"Reloading room themes ({NameToTheme.Count} entries).");
     Log.Info($"Reloading room data ({data.Count} entries).");
 
-    RoomNames = Helper.ToDict(data, item => item.m_prefab.Name.ToLowerInvariant(), item => item.m_prefab.Name);
+    RoomNames = Helper.ToDict(data, item => item.m_prefab.name.ToLowerInvariant(), item => item.m_prefab.name);
     DungeonDB.instance.m_rooms = data;
     return SetResult.Applied;
   }
@@ -187,7 +187,7 @@ public class RoomManager
       room.m_musicPrefab = baseRoom.RoomInPrefab.m_musicPrefab;
       var connections = baseRoom.RoomInPrefab.GetConnections();
       if (connections.Length != snapPieces.Length)
-        Log.Warning($"Room {name} has {snapPieces.Length} connections, but base room {baseRoom.m_prefab.Name} has {connections.Length} connections.");
+        Log.Warning($"Room {name} has {snapPieces.Length} connections, but base room {baseRoom.m_prefab.name} has {connections.Length} connections.");
       // Initialize with base connections to allow data missing from the yaml.
       room.m_roomConnections = [.. connections.Select(c =>
         {
@@ -328,11 +328,11 @@ public class RoomManager
   private static void SetDefaultEntries()
   {
     DefaultEntries = DungeonDB.instance.m_rooms.Where(room => room.m_prefab.IsValid).ToList();
-    RoomSpawning.Prefabs = DefaultEntries.ToDictionary(entry => entry.m_prefab.Name, entry => entry);
+    RoomSpawning.Prefabs = DefaultEntries.ToDictionary(entry => entry.m_prefab.name, entry => entry);
   }
   private static bool AddMissingEntries(List<DungeonDB.RoomData> entries)
   {
-    var missingEntries = YamlFiles.GetMissingEntries(DefaultEntries, entries.Select(entry => entry.m_prefab.Name), entry => entry.m_prefab.Name);
+    var missingEntries = YamlFiles.GetMissingEntries(DefaultEntries, entries.Select(entry => entry.m_prefab.name), entry => entry.m_prefab.name);
     if (missingEntries.Count == 0) return false;
     var missing = missingEntries.Select(ToData).Where(d => d != null).ToList();
     Log.Warning($"Adding {missing.Count} missing rooms to the expand_rooms.yaml file.");

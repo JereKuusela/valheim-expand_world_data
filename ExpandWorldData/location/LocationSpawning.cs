@@ -43,7 +43,7 @@ public class LocationSpawning
   {
     if (!LocationExtra.TryGet(location, out var extra) || extra?.Objects == null) return;
     var objects = extra.Objects;
-    //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefab.Name}");
+    //ExpandWorldData.Log.Debug($"Spawning {objects.Count} custom objects in {location.m_prefab.name}");
     foreach (var obj in objects)
     {
       if (obj.Chance < 1f && Random.value > obj.Chance) continue;
@@ -130,7 +130,7 @@ public class LocationObjectDataAndSwap
     var go = Object.Instantiate(ZoneSystem.instance.m_locationProxyPrefab, pos, Quaternion.identity);
     var loc = go.GetComponent<LocationProxy>();
     var view = loc.m_nview;
-    var hash = location.m_prefab.Name.GetStableHashCode();
+    var hash = location.m_prefab.name.GetStableHashCode();
     view.GetZDO().Set(FixGhostInit.ReferenceHash, hash);
     if (mode == ZoneSystem.SpawnMode.Full)
       loc.SpawnLocation();
@@ -171,9 +171,9 @@ public class LocationObjectDataAndSwap
     // If the player teleports to the location, location placement would also run the client spawning.
     if (mode == ZoneSystem.SpawnMode.Client) return;
 
-    var isBluePrint = BlueprintManager.Has(location.m_prefab.Name);
+    var isBluePrint = BlueprintManager.Has(location.m_prefab.name);
     Blueprint? blueprint = null;
-    if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.Name, out var loadedBlueprint))
+    if (isBluePrint && BlueprintManager.TryGet(location.m_prefab.name, out var loadedBlueprint))
       blueprint = loadedBlueprint;
     // Paint-only snapshots still need the existing implicit blueprint level.
     // Only captured height data replaces that default terrain operation.
@@ -197,7 +197,7 @@ public class LocationObjectDataAndSwap
       Terrain.ApplyBlueprint(blueprint.Name, height, paint, pos, rot, mode, spawnedGhostObjects);
     }
     if (mode == ZoneSystem.SpawnMode.Ghost)
-      Terrain.FinalizeGhostTerrain(pos, spawnedGhostObjects, location.m_prefab.Name);
+      Terrain.FinalizeGhostTerrain(pos, spawnedGhostObjects, location.m_prefab.name);
     Random.InitState(seed);
     if (mode == ZoneSystem.SpawnMode.Ghost)
       ZNetView.StartGhostInit();
@@ -249,7 +249,7 @@ public class LocationObjectDataAndSwap
   {
     static bool Prefix(ZoneSystem.ZoneLocation location, ref bool __result)
     {
-      if (BlueprintManager.Has(location.m_prefab.Name))
+      if (BlueprintManager.Has(location.m_prefab.name))
       {
         __result = true;
         return false;

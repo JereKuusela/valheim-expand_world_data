@@ -138,15 +138,15 @@ public class Spawner
   static readonly Dictionary<string, int> roomCounts = [];
   static void TrackRoomCOunt(DungeonDB.RoomData roomData)
   {
-    if (!roomCounts.TryGetValue(roomData.m_prefab.Name, out var count))
+    if (!roomCounts.TryGetValue(roomData.m_prefab.name, out var count))
       count = 0;
     count += 1;
-    roomCounts[roomData.m_prefab.Name] = count;
+    roomCounts[roomData.m_prefab.name] = count;
 
     if (!DungeonObjects.Generators.TryGetValue(DungeonObjects.CurrentDungeon, out var gen)) return;
-    if (!gen.m_roomLimits.TryGetValue(roomData.m_prefab.Name, out var limit)) return;
+    if (!gen.m_roomLimits.TryGetValue(roomData.m_prefab.name, out var limit)) return;
     if (limit.max <= 0 || count < limit.max) return;
-    DungeonGenerator.m_availableRooms.RemoveAll(room => room.m_prefab.Name == roomData.m_prefab.Name);
+    DungeonGenerator.m_availableRooms.RemoveAll(room => room.m_prefab.name == roomData.m_prefab.name);
   }
 
 
@@ -236,7 +236,7 @@ public class Spawner
     var name = Utils.GetPrefabName(__instance.gameObject);
     if (!DungeonObjects.Generators.TryGetValue(name, out var gen)) return;
     if (gen.m_excludedRooms.Count == 0) return;
-    DungeonGenerator.m_availableRooms.RemoveAll(room => gen.m_excludedRooms.Contains(room.m_prefab.Name));
+    DungeonGenerator.m_availableRooms.RemoveAll(room => gen.m_excludedRooms.Contains(room.m_prefab.name));
   }
 
   private static readonly List<RoomConnection> endConnections = [];

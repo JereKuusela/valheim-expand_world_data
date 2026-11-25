@@ -148,7 +148,7 @@ public class DebugCommands
     {
       var db = DungeonDB.instance;
       if (!db) return;
-      var names = db.m_rooms.Select(room => $"{room.m_prefab.Name} ({DataManager.FromEnum(room.m_theme)}): {GetRoomItems(room)}").ToList();
+      var names = db.m_rooms.Select(room => $"{room.m_prefab.name} ({DataManager.FromEnum(room.m_theme)}): {GetRoomItems(room)}").ToList();
       ZLog.Log(string.Join("\n", names));
       args.Context.AddString($"Logged {names.Count} rooms to the log file.");
     }, true);
@@ -156,7 +156,7 @@ public class DebugCommands
     {
       var zs = ZoneSystem.instance;
       if (!zs) return;
-      var names = zs.m_locations.Where(loc => loc.m_prefab.IsValid && loc.m_prefab.Name != "Blueprint").Select(loc => $"{loc.m_prefab.Name}: {GetLocationItems(loc)}").ToList();
+      var names = zs.m_locations.Where(loc => loc.m_prefab.IsValid && loc.m_prefab.name != "Blueprint").Select(loc => $"{loc.m_prefab.name}: {GetLocationItems(loc)}").ToList();
       ZLog.Log(string.Join("\n", names));
       args.Context.AddString($"Logged {names.Count} locations to the log file.");
     }, true);
@@ -170,7 +170,7 @@ public class DebugCommands
       {
         Dungeon.Spawner.Override(dg, kvp.Key);
         dg.SetupAvailableRooms();
-        var rooms = DungeonGenerator.m_availableRooms.Select(room => room.m_prefab.Name);
+        var rooms = DungeonGenerator.m_availableRooms.Select(room => room.m_prefab.name);
         return $"{kvp.Key}: {string.Join(", ", rooms)}";
       }).ToList();
       ZLog.Log(string.Join("\n", dgs));

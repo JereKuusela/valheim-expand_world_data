@@ -72,7 +72,7 @@ public static class LocationClientData
     HashSet<string> names = [];
     foreach (var kvp in LocationExtra.ExtraInfo)
     {
-      var name = kvp.Key.m_prefab.Name;
+      var name = kvp.Key.m_prefab.name;
       // Blueprints have no Location component. The first entry wins like in ZoneSystem.GetLocation.
       if (BlueprintManager.Has(name) || !names.Add(name)) continue;
       list.Add(ToClient(name, kvp.Value));
