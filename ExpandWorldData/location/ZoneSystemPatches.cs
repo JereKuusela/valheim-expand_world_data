@@ -32,7 +32,7 @@ public static class ZoneSystemPatches
       if (loc == null) continue;
       if (LocationExtra.TryGetData(loc, out var data))
       {
-        var placed = data.iconPlaced == "true" ? loc.m_prefab.Name : data.iconPlaced == "false" ? "" : data.iconPlaced;
+        var placed = data.iconPlaced == "true" ? loc.m_prefab.name : data.iconPlaced == "false" ? "" : data.iconPlaced;
         if (kvp.Value.m_placed && placed != "")
         {
           icons[pos] = placed;
@@ -40,14 +40,14 @@ public static class ZoneSystemPatches
         else
         {
           pos.y += 0.00001f; // Trivial amount for a different key.
-          var always = data.iconAlways == "true" ? loc.m_prefab.Name : data.iconAlways == "false" ? "" : data.iconAlways;
+          var always = data.iconAlways == "true" ? loc.m_prefab.name : data.iconAlways == "false" ? "" : data.iconAlways;
           if (always != "") icons[pos] = always;
         }
       }
       // Jewelcrafting has dynamic locations so use the vanilla code as a fallback.
       else if (loc.m_iconAlways || (loc.m_iconPlaced && kvp.Value.m_placed))
       {
-        icons[pos] = loc.m_prefab.Name;
+        icons[pos] = loc.m_prefab.name;
       }
     }
     return false;
@@ -59,7 +59,7 @@ public static class ZoneSystemPatches
   {
     foreach (ZoneSystem.ZoneLocation zoneLocation in __instance.m_locations)
     {
-      if (zoneLocation.m_prefab.Name == name)
+      if (zoneLocation.m_prefab.name == name)
       {
         __result = zoneLocation;
         return false;

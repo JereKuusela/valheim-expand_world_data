@@ -26,7 +26,7 @@ public class RoomSpawning
 
   private static bool IsBaseRoom(DungeonDB.RoomData room)
   {
-    var baseName = Parse.Name(room.m_prefab.Name);
+    var baseName = Parse.Name(room.m_prefab.name);
     return Prefabs.ContainsKey(baseName);
   }
 
