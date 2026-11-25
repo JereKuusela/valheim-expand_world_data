@@ -1,5 +1,6 @@
 - v1.82
   - Adds support for numeric `clearArea` in locations yaml.
+  - Fixed for the new update. Thanks Maxime!
 
 - v1.81
   - Adds support for clients having the mod installed even if the server does not require it. Thanks JPValheim!
