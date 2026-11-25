@@ -55,6 +55,8 @@ public static class Patcher
 
   private static void PatchLava(Harmony harmony)
   {
+    // Always applied (vanilla bug fix), tracked so it is not repatched.
+    Patches.Transpiler(harmony, true, typeof(Character), nameof(Character.UpdateLava), typeof(BiomeHeat), nameof(BiomeHeat.FixLavaHeatReset));
     var shouldPatch = BiomeManager.HasLavaOverrides;
     Patches.Transpiler(harmony, shouldPatch, typeof(Character), nameof(Character.UpdateLava), typeof(BiomeHeat), nameof(BiomeHeat.UpdateLava));
     Patches.Prefix(harmony, shouldPatch, typeof(Heightmap), nameof(Heightmap.GetLava), typeof(BiomeHeat), nameof(BiomeHeat.ReplaceGetLava));

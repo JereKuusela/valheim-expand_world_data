@@ -1,3 +1,8 @@
+
+- v1.83
+  - Adds automatic fill for new alternative biomes.
+  - Fixes compatibility issue with unknown mod.
+
 - v1.82
   - Adds support for numeric `clearArea` in locations yaml.
   - Fixed for the new update. Thanks Maxime!
@@ -33,10 +38,3 @@
   - Fixes Infinity Hammer "Ignore no build" not ignoring no build zones.
   - Fixes custom item data not working on data entries. Thanks Zeall!
   - Optimizes world load to not apply extra refresh.
-
-- v1.78
-  - Hotfix.
-
-- v1.77
-  - Fixes blueprint locations being in the same group for location "distance from similar" checks.
-  - Fixes environments not resetting after changes.

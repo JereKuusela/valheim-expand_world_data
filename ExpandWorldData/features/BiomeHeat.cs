@@ -1,34 +1,46 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using ExpandWorldData.Biome;
-using ExpandWorldData.World;
 using HarmonyLib;
+using Service;
 using UnityEngine;
 
 namespace ExpandWorldData.Features;
 
-[HarmonyPatch(typeof(Character), nameof(Character.UpdateLava))]
-public class FixLavaHeatReset
-{
-  // Vanilla code has bug that heat doesn't reset when not in hot biome.
-  static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => new CodeMatcher(instructions)
-    .MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.IsAshlands))))
-    .SetAndAdvance(OpCodes.Pop, null)
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Pop))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_lastBiome))))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FixLavaHeatReset), nameof(HasLavaHeat))))
-    .Advance(1)
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, 0f))
-    .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(Character), nameof(Character.m_lavaHeatLevel))))
-    .InstructionEnumeration();
-
-  private static bool HasLavaHeat(Heightmap.Biome biome) => (biome & BiomeManager.LavaBiomes) != 0;
-}
-
 public class BiomeHeat
 {
+  // Vanilla code has bug that heat doesn't reset when not in hot biome.
+  internal static IEnumerable<CodeInstruction> FixLavaHeatReset(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+  {
+    var matcher = new CodeMatcher(instructions, generator)
+      .MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(WorldGenerator), nameof(WorldGenerator.IsAshlands))));
+    if (matcher.IsInvalid)
+    {
+      Log.Warning("Character.UpdateLava: IsAshlands call not found, skipping the lava heat reset fix.");
+      return matcher.InstructionEnumeration();
+    }
+    // Result becomes HasLava(m_lastBiome) || (false && IsAshlands). The call stays in the IL but is always jumped over.
+    var skipCall = generator.DefineLabel();
+    var afterCall = generator.DefineLabel();
+    return matcher
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_I4_0))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Brfalse, skipCall))
+      .Advance(1)
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Br, afterCall))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Pop).WithLabels(skipCall))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Pop))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_I4_0))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0).WithLabels(afterCall))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_lastBiome))))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BiomeHeat), nameof(HasLava))))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Or))
+      .Advance(1)
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_R4, 0f))
+      .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(Character), nameof(Character.m_lavaHeatLevel))))
+      .InstructionEnumeration();
+  }
+
   internal static IEnumerable<CodeInstruction> UpdateLava(IEnumerable<CodeInstruction> instructions) => PatchBiomeHeat(instructions);
 
   internal static bool ReplaceGetLava(Heightmap __instance, Vector3 worldPos, ref float __result)

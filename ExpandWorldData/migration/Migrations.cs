@@ -14,7 +14,7 @@ namespace ExpandWorldData.Migration;
 public static class Migrations
 {
   // Increase when adding a step, and give the step a check for the new revision. Steps must also be safe to repeat.
-  public const int Latest = 2;
+  public const int Latest = 3;
 
   public static int ReadRevision(string path)
   {
@@ -95,9 +95,14 @@ public static class Migrations
       "Removed obsolete addVegetation and addLocations from alt biome files. These are handled by the vegetation and location files.");
     Finish(Event.EventManager.Pattern, EventMigration.Migrate(Event.EventManager.Pattern),
       "Migrated event keys to the new row format (notRequired* is now forbidden*, requiredPlayerKeysAll merged to requiredPlayerKeys).");
+    Finish(Event.EventManager.Pattern, Yaml.RenameFields(Event.EventManager.Pattern, SpawnMigration.Renames),
+      "Renamed spawn requirement fields to plural in event files.");
     Read<Event.Data>(Event.EventManager.Pattern);
     Finish(Spawn.SpawnManager.Pattern, Yaml.RenameFields(Spawn.SpawnManager.Pattern, SpawnMigration.Renames),
       "Renamed spawn requirement fields to plural (for example requiredGlobalKey is now requiredGlobalKeys).");
+    // Alt biomes embed spawn entries.
+    Finish(AltBiomeManager.Pattern, Yaml.RenameFields(AltBiomeManager.Pattern, SpawnMigration.Renames),
+      "Renamed spawn requirement fields to plural in alt biome files.");
     Finish(Vegetation.VegetationManager.Pattern, Yaml.RenameFields(Vegetation.VegetationManager.Pattern, VegetationMigration.Renames),
       "Renamed vegetation requiredGlobalKey and forbiddenGlobalKey to plural.");
     Finish(WorldManager.Pattern, WorldManager.MigrateOldDefault(), null);
